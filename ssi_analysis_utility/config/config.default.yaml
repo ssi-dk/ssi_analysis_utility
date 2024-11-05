@@ -1,0 +1,9 @@
+# When accessing this in the code you'll work with it as a dict.
+# ENV variables will be replaced with their values. This is done with the envyaml package that is in the code template `load_config`.
+# By convention all variables for the project should have the SSI_ANALYSIS_UTILITY_* prefix.
+# e.g
+# name: ${SSI_ANALYSIS_UTILITY_NAME}
+example:
+    input:
+        name: ${SSI_ANALYSIS_UTILITY_USER_INPUT_NAME}
+        alternative_name: Lee
