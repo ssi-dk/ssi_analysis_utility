@@ -415,10 +415,11 @@ def get_single_sample_attributes(input_config):
     attributes.update(file_paths)
     return attributes
 
-# %% ../nbs/01_sample_manager.ipynb 9
+# %% ../nbs/01_sample_manager.ipynb 10
 def single_test():
     example_sample = sample_data(
-        {  # "sample_name":"GAS-2022-1029",
+        {
+            "sample_name": "GAS-2022-1029",
             "assembly_file": "examples/GAS-2022-1029.fasta",
             "Illumina_read_files": [
                 "examples/GAS-2022-1029_S42_L555_R1_001.fastq.gz",
@@ -466,7 +467,6 @@ def test_folder():
     input_config = config["input_manager"]
     input_config["load_from_folder"] = True
     input_config["input_folder"] = "examples/"
-    # input_config["samplesheet"] = "samplesheet.tsv"
     test = input_manager(input_config)
     for x in test:
         print(x.__dict__)

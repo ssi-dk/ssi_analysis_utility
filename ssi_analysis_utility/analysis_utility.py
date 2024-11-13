@@ -38,6 +38,7 @@ import subprocess
 import pandas as pd
 import logging
 import csv
+import numpy as np
 
 # %% ../nbs/02_analysis_utility.ipynb 5
 class analysis_utility(sample_manager.sample_data):
@@ -362,12 +363,8 @@ class analysis_utility(sample_manager.sample_data):
             self.logger.error(f"Shell command STDERR: {stderr}")
         return (stdout, stderr)
 
-    ### Analysis functions
+    ############################  ANALYSES ###############################
 
-    ## Below are functions involved in running individual analyses
-
-    #
-    #
     # VCF output can be used directly in nasp
     def _Illumina_read_mapping(
         self, analysis_alias, reference_fasta_file, output_folder=False
@@ -404,9 +401,31 @@ class analysis_utility(sample_manager.sample_data):
         vcf_file = os.path.join(output_folder, self.sample_name + ".vcf")
 
         # Define commands for BWA, Samtools, and GATK
-        bwamem_cmd = f"bwa mem -R '@RG\\tID:{self.sample_name}\\tSM:{self.sample_name}'  -t 4 {reference_fasta_file} {self.Illumina_read_files[0]} {self.Illumina_read_files[1]} | samtools view -S -b -h - | samtools sort -o {bam_file}"
+        bwamem_cmd = (
+            f"bwa mem "
+            f"-R '@RG\\tID:{self.sample_name}\\tSM:{self.sample_name}' "
+            f"-t 4 {reference_fasta_file} "
+            f"{self.Illumina_read_files[0]} {self.Illumina_read_files[1]} "
+            f"| samtools view -S -b -h - "
+            f"| samtools sort -o {bam_file}"
+        )
+
         samtoolsindex_cmd = f"samtools index {bam_file}"
-        gatk_cmd = f"java -Xmx10G -jar GenomeAnalysisTK.jar -T UnifiedGenotyper -dt NONE -glm BOTH -I {bam_file} -R {reference_fasta_file} -nt 4 -o {vcf_file} -out_mode EMIT_ALL_CONFIDENT_SITES -baq RECALCULATE -stand_call_conf 100 -ploidy 1"
+
+        gatk_cmd = (
+            f"java -Xmx10G -jar GenomeAnalysisTK.jar "
+            f"-T UnifiedGenotyper "
+            f"-dt NONE "
+            f"-glm BOTH "
+            f"-I {bam_file} "
+            f"-R {reference_fasta_file} "
+            f"-nt 4 "
+            f"-o {vcf_file} "
+            f"-out_mode EMIT_ALL_CONFIDENT_SITES "
+            f"-baq RECALCULATE "
+            f"-stand_call_conf 100 "
+            f"-ploidy 1"
+        )
         commands = {}
 
         # Execute the appropriate commands based on the existing files
@@ -770,7 +789,14 @@ class analysis_utility(sample_manager.sample_data):
 
             # Run BLAST if output file does not exist
             if not os.path.exists(blast_output_file):
-                cmd = f"blastn -query {query_sequence_file} -subject {self.assembly_file} -out {blast_output_file} -outfmt \"6 {blast_presence_absence_config['blast_header']}\" {blast_presence_absence_config['additional_blast_parameters']}"
+                cmd = (
+                    f"blastn "
+                    f"-query {query_sequence_file} "
+                    f"-subject {self.assembly_file} "
+                    f"-out {blast_output_file} "
+                    f"-outfmt '6 {blast_presence_absence_config['blast_header']}' "
+                    f"{blast_presence_absence_config['additional_blast_parameters']}"
+                )
                 stdout, stderr = self.execute_cmd_and_log(cmd)
             else:
                 self.logger.info(
@@ -829,6 +855,148 @@ class analysis_utility(sample_manager.sample_data):
                 # "blast_df": blast_df_unique
             }
 
+    def _emm_typing_(self, emm_typing_config, output_folder=False):
+        """
+        Perform EMM typing analysis based on the provided configuration and
+        save the results in the specified output folder.
+
+        Parameters:
+        -------------
+        emm_typing_config : dict
+                Dictionary containing configuration settings for EMM typing analysis, including
+                file paths, analysis alias, and BLAST parameters.
+        output_folder : str, optional
+                Path to the folder where results will be saved. If not provided, a default folder
+                is set up.
+
+        Returns:
+        -------------
+        None
+        """
+        # Set the analysis alias from configuration
+        analysis_alias = emm_typing_config["alias"]
+
+        # Check if the assembly file is available; if not, log a critical message and skip the analysis
+        if self.assembly_file is None:
+            self.logger.critical(
+                f"Assembly file not provided or not found. Skipping analysis {analysis_alias}"
+            )
+            self.analysis_results[analysis_alias] = {analysis_alias: "NA"}
+        else:
+            # Setup the output folder for this analysis
+            output_folder = self.analysis_setup(analysis_alias, output_folder)
+            emm_blast_output_file = os.path.join(output_folder, "blast.tsv")
+
+            # Try to load EMM clusters from the specified file
+            try:
+                with open(emm_typing_config["emm_cluster_file"]) as f:
+                    emm_clusters = {}
+                    for line in f:
+                        line = line.rstrip("\n").split()
+                        for ele in line:
+                            emm_clusters[ele] = line[0]
+                self.logger.info(
+                    f"Loaded EMM clusters from file {emm_typing_config['emm_cluster_file']}"
+                )
+            except Exception as e:
+                self.logger.error(
+                    f"Failed to parse cluster EMM cluster file, error: {e}"
+                )
+
+            # Construct the BLAST command using the given configuration parameters
+            cmd = (
+                f"blastn -query {emm_typing_config['emm_allele_file']} "
+                f"-subject {self.assembly_file} -qcov_hsp_perc 90 "
+                f"-out {emm_blast_output_file} "
+                f"-outfmt \"6 {emm_typing_config['blast_header']}\""
+            )
+
+            # Execute the command if the output file does not already exist
+            if not os.path.exists(emm_blast_output_file):
+                stdout, stderr = self.execute_cmd_and_log(cmd)
+
+            # Read the BLAST output into a DataFrame
+            blast_df = pd.read_csv(emm_blast_output_file, sep="\t", header=None)
+            blast_df.columns = emm_typing_config["blast_header"].split(" ")
+
+            # Calculate percentage length and extended start position
+            blast_df["plen"] = blast_df["length"] / blast_df["qlen"] * 100
+            blast_df["extended_sstart"] = np.where(
+                blast_df["sstart"] < blast_df["send"],
+                round((blast_df["sstart"] - blast_df["qstart"] + 1) / 100),
+                round((blast_df["send"] - blast_df["qstart"] + 1) / 100),
+            )
+
+            # Sort the DataFrame by bitscore in descending order
+            blast_df_sorted = blast_df.sort_values(by=["bitscore"], ascending=False)
+
+            # Initialize results dictionary with default values
+            emm_typing_results = {
+                "EMM_type": "-",
+                "EMM_cluster": "-",
+                "ENN_type": "-",
+                "ENN_cluster": "-",
+                "MRP_type": "-",
+                "MRP_cluster": "-",
+            }
+
+            unclassified_alleles = []  # List to store unclassified alleles
+
+            # Iterate through unique start positions to classify alleles
+            for start_pos in set(blast_df_sorted["extended_sstart"]):
+                allele_type = False  # Flag for the allele type
+                df_filtered = blast_df.query("extended_sstart == @start_pos")
+                df_filtered_dict = df_filtered.to_dict("records")
+
+                # Process each row to classify the allele based on clusters
+                for row in df_filtered_dict:
+                    allele_name = row["qseqid"][
+                        3:
+                    ]  # Extract allele name from query sequence ID
+                    # Check if allele is in EMM clusters and classify
+                    if allele_name in emm_clusters:
+                        cluster = emm_clusters[allele_name]
+                        allele_type = cluster[:3]
+                        emm_typing_results[f"{allele_type}_cluster"] = cluster
+                        break
+                    elif allele_name.split(".")[0] in emm_clusters:
+                        cluster = emm_clusters[allele_name.split(".")[0]]
+                        allele_type = cluster[:3]
+                        emm_typing_results[f"{allele_type}_cluster"] = cluster
+                        break
+
+                # Annotate allele name with indicators if percent identity or length is below threshold
+                if row["pident"] < 100:
+                    allele_name = f"{allele_name}*"
+                if row["plen"] < 100:
+                    allele_name = f"{allele_name}?"
+
+                # If allele type is unclassified, add to unclassified alleles
+                if not allele_type:
+                    unclassified_alleles.append(allele_name)
+                emm_typing_results[f"{allele_type}_type"] = allele_name
+
+            # Handle unclassified alleles and update results dictionary accordingly
+            if unclassified_alleles:
+                emm_typing_results["unclassified_emm_like_alleles"] = ",".join(
+                    unclassified_alleles
+                )
+                if emm_typing_results["EMM_type"] == "-":
+                    emm_typing_results["EMM_type"] = (
+                        "/".join(unclassified_alleles) + "+"
+                    )
+            else:
+                emm_typing_results["unclassified_emm_like_alleles"] = "-"
+
+            # Save analysis results and output file locations
+            self.analysis_results[analysis_alias] = emm_typing_results
+            self.analysis_output_files[analysis_alias] = {
+                "blast": emm_blast_output_file
+            }
+
+            # Clean up temporary files as specified in the configuration
+            self.analysis_cleanup(analysis_alias, emm_typing_config["files_to_clean"])
+
     def __iter__(self):
         for analysis_alias in self.analysis_results:
             yield (analysis_alias)
@@ -840,7 +1008,7 @@ class analysis_utility(sample_manager.sample_data):
         }
 
 # %% ../nbs/02_analysis_utility.ipynb 6
-class analysis_manager(sample_manager.input_manager):
+class analysis_manager(sample_manager.input_manager, analysis_utility):
     """
     Analysis manager class that inherits from `input_manager`
     """
@@ -904,65 +1072,6 @@ class analysis_manager(sample_manager.input_manager):
         )
         # Return the initialized sample
         return sample
-
-    ########## COPY OF ANOTHER METHOD TO RECHECK #############
-    def write_to_tsv(self, include_metadata=True):
-        """
-        Write results from all analyses to .tsv file. Includes metadata by default.
-
-        Parameters:
-        -------------
-
-        include_metadata : bool
-            Wether to include metadata
-        """
-
-        if self.samples:
-            output_file = os.path.join(self.base_output_folder, "results_summary.tsv")
-            print_dicts = []
-            for sample in self.samples:
-                if include_metadata:
-                    print_dict = sample.metadata.copy()
-                    if "Illumina_read_files" in print_dict and isinstance(
-                        print_dict["Illumina_read_files"], list
-                    ):
-                        print_dict["Illumina_read_files"] = ",".join(
-                            print_dict["Illumina_read_files"]
-                        )
-                    print_dict = {
-                        "sample_name": print_dict.pop("sample_name"),
-                        **print_dict,
-                    }  # Move sample_name to first column before printing for readability
-                else:
-                    print_dict = {"sample_name": sample.sample_name}
-                for analysis_alias in sample.analysis_results:
-                    print_dict.update(sample.analysis_results[analysis_alias])
-                print_dicts.append(print_dict.copy())
-            try:
-                with open(output_file, "w") as o:
-                    dict_writer = csv.DictWriter(
-                        o, print_dicts[0].keys(), delimiter="\t"
-                    )
-                    dict_writer.writeheader()
-                    dict_writer.writerows(print_dicts)
-                o.close()
-                print(f"Analysis summary written to {output_file}")
-            except Exception as e:
-                print(f"ERROR while writing analysis summary to {output_file}: {e}")
-
-    ########## COPY OF ANOTHER METHOD TO RECHECK #############
-    def setup_log_config(self, log_file, log_level="INFO"):
-        logger = logging.getLogger()
-        logging.basicConfig(
-            level=log_level,
-            # filename=str(log_file),
-            encoding="utf-8",
-            filemode="w",
-            format="{asctime} - {levelname} - {message}",
-            style="{",
-            datefmt="%Y-%m-%d %H:%M:%S",
-        )
-        return logger
 
 # %% ../nbs/02_analysis_utility.ipynb 7
 def get_names_from_fasta(fasta_file):
@@ -1053,7 +1162,7 @@ def update_cleanup_config(analysis_config, files_to_keep_string):
                 )
     return analysis_config
 
-
+# %% ../nbs/02_analysis_utility.ipynb 8
 def update_cli_input_config(
     input_config,
     analysis_config,
@@ -1148,7 +1257,7 @@ def update_cli_input_config(
     # Return the updated configuration dictionaries
     return (input_config, analysis_config)
 
-# %% ../nbs/02_analysis_utility.ipynb 9
+# %% ../nbs/02_analysis_utility.ipynb 10
 def unit_test_single():
     config = core.get_config()
     example_sample = analysis_utility(
@@ -1164,6 +1273,7 @@ def unit_test_single():
         output_folder="output/",
         analysis_config=config["analysis_settings"]["Spyogenes"],
     )
+
     assert example_sample.sample_name == "GAS-2022-1029"
     assert len(example_sample.Illumina_read_files) == 2
     assert not example_sample.Nanopore_read_file
@@ -1205,6 +1315,7 @@ def unit_test_single_3():
         output_folder="output/",
         analysis_config=config["analysis_settings"]["Spyogenes"],
     )
+
     assert example_sample.sample_name == "GAS-2022-1029"
     assert len(example_sample.Illumina_read_files) == 2
     assert not example_sample.Nanopore_read_file
@@ -1217,8 +1328,10 @@ def unit_test_from_folder():
     input_config["load_from_folder"] = True
     input_config["input_folder"] = "examples/"
     input_config["output_folder"] = "output_from_folder/"
+    # print(input_config)
     input_config["analysis_config"] = config["analysis_settings"]["Spyogenes"]
-    test = analysis_manager(input_config, config["analysis_settings"]["Spyogenes"])
+    test = analysis_manager(input_config, input_config["analysis_config"])
+    print(test.__dict__)
 
 
 def unit_test_from_samplesheet():
@@ -1229,6 +1342,3 @@ def unit_test_from_samplesheet():
     input_config["output_folder"] = "output_from_samplesheet/"
     input_config["analysis_config"] = config["analysis_settings"]["Spyogenes"]
     test = analysis_manager(input_config, config["analysis_settings"]["Spyogenes"])
-    print(test.__dict__)
-    for x in test:
-        print(x.__dict__)
