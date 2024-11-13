@@ -1,0 +1,1 @@
+Sitemap: https://$GIT_USER_NAME.github.io/ssi_analysis_utility/sitemap.xml

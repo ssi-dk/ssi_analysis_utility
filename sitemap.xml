@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://$GIT_USER_NAME.github.io/ssi_analysis_utility/pipeline_runner.html</loc>
+    <lastmod>2024-11-13T13:27:42.811Z</lastmod>
+  </url>
+  <url>
+    <loc>https://$GIT_USER_NAME.github.io/ssi_analysis_utility/sample_manager.html</loc>
+    <lastmod>2024-11-13T13:27:42.591Z</lastmod>
+  </url>
+  <url>
+    <loc>https://$GIT_USER_NAME.github.io/ssi_analysis_utility/core.html</loc>
+    <lastmod>2024-11-13T13:27:42.619Z</lastmod>
+  </url>
+  <url>
+    <loc>https://$GIT_USER_NAME.github.io/ssi_analysis_utility/index.html</loc>
+    <lastmod>2024-11-13T13:27:41.935Z</lastmod>
+  </url>
+  <url>
+    <loc>https://$GIT_USER_NAME.github.io/ssi_analysis_utility/analysis_utility.html</loc>
+    <lastmod>2024-11-13T13:27:42.791Z</lastmod>
+  </url>
+</urlset>
