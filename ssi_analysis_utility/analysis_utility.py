@@ -1342,3 +1342,4 @@ def unit_test_from_samplesheet():
     input_config["output_folder"] = "output_from_samplesheet/"
     input_config["analysis_config"] = config["analysis_settings"]["Spyogenes"]
     test = analysis_manager(input_config, config["analysis_settings"]["Spyogenes"])
+    print(test.__dict__)

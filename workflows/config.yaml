@@ -1,0 +1,7 @@
+input_manager:
+    path : /dpssi/home/scrsim/ssi_analysis_utility/examples/samplesheet.tsv
+    out_folder : "/dpssi/home/scrsim/ssi_analysis_utility/output"
+
+
+
+

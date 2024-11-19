@@ -1,0 +1,151 @@
+import pandas as pd
+import os
+import yaml
+
+
+# Read the CSV file
+csv = config['input_manager']['path']
+csv_data = pd.read_csv(csv, sep='\t')
+
+# Setup output folder
+out_name = config['input_manager']['out_folder']
+
+############ Example TSV format ################:
+# sample_name     Illumina_read_files     Nanopore_read_file      ...  ...       variant notes
+# GAS-2022-1029   GAS-2022-1029_S42_L555_R1_001.fastq.gz,GAS-2022-1029_S42_L555_R2_001.fastq.gz   GAS-2022-1029_nanopore.fastq.gz GAS-2022-1029.fasta  
+
+# Use the sample names as wildcards
+SAMPLES = csv_data['sample_name'].tolist()
+
+# Create a dictionary for mapping sampleID to file paths
+sample_to_illumina = {row['sample_name']: row['Illumina_read_files'].split(',') for idx, row in csv_data.iterrows()}
+sample_to_nanopore = {row['sample_name']: row['Nanopore_read_file'] for idx, row in csv_data.iterrows()}
+sample_to_assembly_file = {row['sample_name']: row['assembly_file'] for idx, row in csv_data.iterrows()}
+sample_to_organism = {row['sample_name']: row['organism'] for idx, row in csv_data.iterrows()}
+
+#------------------------------ Modules --------------------------------#
+# kma_path = config['kma']['path']
+# resfinder_standard_db = config['ResFinder']['standard']
+# resfinder_van_db = config['ResFinder']['van_genes']
+# plasmidfinder_standard_db = config['PlasmidFinder']['standard']
+# virulencefinder_standard_db = config['VirulenceFinder']['standard']
+# lrefinder_path = config['LREFinder']['path']
+# lrefinder_standard_db = config['LREFinder']['standard']
+
+##############################################################################
+#
+#                              Snakefile 
+#
+##############################################################################
+
+rule all:
+    input:
+        expand("{out}/{sample}/blast/", sample=SAMPLES, out=out_name),
+        expand("{out}/{sample}/emm_typing/", sample=SAMPLES, out=out_name),
+        #expand("results/resfinder/{sample}/", sample=SAMPLES),
+        #expand("results/plasmidfinder/{sample}/", sample=SAMPLES),
+        #expand("results/virulencefinder/{sample}/", sample=SAMPLES)
+
+
+##################### BLAST AMR GENES #####################################
+
+rule blast:
+    input:
+        amr_genes = "../resources/AMR/AMR_genes.fasta",
+        assembly = lambda wildcards: "../examples/"+ sample_to_assembly_file[wildcards.sample]
+    output:
+        directory("{out}/{sample}/blast/")  # Indicate that the output is a directory
+    shell:
+        """
+        mkdir {output}
+        blastn -query {input.amr_genes} \
+               -subject {input.assembly} \
+               -out {output}/blast_output.tsv \
+               -outfmt '6 qseqid sseqid pident length qlen qstart qend sstart send sseq evalue bitscore'
+        """
+
+
+
+###################### EMM TYPING #############################################
+
+
+rule emm_typing:
+    input:
+        emm_allele_files = "../resources/emm_typing/emm_alleles.fasta",
+        assembly = lambda wildcards: "../examples/"+ sample_to_assembly_file[wildcards.sample]
+    output:
+        directory("{out}/{sample}/emm_typing/")  # Indicate that the output is a directory
+    shell:
+        """
+        mkdir {output}
+        blastn -query {input.emm_allele_files} \
+               -subject {input.assembly} \
+               -qcov_hsp_perc 90 \
+               -out {output}/blast_output.tsv \
+               -outfmt '6 qseqid sseqid pident length qlen qstart qend sstart send sseq evalue bitscore'
+        """
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# rule ResFinder:
+#     input:
+#         R1 = lambda wildcards: sample_to_path[wildcards.sample]+"_R1.fastq.gz",
+#         R2 = lambda wildcards: sample_to_path[wildcards.sample]+"_R2.fastq.gz"
+#     output:
+#         directory("results/resfinder/{sample}")  # Indicate that the output is a directory
+#     shell:
+#         """
+#         # Example command using input fastq files
+#         python -m resfinder -ifq {input.R1} {input.R2} -o {output} -db_res {resfinder_standard_db} -acq
+#         """
+
+# rule PlasmidFinder:
+#     input:
+#         R1 = lambda wildcards: sample_to_path[wildcards.sample]+"_R1.fastq.gz",
+#         R2 = lambda wildcards: sample_to_path[wildcards.sample]+"_R2.fastq.gz"
+#     output:
+#         directory("results/plasmidfinder/{sample}")  # Indicate that the output is a directory
+#     shell:
+#         """
+#         mkdir results/plasmidfinder/{wildcards.sample}
+#         plasmidfinder.py -i {input.R1} {input.R2} -o {output} -p {plasmidfinder_standard_db} -mp {kma_path}
+#         """
+
+# rule VirulenceFinder:
+#     input:
+#         R1 = lambda wildcards: sample_to_path[wildcards.sample]+"_R1.fastq.gz",
+#         R2 = lambda wildcards: sample_to_path[wildcards.sample]+"_R2.fastq.gz"
+#     output:
+#         directory("results/virulencefinder/{sample}")  # Indicate that the output is a directory
+#     shell:
+#         """
+#         mkdir results/virulencefinder/{wildcards.sample}
+#         plasmidfinder.py -i {input.R1} {input.R2} -o {output} -p {virulencefinder_standard_db} -mp {kma_path}
+#         """
+
+# rule LREFinder:
+#     input:
+#         R1 = lambda wildcards: sample_to_path[wildcards.sample]+"_R1.fastq.gz",
+#         R2 = lambda wildcards: sample_to_path[wildcards.sample]+"_R2.fastq.gz"
+#     output:
+#         directory("results/LREFinder/{sample}")  # Indicate that the output is a directory
+#     shell:
+#         """
+#         mkdir results/virulencefinder/{wildcards.sample}
+#         python {lrefinder_path}/LRE-Finder.py -ipe {input.R1} {input.R2} -o output -t_db {lrefinder_standard_db} -ID 80 -1t1 -cge -matrix

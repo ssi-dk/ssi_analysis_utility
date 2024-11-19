@@ -20,14 +20,14 @@ file_patterns: &input_file_patterns
 
 input_manager:
     file_patterns: *input_file_patterns
-    load_from_samplesheet: False
+    load_from_samplesheet: True
     load_from_folder: False
     input_folder: null
     output_folder: .
     assembly_file: null
     Illumina_read_files: null
     Nanopore_read_file: null
-    samplesheet: null
+    samplesheet: /dpssi/home/scrsim/ssi_analysis_utility/examples/samplesheet.tsv
     sample_name: null
 
 analysis_settings:

@@ -31,6 +31,7 @@ from ssi_analysis_utility import (
 )
 from fastcore.script import call_parse
 from pathlib import Path  # to be able write :Path in cli function
+import snakemake
 
 # Project specific libraries
 import pandas as pd
@@ -64,64 +65,113 @@ def arguments_present_check(input_config):
     else:
         return True
 
-# %% ../nbs/03_pipeline_runner.ipynb 8
+# %% ../nbs/03_pipeline_runner.ipynb 9
 class Spyogenes_analysis(analysis_utility.analysis_utility):
+    """
+    Class to perform analysis for Streptococcus pyogenes.
+    """
+
     species = "Streptococcus pyogenes"
 
     def __init__(self, attributes, input_folder, output_folder, analysis_config):
+        """
+        Initialize the Spyogenes_analysis class with sample attributes, input folder, output folder,
+        and analysis configuration.
+
+        Parameters:
+        -------------
+        attributes : dict
+            Dictionary containing sample information such as sample name, input files, etc.
+        input_folder : str
+            Path to the input folder containing required files for the analysis.
+        output_folder : str
+            Path to the output folder where analysis results will be saved.
+        analysis_config : dict
+            Dictionary containing configuration settings for the analyses to be performed.
+        """
         attributes = attributes.copy()
         analysis_config = analysis_config.copy()
         super().__init__(attributes, input_folder, output_folder, analysis_config)
         self.run_analyses(analysis_config)
 
     def run_analyses(self, analysis_config):
-        self.sample_setup()
+        """
+        Runs the specified analyses on the sample based on the provided configuration.
+
+        Parameters:
+        -------------
+        analysis_config : dict
+            Configuration dictionary specifying which analyses to run and their settings.
+        """
+        self.sample_setup()  # Setup sample before starting analyses
         analyses_to_run = analysis_config["analyses_to_run"]
+
+        # Run lineage determination if specified
         if "assembly_lineage_determination" in analyses_to_run:
             lineage_determination_config = analysis_config[
                 "assembly_lineage_determination"
             ]
             self._assembly_lineage_determination_(lineage_determination_config)
+
+        # Run emm typing if specified
         if "emm_typing" in analyses_to_run:
             emm_typing_config = analysis_config["emm_typing"]
             self._emm_typing_(emm_typing_config)
+
+        # Run resistance gene detection if specified
         if "resistance_gene_detection" in analyses_to_run:
             AMR_blast_config = analysis_config["resistance_gene_detection"]
             self._blast_presence_absence_(AMR_blast_config)
+
+        # Run virulence gene detection if specified
         if "virulence_gene_detection" in analyses_to_run:
             VFDB_blast_config = analysis_config["virulence_gene_detection"]
             VFDB_blast_config["results_format"] = "string"
             self._blast_presence_absence_(VFDB_blast_config)
-        self.sample_cleanup()
-        self.write_to_tsv()
 
-    def load_emm_clusters(emm_cluster_file):
-        emm_clusters = {}
-        with open(emm_cluster_file) as f:
-            for line in f:
-                line = line.rstrip("\n").split(" ")
-                for i in range(1, len(line)):
-                    try:
-                        emm_clusters[line[i]] += f",{line[0]}"
-                    except KeyError:
-                        emm_clusters[line[i]] = line[0]
-        return emm_clusters
+        self.sample_cleanup()  # Cleanup after analyses are done
+        self.write_to_tsv()  # Write results to a TSV file
 
 
 class Spyogenes_manager(analysis_utility.analysis_manager):
+    """
+    A class to manage the analysis of multiple Streptococcus pyogenes samples.
+    """
 
     def __init__(self, input_config, analysis_settings_config):
-        # self.analysis_settings: dict = analysis_settings_config
+        """
+        Initializes the Spyogenes_manager with input configuration and analysis settings.
+
+        Parameters:
+        -------------
+        input_config : dict
+            Configuration for input files and sample handling.
+        analysis_settings_config : dict
+            Configuration for the specific analyses to be run on the samples.
+        """
         super().__init__(input_config, analysis_settings_config)
 
-    ### Initialize Spyogenes_analysis and add class instance to list in Spyogenes_manager.samples
     def init_sample(self, attributes):
+        """
+        Initializes a sample for analysis by creating an instance of `Spyogenes_analysis`.
+
+        Parameters:
+        -------------
+        attributes : dict
+            Dictionary containing sample-specific information, such as file paths and sample name.
+
+        Returns:
+        -------------
+        Spyogenes_analysis
+            An instance of `Spyogenes_analysis` initialized with the given sample attributes.
+        """
         try:
             output_folder = os.path.abspath(attributes["output_folder"])
         except KeyError:
             output_folder = os.path.join(
                 self.base_output_folder, attributes["sample_name"]
             )
+
         sample = Spyogenes_analysis(
             attributes,
             self.base_input_folder,
@@ -132,14 +182,24 @@ class Spyogenes_manager(analysis_utility.analysis_manager):
 
 
 def print_fasta_from_dict(fasta_dict, output_file):
+    """
+    Prints a dictionary of sequences in FASTA format to an output file.
+
+    Parameters:
+    -------------
+    fasta_dict : dict
+        Dictionary where keys are sequence headers and values are sequence strings.
+    output_file : str
+        Path to the output file where the FASTA data will be written.
+    """
     printlines = ""
     for header, sequence in fasta_dict.items():
         printlines += ">" + header + "\n" + sequence + "\n"
-    o = open(output_file, "w")
-    o.write(printlines)
-    o.close()
 
-# %% ../nbs/03_pipeline_runner.ipynb 10
+    with open(output_file, "w") as o:
+        o.write(printlines)
+
+# %% ../nbs/03_pipeline_runner.ipynb 11
 def single_test():
     config = core.get_config()
     example_sample = Spyogenes_analysis(
@@ -222,7 +282,7 @@ def samplesheet_test():
     for x in test:
         print(x.__dict__)
 
-# %% ../nbs/03_pipeline_runner.ipynb 17
+# %% ../nbs/03_pipeline_runner.ipynb 18
 @call_parse
 def cli(
     # Definition of command-line arguments
