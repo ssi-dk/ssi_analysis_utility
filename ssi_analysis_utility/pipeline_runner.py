@@ -129,7 +129,7 @@ class Spyogenes_analysis(analysis_utility.analysis_utility):
             VFDB_blast_config["results_format"] = "string"
             self._blast_presence_absence_(VFDB_blast_config)
 
-        self.sample_cleanup()  # Cleanup after analyses are done
+        # self.sample_cleanup()  # Cleanup after analyses are done
         self.write_to_tsv()  # Write results to a TSV file
 
 

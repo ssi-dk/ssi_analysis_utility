@@ -359,6 +359,73 @@ def _parse_args():
     parser.add_argument("--outputdir", default="", help="Path to outputfolder containing delta and frankenfasta files")
     return parser.parse_args()
 
+import subprocess
+import os
+
+def generate_delta_file(
+    nucmerpath: str,
+    nucmerargs: str,
+    deltafilterpath: str,
+    deltafilterargs: str,
+    external_nickname: str,
+    reference: str,
+    external: str,
+    outputdir: str
+):
+    """
+    Generates a delta file by aligning an external genome against the reference genome.
+
+    Args:
+        nucmerpath (str): Path to the nucmer executable.
+        nucmerargs (str): Additional arguments to pass to nucmer.
+        deltafilterpath (str): Path to the delta-filter executable.
+        deltafilterargs (str): Additional arguments to pass to delta-filter.
+        external_nickname (str): Nickname for the external genome (used in output naming).
+        reference (str): Path to the reference genome FASTA file.
+        external (str): Path to the external genome FASTA file.
+        outputdir (str): Directory where output files will be written.
+
+    Returns:
+        str: Path to the filtered delta file.
+    """
+    # Ensure output directory exists
+    os.makedirs(outputdir, exist_ok=True)
+
+    # File paths
+    delta_file = os.path.join(outputdir, f"{external_nickname}.delta")
+    filtered_delta_file = os.path.join(outputdir, f"{external_nickname}.filtered.delta")
+
+    try:
+        # Run nucmer
+        nucmer_cmd = [
+            nucmerpath,
+            *nucmerargs.split(),
+            "-p", os.path.join(outputdir, external_nickname),
+            reference,
+            external
+        ]
+        subprocess.run(nucmer_cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        # Run delta-filter
+        deltafilter_cmd = [
+            deltafilterpath,
+            *deltafilterargs.split(),
+            delta_file,
+            ">",  # Redirect output to filtered delta file
+            filtered_delta_file
+        ]
+        subprocess.run(" ".join(deltafilter_cmd), shell=True, check=True)
+
+        if not os.path.exists(filtered_delta_file):
+            raise FileNotFoundError(f"Filtered delta file not generated: {filtered_delta_file}")
+
+        return filtered_delta_file
+
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(
+            f"Error during delta file generation:\n{e.stderr.decode('utf-8')}"
+        )
+
 
 # This should eventually be moved to the main job manager section
 

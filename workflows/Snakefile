@@ -1,14 +1,16 @@
 import pandas as pd
 import os
 import yaml
-
+from ssi_analysis_utility import convert_external_genome
 
 # Read the CSV file
 csv = config['input_manager']['path']
 csv_data = pd.read_csv(csv, sep='\t')
 
 # Setup output folder
-out_name = config['input_manager']['out_folder']
+OUT_FOLDER = config['input_manager']['out_folder']
+
+
 
 ############ Example TSV format ################:
 # sample_name     Illumina_read_files     Nanopore_read_file      ...  ...       variant notes
@@ -24,13 +26,8 @@ sample_to_assembly_file = {row['sample_name']: row['assembly_file'] for idx, row
 sample_to_organism = {row['sample_name']: row['organism'] for idx, row in csv_data.iterrows()}
 
 #------------------------------ Modules --------------------------------#
-# kma_path = config['kma']['path']
-# resfinder_standard_db = config['ResFinder']['standard']
-# resfinder_van_db = config['ResFinder']['van_genes']
-# plasmidfinder_standard_db = config['PlasmidFinder']['standard']
-# virulencefinder_standard_db = config['VirulenceFinder']['standard']
-# lrefinder_path = config['LREFinder']['path']
-# lrefinder_standard_db = config['LREFinder']['standard']
+
+
 
 ##############################################################################
 #
@@ -38,10 +35,14 @@ sample_to_organism = {row['sample_name']: row['organism'] for idx, row in csv_da
 #
 ##############################################################################
 
+
+# For now this, later final samplesheet
 rule all:
     input:
-        expand("{out}/{sample}/blast/", sample=SAMPLES, out=out_name),
-        expand("{out}/{sample}/emm_typing/", sample=SAMPLES, out=out_name),
+        #expand("{out}/{sample}/blast/", sample=SAMPLES, out=OUT_FOLDER),
+        #expand("{out}/{sample}/emm_typing/", sample=SAMPLES, out=OUT_FOLDER),
+        #expand("{out}/{sample}/assembly_lineage/", sample=SAMPLES, out=OUT_FOLDER),
+        expand("{out}/{sample}/illumina_lineage/", sample=SAMPLES, out=OUT_FOLDER)
         #expand("results/resfinder/{sample}/", sample=SAMPLES),
         #expand("results/plasmidfinder/{sample}/", sample=SAMPLES),
         #expand("results/virulencefinder/{sample}/", sample=SAMPLES)
@@ -51,13 +52,19 @@ rule all:
 
 rule blast:
     input:
-        amr_genes = "../resources/AMR/AMR_genes.fasta",
-        assembly = lambda wildcards: "../examples/"+ sample_to_assembly_file[wildcards.sample]
+        amr_genes = config["analysis_settings"]["blast_presence_absence"]["query_fasta_resistance_gene_detection"],
+        assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample]
     output:
         directory("{out}/{sample}/blast/")  # Indicate that the output is a directory
     shell:
         """
-        mkdir {output}
+        if [ -d {output} ]; 
+            then
+                echo "Directory {output} exists,skipping."
+            else
+                mkdir {output}
+        fi
+
         blastn -query {input.amr_genes} \
                -subject {input.assembly} \
                -out {output}/blast_output.tsv \
@@ -71,13 +78,19 @@ rule blast:
 
 rule emm_typing:
     input:
-        emm_allele_files = "../resources/emm_typing/emm_alleles.fasta",
-        assembly = lambda wildcards: "../examples/"+ sample_to_assembly_file[wildcards.sample]
+        emm_allele_files = config["analysis_settings"]["emm_typing"]["emm_allele_file"],
+        assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample]
     output:
         directory("{out}/{sample}/emm_typing/")  # Indicate that the output is a directory
     shell:
         """
-        mkdir {output}
+        if [ -d {output} ]; 
+            then
+                echo "Directory {output} exists,skipping."
+            else
+                mkdir {output}
+        fi
+
         blastn -query {input.emm_allele_files} \
                -subject {input.assembly} \
                -qcov_hsp_perc 90 \
@@ -86,11 +99,113 @@ rule emm_typing:
         """
 
 
+############################ ASSEMBLY LINEAGE ####################################
+# Likely to add the convert_external_genome script functions as helper functions to notebook
+rule convert_external_genome:
+    input:
+        reference= config["analysis_settings"]["assembly_lineage_determination"]["reference_fasta_file"],
+        assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample]
+    output:
+        directory("{out}/{sample}/assembly_lineage/")
+    params:
+        name = lambda wildcards: wildcards.sample,
+        deltafile= lambda wildcards: wildcards.sample + ".filtered.delta",
+        frankenfasta = lambda wildcards: wildcards.sample + ".frankenfasta",
+        nucmerpath=config["analysis_settings"]["assembly_lineage_determination"]["nucmerpath"],
+        nucmerargs=config["analysis_settings"]["assembly_lineage_determination"]["nucmerargs"],
+        deltafilterpath=config["analysis_settings"]["assembly_lineage_determination"]["deltafilterpath"],
+        deltafilterargs=config["analysis_settings"]["assembly_lineage_determination"]["deltafilterargs"]
+    run:
+        if not os.path.exists(str(output)):
+            os.mkdir(str(output))
+            external_genome = convert_external_genome.Genome()
+            external_genome.import_fasta_file(input.reference)
+            convert_external_genome.generate_delta_file(params.nucmerpath, 
+                                                        params.nucmerargs, 
+                                                        params.deltafilterpath,
+                                                        params.deltafilterargs, 
+                                                        params.name, 
+                                                        input.reference,
+                                                        input.assembly, 
+                                                        str(output) )
+            franken_genome = convert_external_genome.Genome()
+            convert_external_genome.parse_delta_file((os.path.join(str(output),
+                                                                params.deltafile)),
+                                                    franken_genome, 
+                                                    external_genome)
+            franken_genome.write_to_fasta_file(( os.path.join(str(output),
+                                                            params.frankenfasta)), 
+                                                params.name + " ref:")
+    
+
+rule illumina_lineage:
+    input:
+        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
+        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
+        reference= config["analysis_settings"]["Illumina_lineage_determination"]["reference_fasta_file"],
+    output:
+        directory("{out}/{sample}/illumina_lineage/")
+    params:
+        name = lambda wildcards: wildcards.sample
+    shell:
+        """
+        # Set output paths
+        
+        if [ -d {output} ]; 
+        then
+            echo "Directory {output} exists,skipping."
+        else
+            mkdir {output}
+        fi
+    
+        bam_file="{output}/{params.name}.bam"
+        vcf_file="{output}/{params.name}.vcf"
+
+        # Define commands
+        bwamem_cmd="bwa mem \
+                    -R '@RG\\tID:{params.name}\\tSM:{params.name}' \
+                    -t 4 {input.reference} \
+                    {input.R1} {input.R2} \
+                    | samtools view -S -b -h - \
+                    | samtools sort -o ${{bam_file}}"
+
+        samtoolsindex_cmd="samtools index ${{bam_file}}"
+
+        gatk_cmd="java -Xmx10G \
+                    -jar GenomeAnalysisTK.jar \
+                    -T UnifiedGenotyper \
+                    -dt NONE \
+                    -glm BOTH \
+                    -I ${{bam_file}} \
+                    -R {input.reference} \
+                    -nt 4 \
+                    -o ${{vcf_file}} \
+                    -out_mode EMIT_ALL_CONFIDENT_SITES \
+                    -baq RECALCULATE \
+                    -stand_call_conf 100 \
+                    -ploidy 1"
 
 
+        # Determine the command to run
+        if [ -f "${{vcf_file}}" ]; then
+            echo "VCF file found at ${{vcf_file}}. Skipping read mapping."
+        else
+            if [ -f "${{bam_file}}" ]; then
+                cmd="${{gatk_cmd}}"
+                echo "Indexed BAM file found at ${{bam_file}}. Running GATK."
+            elif [ -f "${{bam_file}}" ]; then
+                cmd="${{samtoolsindex_cmd}}; ${{gatk_cmd}}"
+                echo "BAM file found at ${{bam_file}}. Indexing and running GATK."
+            else
+                cmd="${{bwamem_cmd}}; ${{samtoolsindex_cmd}}; ${{gatk_cmd}}"
+                echo "Running BWA-MEM and GATK."
+            fi
 
-
-
+            # Execute the determined command
+            eval "${{cmd}}"
+        fi
+        """
+    
 
 
 

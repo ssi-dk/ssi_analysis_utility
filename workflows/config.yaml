@@ -2,6 +2,29 @@ input_manager:
     path : /dpssi/home/scrsim/ssi_analysis_utility/examples/samplesheet.tsv
     out_folder : "/dpssi/home/scrsim/ssi_analysis_utility/output"
 
+analysis_settings: 
 
+    blast_presence_absence: 
+        pident_threshold: 80
+        cov_threshold: 80
+        query_fasta_resistance_gene_detection: /dpssi/home/scrsim/ssi_analysis_utility/resources/AMR/AMR_genes.fasta
+        query_fasta_virulence_gene_detection: /dpssi/home/scrsim/ssi_analysis_utility/resources/virulence_factors/VFDB_genes.fasta
+           
+    emm_typing:
+        emm_allele_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/emm_typing/emm_alleles.fasta
+        emm_cluster_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/emm_typing/emm_enn_mrp_subgroups.txt
+    
+    assembly_lineage_determination: 
+        percent_snp_threshold: 50
+        reference_fasta_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/lineage_determination/MGAS5005.fasta
+        lineage_variant_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/lineage_determination/Spyogenes_LOCs.tsv
+        nucmerargs : ""
+        nucmerpath : /dpssi/home/scrsim/conda_envs/.venv/bin/nucmer
+        deltafilterpath : /dpssi/home/scrsim/conda_envs/.venv/bin/delta-filter
+        deltafilterargs : "-q -r -o 100"
+
+    Illumina_lineage_determination:   
+        reference_fasta_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/lineage_determination/MGAS5005.fasta
+        lineage_variant_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/lineage_determination/Spyogenes_LOCs.tsv
 
 
