@@ -36,21 +36,36 @@ sample_to_organism = {row['sample_name']: row['organism'] for idx, row in csv_da
 ##############################################################################
 
 
-# For now this, later final samplesheet
+# # For now this, later final samplesheet
+# rule all:
+#     input:
+#         #expand("{out}/{sample}/blast/", sample=SAMPLES, out=OUT_FOLDER),
+#         #expand("{out}/{sample}/emm_typing/", sample=SAMPLES, out=OUT_FOLDER),
+#         #expand("{out}/{sample}/assembly_lineage/", sample=SAMPLES, out=OUT_FOLDER),
+#         expand("{out}/{sample}/illumina_lineage/", sample=SAMPLES, out=OUT_FOLDER)
+#         #expand("results/resfinder/{sample}/", sample=SAMPLES),
+#         #expand("results/plasmidfinder/{sample}/", sample=SAMPLES),
+#         #expand("results/virulencefinder/{sample}/", sample=SAMPLES)
+
+# Define the dynamic input for rule all
 rule all:
     input:
-        #expand("{out}/{sample}/blast/", sample=SAMPLES, out=OUT_FOLDER),
-        #expand("{out}/{sample}/emm_typing/", sample=SAMPLES, out=OUT_FOLDER),
-        #expand("{out}/{sample}/assembly_lineage/", sample=SAMPLES, out=OUT_FOLDER),
-        expand("{out}/{sample}/illumina_lineage/", sample=SAMPLES, out=OUT_FOLDER)
-        #expand("results/resfinder/{sample}/", sample=SAMPLES),
-        #expand("results/plasmidfinder/{sample}/", sample=SAMPLES),
-        #expand("results/virulencefinder/{sample}/", sample=SAMPLES)
-
+        expand("{out}/{sample}/emm_typing/", 
+               sample=[s for s in SAMPLES if "emm_typing" in config["Species"][sample_to_organism[s]]["analyses_to_run"]],
+               out=OUT_FOLDER),
+        expand("{out}/{sample}/blast/", 
+               sample=[s for s in SAMPLES if "resistance_gene_detection" in config["Species"][sample_to_organism[s]]["analyses_to_run"]],
+               out=OUT_FOLDER),
+        expand("{out}/{sample}/assembly_lineage/", 
+               sample=[s for s in SAMPLES if "assembly_lineage_determination" in config["Species"][sample_to_organism[s]]["analyses_to_run"]],
+               out=OUT_FOLDER),
+        expand("{out}/{sample}/illumina_lineage/", 
+               sample=[s for s in SAMPLES if "Illumina_lineage_determination" in config["Species"][sample_to_organism[s]]["analyses_to_run"]],
+               out=OUT_FOLDER)
 
 ##################### BLAST AMR GENES #####################################
 
-rule blast:
+rule resistance_gene_detection:
     input:
         amr_genes = config["analysis_settings"]["blast_presence_absence"]["query_fasta_resistance_gene_detection"],
         assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample]
@@ -101,7 +116,7 @@ rule emm_typing:
 
 ############################ ASSEMBLY LINEAGE ####################################
 # Likely to add the convert_external_genome script functions as helper functions to notebook
-rule convert_external_genome:
+rule assembly_lineage_determination:
     input:
         reference= config["analysis_settings"]["assembly_lineage_determination"]["reference_fasta_file"],
         assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample]
@@ -137,7 +152,7 @@ rule convert_external_genome:
                                                             params.frankenfasta)), 
                                                 params.name + " ref:")
     
-
+# GATK 4 changed the workflow, now it is HaplotypeCaller, some options are different though #
 rule illumina_lineage:
     input:
         R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],

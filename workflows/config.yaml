@@ -27,4 +27,14 @@ analysis_settings:
         reference_fasta_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/lineage_determination/MGAS5005.fasta
         lineage_variant_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/lineage_determination/Spyogenes_LOCs.tsv
 
-
+Species:
+    Spyogenes:
+            analyses_to_run: 
+                emm_typing: Typing of M protein gene using blast against CDC curated alleles
+                assembly_lineage_determination: Lineage determination based on presence of specified SNPs when mapping genome assembly against reference genome
+                resistance_gene_detection: Presence of resistance gens tetM, ermA and ermB
+                #virulence_gene_detection: Presence of Streptococcal virulence genes from the Virulence Factor Database
+    E.coli:
+            analyses_to_run: 
+                emm_typing: Typing of M protein gene using blast against CDC curated alleles
+                resistance_gene_detection: Presence of resistance gens tetM, ermA and ermB
