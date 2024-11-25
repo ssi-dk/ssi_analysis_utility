@@ -1,8 +1,19 @@
+####################### INPUT MANAGER #######################################
+
+
 input_manager:
     path : /dpssi/home/scrsim/ssi_analysis_utility/examples/samplesheet.tsv
     out_folder : "/dpssi/home/scrsim/ssi_analysis_utility/output"
 
+
+
+###################### ANALYSIS & TOOLS SETTINGS ############################
+
+
 analysis_settings: 
+
+    kma_aligner:
+        path: /dpssi/home/scrsim/conda_envs/.venv/bin/kma
 
     blast_presence_absence: 
         pident_threshold: 80
@@ -26,6 +37,26 @@ analysis_settings:
     Illumina_lineage_determination:   
         reference_fasta_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/lineage_determination/MGAS5005.fasta
         lineage_variant_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/lineage_determination/Spyogenes_LOCs.tsv
+    
+    plasmidfinder:
+        database: /dpssi/home/scrsim/conda_envs/.venv/share/plasmidfinder-2.1.6/database
+    
+    resfinder:
+        resfinder_db : /dpssi/home/scrsim/conda_envs/.venv/share/resfinder-4.6.0/resfinder_db
+        pointfinder_db : /dpssi/home/scrsim/conda_envs/.venv/share/resfinder-4.6.0/pointfinder_db
+        disinfinder_db: /dpssi/home/scrsim/conda_envs/.venv/share/resfinder-4.6.0/disinfinder_db
+    
+    virulencefinder:
+        database: /dpssi/home/scrsim/conda_envs/.venv/share/virulencefinder-2.0.4/virulencefinder_db
+
+    LRE-finder: 
+        path : /dpssi/home/scrsim/apps/lre-finder/
+        database: /dpssi/home/scrsim/apps/lre-finder/elmDB/elm
+
+
+
+
+###################### BACTERIAL SPECIES ###################################
 
 Species:
     Spyogenes:
@@ -33,7 +64,11 @@ Species:
                 emm_typing: Typing of M protein gene using blast against CDC curated alleles
                 assembly_lineage_determination: Lineage determination based on presence of specified SNPs when mapping genome assembly against reference genome
                 resistance_gene_detection: Presence of resistance gens tetM, ermA and ermB
-                #virulence_gene_detection: Presence of Streptococcal virulence genes from the Virulence Factor Database
+                virulence_gene_detection: Presence of Streptococcal virulence genes from the Virulence Factor Database
+                plasmidfinder: "Plasmidfinder"
+                resfinder: "Resfinder"
+                virulencefinder : "Virulence finder"
+                lre-finder: "LRE-Finder"
     E.coli:
             analyses_to_run: 
                 emm_typing: Typing of M protein gene using blast against CDC curated alleles

@@ -61,7 +61,20 @@ rule all:
                out=OUT_FOLDER),
         expand("{out}/{sample}/illumina_lineage/", 
                sample=[s for s in SAMPLES if "Illumina_lineage_determination" in config["Species"][sample_to_organism[s]]["analyses_to_run"]],
-               out=OUT_FOLDER)
+               out=OUT_FOLDER),
+        expand("{out}/{sample}/plasmidfinder/", 
+               sample=[s for s in SAMPLES if "plasmidfinder" in config["Species"][sample_to_organism[s]]["analyses_to_run"]],
+               out=OUT_FOLDER),
+        expand("{out}/{sample}/resfinder/", 
+               sample=[s for s in SAMPLES if "resfinder" in config["Species"][sample_to_organism[s]]["analyses_to_run"]],
+               out=OUT_FOLDER),
+        expand("{out}/{sample}/virulencefinder/", 
+               sample=[s for s in SAMPLES if "virulencefinder" in config["Species"][sample_to_organism[s]]["analyses_to_run"]],
+               out=OUT_FOLDER),
+        expand("{out}/{sample}/lre-finder/", 
+               sample=[s for s in SAMPLES if "lre-finder" in config["Species"][sample_to_organism[s]]["analyses_to_run"]],
+               out=OUT_FOLDER),
+
 
 ##################### BLAST AMR GENES #####################################
 
@@ -152,130 +165,160 @@ rule assembly_lineage_determination:
                                                             params.frankenfasta)), 
                                                 params.name + " ref:")
     
-# GATK 4 changed the workflow, now it is HaplotypeCaller, some options are different though #
-rule illumina_lineage:
+# # GATK 4 changed the workflow, now it is HaplotypeCaller, some options are different though #
+# rule illumina_lineage:
+#     input:
+#         R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
+#         R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
+#         reference= config["analysis_settings"]["Illumina_lineage_determination"]["reference_fasta_file"],
+#     output:
+#         directory("{out}/{sample}/illumina_lineage/")
+#     params:
+#         name = lambda wildcards: wildcards.sample
+#     shell:
+#         """
+#         # Set output paths
+        
+#         if [ -d {output} ]; 
+#         then
+#             echo "Directory {output} exists,skipping."
+#         else
+#             mkdir {output}
+#         fi
+    
+#         bam_file="{output}/{params.name}.bam"
+#         vcf_file="{output}/{params.name}.vcf"
+
+#         # Define commands
+#         bwamem_cmd="bwa mem \
+#                     -R '@RG\\tID:{params.name}\\tSM:{params.name}' \
+#                     -t 4 {input.reference} \
+#                     {input.R1} {input.R2} \
+#                     | samtools view -S -b -h - \
+#                     | samtools sort -o ${{bam_file}}"
+
+#         samtoolsindex_cmd="samtools index ${{bam_file}}"
+
+#         gatk_cmd="java -Xmx10G \
+#                     -jar GenomeAnalysisTK.jar \
+#                     -T UnifiedGenotyper \
+#                     -dt NONE \
+#                     -glm BOTH \
+#                     -I ${{bam_file}} \
+#                     -R {input.reference} \
+#                     -nt 4 \
+#                     -o ${{vcf_file}} \
+#                     -out_mode EMIT_ALL_CONFIDENT_SITES \
+#                     -baq RECALCULATE \
+#                     -stand_call_conf 100 \
+#                     -ploidy 1"
+
+
+#         # Determine the command to run
+#         if [ -f "${{vcf_file}}" ]; then
+#             echo "VCF file found at ${{vcf_file}}. Skipping read mapping."
+#         else
+#             if [ -f "${{bam_file}}" ]; then
+#                 cmd="${{gatk_cmd}}"
+#                 echo "Indexed BAM file found at ${{bam_file}}. Running GATK."
+#             elif [ -f "${{bam_file}}" ]; then
+#                 cmd="${{samtoolsindex_cmd}}; ${{gatk_cmd}}"
+#                 echo "BAM file found at ${{bam_file}}. Indexing and running GATK."
+#             else
+#                 cmd="${{bwamem_cmd}}; ${{samtoolsindex_cmd}}; ${{gatk_cmd}}"
+#                 echo "Running BWA-MEM and GATK."
+#             fi
+
+#             # Execute the determined command
+#             eval "${{cmd}}"
+#         fi
+#         """
+    
+
+
+rule PlasmidFinder:
     input:
         R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
-        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
-        reference= config["analysis_settings"]["Illumina_lineage_determination"]["reference_fasta_file"],
-    output:
-        directory("{out}/{sample}/illumina_lineage/")
+        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1]
     params:
-        name = lambda wildcards: wildcards.sample
+        db_path = config["analysis_settings"]["plasmidfinder"]["database"],
+        kma_path = config["analysis_settings"]["kma_aligner"]["path"]
+    output:
+        directory("{out}/{sample}/plasmidfinder/")  # Indicate that the output is a directory
     shell:
         """
-        # Set output paths
-        
         if [ -d {output} ]; 
-        then
-            echo "Directory {output} exists,skipping."
-        else
-            mkdir {output}
-        fi
-    
-        bam_file="{output}/{params.name}.bam"
-        vcf_file="{output}/{params.name}.vcf"
-
-        # Define commands
-        bwamem_cmd="bwa mem \
-                    -R '@RG\\tID:{params.name}\\tSM:{params.name}' \
-                    -t 4 {input.reference} \
-                    {input.R1} {input.R2} \
-                    | samtools view -S -b -h - \
-                    | samtools sort -o ${{bam_file}}"
-
-        samtoolsindex_cmd="samtools index ${{bam_file}}"
-
-        gatk_cmd="java -Xmx10G \
-                    -jar GenomeAnalysisTK.jar \
-                    -T UnifiedGenotyper \
-                    -dt NONE \
-                    -glm BOTH \
-                    -I ${{bam_file}} \
-                    -R {input.reference} \
-                    -nt 4 \
-                    -o ${{vcf_file}} \
-                    -out_mode EMIT_ALL_CONFIDENT_SITES \
-                    -baq RECALCULATE \
-                    -stand_call_conf 100 \
-                    -ploidy 1"
-
-
-        # Determine the command to run
-        if [ -f "${{vcf_file}}" ]; then
-            echo "VCF file found at ${{vcf_file}}. Skipping read mapping."
-        else
-            if [ -f "${{bam_file}}" ]; then
-                cmd="${{gatk_cmd}}"
-                echo "Indexed BAM file found at ${{bam_file}}. Running GATK."
-            elif [ -f "${{bam_file}}" ]; then
-                cmd="${{samtoolsindex_cmd}}; ${{gatk_cmd}}"
-                echo "BAM file found at ${{bam_file}}. Indexing and running GATK."
+            then
+                echo "Directory {output} exists,skipping."
             else
-                cmd="${{bwamem_cmd}}; ${{samtoolsindex_cmd}}; ${{gatk_cmd}}"
-                echo "Running BWA-MEM and GATK."
-            fi
-
-            # Execute the determined command
-            eval "${{cmd}}"
-        fi
+                mkdir {output}
+        fi        
+        plasmidfinder.py -i {input.R1} {input.R2} -o {output} -p {params.db_path} -mp {params.kma_path}
         """
-    
+
+
+rule ResFinder:
+    input:
+        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
+        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1]
+    params:
+        res_db_path = config["analysis_settings"]["resfinder"]["resfinder_db"],
+        point_db_path = config["analysis_settings"]["resfinder"]["pointfinder_db"],
+        disi_db_path = config["analysis_settings"]["resfinder"]["disinfinder_db"]
+    output:
+        directory("{out}/{sample}/resfinder/")  # Indicate that the output is a directory
+    shell:
+        """
+        if [ -d {output} ]; 
+            then
+                echo "Directory {output} exists,skipping."
+            else
+                mkdir {output}
+        fi        
+        # Example command using input fastq files
+        python -m resfinder -ifq {input.R1} {input.R2} -o {output} -db_res {params.res_db_path} -db_disinf {params.disi_db_path} -db_point {params.point_db_path} -acq
+        """
 
 
 
+rule VirulenceFinder:
+    input:
+        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
+        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1]
+    params:
+        db_path = config["analysis_settings"]["virulencefinder"]["database"],
+        kma_path = config["analysis_settings"]["kma_aligner"]["path"]
+    output:
+        directory("{out}/{sample}/virulencefinder/")  # Indicate that the output is a directory
+    shell:
+        """
+        if [ -d {output} ]; 
+            then
+                echo "Directory {output} exists,skipping."
+            else
+                mkdir {output}
+        fi 
 
+        virulencefinder.py -i {input.R1} {input.R2} -o {output} -p {params.db_path} -mp {params.kma_path}
+        """
 
-
-
-
-
-
-
-
-# rule ResFinder:
-#     input:
-#         R1 = lambda wildcards: sample_to_path[wildcards.sample]+"_R1.fastq.gz",
-#         R2 = lambda wildcards: sample_to_path[wildcards.sample]+"_R2.fastq.gz"
-#     output:
-#         directory("results/resfinder/{sample}")  # Indicate that the output is a directory
-#     shell:
-#         """
-#         # Example command using input fastq files
-#         python -m resfinder -ifq {input.R1} {input.R2} -o {output} -db_res {resfinder_standard_db} -acq
-#         """
-
-# rule PlasmidFinder:
-#     input:
-#         R1 = lambda wildcards: sample_to_path[wildcards.sample]+"_R1.fastq.gz",
-#         R2 = lambda wildcards: sample_to_path[wildcards.sample]+"_R2.fastq.gz"
-#     output:
-#         directory("results/plasmidfinder/{sample}")  # Indicate that the output is a directory
-#     shell:
-#         """
-#         mkdir results/plasmidfinder/{wildcards.sample}
-#         plasmidfinder.py -i {input.R1} {input.R2} -o {output} -p {plasmidfinder_standard_db} -mp {kma_path}
-#         """
-
-# rule VirulenceFinder:
-#     input:
-#         R1 = lambda wildcards: sample_to_path[wildcards.sample]+"_R1.fastq.gz",
-#         R2 = lambda wildcards: sample_to_path[wildcards.sample]+"_R2.fastq.gz"
-#     output:
-#         directory("results/virulencefinder/{sample}")  # Indicate that the output is a directory
-#     shell:
-#         """
-#         mkdir results/virulencefinder/{wildcards.sample}
-#         plasmidfinder.py -i {input.R1} {input.R2} -o {output} -p {virulencefinder_standard_db} -mp {kma_path}
-#         """
-
-# rule LREFinder:
-#     input:
-#         R1 = lambda wildcards: sample_to_path[wildcards.sample]+"_R1.fastq.gz",
-#         R2 = lambda wildcards: sample_to_path[wildcards.sample]+"_R2.fastq.gz"
-#     output:
-#         directory("results/LREFinder/{sample}")  # Indicate that the output is a directory
-#     shell:
-#         """
-#         mkdir results/virulencefinder/{wildcards.sample}
-#         python {lrefinder_path}/LRE-Finder.py -ipe {input.R1} {input.R2} -o output -t_db {lrefinder_standard_db} -ID 80 -1t1 -cge -matrix
+rule LREFinder:
+    input:
+        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
+        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1]
+    params:
+        db_path = config["analysis_settings"]["LRE-finder"]["database"],
+        app_path = config["analysis_settings"]["LRE-finder"]["path"]
+    output:
+        directory("{out}/{sample}/lre-finder/")  # Indicate that the output is a directory
+    shell:
+        """
+        if [ -d {output} ]; 
+            then
+                echo "Directory {output} exists, skipping."
+            else
+                mkdir {output}
+                cd {output}
+        fi 
+        python {params.app_path}/LRE-Finder.py -ipe {input.R1} {input.R2} -o lre-finder -t_db {params.db_path} -ID 80 -1t1 -cge -matrix
+        """
