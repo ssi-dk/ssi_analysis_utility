@@ -11,7 +11,6 @@ input_manager:
 
 
 analysis_settings: 
-
     kma_aligner:
         path: /dpssi/home/scrsim/conda_envs/.venv/bin/kma
 
@@ -73,3 +72,5 @@ Species:
             analyses_to_run: 
                 emm_typing: Typing of M protein gene using blast against CDC curated alleles
                 resistance_gene_detection: Presence of resistance gens tetM, ermA and ermB
+                assembly_lineage_determination: Lineage determination based on presence of specified SNPs when mapping genome assembly against reference genome
+

@@ -36,17 +36,6 @@ sample_to_organism = {row['sample_name']: row['organism'] for idx, row in csv_da
 ##############################################################################
 
 
-# # For now this, later final samplesheet
-# rule all:
-#     input:
-#         #expand("{out}/{sample}/blast/", sample=SAMPLES, out=OUT_FOLDER),
-#         #expand("{out}/{sample}/emm_typing/", sample=SAMPLES, out=OUT_FOLDER),
-#         #expand("{out}/{sample}/assembly_lineage/", sample=SAMPLES, out=OUT_FOLDER),
-#         expand("{out}/{sample}/illumina_lineage/", sample=SAMPLES, out=OUT_FOLDER)
-#         #expand("results/resfinder/{sample}/", sample=SAMPLES),
-#         #expand("results/plasmidfinder/{sample}/", sample=SAMPLES),
-#         #expand("results/virulencefinder/{sample}/", sample=SAMPLES)
-
 # Define the dynamic input for rule all
 rule all:
     input:
@@ -89,6 +78,7 @@ rule resistance_gene_detection:
         if [ -d {output} ]; 
             then
                 echo "Directory {output} exists,skipping."
+                exit 1
             else
                 mkdir {output}
         fi
@@ -115,6 +105,7 @@ rule emm_typing:
         if [ -d {output} ]; 
             then
                 echo "Directory {output} exists,skipping."
+                exit 1
             else
                 mkdir {output}
         fi
@@ -147,7 +138,7 @@ rule assembly_lineage_determination:
         if not os.path.exists(str(output)):
             os.mkdir(str(output))
             external_genome = convert_external_genome.Genome()
-            external_genome.import_fasta_file(input.reference)
+            external_genome.import_fasta_file(str(input.assembly))
             convert_external_genome.generate_delta_file(params.nucmerpath, 
                                                         params.nucmerargs, 
                                                         params.deltafilterpath,
@@ -157,14 +148,17 @@ rule assembly_lineage_determination:
                                                         input.assembly, 
                                                         str(output) )
             franken_genome = convert_external_genome.Genome()
-            convert_external_genome.parse_delta_file((os.path.join(str(output),
-                                                                params.deltafile)),
+            convert_external_genome.parse_delta_file((os.path.join(str(output), params.deltafile)),
                                                     franken_genome, 
                                                     external_genome)
-            franken_genome.write_to_fasta_file(( os.path.join(str(output),
-                                                            params.frankenfasta)), 
-                                                params.name + " ref:")
-    
+            franken_genome.write_to_fasta_file( (os.path.join(str(output), str(params.frankenfasta))), str(params.name) + " ref:")
+        else:
+            print("Directory {output} exists,skipping.")
+            exit() 
+
+
+
+
 # # GATK 4 changed the workflow, now it is HaplotypeCaller, some options are different though #
 # rule illumina_lineage:
 #     input:
@@ -250,6 +244,7 @@ rule PlasmidFinder:
         if [ -d {output} ]; 
             then
                 echo "Directory {output} exists,skipping."
+                exit 1
             else
                 mkdir {output}
         fi        
@@ -272,6 +267,7 @@ rule ResFinder:
         if [ -d {output} ]; 
             then
                 echo "Directory {output} exists,skipping."
+                exit 1
             else
                 mkdir {output}
         fi        
@@ -295,6 +291,7 @@ rule VirulenceFinder:
         if [ -d {output} ]; 
             then
                 echo "Directory {output} exists,skipping."
+                exit 1
             else
                 mkdir {output}
         fi 
@@ -316,6 +313,7 @@ rule LREFinder:
         if [ -d {output} ]; 
             then
                 echo "Directory {output} exists, skipping."
+                exit 1
             else
                 mkdir {output}
                 cd {output}

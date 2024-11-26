@@ -359,9 +359,6 @@ def _parse_args():
     parser.add_argument("--outputdir", default="", help="Path to outputfolder containing delta and frankenfasta files")
     return parser.parse_args()
 
-import subprocess
-import os
-
 def generate_delta_file(
     nucmerpath: str,
     nucmerargs: str,
