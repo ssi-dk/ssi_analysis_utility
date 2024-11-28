@@ -63,6 +63,15 @@ rule all:
         expand("{out}/{sample}/lre-finder/", 
                sample=[s for s in SAMPLES if "lre-finder" in config["Species"][sample_to_organism[s]]["analyses_to_run"]],
                out=OUT_FOLDER),
+        expand("{out}/{sample}/serotypefinder/", 
+               sample=[s for s in SAMPLES if "serotypefinder" in config["Species"][sample_to_organism[s]]["analyses_to_run"]],
+               out=OUT_FOLDER),
+        expand("{out}/{sample}/kleborate/", 
+               sample=[s for s in SAMPLES if "kleborate" in config["Species"][sample_to_organism[s]]["analyses_to_run"]],
+               out=OUT_FOLDER),
+        expand("{out}/{sample}/chtyper/", 
+               sample=[s for s in SAMPLES if "chtyper" in config["Species"][sample_to_organism[s]]["analyses_to_run"]],
+               out=OUT_FOLDER),
 
 
 ##################### BLAST AMR GENES #####################################
@@ -319,4 +328,69 @@ rule LREFinder:
                 cd {output}
         fi 
         python {params.app_path}/LRE-Finder.py -ipe {input.R1} {input.R2} -o lre-finder -t_db {params.db_path} -ID 80 -1t1 -cge -matrix
+        """
+
+
+rule serotypefinder:
+    input:
+        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
+        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1]
+    params:
+        db_path = config["analysis_settings"]["serotypefinder"]["database"],
+    output:
+        directory("{out}/{sample}/serotypefinder/")  # Indicate that the output is a directory
+    shell:
+        """
+        if [ -d {output} ]; 
+            then
+                echo "Directory {output} exists, skipping."
+                exit 1
+            else
+                mkdir {output}
+        fi 
+        serotypefinder -i {input.R1} {input.R2} -o {output} -p {params.db_path} 
+        """
+
+rule kleborate:
+    input:
+        assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample]
+    params:
+        preset = config["analysis_settings"]["kleborate"]["preset"],
+    output:
+        directory("{out}/{sample}/kleborate/")  # Indicate that the output is a directory
+    shell:
+        """
+        if [ -d {output} ]; 
+            then
+                echo "Directory {output} exists, skipping."
+                exit 1
+            else
+                mkdir {output}
+        fi 
+        kleborate -a {input.assembly}  -o {output} -p {params.preset} 
+        """
+
+
+
+
+rule CHtyper:
+    input:
+        assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample]
+    params:
+        database = config["analysis_settings"]["chtyper"]["database"],
+        threshold = config["analysis_settings"]["chtyper"]["threshold"],
+        coverage = config["analysis_settings"]["chtyper"]["coverage"],
+        blast = config["analysis_settings"]["chtyper"]["blast"],
+    output:
+        directory("{out}/{sample}/chtyper/")  # Indicate that the output is a directory
+    shell:
+        """
+        if [ -d {output} ]; 
+            then
+                echo "Directory {output} exists, skipping."
+                exit 1
+            else
+                mkdir {output}
+        fi 
+        python3 ../ssi_analysis_utility/CHTyper-1.0.py -i {input.assembly}  -o {output} -p {params.database} -t {params.threshold} -l {params.coverage} -b {params.blast}
         """

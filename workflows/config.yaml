@@ -52,6 +52,19 @@ analysis_settings:
         path : /dpssi/home/scrsim/apps/lre-finder/
         database: /dpssi/home/scrsim/apps/lre-finder/elmDB/elm
 
+    serotypefinder:
+        database : /dpssi/home/scrsim/conda_envs/.venv/share/serotypefinder-2.0.2/db
+    
+    kleborate:
+        preset : kpsc  # choose from: kpsc, kosc, escherichia
+    
+    chtyper:
+        blast : /dpssi/home/scrsim/conda_envs/.venv/bin/blastn
+        database: /dpssi/home/scrsim/conda_envs/.venv/share/chtyper_db
+        threshold : 0.90
+        coverage : 0.60
+
+
 
 
 
@@ -60,17 +73,21 @@ analysis_settings:
 Species:
     Spyogenes:
             analyses_to_run: 
-                emm_typing: Typing of M protein gene using blast against CDC curated alleles
-                assembly_lineage_determination: Lineage determination based on presence of specified SNPs when mapping genome assembly against reference genome
-                resistance_gene_detection: Presence of resistance gens tetM, ermA and ermB
-                virulence_gene_detection: Presence of Streptococcal virulence genes from the Virulence Factor Database
-                plasmidfinder: "Plasmidfinder"
-                resfinder: "Resfinder"
-                virulencefinder : "Virulence finder"
+                # emm_typing: Typing of M protein gene using blast against CDC curated alleles
+                # assembly_lineage_determination: Lineage determination based on presence of specified SNPs when mapping genome assembly against reference genome
+                # resistance_gene_detection: Presence of resistance gens tetM, ermA and ermB
+                # virulence_gene_detection: Presence of Streptococcal virulence genes from the Virulence Factor Database
+                # plasmidfinder: "Plasmidfinder"
+                # resfinder: "Resfinder"
+                # virulencefinder : "Virulence finder"
                 lre-finder: "LRE-Finder"
+                serotypefinder : "Potato"
+                kleborate : "Potato2"
+                chtyper : potato3
+
     E.coli:
             analyses_to_run: 
                 emm_typing: Typing of M protein gene using blast against CDC curated alleles
-                resistance_gene_detection: Presence of resistance gens tetM, ermA and ermB
-                assembly_lineage_determination: Lineage determination based on presence of specified SNPs when mapping genome assembly against reference genome
+    #             resistance_gene_detection: Presence of resistance gens tetM, ermA and ermB
+    #             assembly_lineage_determination: Lineage determination based on presence of specified SNPs when mapping genome assembly against reference genome
 
