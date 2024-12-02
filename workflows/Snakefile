@@ -72,6 +72,12 @@ rule all:
         expand("{out}/{sample}/chtyper/", 
                sample=[s for s in SAMPLES if "chtyper" in config["Species"][sample_to_organism[s]]["analyses_to_run"]],
                out=OUT_FOLDER),
+        expand("{out}/{sample}/kmerfinder/", 
+               sample=[s for s in SAMPLES if "kmerfinder" in config["Species"][sample_to_organism[s]]["analyses_to_run"]],
+               out=OUT_FOLDER),
+        expand("{out}/{sample}/cgmlstfinder/", 
+               sample=[s for s in SAMPLES if "cgMLSTFinder" in config["Species"][sample_to_organism[s]]["analyses_to_run"]],
+               out=OUT_FOLDER),
 
 
 ##################### BLAST AMR GENES #####################################
@@ -371,16 +377,15 @@ rule kleborate:
         """
 
 
-
-
 rule CHtyper:
     input:
         assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample]
     params:
+        app_path = config["analysis_settings"]["chtyper"]["path"],
         database = config["analysis_settings"]["chtyper"]["database"],
         threshold = config["analysis_settings"]["chtyper"]["threshold"],
         coverage = config["analysis_settings"]["chtyper"]["coverage"],
-        blast = config["analysis_settings"]["chtyper"]["blast"],
+        blast = config["analysis_settings"]["chtyper"]["blast"]
     output:
         directory("{out}/{sample}/chtyper/")  # Indicate that the output is a directory
     shell:
@@ -392,5 +397,50 @@ rule CHtyper:
             else
                 mkdir {output}
         fi 
-        python3 ../ssi_analysis_utility/CHTyper-1.0.py -i {input.assembly}  -o {output} -p {params.database} -t {params.threshold} -l {params.coverage} -b {params.blast}
+        python {params.app_path}/CHTyper-1.0.py -i {input.assembly}  -o {output} -p {params.database} -t {params.threshold} -l {params.coverage} -b {params.blast}
+        """
+
+rule kmerfinder:
+    input:
+        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
+        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1]
+    params:
+        db_path = config["analysis_settings"]["kmerfinder"]["database"],
+        kma_path = config["analysis_settings"]["kma_aligner"]["path"],
+        taxa = config["analysis_settings"]["kmerfinder"]["taxa"]
+    output:
+        directory("{out}/{sample}/kmerfinder/")  # Indicate that the output is a directory
+    shell:
+        """
+        if [ -d {output} ]; 
+            then
+                echo "Directory {output} exists, skipping."
+                exit 1
+            else
+                mkdir {output}
+        fi 
+        kmerfinder.py  -i {input.R1} {input.R2} -o {output} -db {params.db_path} -tax {params.taxa}
+        """
+
+rule cgMLSTFinder:
+    input:
+        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
+        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1]
+    params:
+        app_path = config["analysis_settings"]["cgMLSTFinder"]["path"],
+        db_path = config["analysis_settings"]["cgMLSTFinder"]["database"],
+        scheme = config["analysis_settings"]["cgMLSTFinder"]["scheme"],
+        kma_path = config["analysis_settings"]["kma_aligner"]["path"]
+    output:
+        directory("{out}/{sample}/cgmlstfinder/")  # Indicate that the output is a directory
+    shell:
+        """
+        if [ -d {output} ]; 
+            then
+                echo "Directory {output} exists, skipping."
+                exit 1
+            else
+                mkdir {output}
+        fi 
+        python {params.app_path}/cgMLST.py  -i {input.R1},{input.R2} -o {output} -db {params.db_path} -k {params.kma_path} -s {params.scheme}
         """

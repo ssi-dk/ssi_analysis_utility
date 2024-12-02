@@ -49,7 +49,7 @@ analysis_settings:
         database: /dpssi/home/scrsim/conda_envs/.venv/share/virulencefinder-2.0.4/virulencefinder_db
 
     LRE-finder: 
-        path : /dpssi/home/scrsim/apps/lre-finder/
+        path : /dpssi/home/scrsim/ssi_analysis_utility/ssi_analysis_utility
         database: /dpssi/home/scrsim/apps/lre-finder/elmDB/elm
 
     serotypefinder:
@@ -59,10 +59,24 @@ analysis_settings:
         preset : kpsc  # choose from: kpsc, kosc, escherichia
     
     chtyper:
+        path : /dpssi/home/scrsim/ssi_analysis_utility/ssi_analysis_utility
         blast : /dpssi/home/scrsim/conda_envs/.venv/bin/blastn
         database: /dpssi/home/scrsim/conda_envs/.venv/share/chtyper_db
         threshold : 0.90
         coverage : 0.60
+    
+    kmerfinder:
+        database: /dpssi/home/scrsim/conda_envs/.venv/share/kmerfinder_db/bacteria/bacteria.ATG
+        taxa : /dpssi/home/scrsim/conda_envs/.venv/share/kmerfinder_db/bacteria/bacteria.tax
+
+    cgMLSTFinder:
+        path : /dpssi/home/scrsim/ssi_analysis_utility/ssi_analysis_utility
+        database: /dpssi/home/scrsim/conda_envs/.venv/share/cgmlstfinder_db
+        scheme : salmonella # choose between  salmonella,campylobacter,yersinia,clostridium,ecoli
+
+
+
+
 
 
 
@@ -73,17 +87,19 @@ analysis_settings:
 Species:
     Spyogenes:
             analyses_to_run: 
-                # emm_typing: Typing of M protein gene using blast against CDC curated alleles
-                # assembly_lineage_determination: Lineage determination based on presence of specified SNPs when mapping genome assembly against reference genome
-                # resistance_gene_detection: Presence of resistance gens tetM, ermA and ermB
-                # virulence_gene_detection: Presence of Streptococcal virulence genes from the Virulence Factor Database
-                # plasmidfinder: "Plasmidfinder"
-                # resfinder: "Resfinder"
-                # virulencefinder : "Virulence finder"
+                emm_typing: Typing of M protein gene using blast against CDC curated alleles
+                assembly_lineage_determination: Lineage determination based on presence of specified SNPs when mapping genome assembly against reference genome
+                resistance_gene_detection: Presence of resistance gens tetM, ermA and ermB
+                virulence_gene_detection: Presence of Streptococcal virulence genes from the Virulence Factor Database
+                plasmidfinder: "Plasmidfinder"
+                resfinder: "Resfinder"
+                virulencefinder : "Virulence finder"
                 lre-finder: "LRE-Finder"
                 serotypefinder : "Potato"
                 kleborate : "Potato2"
                 chtyper : potato3
+                kmerfinder : potato4
+                cgMLSTFinder : potato6
 
     E.coli:
             analyses_to_run: 

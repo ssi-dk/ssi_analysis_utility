@@ -6,6 +6,11 @@ __email__ = "dsmith@tgen.org"
 __modified_for_SSI_use_by = "Thor Bech Johannesen, thej@ssi.dk"
 
 import logging
+import subprocess
+import os
+import re
+import argparse
+
 class GenomeStatus(object):
     """
     Contains and manipulates any generic data that is per-contig-position.
@@ -278,7 +283,7 @@ class Genome(GenomeStatus):
             line_from_fasta (str): the current line to parse
             contig_prefix (str): the prefix will be removed from the parsed contig name
         """
-        import re
+
 
         # Parse the contig name discarding the prefix and surrounding whitespace characters
         contig_match = re.match(r'^>' + re.escape(contig_prefix) + r'([^\s]+)(?:\s|$)', line_from_fasta)
@@ -346,7 +351,7 @@ class Genome(GenomeStatus):
 
 
 def _parse_args():
-    import argparse
+
 
     parser = argparse.ArgumentParser(description="Meant to be called from the pipeline automatically.")
     parser.add_argument("--nucmerpath", default="nucmer", help="Path to the 'nucmer' executable.")
@@ -453,7 +458,7 @@ def _update_genome_from_delta_data(franken_genome, external_genome, parser_state
 
 
 def _parse_delta_line(line_from_delta_file, franken_genome, external_genome, parser_state):
-    import re
+  
 
     line_match = re.match(r'^>([^ ]+) ([^ ]+) (\d+) \d+\s*$', line_from_delta_file)
     if line_match:
@@ -491,8 +496,7 @@ def parse_delta_file(delta_filename, franken_genome, external_genome):
 
 
 def main():
-    import subprocess
-    import os
+
 
     commandline_args = _parse_args()
 
