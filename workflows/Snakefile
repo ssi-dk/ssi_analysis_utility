@@ -84,8 +84,11 @@ rule all:
 
 rule resistance_gene_detection:
     input:
-        amr_genes = config["analysis_settings"]["blast_presence_absence"]["query_fasta_resistance_gene_detection"],
+        amr_genes = config["analysis_settings"]["resistance_gene_detection"]["query_fasta_resistance_gene_detection"],
         assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample]
+    params:
+        id_per = lambda wildcards: config["Species"][sample_to_organism[wildcards.sample]]["analyses_to_run"]["resistance_gene_detection"]["pident_threshold"],
+        cov_per = lambda wildcards: config["Species"][sample_to_organism[wildcards.sample]]["analyses_to_run"]["resistance_gene_detection"]["cov_threshold"],
     output:
         directory("{out}/{sample}/blast/")  # Indicate that the output is a directory
     shell:
@@ -101,7 +104,9 @@ rule resistance_gene_detection:
         blastn -query {input.amr_genes} \
                -subject {input.assembly} \
                -out {output}/blast_output.tsv \
-               -outfmt '6 qseqid sseqid pident length qlen qstart qend sstart send sseq evalue bitscore'
+               -outfmt '6 qseqid sseqid pident length qlen qstart qend sstart send sseq evalue bitscore' \
+               -perc_identity {params.id_per} \
+               -qcov_hsp_perc {params.cov_per}
         """
 
 
@@ -113,6 +118,8 @@ rule emm_typing:
     input:
         emm_allele_files = config["analysis_settings"]["emm_typing"]["emm_allele_file"],
         assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample]
+    params:
+        cov_per = lambda wildcards: config["Species"][sample_to_organism[wildcards.sample]]["analyses_to_run"]["emm_typing"]["cov_threshold"],
     output:
         directory("{out}/{sample}/emm_typing/")  # Indicate that the output is a directory
     shell:
@@ -127,7 +134,7 @@ rule emm_typing:
 
         blastn -query {input.emm_allele_files} \
                -subject {input.assembly} \
-               -qcov_hsp_perc 90 \
+               -qcov_hsp_perc {params.cov_per} \
                -out {output}/blast_output.tsv \
                -outfmt '6 qseqid sseqid pident length qlen qstart qend sstart send sseq evalue bitscore'
         """
@@ -137,7 +144,8 @@ rule emm_typing:
 # Likely to add the convert_external_genome script functions as helper functions to notebook
 rule assembly_lineage_determination:
     input:
-        reference= config["analysis_settings"]["assembly_lineage_determination"]["reference_fasta_file"],
+        reference = lambda wildcards: config["Species"][sample_to_organism[wildcards.sample]]["analyses_to_run"]["assembly_lineage_determination"]["reference_fasta_file"],
+        #reference= config["analysis_settings"]["assembly_lineage_determination"]["reference_fasta_file"],
         assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample]
     output:
         directory("{out}/{sample}/assembly_lineage/")
@@ -145,10 +153,12 @@ rule assembly_lineage_determination:
         name = lambda wildcards: wildcards.sample,
         deltafile= lambda wildcards: wildcards.sample + ".filtered.delta",
         frankenfasta = lambda wildcards: wildcards.sample + ".frankenfasta",
+        nucmerargs=lambda wildcards: config["Species"][sample_to_organism[wildcards.sample]]["analyses_to_run"]["assembly_lineage_determination"]["nucmerargs"],
         nucmerpath=config["analysis_settings"]["assembly_lineage_determination"]["nucmerpath"],
-        nucmerargs=config["analysis_settings"]["assembly_lineage_determination"]["nucmerargs"],
+        #nucmerargs=config["analysis_settings"]["assembly_lineage_determination"]["nucmerargs"],
         deltafilterpath=config["analysis_settings"]["assembly_lineage_determination"]["deltafilterpath"],
-        deltafilterargs=config["analysis_settings"]["assembly_lineage_determination"]["deltafilterargs"]
+        deltafilterargs= lambda wildcards: config["Species"][sample_to_organism[wildcards.sample]]["analyses_to_run"]["assembly_lineage_determination"]["deltafilterargs"]
+        #deltafilterargs=config["analysis_settings"]["assembly_lineage_determination"]["deltafilterargs"]
     run:
         if not os.path.exists(str(output)):
             os.mkdir(str(output))
@@ -263,7 +273,7 @@ rule PlasmidFinder:
             else
                 mkdir {output}
         fi        
-        plasmidfinder.py -i {input.R1} {input.R2} -o {output} -p {params.db_path} -mp {params.kma_path}
+        plasmidfinder.py -i {input.R1} {input.R2} -o {output} -p {params.db_path} -mp {params.kma_path} -x
         """
 
 
@@ -320,7 +330,9 @@ rule LREFinder:
         R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1]
     params:
         db_path = config["analysis_settings"]["LRE-finder"]["database"],
-        app_path = config["analysis_settings"]["LRE-finder"]["path"]
+        app_path = config["analysis_settings"]["LRE-finder"]["path"],
+        min_con_ID = lambda wildcards: config["Species"][sample_to_organism[wildcards.sample]]["analyses_to_run"]["lre-finder"]["min_consensus_ID"],
+        add_opt = lambda wildcards: config["Species"][sample_to_organism[wildcards.sample]]["analyses_to_run"]["lre-finder"]["additional_option"],
     output:
         directory("{out}/{sample}/lre-finder/")  # Indicate that the output is a directory
     shell:
@@ -333,7 +345,7 @@ rule LREFinder:
                 mkdir {output}
                 cd {output}
         fi 
-        python {params.app_path}/LRE-Finder.py -ipe {input.R1} {input.R2} -o lre-finder -t_db {params.db_path} -ID 80 -1t1 -cge -matrix
+        python {params.app_path}/LRE-Finder.py -ipe {input.R1} {input.R2} -o lre-finder -t_db {params.db_path} -ID {params.min_con_ID} {params.add_opt} 
         """
 
 
@@ -361,7 +373,7 @@ rule kleborate:
     input:
         assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample]
     params:
-        preset = config["analysis_settings"]["kleborate"]["preset"],
+        preset = lambda wildcards: config["Species"][sample_to_organism[wildcards.sample]]["analyses_to_run"]["kleborate"]["preset"],
     output:
         directory("{out}/{sample}/kleborate/")  # Indicate that the output is a directory
     shell:
@@ -383,8 +395,8 @@ rule CHtyper:
     params:
         app_path = config["analysis_settings"]["chtyper"]["path"],
         database = config["analysis_settings"]["chtyper"]["database"],
-        threshold = config["analysis_settings"]["chtyper"]["threshold"],
-        coverage = config["analysis_settings"]["chtyper"]["coverage"],
+        threshold = lambda wildcards: config["Species"][sample_to_organism[wildcards.sample]]["analyses_to_run"]["chtyper"]["threshold"],
+        coverage = lambda wildcards: config["Species"][sample_to_organism[wildcards.sample]]["analyses_to_run"]["chtyper"]["coverage"],
         blast = config["analysis_settings"]["chtyper"]["blast"]
     output:
         directory("{out}/{sample}/chtyper/")  # Indicate that the output is a directory
@@ -407,7 +419,7 @@ rule kmerfinder:
     params:
         db_path = config["analysis_settings"]["kmerfinder"]["database"],
         kma_path = config["analysis_settings"]["kma_aligner"]["path"],
-        taxa = config["analysis_settings"]["kmerfinder"]["taxa"]
+        taxa = lambda wildcards: config["Species"][sample_to_organism[wildcards.sample]]["analyses_to_run"]["kmerfinder"]["taxa"]
     output:
         directory("{out}/{sample}/kmerfinder/")  # Indicate that the output is a directory
     shell:
@@ -429,7 +441,7 @@ rule cgMLSTFinder:
     params:
         app_path = config["analysis_settings"]["cgMLSTFinder"]["path"],
         db_path = config["analysis_settings"]["cgMLSTFinder"]["database"],
-        scheme = config["analysis_settings"]["cgMLSTFinder"]["scheme"],
+        scheme = lambda wildcards: config["Species"][sample_to_organism[wildcards.sample]]["analyses_to_run"]["cgMLSTFinder"]["scheme"],
         kma_path = config["analysis_settings"]["kma_aligner"]["path"]
     output:
         directory("{out}/{sample}/cgmlstfinder/")  # Indicate that the output is a directory

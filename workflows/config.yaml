@@ -14,9 +14,7 @@ analysis_settings:
     kma_aligner:
         path: /dpssi/home/scrsim/conda_envs/.venv/bin/kma
 
-    blast_presence_absence: 
-        pident_threshold: 80
-        cov_threshold: 80
+    resistance_gene_detection: 
         query_fasta_resistance_gene_detection: /dpssi/home/scrsim/ssi_analysis_utility/resources/AMR/AMR_genes.fasta
         query_fasta_virulence_gene_detection: /dpssi/home/scrsim/ssi_analysis_utility/resources/virulence_factors/VFDB_genes.fasta
            
@@ -25,17 +23,13 @@ analysis_settings:
         emm_cluster_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/emm_typing/emm_enn_mrp_subgroups.txt
     
     assembly_lineage_determination: 
-        percent_snp_threshold: 50
-        reference_fasta_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/lineage_determination/MGAS5005.fasta
-        lineage_variant_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/lineage_determination/Spyogenes_LOCs.tsv
-        nucmerargs : ""
         nucmerpath : /dpssi/home/scrsim/conda_envs/.venv/bin/nucmer
         deltafilterpath : /dpssi/home/scrsim/conda_envs/.venv/bin/delta-filter
-        deltafilterargs : "-q -r -o 100"
+        
 
-    Illumina_lineage_determination:   
-        reference_fasta_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/lineage_determination/MGAS5005.fasta
-        lineage_variant_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/lineage_determination/Spyogenes_LOCs.tsv
+    # Illumina_lineage_determination:   
+    #     reference_fasta_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/lineage_determination/MGAS5005.fasta
+    #     lineage_variant_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/lineage_determination/Spyogenes_LOCs.tsv
     
     plasmidfinder:
         database: /dpssi/home/scrsim/conda_envs/.venv/share/plasmidfinder-2.1.6/database
@@ -62,23 +56,15 @@ analysis_settings:
         path : /dpssi/home/scrsim/ssi_analysis_utility/ssi_analysis_utility
         blast : /dpssi/home/scrsim/conda_envs/.venv/bin/blastn
         database: /dpssi/home/scrsim/conda_envs/.venv/share/chtyper_db
-        threshold : 0.90
-        coverage : 0.60
+
     
     kmerfinder:
         database: /dpssi/home/scrsim/conda_envs/.venv/share/kmerfinder_db/bacteria/bacteria.ATG
-        taxa : /dpssi/home/scrsim/conda_envs/.venv/share/kmerfinder_db/bacteria/bacteria.tax
-
+        
     cgMLSTFinder:
         path : /dpssi/home/scrsim/ssi_analysis_utility/ssi_analysis_utility
         database: /dpssi/home/scrsim/conda_envs/.venv/share/cgmlstfinder_db
-        scheme : salmonella # choose between  salmonella,campylobacter,yersinia,clostridium,ecoli
-
-
-
-
-
-
+         
 
 
 
@@ -86,24 +72,80 @@ analysis_settings:
 
 Species:
     Spyogenes:
-            analyses_to_run: 
-                emm_typing: Typing of M protein gene using blast against CDC curated alleles
-                assembly_lineage_determination: Lineage determination based on presence of specified SNPs when mapping genome assembly against reference genome
-                resistance_gene_detection: Presence of resistance gens tetM, ermA and ermB
-                virulence_gene_detection: Presence of Streptococcal virulence genes from the Virulence Factor Database
-                plasmidfinder: "Plasmidfinder"
-                resfinder: "Resfinder"
-                virulencefinder : "Virulence finder"
-                lre-finder: "LRE-Finder"
-                serotypefinder : "Potato"
-                kleborate : "Potato2"
-                chtyper : potato3
-                kmerfinder : potato4
-                cgMLSTFinder : potato6
+        analyses_to_run: 
+            emm_typing: 
+                Title: Typing of M protein gene using blast against CDC curated alleles
+                cov_threshold: 90
+            assembly_lineage_determination: 
+                Title: Lineage determination based on presence of specified SNPs when mapping genome assembly against reference genome
+                percent_snp_threshold: 50
+                nucmerargs : ""
+                deltafilterargs : "-q -r -o 100"
+                reference_fasta_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/lineage_determination/MGAS5005.fasta
+                lineage_variant_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/lineage_determination/Spyogenes_LOCs.tsv
+            resistance_gene_detection: 
+                pident_threshold: 80
+                cov_threshold: 80
+                Title: Presence of resistance gens tetM, ermA and ermB
+            virulence_gene_detection: Presence of Streptococcal virulence genes from the Virulence Factor Database
+            plasmidfinder: "Plasmidfinder"
+            resfinder: "Resfinder"
+            virulencefinder : "Virulence finder"
+            lre-finder: 
+                Title : "LRE-Finder"
+                min_consensus_ID : 80
+                additional_option : -1t1 -cge -matrix
+            serotypefinder : "Potato"
+            kleborate : 
+                Title : "Potato2"
+                preset : kpsc
+            chtyper : 
+                Title: potato3
+                threshold : 0.90
+                coverage : 0.60
+            kmerfinder : 
+                Title : potato4
+                taxa : /dpssi/home/scrsim/conda_envs/.venv/share/kmerfinder_db/bacteria/bacteria.tax
+            cgMLSTFinder : 
+                Title : potato6 
+                scheme : salmonella # choose between  salmonella,campylobacter,yersinia,clostridium,ecoli
 
     E.coli:
-            analyses_to_run: 
-                emm_typing: Typing of M protein gene using blast against CDC curated alleles
-    #             resistance_gene_detection: Presence of resistance gens tetM, ermA and ermB
-    #             assembly_lineage_determination: Lineage determination based on presence of specified SNPs when mapping genome assembly against reference genome
+        analyses_to_run: 
+            emm_typing: 
+                Title: Typing of M protein gene using blast against CDC curated alleles
+                cov_threshold: 90
+            assembly_lineage_determination: 
+                Title: Lineage determination based on presence of specified SNPs when mapping genome assembly against reference genome
+                percent_snp_threshold: 50
+                nucmerargs : ""
+                deltafilterargs : "-q -r -o 100"
+                reference_fasta_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/lineage_determination/MGAS5005.fasta
+                lineage_variant_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/lineage_determination/Spyogenes_LOCs.tsv
+            resistance_gene_detection: 
+                pident_threshold: 80
+                cov_threshold: 80
+                Title: Presence of resistance gens tetM, ermA and ermB
+            virulence_gene_detection: Presence of Streptococcal virulence genes from the Virulence Factor Database
+            plasmidfinder: "Plasmidfinder"
+            resfinder: "Resfinder"
+            virulencefinder : "Virulence finder"
+            lre-finder: 
+                Title : "LRE-Finder"
+                min_consensus_ID : 80
+                additional_option : -1t1 -cge -matrix
+            serotypefinder : "Potato"
+            kleborate : 
+                Title : "Potato2"
+                preset : kpsc
+            chtyper : 
+                Title: potato3
+                threshold : 0.90
+                coverage : 0.60
+            kmerfinder : 
+                Title : potato4
+                taxa : /dpssi/home/scrsim/conda_envs/.venv/share/kmerfinder_db/bacteria/bacteria.tax
+            cgMLSTFinder : 
+                Title : potato6 
+                scheme : salmonella # choose between  salmonella,campylobacter,yersinia,clostridium,ecoli
 
