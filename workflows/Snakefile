@@ -145,7 +145,6 @@ rule emm_typing:
 rule assembly_lineage_determination:
     input:
         reference = lambda wildcards: config["Species"][sample_to_organism[wildcards.sample]]["analyses_to_run"]["assembly_lineage_determination"]["reference_fasta_file"],
-        #reference= config["analysis_settings"]["assembly_lineage_determination"]["reference_fasta_file"],
         assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample]
     output:
         directory("{out}/{sample}/assembly_lineage/")
@@ -155,10 +154,8 @@ rule assembly_lineage_determination:
         frankenfasta = lambda wildcards: wildcards.sample + ".frankenfasta",
         nucmerargs=lambda wildcards: config["Species"][sample_to_organism[wildcards.sample]]["analyses_to_run"]["assembly_lineage_determination"]["nucmerargs"],
         nucmerpath=config["analysis_settings"]["assembly_lineage_determination"]["nucmerpath"],
-        #nucmerargs=config["analysis_settings"]["assembly_lineage_determination"]["nucmerargs"],
         deltafilterpath=config["analysis_settings"]["assembly_lineage_determination"]["deltafilterpath"],
         deltafilterargs= lambda wildcards: config["Species"][sample_to_organism[wildcards.sample]]["analyses_to_run"]["assembly_lineage_determination"]["deltafilterargs"]
-        #deltafilterargs=config["analysis_settings"]["assembly_lineage_determination"]["deltafilterargs"]
     run:
         if not os.path.exists(str(output)):
             os.mkdir(str(output))
