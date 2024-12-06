@@ -28,8 +28,6 @@ sample_to_organism = {row['sample_name']: row['organism'] for idx, row in csv_da
 
 
 
-
-
 ##############################################################################
 #
 #                              Snakefile 
