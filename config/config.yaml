@@ -1,0 +1,152 @@
+####################### INPUT MANAGER #######################################
+# This section defines the input manager settings, which specify the path 
+# to the sample sheet and the output folder for analysis results.
+
+input_manager:
+    path: /dpssi/home/scrsim/ssi_analysis_utility/examples/samplesheet.tsv  # Path to the input samplesheet (CSV/TSV file)
+    out_folder: "/dpssi/home/scrsim/ssi_analysis_utility/results"  # Folder where the analysis results will be saved
+
+
+
+###################### ANALYSIS & TOOLS SETTINGS ############################
+# This section provides paths to different tools and resources required for 
+# various bioinformatics analyses, including gene detection, typing, and lineage determination.
+
+analysis_settings:
+    kma_aligner:
+        path: /dpssi/home/scrsim/conda_envs/.venv/bin/kma  # Path to KMA aligner executable
+
+    resistance_gene_detection:
+        query_fasta_resistance_gene_detection: /dpssi/home/scrsim/ssi_analysis_utility/resources/AMR/AMR_genes.fasta  # Fasta file with AMR genes
+        query_fasta_virulence_gene_detection: /dpssi/home/scrsim/ssi_analysis_utility/resources/virulence_factors/VFDB_genes.fasta  # Fasta file with virulence genes
+
+    emm_typing:
+        emm_allele_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/emm_typing/emm_alleles.fasta  # Fasta file with emm alleles
+        emm_cluster_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/emm_typing/emm_enn_mrp_subgroups.txt  # File with emm allele clusters
+    
+    assembly_lineage_determination:
+        nucmerpath: /dpssi/home/scrsim/conda_envs/.venv/bin/nucmer  # Path to Nucmer tool for genome alignment
+        deltafilterpath: /dpssi/home/scrsim/conda_envs/.venv/bin/delta-filter  # Path to delta-filter tool for filtering alignments
+    
+    # Illumina lineage determination (commented out for now):
+    # reference_fasta_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/lineage_determination/MGAS5005.fasta  # Fasta file for reference genome
+    # lineage_variant_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/lineage_determination/Spyogenes_LOCs.tsv  # File with lineage variants
+    
+    plasmidfinder:
+        database: /dpssi/home/scrsim/conda_envs/.venv/share/plasmidfinder-2.1.6/database  # Path to PlasmidFinder database
+
+    resfinder:
+        resfinder_db: /dpssi/home/scrsim/conda_envs/.venv/share/resfinder-4.6.0/resfinder_db  # ResFinder database for AMR detection
+        pointfinder_db: /dpssi/home/scrsim/conda_envs/.venv/share/resfinder-4.6.0/pointfinder_db  # PointFinder database for AMR point mutations
+        disinfinder_db: /dpssi/home/scrsim/conda_envs/.venv/share/resfinder-4.6.0/disinfinder_db  # DisinFinder database for disinfectant resistance
+
+    virulencefinder:
+        database: /dpssi/home/scrsim/conda_envs/.venv/share/virulencefinder-2.0.4/virulencefinder_db  # VirulenceFinder database
+
+    LRE-finder:
+        path: /dpssi/home/scrsim/ssi_analysis_utility/workflow/scripts  # Path to LRE-finder script directory
+        database: /dpssi/home/scrsim/apps/lre-finder/elmDB/elm  # Database for LRE-finder
+
+    serotypefinder:
+        database: /dpssi/home/scrsim/conda_envs/.venv/share/serotypefinder-2.0.2/db  # SerotypeFinder database
+
+    kleborate:
+        preset: kpsc  # Preset for Kleborate, options are: kpsc, kosc, escherichia
+    
+    chtyper:
+        path: /dpssi/home/scrsim/ssi_analysis_utility/workflow/scripts  # Path to CHTyper script directory
+        blast: /dpssi/home/scrsim/conda_envs/.venv/bin/blastn  # Path to BLASTn executable
+        database: /dpssi/home/scrsim/conda_envs/.venv/share/chtyper_db  # CHTyper database
+    
+    kmerfinder:
+        database: /dpssi/home/scrsim/conda_envs/.venv/share/kmerfinder_db/bacteria/bacteria.ATG  # KmerFinder database for bacterial genomes
+
+    cgMLSTFinder:
+        path: /dpssi/home/scrsim/ssi_analysis_utility/workflow/scripts  # Path to cgMLSTFinder script directory
+        database: /dpssi/home/scrsim/conda_envs/.venv/share/cgmlstfinder_db  # cgMLSTFinder database
+
+         
+
+###################### BACTERIAL SPECIES ###################################
+# This section defines analyses for specific bacterial species. Each species
+# specifies the analyses to run and associated parameters.
+
+Species:
+    Spyogenes:
+        analyses_to_run:
+            emm_typing:
+                Title: Typing of M protein gene using blast against CDC curated alleles  # Description of the analysis
+                cov_threshold: 90  # Coverage threshold for emm typing
+            assembly_lineage_determination:
+                Title: Lineage determination based on presence of specified SNPs when mapping genome assembly against reference genome  # Lineage determination description
+                percent_snp_threshold: 50  # SNP threshold for lineage determination
+                nucmerargs: ""  # Additional arguments for Nucmer (empty for default)
+                deltafilterargs: "-q -r -o 100"  # Arguments for delta-filter tool
+                reference_fasta_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/lineage_determination/MGAS5005.fasta  # Reference genome file
+                lineage_variant_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/lineage_determination/Spyogenes_LOCs.tsv  # Variant file for lineage determination
+            resistance_gene_detection:
+                pident_threshold: 80  # Percent identity threshold for resistance gene detection
+                cov_threshold: 80  # Coverage threshold for resistance gene detection
+                Title: Presence of resistance genes tetM, ermA, and ermB  # Description of resistance gene detection
+            virulence_gene_detection: Presence of Streptococcal virulence genes from the Virulence Factor Database  # Virulence gene detection description
+            plasmidfinder: "Plasmidfinder"  # Run PlasmidFinder for plasmid detection
+            resfinder: "Resfinder"  # Run ResFinder for antimicrobial resistance detection
+            virulencefinder: "Virulence finder"  # Run VirulenceFinder for virulence factor detection
+            lre-finder:
+                Title: "LRE-Finder"  # Description of LRE-Finder analysis
+                min_consensus_ID: 80  # Minimum consensus identity for LRE-Finder
+                additional_option: -1t1 -cge -matrix  # Additional options for LRE-Finder
+            serotypefinder: "Potato"  # Placeholder for SerotypeFinder
+            kleborate:
+                Title: "Potato2"  # Placeholder for Kleborate analysis
+                preset: kpsc  # Preset for Kleborate
+            chtyper:
+                Title: "Potato3"  # Placeholder for CHTyper analysis
+                threshold: 0.90  # Threshold for CHTyper
+                coverage: 0.60  # Coverage threshold for CHTyper
+            kmerfinder:
+                Title: "Potato4"  # Placeholder for KmerFinder analysis
+                taxa: /dpssi/home/scrsim/conda_envs/.venv/share/kmerfinder_db/bacteria/bacteria.tax  # Taxa file for KmerFinder
+            cgMLSTFinder:
+                Title: "Potato6"  # Placeholder for cgMLSTFinder analysis
+                scheme: salmonella  # Scheme for cgMLSTFinder (options: salmonella, campylobacter, yersinia, clostridium, ecoli)
+
+# Example for E.coli
+    E.coli:
+        analyses_to_run: 
+            emm_typing: 
+                Title: Typing of M protein gene using blast against CDC curated alleles
+                cov_threshold: 90
+            assembly_lineage_determination: 
+                Title: Lineage determination based on presence of specified SNPs when mapping genome assembly against reference genome
+                percent_snp_threshold: 50
+                nucmerargs : ""
+                deltafilterargs : "-q -r -o 100"
+                reference_fasta_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/lineage_determination/MGAS5005.fasta
+                lineage_variant_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/lineage_determination/Spyogenes_LOCs.tsv
+            resistance_gene_detection: 
+                pident_threshold: 80
+                cov_threshold: 80
+                Title: Presence of resistance gens tetM, ermA and ermB
+            virulence_gene_detection: Presence of Streptococcal virulence genes from the Virulence Factor Database
+            plasmidfinder: "Plasmidfinder"
+            resfinder: "Resfinder"
+            virulencefinder : "Virulence finder"
+            lre-finder: 
+                Title : "LRE-Finder"
+                min_consensus_ID : 80
+                additional_option : -1t1 -cge -matrix
+            serotypefinder : "Potato"
+            kleborate : 
+                Title : "Potato2"
+                preset : kpsc
+            chtyper : 
+                Title: potato3
+                threshold : 0.90
+                coverage : 0.60
+            kmerfinder : 
+                Title : potato4
+                taxa : /dpssi/home/scrsim/conda_envs/.venv/share/kmerfinder_db/bacteria/bacteria.tax
+            cgMLSTFinder : 
+                Title : potato6 
+                scheme : salmonella # choose between  salmonella,campylobacter,yersinia,clostridium,ecoli

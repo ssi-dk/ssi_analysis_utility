@@ -1,0 +1,86 @@
+import pandas as pd
+import os
+import yaml
+from scripts import convert_external_genome
+
+# Read the CSV file
+csv = config['input_manager']['path']
+csv_data = pd.read_csv(csv, sep='\t')
+
+# Setup output folder
+OUT_FOLDER = config['input_manager']['out_folder']
+
+
+
+############ Example TSV format ################:
+# sample_name     Illumina_read_files     Nanopore_read_file      ...  ...       variant notes
+# GAS-2022-1029   GAS-2022-1029_S42_L555_R1_001.fastq.gz,GAS-2022-1029_S42_L555_R2_001.fastq.gz   GAS-2022-1029_nanopore.fastq.gz GAS-2022-1029.fasta  
+
+# Use the sample names as wildcards
+SAMPLES = csv_data['sample_name'].tolist()
+
+# Create a dictionary for mapping sampleID to file paths
+sample_to_illumina = {row['sample_name']: row['Illumina_read_files'].split(',') for idx, row in csv_data.iterrows()}
+sample_to_nanopore = {row['sample_name']: row['Nanopore_read_file'] for idx, row in csv_data.iterrows()}
+sample_to_assembly_file = {row['sample_name']: row['assembly_file'] for idx, row in csv_data.iterrows()}
+sample_to_organism = {row['sample_name']: row['organism'] for idx, row in csv_data.iterrows()}
+
+
+
+
+##############################################################################
+#
+#                              Snakefile 
+#
+##############################################################################
+
+
+# Define the dynamic input for rule all
+rule all:
+    input:
+        expand("{out}/{sample}/emm_typing/", 
+               sample=[s for s in SAMPLES if "emm_typing" in config["Species"][sample_to_organism[s]]["analyses_to_run"]],
+               out=OUT_FOLDER),
+        expand("{out}/{sample}/blast/", 
+               sample=[s for s in SAMPLES if "resistance_gene_detection" in config["Species"][sample_to_organism[s]]["analyses_to_run"]],
+               out=OUT_FOLDER),
+        expand("{out}/{sample}/assembly_lineage/", 
+               sample=[s for s in SAMPLES if "assembly_lineage_determination" in config["Species"][sample_to_organism[s]]["analyses_to_run"]],
+               out=OUT_FOLDER),
+        expand("{out}/{sample}/illumina_lineage/", 
+               sample=[s for s in SAMPLES if "Illumina_lineage_determination" in config["Species"][sample_to_organism[s]]["analyses_to_run"]],
+               out=OUT_FOLDER),
+        expand("{out}/{sample}/plasmidfinder/", 
+               sample=[s for s in SAMPLES if "plasmidfinder" in config["Species"][sample_to_organism[s]]["analyses_to_run"]],
+               out=OUT_FOLDER),
+        expand("{out}/{sample}/resfinder/", 
+               sample=[s for s in SAMPLES if "resfinder" in config["Species"][sample_to_organism[s]]["analyses_to_run"]],
+               out=OUT_FOLDER),
+        expand("{out}/{sample}/virulencefinder/", 
+               sample=[s for s in SAMPLES if "virulencefinder" in config["Species"][sample_to_organism[s]]["analyses_to_run"]],
+               out=OUT_FOLDER),
+        expand("{out}/{sample}/lre-finder/", 
+               sample=[s for s in SAMPLES if "lre-finder" in config["Species"][sample_to_organism[s]]["analyses_to_run"]],
+               out=OUT_FOLDER),
+        expand("{out}/{sample}/serotypefinder/", 
+               sample=[s for s in SAMPLES if "serotypefinder" in config["Species"][sample_to_organism[s]]["analyses_to_run"]],
+               out=OUT_FOLDER),
+        expand("{out}/{sample}/kleborate/", 
+               sample=[s for s in SAMPLES if "kleborate" in config["Species"][sample_to_organism[s]]["analyses_to_run"]],
+               out=OUT_FOLDER),
+        expand("{out}/{sample}/chtyper/", 
+               sample=[s for s in SAMPLES if "chtyper" in config["Species"][sample_to_organism[s]]["analyses_to_run"]],
+               out=OUT_FOLDER),
+        expand("{out}/{sample}/kmerfinder/", 
+               sample=[s for s in SAMPLES if "kmerfinder" in config["Species"][sample_to_organism[s]]["analyses_to_run"]],
+               out=OUT_FOLDER),
+        expand("{out}/{sample}/cgmlstfinder/", 
+               sample=[s for s in SAMPLES if "cgMLSTFinder" in config["Species"][sample_to_organism[s]]["analyses_to_run"]],
+               out=OUT_FOLDER),
+
+
+include : "rules/finders.smk"
+include : "rules/others.smk"
+    
+
+

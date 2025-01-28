@@ -743,9 +743,8 @@ class analysis_utility(sample_manager.sample_data):
                 best_hit = "-"
 
             self.analysis_results[analysis_alias].update({"Lineage": best_hit})
-            self.analysis_cleanup(
-                analysis_alias, lineage_determination_config["files_to_clean"]
-            )
+            # self.analysis_cleanup(analysis_alias,
+            #                      lineage_determination_config["files_to_clean"])
 
     def _blast_presence_absence_(
         self, blast_presence_absence_config: dict, output_folder=False
@@ -1342,3 +1341,4 @@ def unit_test_from_samplesheet():
     input_config["output_folder"] = "output_from_samplesheet/"
     input_config["analysis_config"] = config["analysis_settings"]["Spyogenes"]
     test = analysis_manager(input_config, config["analysis_settings"]["Spyogenes"])
+    print(test.__dict__)

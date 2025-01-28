@@ -9,7 +9,7 @@ input/*
 output/*
 !output/.gitkeep
 # The config folder is intended to keep multiple program configs, these are sensitive to the system, a default is included for people to work off of while the others are hidden
-config/*
+#config/*
 # If you are using pypi integration
 .pypirc
 
