@@ -13,6 +13,8 @@ rule resistance_gene_detection:
     output:
         # Output is a directory to store BLAST results for the sample
         directory("{out}/{sample}/blast/")
+    conda:
+        config["analysis_settings"]["resistance_gene_detection"]["yaml"]
     shell:
         """
         # Check if the output directory exists, skip execution if it does
@@ -45,6 +47,8 @@ rule emm_typing:
     output:
         # Output is a directory to store emm typing results for the sample
         directory("{out}/{sample}/emm_typing/")
+    conda:
+        config["analysis_settings"]["resistance_gene_detection"]["yaml"]
     shell:
         """
         # Check if the output directory exists, skip execution if it does
@@ -76,21 +80,23 @@ rule assembly_lineage_determination:
     params:
         # Various parameters including delta file name, frankenfasta file, and arguments for nucmer and deltafilter
         name = lambda wildcards: wildcards.sample,
+        nucmerargs = lambda wildcards: config["Species"][sample_to_organism[wildcards.sample]]["analyses_to_run"]["assembly_lineage_determination"]["nucmerargs"],
         deltafile= lambda wildcards: wildcards.sample + ".filtered.delta",
         frankenfasta = lambda wildcards: wildcards.sample + ".frankenfasta",
-        nucmerargs=lambda wildcards: config["Species"][sample_to_organism[wildcards.sample]]["analyses_to_run"]["assembly_lineage_determination"]["nucmerargs"],
-        nucmerpath=config["analysis_settings"]["assembly_lineage_determination"]["nucmerpath"],
-        deltafilterpath=config["analysis_settings"]["assembly_lineage_determination"]["deltafilterpath"],
         deltafilterargs= lambda wildcards: config["Species"][sample_to_organism[wildcards.sample]]["analyses_to_run"]["assembly_lineage_determination"]["deltafilterargs"]
     run:
+        import shutil
+
         # Create output directory if it doesn't exist, and run the lineage determination workflow
         if not os.path.exists(str(output)):
             os.mkdir(str(output))
             external_genome = convert_external_genome.Genome()
             external_genome.import_fasta_file(str(input.assembly))  # Import assembly as external genome
-            convert_external_genome.generate_delta_file(params.nucmerpath, 
+            nucmerpath = shutil.which("nucmer")
+            deltafilter_path = shutil.which("delta-filter")
+            convert_external_genome.generate_delta_file(nucmerpath, 
                                                         params.nucmerargs, 
-                                                        params.deltafilterpath,
+                                                        deltafilter_path,
                                                         params.deltafilterargs, 
                                                         params.name, 
                                                         input.reference,
@@ -117,6 +123,8 @@ rule kleborate:
     output:
         # Output is a directory to store Kleborate results
         directory("{out}/{sample}/kleborate/")
+    conda:
+        config["analysis_settings"]["kleborate"]["yaml"]
     shell:
         """
         # Check if the output directory exists, skip execution if it does
@@ -141,10 +149,11 @@ rule CHtyper:
         database = config["analysis_settings"]["chtyper"]["database"],
         threshold = lambda wildcards: config["Species"][sample_to_organism[wildcards.sample]]["analyses_to_run"]["chtyper"]["threshold"],
         coverage = lambda wildcards: config["Species"][sample_to_organism[wildcards.sample]]["analyses_to_run"]["chtyper"]["coverage"],
-        blast = config["analysis_settings"]["chtyper"]["blast"]
     output:
         # Output is a directory to store CHtyper results
         directory("{out}/{sample}/chtyper/")
+    conda:
+        config["analysis_settings"]["resistance_gene_detection"]["yaml"]
     shell:
         """
         # Check if the output directory exists, skip execution if it does
@@ -155,6 +164,9 @@ rule CHtyper:
             else
                 mkdir {output}  # Create the directory if it doesn't exist
         fi 
+        
+        blastn=$(which blastn)
+        
         # Run CHtyper Python script with the specified parameters
-        python {params.app_path}/CHTyper-1.0.py -i {input.assembly}  -o {output} -p {params.database} -t {params.threshold} -l {params.coverage} -b {params.blast}
+        python {params.app_path}/CHTyper-1.0.py -i {input.assembly}  -o {output} -p {params.database} -t {params.threshold} -l {params.coverage} -b $blastn
         """

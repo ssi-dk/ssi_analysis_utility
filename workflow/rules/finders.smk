@@ -10,10 +10,12 @@ rule PlasmidFinder:
     params:
         # Path to the plasmid database and KMA aligner.
         db_path = config["analysis_settings"]["plasmidfinder"]["database"],
-        kma_path = config["analysis_settings"]["kma_aligner"]["path"]
+        #kma_path = config["analysis_settings"]["kma_aligner"]["path"]
     output:
         # Output directory for plasmidfinder results.
         directory("{out}/{sample}/plasmidfinder/")
+    conda:
+        config["analysis_settings"]["plasmidfinder"]["yaml"]
     shell:
         """
         # Check if the output directory exists, and skip if it does.
@@ -25,7 +27,8 @@ rule PlasmidFinder:
                 mkdir {output}
         fi        
         # Run plasmidfinder.py with specified input, output, and parameters.
-        plasmidfinder.py -i {input.R1} {input.R2} -o {output} -p {params.db_path} -mp {params.kma_path} -x
+        plasmidfinder.py -i {input.R1} {input.R2} -o {output} -p {params.db_path}  -x
+        
         """
 
 # Rule: ResFinder
@@ -41,6 +44,8 @@ rule ResFinder:
         disi_db_path = config["analysis_settings"]["resfinder"]["disinfinder_db"]
     output:
         directory("{out}/{sample}/resfinder/")
+    conda:
+        config["analysis_settings"]["resfinder"]["yaml"]
     shell:
         """
         # Check if the output directory exists, and skip if it does.
@@ -122,6 +127,8 @@ rule serotypefinder:
         db_path = config["analysis_settings"]["serotypefinder"]["database"],
     output:
         directory("{out}/{sample}/serotypefinder/")
+    conda:
+        config["analysis_settings"]["serotypefinder"]["yaml"]
     shell:
         """
         # Check if the output directory exists, and skip if it does.
@@ -149,6 +156,8 @@ rule kmerfinder:
         taxa = lambda wildcards: config["Species"][sample_to_organism[wildcards.sample]]["analyses_to_run"]["kmerfinder"]["taxa"]
     output:
         directory("{out}/{sample}/kmerfinder/")
+    conda:
+        config["analysis_settings"]["kmerfinder"]["yaml"]
     shell:
         """
         # Check if the output directory exists, and skip if it does.
@@ -177,6 +186,8 @@ rule cgMLSTFinder:
         kma_path = config["analysis_settings"]["kma_aligner"]["path"]
     output:
         directory("{out}/{sample}/cgmlstfinder/")
+    conda:
+        config["analysis_settings"]["cgMLSTFinder"]["yaml"]   
     shell:
         """
         # Check if the output directory exists, and skip if it does.
