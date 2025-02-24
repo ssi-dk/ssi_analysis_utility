@@ -17,6 +17,7 @@ analysis_settings:
         path: /dpssi/home/scrsim/conda_envs/.venv/bin/kma  # Path to KMA aligner executable
 
     resistance_gene_detection:
+        yaml : /dpssi/home/scrsim/ssi_analysis_utility/workflow/envs/resistence_gene_detection.yaml
         query_fasta_resistance_gene_detection: /dpssi/home/scrsim/ssi_analysis_utility/resources/AMR/AMR_genes.fasta  # Fasta file with AMR genes
         query_fasta_virulence_gene_detection: /dpssi/home/scrsim/ssi_analysis_utility/resources/virulence_factors/VFDB_genes.fasta  # Fasta file with virulence genes
 
@@ -25,45 +26,54 @@ analysis_settings:
         emm_cluster_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/emm_typing/emm_enn_mrp_subgroups.txt  # File with emm allele clusters
     
     assembly_lineage_determination:
-        nucmerpath: /dpssi/home/scrsim/conda_envs/.venv/bin/nucmer  # Path to Nucmer tool for genome alignment
-        deltafilterpath: /dpssi/home/scrsim/conda_envs/.venv/bin/delta-filter  # Path to delta-filter tool for filtering alignments
+        yaml : /dpssi/home/scrsim/ssi_analysis_utility/workflow/envs/assembly_lineage_determination.yaml
     
     # Illumina lineage determination (commented out for now):
     # reference_fasta_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/lineage_determination/MGAS5005.fasta  # Fasta file for reference genome
     # lineage_variant_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/lineage_determination/Spyogenes_LOCs.tsv  # File with lineage variants
     
     plasmidfinder:
+        yaml : /dpssi/home/scrsim/ssi_analysis_utility/workflow/envs/plasmidfinder.yaml
         database: /dpssi/home/scrsim/conda_envs/.venv/share/plasmidfinder-2.1.6/database  # Path to PlasmidFinder database
 
     resfinder:
+        yaml : /dpssi/home/scrsim/ssi_analysis_utility/workflow/envs/resfinder.yaml
         resfinder_db: /dpssi/home/scrsim/conda_envs/.venv/share/resfinder-4.6.0/resfinder_db  # ResFinder database for AMR detection
         pointfinder_db: /dpssi/home/scrsim/conda_envs/.venv/share/resfinder-4.6.0/pointfinder_db  # PointFinder database for AMR point mutations
         disinfinder_db: /dpssi/home/scrsim/conda_envs/.venv/share/resfinder-4.6.0/disinfinder_db  # DisinFinder database for disinfectant resistance
 
     virulencefinder:
+        yaml : /dpssi/home/scrsim/ssi_analysis_utility/workflow/envs/virulencefinder.yaml
         database: /dpssi/home/scrsim/conda_envs/.venv/share/virulencefinder-2.0.4/virulencefinder_db  # VirulenceFinder database
 
     LRE-finder:
         path: /dpssi/home/scrsim/ssi_analysis_utility/workflow/scripts  # Path to LRE-finder script directory
         database: /dpssi/home/scrsim/apps/lre-finder/elmDB/elm  # Database for LRE-finder
-
+        
     serotypefinder:
+        yaml : /dpssi/home/scrsim/ssi_analysis_utility/workflow/envs/serotypefinder.yaml
         database: /dpssi/home/scrsim/conda_envs/.venv/share/serotypefinder-2.0.2/db  # SerotypeFinder database
 
+    kmerfinder:
+        yaml : /dpssi/home/scrsim/ssi_analysis_utility/workflow/envs/kmerfinder.yaml
+        database: /dpssi/home/scrsim/conda_envs/.venv/share/kmerfinder_db/bacteria/bacteria.ATG  # KmerFinder database for bacterial genomes
+
+    cgMLSTFinder:
+        yaml : /dpssi/home/scrsim/ssi_analysis_utility/workflow/envs/cgMLSTfinder.yaml
+        path: /dpssi/home/scrsim/ssi_analysis_utility/workflow/scripts  # Path to cgMLSTFinder script directory
+        database: /dpssi/home/scrsim/conda_envs/.venv/share/cgmlstfinder_db  # cgMLSTFinder database
+
     kleborate:
+        yaml : /dpssi/home/scrsim/ssi_analysis_utility/workflow/envs/kleborate.yaml
         preset: kpsc  # Preset for Kleborate, options are: kpsc, kosc, escherichia
     
     chtyper:
         path: /dpssi/home/scrsim/ssi_analysis_utility/workflow/scripts  # Path to CHTyper script directory
-        blast: /dpssi/home/scrsim/conda_envs/.venv/bin/blastn  # Path to BLASTn executable
         database: /dpssi/home/scrsim/conda_envs/.venv/share/chtyper_db  # CHTyper database
     
-    kmerfinder:
-        database: /dpssi/home/scrsim/conda_envs/.venv/share/kmerfinder_db/bacteria/bacteria.ATG  # KmerFinder database for bacterial genomes
 
-    cgMLSTFinder:
-        path: /dpssi/home/scrsim/ssi_analysis_utility/workflow/scripts  # Path to cgMLSTFinder script directory
-        database: /dpssi/home/scrsim/conda_envs/.venv/share/cgmlstfinder_db  # cgMLSTFinder database
+
+
 
          
 
