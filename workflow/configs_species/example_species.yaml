@@ -1,0 +1,89 @@
+###################### BACTERIAL SPECIES ###################################
+# This config defines analyses for the specified bacterial species e.g E.Coli  
+# and associated parameters.
+
+XXX: # species name must be the same as found in the TSV input file 
+    analyses_to_run: 
+        # To run the analysis modify the status from FALSE to TRUE 
+        kmeraligner:
+            status : True
+            Title : Kmer Aligner on two pair reads
+            ID: 90
+            additional_option : -apm -matrix -mem_mode 
+            database : /dpssi/home/scrsim/dabatabase/kma/
+
+        emm_typing: 
+            status : False
+            Title: Typing of M protein gene using blast against CDC curated alleles
+            cov_threshold: 90
+            emm_allele_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/emm_typing/emm_alleles.fasta  # Fasta file with emm alleles
+            emm_cluster_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/emm_typing/emm_enn_mrp_subgroups.txt  # File with emm allele clusters
+          
+        assembly_lineage_determination: 
+            status : False
+            Title: Lineage determination based on presence of specified SNPs when mapping genome assembly against reference genome
+            percent_snp_threshold: 50
+            nucmerargs : ""
+            deltafilterargs : -q -r -o 100
+            reference_fasta_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/lineage_determination/MGAS5005.fasta
+            lineage_variant_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/lineage_determination/Spyogenes_LOCs.tsv
+            query_fasta_resistance_gene_detection: /dpssi/home/scrsim/ssi_analysis_utility/resources/AMR/AMR_genes.fasta  # Fasta file with AMR genes
+            query_fasta_virulence_gene_detection: /dpssi/home/scrsim/ssi_analysis_utility/resources/virulence_factors/VFDB_genes.fasta  # Fasta file with virulence genes
+  
+        resistance_gene_detection: 
+            status : False
+            pident_threshold: 80
+            cov_threshold: 80
+            Title: Presence of resistance gens tetM, ermA and ermB
+ 
+        virulence_gene_detection: Presence of Streptococcal virulence genes from the Virulence Factor Database
+            status : False
+ 
+        plasmidfinder: Plasmidfinder
+            status : False
+            database: /dpssi/home/scrsim/conda_envs/.venv/share/plasmidfinder-2.1.6/database  # Path to PlasmidFinder database
+
+        resfinder: Resfinder
+            status : False
+            resfinder_db: /dpssi/home/scrsim/conda_envs/.venv/share/resfinder-4.6.0/resfinder_db  # ResFinder database for AMR detection
+            pointfinder_db: /dpssi/home/scrsim/conda_envs/.venv/share/resfinder-4.6.0/pointfinder_db  # PointFinder database for AMR point mutations
+            disinfinder_db: /dpssi/home/scrsim/conda_envs/.venv/share/resfinder-4.6.0/disinfinder_db  # DisinFinder database for disinfectant resistance
+
+        virulencefinder : Virulence finder
+            status : False
+            database: /dpssi/home/scrsim/conda_envs/.venv/share/virulencefinder-2.0.4/virulencefinder_db  # VirulenceFinder database
+
+        lre-finder: 
+            status : False
+            Title : LRE-Finder
+            min_consensus_ID : 80
+            additional_option : -1t1 -cge -matrix
+            database: /dpssi/home/scrsim/apps/lre-finder/elmDB/elm  # Database for LRE-finder
+
+        serotypefinder : Serotypefinder
+            status : False
+            database: /dpssi/home/scrsim/conda_envs/.venv/share/serotypefinder-2.0.2/db  # SerotypeFinder database
+     
+        kleborate : 
+            status : False
+            Title : Kleborate
+            preset : kpsc
+
+        chtyper : 
+            status : False
+            Title: Chtyper
+            threshold : 0.90
+            coverage : 0.60
+            database: /dpssi/home/scrsim/conda_envs/.venv/share/chtyper_db  # CHTyper database
+      
+        kmerfinder : 
+            status : False
+            Title : Kmerfinder
+            taxa : /dpssi/home/scrsim/conda_envs/.venv/share/kmerfinder_db/bacteria/bacteria.tax
+            database: /dpssi/home/scrsim/conda_envs/.venv/share/kmerfinder_db/bacteria/bacteria.ATG  # KmerFinder database for bacterial genomes
+
+        cgMLSTFinder : 
+            status : False
+            Title : cgMLST
+            scheme : salmonella # choose between  salmonella,campylobacter,yersinia,clostridium,ecoli
+            database: /dpssi/home/scrsim/conda_envs/.venv/share/cgmlstfinder_db  # cgMLSTFinder database

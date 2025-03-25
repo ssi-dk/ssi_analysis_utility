@@ -1,10 +1,40 @@
 #------------------------------ Modules --------------------------------#
 
+# Rule: kmeraligner
+# Identifies microbial species or strain using k-mer-based alignment.
+rule kmeraligner:
+    input:
+        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
+        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1]
+    params:
+        # Path to the kmerfinder database, KMA aligner, and taxa file.
+        db_path = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["kmeraligner"]["database"],
+        add_opt = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["kmeraligner"]["additional_option"]
+    output:
+        directory("{out}/{sample}/kma/")
+    conda:
+        config["analysis_settings"]["kmeraligner"]["yaml"]
+    shell:
+        """
+        # Check if the output directory exists, and skip if it does.
+        if [ -d {output} ]; 
+            then
+                echo "Directory {output} exists, skipping."
+                exit 1
+            else
+                mkdir {output}
+        fi 
+        # Run kmaaligner with the specified parameters and inputs.
+        kma  -ipe {input.R1} {input.R2} -o {output} -t_db {params.db_path} {params.add_opt}
+        """
+
+
+
 # Rule for resistance gene detection using BLAST
 rule resistance_gene_detection:
     input:
         # Input: AMR gene database file and assembly file for the sample
-        amr_genes = config["analysis_settings"]["resistance_gene_detection"]["query_fasta_resistance_gene_detection"],
+        amr_genes = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["resistance_gene_detection"]["query_fasta_resistance_gene_detection"],
         assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample]  # Use wildcards to get the sample's assembly file
     params:
         # Parameters for BLAST, including identity and coverage thresholds
@@ -39,11 +69,11 @@ rule resistance_gene_detection:
 rule emm_typing:
     input:
         # Input: emm allele files and assembly file for the sample
-        emm_allele_files = config["analysis_settings"]["emm_typing"]["emm_allele_file"],
+        emm_allele_files = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["emm_typing"]["emm_allele_file"],
         assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample]
     params:
         # Parameter for coverage threshold
-        cov_per = lambda wildcards: config["Species"][sample_to_organism[wildcards.sample]]["analyses_to_run"]["emm_typing"]["cov_threshold"],
+        cov_per = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["emm_typing"]["cov_threshold"],
     output:
         # Output is a directory to store emm typing results for the sample
         directory("{out}/{sample}/emm_typing/")
@@ -72,7 +102,7 @@ rule emm_typing:
 rule assembly_lineage_determination:
     input:
         # Input: Reference file for lineage determination and assembly file for the sample
-        reference = lambda wildcards: config["Species"][sample_to_organism[wildcards.sample]]["analyses_to_run"]["assembly_lineage_determination"]["reference_fasta_file"],
+        reference = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["assembly_lineage_determination"]["reference_fasta_file"],
         assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample]
     output:
         # Output is a directory to store lineage determination results
@@ -80,10 +110,10 @@ rule assembly_lineage_determination:
     params:
         # Various parameters including delta file name, frankenfasta file, and arguments for nucmer and deltafilter
         name = lambda wildcards: wildcards.sample,
-        nucmerargs = lambda wildcards: config["Species"][sample_to_organism[wildcards.sample]]["analyses_to_run"]["assembly_lineage_determination"]["nucmerargs"],
+        nucmerargs = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["assembly_lineage_determination"]["nucmerargs"],
         deltafile= lambda wildcards: wildcards.sample + ".filtered.delta",
         frankenfasta = lambda wildcards: wildcards.sample + ".frankenfasta",
-        deltafilterargs= lambda wildcards: config["Species"][sample_to_organism[wildcards.sample]]["analyses_to_run"]["assembly_lineage_determination"]["deltafilterargs"]
+        deltafilterargs= lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["assembly_lineage_determination"]["deltafilterargs"]
     run:
         import shutil
 
@@ -119,7 +149,7 @@ rule kleborate:
         assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample]
     params:
         # Parameter for preset options
-        preset = lambda wildcards: config["Species"][sample_to_organism[wildcards.sample]]["analyses_to_run"]["kleborate"]["preset"],
+        preset = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["kleborate"]["preset"],
     output:
         # Output is a directory to store Kleborate results
         directory("{out}/{sample}/kleborate/")
@@ -145,10 +175,10 @@ rule CHtyper:
         assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample]
     params:
         # Parameters for CHtyper including application path, database, threshold, coverage, and BLAST options
-        app_path = config["analysis_settings"]["chtyper"]["path"],
-        database = config["analysis_settings"]["chtyper"]["database"],
-        threshold = lambda wildcards: config["Species"][sample_to_organism[wildcards.sample]]["analyses_to_run"]["chtyper"]["threshold"],
-        coverage = lambda wildcards: config["Species"][sample_to_organism[wildcards.sample]]["analyses_to_run"]["chtyper"]["coverage"],
+        app_path = config["analysis_settings"]["chtyper"]["script"],
+        database = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["chtyper"]["database"],
+        threshold = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["chtyper"]["threshold"],
+        coverage = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["chtyper"]["coverage"],
     output:
         # Output is a directory to store CHtyper results
         directory("{out}/{sample}/chtyper/")
