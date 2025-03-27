@@ -14,7 +14,7 @@ rule PlasmidFinder:
         # Output directory for plasmidfinder results.
         directory("{out}/{sample}/plasmidfinder/")
     conda:
-        "/users/data/Tools/Conda/Conda_envs/PlasmidFinder" #config["analysis_settings"]["plasmidfinder"]["yaml"]
+        config["analysis_settings"]["plasmidfinder"]["yaml"]
     message:
         "mkdir -p {output}"
     shell:
@@ -46,7 +46,7 @@ rule ResFinder:
     output:
         directory("{out}/{sample}/resfinder/")
     conda:
-        "/dpssi/data/Projects/MICROBESEQ/proj/SpeciesSpecific/conda_envs/resfinder"    #config["analysis_settings"]["resfinder"]["yaml"]
+        config["analysis_settings"]["resfinder"]["yaml"]
     shell:
         """
         # Check if the output directory exists, and skip if it does.
