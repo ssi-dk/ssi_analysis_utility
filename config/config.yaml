@@ -3,9 +3,9 @@
 # to the sample sheet and the output folder for analysis results.
 
 input_manager:
-    path: /dpssi/home/scrsim/ssi_analysis_utility/examples/samplesheet.tsv  # Path to the input samplesheet (CSV/TSV file)
-    config_species : /dpssi/home/scrsim/ssi_analysis_utility/workflow/configs_species/
-    out_folder: /dpssi/home/scrsim/ssi_analysis_utility/results  # Folder where the analysis results will be saved
+    path: /home/simonescrima/Desktop/ssi_analysis_utility/examples/samplesheet.tsv  # Path to the input samplesheet (CSV/TSV file)
+    config_species : /home/simonescrima/Desktop/ssi_analysis_utility/workflow/configs_species/
+    out_folder: /home/simonescrima/Desktop/ssi_analysis_utility/results  # Folder where the analysis results will be saved
     
 
 
@@ -16,50 +16,50 @@ input_manager:
 analysis_settings:
     
     kmeraligner:
-        yaml : /dpssi/home/scrsim/ssi_analysis_utility/workflow/envs/kmeraligner.yaml
+        yaml : /home/simonescrima/Desktop/ssi_analysis_utility/workflow/envs/kmeraligner.yaml
 
     resistance_gene_detection:
-        yaml : /dpssi/home/scrsim/ssi_analysis_utility/workflow/envs/resistence_gene_detection.yaml
+        yaml : /home/simonescrima/Desktop/ssi_analysis_utility/workflow/envs/resistence_gene_detection.yaml
 
     emm_typing:
-        yaml : /dpssi/home/scrsim/ssi_analysis_utility/workflow/envs/emm_typing.yaml
+        yaml : /home/simonescrima/Desktop/ssi_analysis_utility/workflow/envs/emm_typing.yaml
 
     assembly_lineage_determination:
-        yaml : /dpssi/home/scrsim/ssi_analysis_utility/workflow/envs/assembly_lineage_determination.yaml
+        yaml : /home/simonescrima/Desktop/ssi_analysis_utility/workflow/envs/assembly_lineage_determination.yaml
     
     plasmidfinder:
-        yaml : /dpssi/home/scrsim/ssi_analysis_utility/workflow/envs/plasmidfinder.yaml
+        yaml : /home/simonescrima/Desktop/ssi_analysis_utility/workflow/envs/plasmidfinder.yaml
         
     resfinder:
-        yaml : /dpssi/home/scrsim/ssi_analysis_utility/workflow/envs/resfinder.yaml
+        yaml : /home/simonescrima/Desktop/ssi_analysis_utility/workflow/envs/resfinder.yaml
 
     virulencefinder:
-        yaml : /dpssi/home/scrsim/ssi_analysis_utility/workflow/envs/virulencefinder.yaml
+        yaml : /home/simonescrima/Desktop/ssi_analysis_utility/workflow/envs/virulencefinder.yaml
         
     LRE-finder:
-        yaml : /dpssi/home/scrsim/ssi_analysis_utility/workflow/envs/LREfinder.yaml
-        script: /dpssi/home/scrsim/ssi_analysis_utility/workflow/scripts  # Path to LRE-finder script directory
+        yaml : /home/simonescrima/Desktop/ssi_analysis_utility/workflow/envs/LREfinder.yaml
+        script: /home/simonescrima/Desktop/ssi_analysis_utility/workflow/scripts  # Path to LRE-finder script directory
         
     serotypefinder:
-        yaml : /dpssi/home/scrsim/ssi_analysis_utility/workflow/envs/serotypefinder.yaml
+        yaml : /home/simonescrima/Desktop/ssi_analysis_utility/workflow/envs/serotypefinder.yaml
 
     kmerfinder:
-        yaml : /dpssi/home/scrsim/ssi_analysis_utility/workflow/envs/kmerfinder.yaml
+        yaml : /home/simonescrima/Desktop/ssi_analysis_utility/workflow/envs/kmerfinder.yaml
 
     cgMLSTFinder:
-        yaml : /dpssi/home/scrsim/ssi_analysis_utility/workflow/envs/cgMLSTfinder.yaml
-        script: /dpssi/home/scrsim/ssi_analysis_utility/workflow/scripts  # Path to cgMLSTFinder script directory
+        yaml : /home/simonescrima/Desktop/ssi_analysis_utility/workflow/envs/cgMLSTfinder.yaml
+        script: /home/simonescrima/Desktop/ssi_analysis_utility/workflow/scripts  # Path to cgMLSTFinder script directory
 
     kleborate:
-        yaml : /dpssi/home/scrsim/ssi_analysis_utility/workflow/envs/kleborate.yaml
+        yaml : /home/simonescrima/Desktop/ssi_analysis_utility/workflow/envs/kleborate.yaml
     
     chtyper:
-        script: /dpssi/home/scrsim/ssi_analysis_utility/workflow/scripts  # Path to CHTyper script directory
+        script: /home/simonescrima/Desktop/ssi_analysis_utility/workflow/scripts  # Path to CHTyper script directory
 
     
     # Illumina lineage determination (commented out for now):
-    # reference_fasta_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/lineage_determination/MGAS5005.fasta  # Fasta file for reference genome
-    # lineage_variant_file: /dpssi/home/scrsim/ssi_analysis_utility/resources/lineage_determination/Spyogenes_LOCs.tsv  # File with lineage variants
+    # reference_fasta_file: /home/simonescrima/Desktop/ssi_analysis_utility/resources/lineage_determination/MGAS5005.fasta  # Fasta file for reference genome
+    # lineage_variant_file: /home/simonescrima/Desktop/ssi_analysis_utility/resources/lineage_determination/Spyogenes_LOCs.tsv  # File with lineage variants
 
 
 
