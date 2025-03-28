@@ -16,7 +16,7 @@ output/*
 examples/
 resources/
 output/
-
+.snakemake/
 _proc/
 # The following files ignored are part of a standard python project with minor additions
 _docs/

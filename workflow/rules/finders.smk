@@ -86,7 +86,7 @@ rule VirulenceFinder:
         fi 
 
         # Run virulencefinder.py with specified input, output, and parameters.
-        virulencefinder.py -i {input.R1} {input.R2} -o {output} -p {params.db_path} -mp {params.kma_path}
+        virulencefinder.py -i {input.R1} {input.R2} -o {output} -p {params.db_path} 
         """
 
 # Rule: LREFinder
@@ -99,8 +99,8 @@ rule LREFinder:
         # Path to the LRE database, application, and additional options.
         db_path = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["LRE-finder"]["database"],
         app_path = config["analysis_settings"]["LRE-finder"]["script"],
-        min_con_ID = lambda wildcards: config["Species"][sample_to_organism[wildcards.sample]]["analyses_to_run"]["lre-finder"]["min_consensus_ID"],
-        add_opt = lambda wildcards: config["Species"][sample_to_organism[wildcards.sample]]["analyses_to_run"]["lre-finder"]["additional_option"]
+        min_con_ID = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["LRE-finder"]["min_consensus_ID"],
+        add_opt = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["LRE-finder"]["additional_option"]
     conda:
         config["analysis_settings"]["LRE-finder"]["yaml"]
     output:
@@ -117,7 +117,7 @@ rule LREFinder:
                 cd {output}
         fi 
         # Run LRE-Finder with the specified parameters and inputs.
-        python {params.app_path}/LRE-Finder.py -ipe {input.R1} {input.R2} -o lre-finder -t_db {params.db_path} -ID {params.min_con_ID} {params.add_opt} 
+        python {params.app_path}/LRE-Finder.py -ipe {input.R1} {input.R2} -o {output} -t_db {params.db_path} -ID {params.min_con_ID} {params.add_opt} 
         """
 
 # Rule: serotypefinder

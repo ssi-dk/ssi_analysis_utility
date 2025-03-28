@@ -9,11 +9,14 @@ rule kmeraligner:
     params:
         # Path to the kmerfinder database, KMA aligner, and taxa file.
         db_path = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["kmeraligner"]["database"],
-        add_opt = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["kmeraligner"]["additional_option"]
+        add_opt = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["kmeraligner"]["additional_option"],
+        prefix = "{out}/{sample}/kma/{sample}"
     output:
         directory("{out}/{sample}/kma/")
     conda:
         config["analysis_settings"]["kmeraligner"]["yaml"]
+    message:
+        "kma  -ipe {input.R1} {input.R2} -o {params.prefix} -t_db {params.db_path} {params.add_opt}"
     shell:
         """
         # Check if the output directory exists, and skip if it does.
@@ -25,7 +28,7 @@ rule kmeraligner:
                 mkdir {output}
         fi 
         # Run kmaaligner with the specified parameters and inputs.
-        kma  -ipe {input.R1} {input.R2} -o {output} -t_db {params.db_path} {params.add_opt}
+        kma  -ipe {input.R1} {input.R2} -o {params.prefix} -t_db {params.db_path} {params.add_opt}
         """
 
 
@@ -38,8 +41,8 @@ rule resistance_gene_detection:
         assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample]  # Use wildcards to get the sample's assembly file
     params:
         # Parameters for BLAST, including identity and coverage thresholds
-        id_per = lambda wildcards: config["Species"][sample_to_organism[wildcards.sample]]["analyses_to_run"]["resistance_gene_detection"]["pident_threshold"],
-        cov_per = lambda wildcards: config["Species"][sample_to_organism[wildcards.sample]]["analyses_to_run"]["resistance_gene_detection"]["cov_threshold"],
+        id_per = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["resistance_gene_detection"]["pident_threshold"],
+        cov_per = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["resistance_gene_detection"]["cov_threshold"],
     output:
         # Output is a directory to store BLAST results for the sample
         directory("{out}/{sample}/blast/")
@@ -114,16 +117,22 @@ rule assembly_lineage_determination:
         deltafile= lambda wildcards: wildcards.sample + ".filtered.delta",
         frankenfasta = lambda wildcards: wildcards.sample + ".frankenfasta",
         deltafilterargs= lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["assembly_lineage_determination"]["deltafilterargs"]
+    conda: 
+        config["analysis_settings"]["assembly_lineage_determination"]["yaml"]
     run:
-        import shutil
-
         # Create output directory if it doesn't exist, and run the lineage determination workflow
+        import shutil
         if not os.path.exists(str(output)):
             os.mkdir(str(output))
             external_genome = convert_external_genome.Genome()
             external_genome.import_fasta_file(str(input.assembly))  # Import assembly as external genome
             nucmerpath = shutil.which("nucmer")
             deltafilter_path = shutil.which("delta-filter")
+            print(shutil)
+            print(nucmerpath,params.nucmerargs)
+            print(deltafilter_path,params.deltafilterargs)
+            print(input.reference,input.assembly)
+            print(output)
             convert_external_genome.generate_delta_file(nucmerpath, 
                                                         params.nucmerargs, 
                                                         deltafilter_path,
