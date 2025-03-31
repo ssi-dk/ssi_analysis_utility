@@ -100,7 +100,8 @@ rule LREFinder:
         db_path = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["LRE-finder"]["database"],
         app_path = config["analysis_settings"]["LRE-finder"]["script"],
         min_con_ID = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["LRE-finder"]["min_consensus_ID"],
-        add_opt = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["LRE-finder"]["additional_option"]
+        add_opt = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["LRE-finder"]["additional_option"],
+        prefix = "{out}/{sample}/lre-finder/{sample}"
     conda:
         config["analysis_settings"]["LRE-finder"]["yaml"]
     output:
@@ -117,7 +118,7 @@ rule LREFinder:
                 cd {output}
         fi 
         # Run LRE-Finder with the specified parameters and inputs.
-        python {params.app_path}/LRE-Finder.py -ipe {input.R1} {input.R2} -o {output} -t_db {params.db_path} -ID {params.min_con_ID} {params.add_opt} 
+        python {params.app_path}/LRE-Finder.py -ipe {input.R1} {input.R2} -o {params.prefix} -t_db {params.db_path} -ID {params.min_con_ID} {params.add_opt} 
         """
 
 # Rule: serotypefinder
