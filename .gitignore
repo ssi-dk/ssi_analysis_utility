@@ -13,6 +13,7 @@ output/*
 # If you are using pypi integration
 .pypirc
 
+results/
 examples/
 resources/
 output/

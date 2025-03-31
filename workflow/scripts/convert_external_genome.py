@@ -10,6 +10,7 @@ import subprocess
 import os
 import re
 import argparse
+import shutil
 
 class GenomeStatus(object):
     """
@@ -354,14 +355,30 @@ def _parse_args():
 
 
     parser = argparse.ArgumentParser(description="Meant to be called from the pipeline automatically.")
-    parser.add_argument("--nucmerpath", default="nucmer", help="Path to the 'nucmer' executable.")
-    parser.add_argument("--nucmerargs", default="", help="Optional arguments to pass to the 'nucmer' executable.")
-    parser.add_argument("--deltafilterpath", default="delta-filter", help="Path to the 'delta-filter' executable.")
-    parser.add_argument("--deltafilterargs", default="", help="Optional arguments to pass to the 'delta-filter' executable.")
-    parser.add_argument("--reference", required=True, help="Path to the reference fasta file.")
-    parser.add_argument("--external", required=True, help="Path to the external genome fasta file.")
-    parser.add_argument("--name", default="", help="Name of this external genome.")
-    parser.add_argument("--outputdir", default="", help="Path to outputfolder containing delta and frankenfasta files")
+    parser.add_argument("--nucmerpath", 
+                        default="nucmer", 
+                        help="Path to the 'nucmer' executable.")
+    parser.add_argument("--nucmerargs", 
+                        default="", 
+                        help="Optional arguments to pass to the 'nucmer' executable.")
+    parser.add_argument("--deltafilterpath", 
+                        default="delta-filter",
+                          help="Path to the 'delta-filter' executable.")
+    parser.add_argument("--deltafilterargs", 
+                        default="",
+                        help="Optional arguments to pass to the 'delta-filter' executable.")
+    parser.add_argument("--reference", 
+                        required=True, 
+                        help="Path to the reference fasta file.")
+    parser.add_argument("--external", 
+                        required=True, 
+                        help="Path to the external genome fasta file.")
+    parser.add_argument("--name", 
+                        default="", 
+                        help="Name of this external genome.")
+    parser.add_argument("--outputdir", 
+                        default="", 
+                        help="Path to outputfolder containing delta and frankenfasta files")
     return parser.parse_args()
 
 def generate_delta_file(
@@ -496,26 +513,64 @@ def parse_delta_file(delta_filename, franken_genome, external_genome):
 
 
 def main():
-
-
+    
     commandline_args = _parse_args()
-
-    external_genome = Genome()
-    external_nickname = commandline_args.name
-    external_genome.import_fasta_file(commandline_args.external)
-    generate_delta_file(commandline_args.nucmerpath, commandline_args.nucmerargs, commandline_args.deltafilterpath,
-                        commandline_args.deltafilterargs, external_nickname, commandline_args.reference,
-                        commandline_args.external, commandline_args.outputdir)
-    franken_genome = Genome()
-    parse_delta_file(( os.path.join(commandline_args.outputdir,external_nickname + ".filtered.delta" )), franken_genome, external_genome)
-    franken_genome.write_to_fasta_file(( os.path.join(commandline_args.outputdir,external_nickname + ".frankenfasta")), external_nickname + " ref:")
-
-    #import pkg_resources
-    #nasptool_path = pkg_resources.resource_filename('nasp', 'nasptool_linux_64')
-    #with open(external_nickname + ".frankenfasta", 'w') as handle:
-    #    return_code = subprocess.call([nasptool_path, "frankenfasta", external_nickname + ".filtered.delta"], stdout=handle)
+    print(commandline_args.deltafilterargs)
+    if not os.path.exists(commandline_args.outputdir):
+        os.mkdir(commandline_args.outputdir)
+        external_genome = Genome()
+        external_nickname = commandline_args.name
+        external_genome.import_fasta_file(commandline_args.external) 
+        generate_delta_file(commandline_args.nucmerpath, 
+                            commandline_args.nucmerargs, 
+                            commandline_args.deltafilterpath,
+                            commandline_args.deltafilterargs, 
+                            external_nickname, 
+                            commandline_args.reference,
+                            commandline_args.external, 
+                            commandline_args.outputdir)
+        franken_genome = Genome()
+        parse_delta_file(( os.path.join(commandline_args.outputdir,
+                                        external_nickname + ".filtered.delta" )), 
+                        franken_genome, 
+                        external_genome)
+        franken_genome.write_to_fasta_file(( os.path.join(commandline_args.outputdir,
+                                                          external_nickname + ".frankenfasta")), 
+                                           external_nickname + " ref:")
+    else:
+        print(f"Directory {commandline_args.outputdir} exists, skipping...")
+        exit()  # Skip if directory already exists
 
 
 if __name__ == "__main__":
     main()
 
+        # # Create output directory if it doesn't exist, and run the lineage determination workflow
+        # import shutil
+        # if not os.path.exists(str(output)):
+        #     os.mkdir(str(output))
+        #     external_genome = convert_external_genome.Genome()
+        #     external_genome.import_fasta_file(str(input.assembly))  # Import assembly as external genome
+        #     nucmerpath = shutil.which("nucmer")
+        #     deltafilter_path = shutil.which("delta-filter")
+        #     print(shutil)
+        #     print(nucmerpath,params.nucmerargs)
+        #     print(deltafilter_path,params.deltafilterargs)
+        #     print(input.reference,input.assembly)
+        #     print(output)
+        #     convert_external_genome.generate_delta_file(nucmerpath, 
+        #                                                 params.nucmerargs, 
+        #                                                 deltafilter_path,
+        #                                                 params.deltafilterargs, 
+        #                                                 params.name, 
+        #                                                 input.reference,
+        #                                                 input.assembly, 
+        #                                                 str(output) )  # Generate delta file using nucmer
+        #     franken_genome = convert_external_genome.Genome()
+        #     convert_external_genome.parse_delta_file((os.path.join(str(output), params.deltafile)),
+        #                                             franken_genome, 
+        #                                             external_genome)  # Parse delta file to create Frankenfasta
+        #     franken_genome.write_to_fasta_file( (os.path.join(str(output), str(params.frankenfasta))), str(params.name) + " ref:")  # Write the Frankenfasta file
+        # else:
+        #     print("Directory {output} exists,skipping.")
+        #     exit()  # Skip if directory already exists

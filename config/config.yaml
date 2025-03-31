@@ -23,9 +23,10 @@ analysis_settings:
 
     emm_typing:
         yaml : /home/simonescrima/Desktop/ssi_analysis_utility/workflow/envs/emm_typing.yaml
-
+        
     assembly_lineage_determination:
         yaml : /home/simonescrima/Desktop/ssi_analysis_utility/workflow/envs/assembly_lineage_determination.yaml
+        script : /home/simonescrima/Desktop/ssi_analysis_utility/workflow/scripts # Path to convert genome script directory
     
     plasmidfinder:
         yaml : /home/simonescrima/Desktop/ssi_analysis_utility/workflow/envs/plasmidfinder.yaml
@@ -53,7 +54,8 @@ analysis_settings:
     kleborate:
         yaml : /home/simonescrima/Desktop/ssi_analysis_utility/workflow/envs/kleborate.yaml
     
-    chtyper:
+    CHtyper:
+        yaml : /home/simonescrima/Desktop/ssi_analysis_utility/workflow/envs/CHtyper.yaml
         script: /home/simonescrima/Desktop/ssi_analysis_utility/workflow/scripts  # Path to CHTyper script directory
 
     

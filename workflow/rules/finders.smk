@@ -201,5 +201,5 @@ rule cgMLSTFinder:
                 mkdir {output}
         fi 
         # Run cgMLSTFinder with the specified inputs, outputs, and scheme.
-        python {params.app_path}/cgMLST.py  -i {input.R1},{input.R2} -o {output} -db {params.db_path} -k {params.kma_path} -s {params.scheme}
+        python {params.app_path}/cgMLST.py  -i {input.R1},{input.R2} -o {output} -db {params.db_path}  -s {params.scheme}
         """

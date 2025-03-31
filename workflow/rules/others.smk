@@ -112,6 +112,7 @@ rule assembly_lineage_determination:
         directory("{out}/{sample}/assembly_lineage/")
     params:
         # Various parameters including delta file name, frankenfasta file, and arguments for nucmer and deltafilter
+        app_path = config["analysis_settings"]["assembly_lineage_determination"]["script"],
         name = lambda wildcards: wildcards.sample,
         nucmerargs = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["assembly_lineage_determination"]["nucmerargs"],
         deltafile= lambda wildcards: wildcards.sample + ".filtered.delta",
@@ -119,37 +120,19 @@ rule assembly_lineage_determination:
         deltafilterargs= lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["assembly_lineage_determination"]["deltafilterargs"]
     conda: 
         config["analysis_settings"]["assembly_lineage_determination"]["yaml"]
-    run:
-        # Create output directory if it doesn't exist, and run the lineage determination workflow
-        import shutil
-        if not os.path.exists(str(output)):
-            os.mkdir(str(output))
-            external_genome = convert_external_genome.Genome()
-            external_genome.import_fasta_file(str(input.assembly))  # Import assembly as external genome
-            nucmerpath = shutil.which("nucmer")
-            deltafilter_path = shutil.which("delta-filter")
-            print(shutil)
-            print(nucmerpath,params.nucmerargs)
-            print(deltafilter_path,params.deltafilterargs)
-            print(input.reference,input.assembly)
-            print(output)
-            convert_external_genome.generate_delta_file(nucmerpath, 
-                                                        params.nucmerargs, 
-                                                        deltafilter_path,
-                                                        params.deltafilterargs, 
-                                                        params.name, 
-                                                        input.reference,
-                                                        input.assembly, 
-                                                        str(output) )  # Generate delta file using nucmer
-            franken_genome = convert_external_genome.Genome()
-            convert_external_genome.parse_delta_file((os.path.join(str(output), params.deltafile)),
-                                                    franken_genome, 
-                                                    external_genome)  # Parse delta file to create Frankenfasta
-            franken_genome.write_to_fasta_file( (os.path.join(str(output), str(params.frankenfasta))), str(params.name) + " ref:")  # Write the Frankenfasta file
-        else:
-            print("Directory {output} exists,skipping.")
-            exit()  # Skip if directory already exists
-
+    shell:
+        """ 
+        nucmer_path=$(which nucmer)
+        deltafilder_path=$(which delta-filter)
+        python {params.app_path}/convert_external_genome.py --nucmerpath $nucmer_path \
+                                                            --nucmerargs {params.nucmerargs} \
+                                                            --deltafilterpath $deltafilder_path \
+                                                            --deltafilterargs {params.deltafilterargs} \
+                                                            --reference {input.reference} \
+                                                            --external {input.assembly} \
+                                                            --name {params.name} \
+                                                            --outputdir {output} \
+        """
 
 # Rule for Kleborate typing (pathogen typing based on assembly)
 rule kleborate:
@@ -184,15 +167,15 @@ rule CHtyper:
         assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample]
     params:
         # Parameters for CHtyper including application path, database, threshold, coverage, and BLAST options
-        app_path = config["analysis_settings"]["chtyper"]["script"],
-        database = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["chtyper"]["database"],
-        threshold = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["chtyper"]["threshold"],
-        coverage = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["chtyper"]["coverage"],
+        app_path = config["analysis_settings"]["CHtyper"]["script"],
+        database = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["CHtyper"]["database"],
+        threshold = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["CHtyper"]["threshold"],
+        coverage = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["CHtyper"]["coverage"],
     output:
         # Output is a directory to store CHtyper results
         directory("{out}/{sample}/chtyper/")
     conda:
-        config["analysis_settings"]["resistance_gene_detection"]["yaml"]
+        config["analysis_settings"]["CHtyper"]["yaml"]
     shell:
         """
         # Check if the output directory exists, skip execution if it does
