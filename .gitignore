@@ -1,4 +1,3 @@
-examples*
 .snakemake/
 Logs
 __pycache__**
