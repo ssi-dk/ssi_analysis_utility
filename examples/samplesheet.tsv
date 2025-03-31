@@ -1,2 +1,2 @@
 sample_name	Illumina_read_files	Nanopore_read_file	assembly_file	organism	variant	notes
-ERR3528110	/home/cucumbergebt/SSPipe/Dataset/reads/ERR3528110_1.fastq.gz,/home/cucumbergebt/SSPipe/Dataset/reads/ERR3528110_2.fastq.gz	Na	/home/cucumbergebt/SSPipe/Dataset/assemblies/ERR3528110/contigs.fa	E.coli	Na	Na
+ERR3528110	examples/Dataset/reads/ERR3528110_1.fastq.gz,examples/Dataset/reads/ERR3528110_2.fastq.gz	Na	examples/Dataset/assemblies/ERR3528110/contigs.fa	E.coli	Na	Na
