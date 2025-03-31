@@ -3,9 +3,9 @@
 # to the sample sheet and the output folder for analysis results.
 
 input_manager:
-    path: /home/simonescrima/Desktop/ssi_analysis_utility/examples/samplesheet.tsv  # Path to the input samplesheet (CSV/TSV file)
-    config_species : /home/simonescrima/Desktop/ssi_analysis_utility/workflow/configs_species/
-    out_folder: /home/simonescrima/Desktop/ssi_analysis_utility/results  # Folder where the analysis results will be saved
+    path: ~/SSPipe/sheet/samplesheet.tsv  # Path to the input samplesheet (CSV/TSV file)
+    config_species : workflow/configs_species/
+    out_folder: ~/SSPipe/Results  # Folder where the analysis results will be saved
     
 
 
@@ -29,7 +29,7 @@ analysis_settings:
         script : /home/simonescrima/Desktop/ssi_analysis_utility/workflow/scripts # Path to convert genome script directory
     
     plasmidfinder:
-        yaml : /home/simonescrima/Desktop/ssi_analysis_utility/workflow/envs/plasmidfinder.yaml
+        yaml : ../envs/plasmidfinder.yaml
         
     resfinder:
         yaml : /home/simonescrima/Desktop/ssi_analysis_utility/workflow/envs/resfinder.yaml

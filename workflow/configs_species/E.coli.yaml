@@ -6,89 +6,89 @@
 analyses_to_run: 
 
     kmeraligner:
-        status : True
+        status : False
         Title : Kmer Aligner on two pair reads
         ID: 90
         additional_option : -matrix 
-        database : /home/simonescrima/Desktop/ssi_analysis_utility/resources/plasmidfinder_db/enterobacteriales
+        database : ../resources/plasmidfinder_db/enterobacteriales
 
     emm_typing: 
-        status : True
+        status : False
         Title: Typing of M protein gene using blast against CDC curated alleles
         cov_threshold: 90
-        emm_allele_file: /home/simonescrima/Desktop/ssi_analysis_utility/resources/emm_typing/emm_alleles.fasta  # Fasta file with emm alleles
-        emm_cluster_file: /home/simonescrima/Desktop/ssi_analysis_utility/resources/emm_typing/emm_enn_mrp_subgroups.txt  # File with emm allele clusters
+        emm_allele_file: ../resources/emm_typing/emm_alleles.fasta  # Fasta file with emm alleles
+        emm_cluster_file: ../resources/emm_typing/emm_enn_mrp_subgroups.txt  # File with emm allele clusters
         
     assembly_lineage_determination: 
-        status : True
+        status : False
         Title: Lineage determination based on presence of specified SNPs when mapping genome assembly against reference genome
         percent_snp_threshold: 50
         nucmerargs : "\"\""
         deltafilterargs : "\"-q -r -o 100\""
-        reference_fasta_file: /home/simonescrima/Desktop/ssi_analysis_utility/resources/lineage_determination/MGAS5005.fasta
-        lineage_variant_file: /home/simonescrima/Desktop/ssi_analysis_utility/resources/lineage_determination/Spyogenes_LOCs.tsv
+        reference_fasta_file: ../resources/lineage_determination/MGAS5005.fasta
+        lineage_variant_file: ../resources/lineage_determination/Spyogenes_LOCs.tsv
 
     resistance_gene_detection: 
-        status : True
+        status : False
         Title: Presence of resistance gens tetM, ermA and ermB
-        query_fasta_resistance_gene_detection: /home/simonescrima/Desktop/ssi_analysis_utility/resources/AMR/AMR_genes.fasta  # Fasta file with AMR genes
-        query_fasta_virulence_gene_detection: /home/simonescrima/Desktop/ssi_analysis_utility/resources/virulence_factors/VFDB_genes.fasta  # Fasta file with virulence genes
+        query_fasta_resistance_gene_detection: ../resources/AMR/AMR_genes.fasta  # Fasta file with AMR genes
+        query_fasta_virulence_gene_detection: ../resources/virulence_factors/VFDB_genes.fasta  # Fasta file with virulence genes
         pident_threshold: 80
         cov_threshold: 80
         
     virulence_gene_detection: 
-        status : True
+        status : False
         Title: Presence of Streptococcal virulence genes from the Virulence Factor Database
 
     plasmidfinder: 
         status : True
         Title : Plasmidfinder
-        database: /home/simonescrima/Desktop/ssi_analysis_utility/resources/plasmidfinder_db/  # Path to PlasmidFinder database
+        database: ../resources/plasmidfinder_db/  # Path to PlasmidFinder database
 
     resfinder: 
-        status : True
+        status : False
         Title : Resfinder
-        resfinder_db: /home/simonescrima/Desktop/ssi_analysis_utility/resources/resfinder_db/ # ResFinder database for AMR detection
-        pointfinder_db: /home/simonescrima/Desktop/ssi_analysis_utility/resources/pointfinder_db/  # PointFinder database for AMR point mutations
-        disinfinder_db: /home/simonescrima/Desktop/ssi_analysis_utility/resources/disinfinder_db/  # DisinFinder database for disinfectant resistance
+        resfinder_db: ../resources/resfinder_db/ # ResFinder database for AMR detection
+        pointfinder_db: ../resources/pointfinder_db/  # PointFinder database for AMR point mutations
+        disinfinder_db: ../resources/disinfinder_db/  # DisinFinder database for disinfectant resistance
 
     virulencefinder : 
-        status : True
+        status : False
         Title : Virulence finder
-        database: /home/simonescrima/Desktop/ssi_analysis_utility/resources/virulencefinder_db  # VirulenceFinder database
+        database: ../resources/virulencefinder_db  # VirulenceFinder database
 
     LRE-finder: 
-        status : True
+        status : False
         Title : LRE-Finder
         min_consensus_ID : 80
         additional_option : -1t1 -cge -matrix
-        database: /home/simonescrima/Desktop/ssi_analysis_utility/resources/lre-finder_db/elm  # Database for LRE-finder
+        database: ../resources/lre-finder_db/elm  # Database for LRE-finder
 
     serotypefinder :
-        status : True 
+        status : False
         Title : Serotypefinder
-        database: /home/simonescrima/Desktop/ssi_analysis_utility/resources/serotypefinder_db/  # SerotypeFinder database
+        database: ../resources/serotypefinder_db/  # SerotypeFinder database
     
     kleborate : 
-        status : True
+        status : False
         Title : Kleborate
         preset : kpsc
 
     CHtyper : 
-        status : True
+        status : False
         Title: Chtyper
         threshold : 0.90
         coverage : 0.60
-        database: /home/simonescrima/Desktop/ssi_analysis_utility/resources/chtyper_db/  # CHTyper database
+        database: ../resources/chtyper_db/  # CHTyper database
     
     kmerfinder : 
         status : False
         Title : Kmerfinder
-        taxa : /home/simonescrima/Desktop/ssi_analysis_utility/resources/kmerfinder_db/kmerfinder_db_old/bacteria.tax
-        database: /home/simonescrima/Desktop/ssi_analysis_utility/resources/kmerfinder_db/kmerfinder_db_old/bacteria.ATG  # KmerFinder database for bacterial genomes
+        taxa : ../resources/kmerfinder_db/kmerfinder_db_old/bacteria.tax
+        database: ../resources/kmerfinder_db/kmerfinder_db_old/bacteria.ATG  # KmerFinder database for bacterial genomes
 
     cgMLSTFinder : 
-        status : True
+        status : False
         Title : cgMLST
         scheme : ecoli # choose between  salmonella,campylobacter,yersinia,clostridium,ecoli
-        database: /home/simonescrima/Desktop/ssi_analysis_utility/resources/cgmlstfinder_db/  # cgMLSTFinder database
+        database: ../resources/cgmlstfinder_db/  # cgMLSTFinder database

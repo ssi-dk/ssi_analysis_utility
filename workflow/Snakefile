@@ -4,6 +4,7 @@ import yaml
 from scripts import convert_external_genome
 import warnings
 
+configfile: "config/config.yaml"
 
 # Read the CSV file
 CSV = config['input_manager']['path']
