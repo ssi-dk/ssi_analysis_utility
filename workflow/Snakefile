@@ -29,7 +29,6 @@ sample_to_nanopore = {row['sample_name']: row['Nanopore_read_file'] for idx, row
 sample_to_assembly_file = {row['sample_name']: row['assembly_file'] for idx, row in CSV_DATA.iterrows()}
 sample_to_organism = {row['sample_name']: row['organism'] for idx, row in CSV_DATA.iterrows()}
 
-
 # Load species-specific configurations dynamically
 species_configs = {}
 for species in set(sample_to_organism.values()):

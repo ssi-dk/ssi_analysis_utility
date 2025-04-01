@@ -15,19 +15,16 @@ rule PlasmidFinder:
         directory("{out}/{sample}/plasmidfinder/")
     conda:
         config["analysis_settings"]["plasmidfinder"]["yaml"]
-    message:
-        "mkdir -p {output}"
     shell:
         """
-        mkdir -p {output}
-        # # Check if the output directory exists, and skip if it does.
-        # if [ -d {output} ]; 
-        #     then
-        #         echo "Directory {output} exists, skipping."
-        #         exit 1
-        #     else
-        #         mkdir {output}
-        # fi        
+        # Check if the output directory exists, and skip if it does.
+        if [ -d {output} ]; 
+            then
+                echo "Directory {output} exists, skipping."
+                exit 1
+            else
+                mkdir {output}
+        fi        
         # Run plasmidfinder.py with specified input, output, and parameters.
         plasmidfinder.py -i {input.R1} {input.R2} -o {output} -p {params.db_path}  -x
         """
@@ -115,8 +112,8 @@ rule LREFinder:
                 exit 1
             else
                 mkdir {output}
-                cd {output}
         fi 
+        
         # Run LRE-Finder with the specified parameters and inputs.
         python {params.app_path}/LRE-Finder.py -ipe {input.R1} {input.R2} -o {params.prefix} -t_db {params.db_path} -ID {params.min_con_ID} {params.add_opt} 
         """
@@ -150,31 +147,31 @@ rule serotypefinder:
 
 # Rule: kmerfinder
 # Identifies microbial species or strain using k-mer-based alignment.
-rule kmerfinder:
-    input:
-        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
-        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1]
-    params:
-        # Path to the kmerfinder database, KMA aligner, and taxa file.
-        db_path = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["kmerfinder"]["database"],
-        taxa = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["kmerfinder"]["taxa"]
-    output:
-        directory("{out}/{sample}/kmerfinder/")
-    conda:
-        config["analysis_settings"]["kmerfinder"]["yaml"]
-    shell:
-        """
-        # Check if the output directory exists, and skip if it does.
-        if [ -d {output} ]; 
-            then
-                echo "Directory {output} exists, skipping."
-                exit 1
-            else
-                mkdir {output}
-        fi 
-        # Run kmerfinder.py with the specified parameters and inputs.
-        kmerfinder.py  -i {input.R1} {input.R2} -o {output} -db {params.db_path} -tax {params.taxa}
-        """
+# rule kmerfinder:
+#     input:
+#         R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
+#         R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1]
+#     params:
+#         # Path to the kmerfinder database, KMA aligner, and taxa file.
+#         db_path = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["kmerfinder"]["database"],
+#         taxa = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["kmerfinder"]["taxa"]
+#     output:
+#         directory("{out}/{sample}/kmerfinder/")
+#     conda:
+#         config["analysis_settings"]["kmerfinder"]["yaml"]
+#     shell:
+#         """
+#         # Check if the output directory exists, and skip if it does.
+#         if [ -d {output} ]; 
+#             then
+#                 echo "Directory {output} exists, skipping."
+#                 exit 1
+#             else
+#                 mkdir {output}
+#         fi 
+#         # Run kmerfinder.py with the specified parameters and inputs.
+#         kmerfinder.py  -i {input.R1} {input.R2} -o {output} -db {params.db_path} -tax {params.taxa}
+#         """
 
 # Rule: cgMLSTFinder
 # Runs cgMLSTFinder for comparative genomic typing.

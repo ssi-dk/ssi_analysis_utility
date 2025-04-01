@@ -2,3 +2,4 @@
 Logs
 __pycache__**
 examples/Dataset/reads/*gz
+resources/

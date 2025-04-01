@@ -147,6 +147,8 @@ rule kleborate:
         directory("{out}/{sample}/kleborate/")
     conda:
         config["analysis_settings"]["kleborate"]["yaml"]
+    message:
+        "kleborate -a {input.assembly}  -o {output} -p {params.preset} "
     shell:
         """
         # Check if the output directory exists, skip execution if it does
