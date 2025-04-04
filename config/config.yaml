@@ -4,6 +4,7 @@
 
 input_manager:
     path: examples/samplesheet.tsv  # Path to the input samplesheet (CSV/TSV file)
+    database_path: resources
     config_species : workflow/configs_species/
     out_folder: examples/Results  # Folder where the analysis results will be saved
     
@@ -30,12 +31,23 @@ analysis_settings:
     
     plasmidfinder:
         yaml : ../envs/plasmidfinder.yaml
+        database: plasmidfinder_db
         
     resfinder:
         yaml : ../envs/resfinder.yaml
+        database: resfinder_db
+
+    pointfinder:
+        yaml : ../envs/pointfinder.yaml
+        database: pointfinder_db
+
+    disinfinder:
+        yaml : ../envs/disinfinder.yaml
+        database: disinfinder_db
 
     virulencefinder:
         yaml : ../envs/virulencefinder.yaml
+        database: virulencefinder_db
         
     LRE-finder:
         yaml : ../envs/LREfinder.yaml

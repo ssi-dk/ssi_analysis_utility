@@ -1,3 +1,4 @@
+from pprint import pprint # devpkg for printing objects
 import pandas as pd
 import os
 import yaml
@@ -12,10 +13,6 @@ CSV_DATA = pd.read_csv(CSV, sep='\t')
 
 # Path to species specific configuration files
 SPECIES_PATH = config['input_manager']['config_species']
-
-############ Example TSV format ################:
-# sample_name     Illumina_read_files     Nanopore_read_file      ...  ...       variant notes
-# GAS-2022-1029   GAS-2022-1029_S42_L555_R1_001.fastq.gz,GAS-2022-1029_S42_L555_R2_001.fastq.gz   GAS-2022-1029_nanopore.fastq.gz GAS-2022-1029.fasta  
 
 # Setup output folder
 OUT_FOLDER = config['input_manager']['out_folder']
@@ -42,8 +39,8 @@ for species in set(sample_to_organism.values()):
                         Skipping analyses for {species}.", UserWarning)
         species_configs[species] = {}  # Empty config to ensure skipping analyses
 
-       
 
+database_path = config['input_manager']['database_path']
 
 
 ##############################################################################
@@ -56,115 +53,99 @@ for species in set(sample_to_organism.values()):
 rule all:
     input:
         expand(
-            "{out}/{sample}/kma/", 
+            "%s/{sample}/kma/" %OUT_FOLDER, 
             sample=[
                 s for s in SAMPLES 
                 if species_configs[sample_to_organism[s]]["analyses_to_run"]["kmeraligner"]["status"] is True
-            ],
-            out=OUT_FOLDER
+            ]
         ),
         expand(
-            "{out}/{sample}/emm_typing/", 
+            "%s/{sample}/emm_typing/" %OUT_FOLDER, 
             sample=[
                 s for s in SAMPLES 
                 if species_configs[sample_to_organism[s]]["analyses_to_run"]["emm_typing"]["status"] is True
-            ],
-            out=OUT_FOLDER
+            ]
         ),       
         expand(
-            "{out}/{sample}/blast/", 
+            "%s/{sample}/blast/" %OUT_FOLDER, 
             sample=[
                 s for s in SAMPLES 
                 if species_configs[sample_to_organism[s]]["analyses_to_run"]["resistance_gene_detection"]["status"] is True
-            ],
-            out=OUT_FOLDER
+            ]
         ),
         expand(
-            "{out}/{sample}/assembly_lineage/", 
+            "%s/{sample}/assembly_lineage/" %OUT_FOLDER, 
             sample=[
                 s for s in SAMPLES 
                 if species_configs[sample_to_organism[s]]["analyses_to_run"]["assembly_lineage_determination"]["status"] is True
-            ],
-            out=OUT_FOLDER
+            ]
         ),
         expand(
-            "{out}/{sample}/plasmidfinder/", 
+            "%s/{sample}/plasmidfinder/" %OUT_FOLDER, 
             sample=[
                 s for s in SAMPLES 
                 if species_configs[sample_to_organism[s]]["analyses_to_run"]["plasmidfinder"]["status"] is True
-            ],
-            out=OUT_FOLDER
+            ]
         ),
         expand(
-            "{out}/{sample}/resfinder/", 
+            "%s/{sample}/resfinder/" %OUT_FOLDER, 
             sample=[
                 s for s in SAMPLES 
                 if species_configs[sample_to_organism[s]]["analyses_to_run"]["resfinder"]["status"] is True
-            ],
-            out=OUT_FOLDER
+            ]
         ),
         expand(
-            "{out}/{sample}/virulencefinder/", 
+            "%s/{sample}/virulencefinder/" %OUT_FOLDER, 
             sample=[
                 s for s in SAMPLES 
                 if species_configs[sample_to_organism[s]]["analyses_to_run"]["virulencefinder"]["status"] is True
-            ],
-            out=OUT_FOLDER
+            ]
         ),
         expand(
-            "{out}/{sample}/lre-finder/", 
+            "%s/{sample}/lre-finder/" %OUT_FOLDER, 
             sample=[
                 s for s in SAMPLES 
                 if species_configs[sample_to_organism[s]]["analyses_to_run"]["LRE-finder"]["status"] is True
-            ],
-            out=OUT_FOLDER
+            ]
         ),
         expand(
-            "{out}/{sample}/serotypefinder/", 
+            "%s/{sample}/serotypefinder/" %OUT_FOLDER, 
             sample=[
                 s for s in SAMPLES 
                 if species_configs[sample_to_organism[s]]["analyses_to_run"]["serotypefinder"]["status"] is True
-            ],
-            out=OUT_FOLDER
+            ]
         ),
         expand(
-            "{out}/{sample}/kleborate/", 
+            "%s/{sample}/kleborate/" %OUT_FOLDER, 
             sample=[
                 s for s in SAMPLES 
                 if species_configs[sample_to_organism[s]]["analyses_to_run"]["kleborate"]["status"] is True
-            ],
-            out=OUT_FOLDER
+            ]
         ),
         expand(
-            "{out}/{sample}/chtyper/", 
+            "%s/{sample}/chtyper/" %OUT_FOLDER, 
             sample=[
                 s for s in SAMPLES 
                 if species_configs[sample_to_organism[s]]["analyses_to_run"]["CHtyper"]["status"] is True
-            ],
-            out=OUT_FOLDER
+            ]
         ),
         # expand(
-        #     "{out}/{sample}/kmerfinder/", 
+        #     "%s/{sample}/kmerfinder/" %OUT_FOLDER, 
         #     sample=[
         #         s for s in SAMPLES 
         #         if species_configs[sample_to_organism[s]]["analyses_to_run"]["kmerfinder"]["status"] is True
-        #     ],
-        #     out=OUT_FOLDER
+        #     ]
         # ),
         expand(
-            "{out}/{sample}/cgmlstfinder/", 
+            "%s/{sample}/cgmlstfinder/" %OUT_FOLDER,
             sample=[
                 s for s in SAMPLES 
                 if species_configs[sample_to_organism[s]]["analyses_to_run"]["cgMLSTFinder"]["status"] is True
-            ],
-            out=OUT_FOLDER
+            ]
         ),
 
-
-
-
+include : "rules/db_setups.smk"
 include : "rules/finders.smk"
 include : "rules/others.smk"
-    
 
 
