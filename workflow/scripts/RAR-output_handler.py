@@ -170,7 +170,7 @@ def filter_resfinder_data(resfinder_df,
                                 (resfinder_df["Coverage"] >= coverage_threshold)]
 
     return resfinder_df
-#IncI1-I(Alpha)
+
 
 
 def build_phenotype_matrix(resfinder_df):
