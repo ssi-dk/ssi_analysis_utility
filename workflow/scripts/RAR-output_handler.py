@@ -119,8 +119,7 @@ def collect_data(sample_paths):
     return plasmid_concat, resfinder_concat
 
 
-def filter_data(plasmid_df, 
-                resfinder_df):
+def filter_plasmidfinder_data(plasmid_df):
     """
     Filter raw result data based on set tresholds
     Parameters
@@ -130,12 +129,35 @@ def filter_data(plasmid_df,
     resfinder_df : pandas.DataFrame object
         Pandas dataframe containing the results from Resfinder
     """
-
-    # Convert 'Identity' to numeric and filter out values <= 80
+    
+    
+    # Convert 'Identity' to numeric and check the name of the plasmid
+    # if the name starts with Col then the ID threshold is set to 80 
+    # otherwise set it at 95%
+    
+    # Ensure the 'Identity' column is numeric (non-numeric values become NaN)
     plasmid_df["Identity"] = pd.to_numeric(plasmid_df.get("Identity", 
                                                           pd.Series()), 
                                            errors="coerce")
-    plasmid_df = plasmid_df[(plasmid_df["Identity"] > 80) | (plasmid_df["Identity"].isna())]
+    
+    # Create two boolean masks:
+    # - One for plasmids that start with 'Col' (e.g., ColRNAI, ColE1, etc.)
+    # - Another for all other plasmid names
+    is_col_plasmid = plasmid_df['Plasmid'].str.startswith("Col", na=False)
+    is_non_col_plasmid = ~is_col_plasmid
+
+    # Apply filtering:
+    # - Keep Col plasmids if Identity > 80
+    # - Keep non-Col plasmids if Identity > 95
+    filtered_plasmid_df = plasmid_df[(is_col_plasmid & (plasmid_df['Identity'] >= 80)) |
+                                     (is_non_col_plasmid & (plasmid_df['Identity'] >= 95))]
+
+    
+    return filtered_plasmid_df
+
+def filter_resfinder_data(resfinder_df,
+                          coverage_threshold,
+                          identity_threshold):
 
     # Filter ResFinder hits where both Identity and Coverage are >= 95
     resfinder_df["Identity"] = pd.to_numeric(resfinder_df.get("Identity", 
@@ -144,10 +166,11 @@ def filter_data(plasmid_df,
     resfinder_df["Coverage"] = pd.to_numeric(resfinder_df.get("Coverage", 
                                                               pd.Series()), 
                                             errors="coerce")
-    resfinder_df = resfinder_df[(resfinder_df["Identity"] >= 95) & (resfinder_df["Coverage"] >= 95)]
+    resfinder_df = resfinder_df[(resfinder_df["Identity"] >= identity_threshold) & 
+                                (resfinder_df["Coverage"] >= coverage_threshold)]
 
-    return plasmid_df, resfinder_df
-
+    return resfinder_df
+#IncI1-I(Alpha)
 
 
 def build_phenotype_matrix(resfinder_df):
@@ -197,8 +220,10 @@ def main():
         sys.exit(1)
 
     # Step 2: Apply quality filters to the data
-    plasmid_df, resfinder_df = filter_data(plasmid_df, 
-                                           resfinder_df)
+    plasmid_df= filter_plasmidfinder_data(plasmid_df)
+    resfinder_df = filter_resfinder_data(resfinder_df,
+                                         95,
+                                         95)
 
     # Step 3: Retain only relevant plasmid columns
     if "Plasmid" in plasmid_df.columns:
