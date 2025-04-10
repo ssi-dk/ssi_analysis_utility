@@ -132,3 +132,18 @@ rule setup_VirulenceFinder:
             fi
         done
         """
+
+
+rule setup_AMRFinder:
+    conda:
+        config["analysis_settings"]["amrfinder"]["yaml"]
+    output:
+        database = directory(f'{database_path}/{config["analysis_settings"]["amrfinder"]["database"]}')
+    log:
+        stdout = f'Logs/virulencefinder_db.log'
+    message:
+        "[AMRFinder_db]: Setting up VirulenceFinder_db"
+    shell:
+        """
+        amrfinder_update --database $(dirname {output.database})
+        """
