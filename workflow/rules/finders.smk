@@ -208,19 +208,17 @@ rule AMRFinder:
     input:
         assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample],
     params:
-        # Paths to the resistance, point mutation, and disinfectant resistance databases.
+        # Paths to the databases
         res_db_path = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["amrfinder"]["database"],
-        organism = lambda wildcards: sample_to_organism[wildcards.sample]
+        # Point mutation
+        organism = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["amrfinder"]["organism"]
     output:
         # "{out}/{sample}/amrfinder/{sample}.tsv"
         directory("{out}/{sample}/amrfinder")
-
     conda:
         config["analysis_settings"]["amrfinder"]["yaml"]
-    message:
-        "amrfinder --nucleotide {input.assembly} --database {params.res_db_path} --output {output}/{wildcards.sample}.tsv"
     shell:
         """
         mkdir -p {output}
-        amrfinder --nucleotide {input.assembly} --database {params.res_db_path} --output {output}/{wildcards.sample}.tsv
+        amrfinder --nucleotide {input.assembly} --database {params.res_db_path} {params.organism} --output {output}/{wildcards.sample}.tsv
         """
