@@ -93,9 +93,12 @@ analyses_to_run:
         scheme : ecoli # choose between  salmonella,campylobacter,yersinia,clostridium,ecoli
         database: resources/cgmlstfinder_db/  # cgMLSTFinder database
 
-
     amrfinder:
         status : True
         Title : NCBI resistance gene finder
         database: resources/amrfinderplus/latest
         organism: --organism Escherichia # Leave blank or insert --organism alongside one of the supported organisms, listed here: https://github.com/evolarjun/amr/wiki/Curated-organisms
+
+    mlst:
+        status : True
+        Title : MLST by Torsten Seeman
