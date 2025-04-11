@@ -10,11 +10,11 @@ rule PlasmidFinder:
         database = rules.setup_PlasmidFinder.output.database
     output:
         # Output directory for plasmidfinder results.
-        directory("%s/{sample}/plasmidfinder" %OUT_FOLDER)
+        directory("%s/{sample}/PlasmidFinder" %OUT_FOLDER)
     conda:
         config["analysis_settings"]["plasmidfinder"]["yaml"]
     log:
-        stdout = 'Logs/PlasmidFinder_{sample}.log'
+        stdout = 'Logs/{sample}/PlasmidFinder.log'
     message:
         "[PlasmidFinder]: Running PlasmidFinder on {wildcards.sample}"
     shell:
@@ -37,11 +37,11 @@ rule ResFinder:
         point_database = rules.setup_PointFinder.output.database,
         disin_database = rules.setup_DisinFinder.output.database
     output:
-        directory("%s/{sample}/resfinder" %OUT_FOLDER)
+        directory("%s/{sample}/ResFinder" %OUT_FOLDER)
     conda:
         config["analysis_settings"]["resfinder"]["yaml"]
     log:
-        stdout = 'Logs/ResFinder_{sample}.log'
+        stdout = 'Logs/{sample}/ResFinder.log'
     message:
         "[ResFinder]: Running ResFinder, PointFinder, and DisinFinder on {wildcards.sample}"
     shell:
@@ -62,11 +62,11 @@ rule VirulenceFinder:
         R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
         database = rules.setup_VirulenceFinder.output.database
     output:
-        directory("%s/{sample}/virulencefinder" %OUT_FOLDER)
+        directory("%s/{sample}/VirulenceFinder" %OUT_FOLDER)
     conda:
         config["analysis_settings"]["virulencefinder"]["yaml"]
     log:
-        stdout = 'Logs/VirulenceFinder_{sample}.log'
+        stdout = 'Logs/{sample}/VirulenceFinder.log'
     message:
         "[VirulenceFinder]: Running VirulenceFinder on {wildcards.sample}"
     shell:
@@ -206,11 +206,11 @@ rule AMRFinder:
         organism = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["amrfinder"]["organism"]
     output:
         # "{out}/{sample}/amrfinder/{sample}.tsv"
-        directory("%s/{sample}/amrfinder" %OUT_FOLDER)
+        directory("%s/{sample}/AMRFinder" %OUT_FOLDER)
     conda:
         config["analysis_settings"]["amrfinder"]["yaml"]
     log:
-        stdout = 'Logs/AMRFinder_{sample}.log'
+        stdout = 'Logs/{sample}/AMRFinder.log'
     message:
         "[AMRFinder]: Running AMRFinderFinder on {wildcards.sample}"
     shell:

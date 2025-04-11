@@ -4,7 +4,7 @@ rule setup_PlasmidFinder:
     output: 
         database = directory(f'{database_path}/{config["analysis_settings"]["plasmidfinder"]["database"]}')
     log:
-        stdout = f'Logs/setup_PlasmidFinder.log'
+        stdout = f'Logs/Databases/setup_PlasmidFinder.log'
     message:
         "[setup_PlasmidFinder]: Setting up PlasmidFinder database"
     shell:
@@ -31,7 +31,7 @@ rule setup_ResFinder:
     output:
         database = directory(f'{database_path}/{config["analysis_settings"]["resfinder"]["database"]}')
     log:
-        stdout = f'Logs/setup_ResFinder.log'
+        stdout = f'Logs/Databases/setup_ResFinder.log'
     message:
         "[setup_ResFinder]: Setting up ResFinder database"
     shell:
@@ -58,7 +58,7 @@ rule setup_PointFinder:
     output:
         database = directory(f'{database_path}/{config["analysis_settings"]["pointfinder"]["database"]}')
     log:
-        stdout = f'Logs/setup_PointFinder.log'
+        stdout = f'Logs/Databases/setup_PointFinder.log'
     message:
         "[setup_PointFinder]: Setting up PointFinder database"
     shell:
@@ -86,7 +86,7 @@ rule setup_DisinFinder:
     output:
         database = directory(f'{database_path}/{config["analysis_settings"]["disinfinder"]["database"]}')
     log:
-        stdout = f'Logs/setup_DisinFinder.log'
+        stdout = f'Logs/Databases/setup_DisinFinder.log'
     message:
         "[setup_DisinFinder]: Setting up DisinFinder database"
     shell:
@@ -113,7 +113,7 @@ rule setup_VirulenceFinder:
     output:
         database = directory(f'{database_path}/{config["analysis_settings"]["virulencefinder"]["database"]}')
     log:
-        stdout = f'Logs/setup_VirulenceFinder.log'
+        stdout = f'Logs/Databases/setup_VirulenceFinder.log'
     message:
         "[setup_VirulenceFinder]: Setting up VirulenceFinder database"
     shell:
@@ -140,10 +140,13 @@ rule setup_AMRFinder:
     output:
         database = directory(f'{database_path}/{config["analysis_settings"]["amrfinder"]["database"]}')
     log:
-        stdout = f'Logs/setup_AMRFinder.log'
+        stdout = f'Logs/Databases/setup_AMRFinder.log'
     message:
         "[setup_AMRFinder]: Setting up AMRFinderPlus database"
     shell:
         """
-        amrfinder_update --database $(dirname {output.database})
+        cmd="amrfinder_update --database $(dirname {output.database})"
+            
+        echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
         """

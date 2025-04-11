@@ -81,21 +81,21 @@ rule all:
             ]
         ),
         expand(
-            "%s/{sample}/plasmidfinder/" %OUT_FOLDER, 
+            "%s/{sample}/PlasmidFinder/" %OUT_FOLDER, 
             sample=[
                 s for s in SAMPLES 
                 if species_configs[sample_to_organism[s]]["analyses_to_run"]["plasmidfinder"]["status"] is True
             ]
         ),
         expand(
-            "%s/{sample}/resfinder/" %OUT_FOLDER, 
+            "%s/{sample}/ResFinder/" %OUT_FOLDER, 
             sample=[
                 s for s in SAMPLES 
                 if species_configs[sample_to_organism[s]]["analyses_to_run"]["resfinder"]["status"] is True
             ]
         ),
         expand(
-            "%s/{sample}/virulencefinder/" %OUT_FOLDER, 
+            "%s/{sample}/VirulenceFinder/" %OUT_FOLDER, 
             sample=[
                 s for s in SAMPLES 
                 if species_configs[sample_to_organism[s]]["analyses_to_run"]["virulencefinder"]["status"] is True
@@ -144,7 +144,7 @@ rule all:
             ]
         ),
         expand(
-            "{out}/{sample}/amrfinder", 
+            "{out}/{sample}/AMRFinder", 
             sample=[
                 s for s in SAMPLES 
                 if species_configs[sample_to_organism[s]]["analyses_to_run"]["amrfinder"]["status"] is True
