@@ -14,7 +14,7 @@ rule PlasmidFinder:
     conda:
         config["analysis_settings"]["plasmidfinder"]["yaml"]
     log:
-        stdout = 'Logs/{sample}_plasmidfinder.log'
+        stdout = 'Logs/PlasmidFinder_{sample}.log'
     message:
         "[PlasmidFinder]: Running PlasmidFinder on {wildcards.sample}"
     shell:
@@ -41,7 +41,7 @@ rule ResFinder:
     conda:
         config["analysis_settings"]["resfinder"]["yaml"]
     log:
-        stdout = 'Logs/{sample}_resfinder.log'
+        stdout = 'Logs/ResFinder_{sample}.log'
     message:
         "[ResFinder]: Running ResFinder, PointFinder, and DisinFinder on {wildcards.sample}"
     shell:
@@ -60,20 +60,20 @@ rule VirulenceFinder:
     input:
         R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
         R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
-        virulence_database = rules.setup_VirulenceFinder.output.database
+        database = rules.setup_VirulenceFinder.output.database
     output:
         directory("%s/{sample}/virulencefinder" %OUT_FOLDER)
     conda:
         config["analysis_settings"]["virulencefinder"]["yaml"]
     log:
-        stdout = 'Logs/{sample}_virulencefinderfinder.log'
+        stdout = 'Logs/VirulenceFinder_{sample}.log'
     message:
         "[VirulenceFinder]: Running VirulenceFinder on {wildcards.sample}"
     shell:
         """
         mkdir -p {output}
 
-        cmd="virulencefinder.py -i {input.R1} {input.R2} -o {output} -p {input.virulence_database}"
+        cmd="virulencefinder.py -i {input.R1} {input.R2} -o {output} -p {input.database}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
@@ -200,18 +200,25 @@ rule cgMLSTFinder:
 rule AMRFinder:
     input:
         assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample],
+        database = rules.setup_AMRFinder.output.database
     params:
-        # Paths to the databases
-        res_db_path = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["amrfinder"]["database"],
         # Point mutation
         organism = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["amrfinder"]["organism"]
     output:
         # "{out}/{sample}/amrfinder/{sample}.tsv"
-        directory("{out}/{sample}/amrfinder")
+        directory("%s/{sample}/amrfinder" %OUT_FOLDER)
     conda:
         config["analysis_settings"]["amrfinder"]["yaml"]
+    log:
+        stdout = 'Logs/AMRFinder_{sample}.log'
+    message:
+        "[AMRFinder]: Running AMRFinderFinder on {wildcards.sample}"
     shell:
         """
         mkdir -p {output}
-        amrfinder --nucleotide {input.assembly} --database {params.res_db_path} {params.organism} --output {output}/{wildcards.sample}.tsv
+
+        cmd="amrfinder --nucleotide {input.assembly} --database {input.database} {params.organism} --output {output}/{wildcards.sample}.tsv"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
         """

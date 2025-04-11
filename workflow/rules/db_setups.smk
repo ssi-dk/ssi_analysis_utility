@@ -4,9 +4,9 @@ rule setup_PlasmidFinder:
     output: 
         database = directory(f'{database_path}/{config["analysis_settings"]["plasmidfinder"]["database"]}')
     log:
-        stdout = f'Logs/plasmidfinder_db.log'
+        stdout = f'Logs/setup_PlasmidFinder.log'
     message:
-        "[PlasmidFinder_db]: Setting up PlasmidFinder_db"
+        "[setup_PlasmidFinder]: Setting up PlasmidFinder database"
     shell:
         """
         git clone https://bitbucket.org/genomicepidemiology/plasmidfinder_db.git {output.database} > {log.stdout} 2>&1
@@ -31,9 +31,9 @@ rule setup_ResFinder:
     output:
         database = directory(f'{database_path}/{config["analysis_settings"]["resfinder"]["database"]}')
     log:
-        stdout = f'Logs/resfinder_db.log'
+        stdout = f'Logs/setup_ResFinder.log'
     message:
-        "[ResFinder_db]: Setting up ResFinder_db"
+        "[setup_ResFinder]: Setting up ResFinder database"
     shell:
         """
         git clone https://bitbucket.org/genomicepidemiology/resfinder_db.git {output.database} > {log.stdout} 2>&1
@@ -58,9 +58,9 @@ rule setup_PointFinder:
     output:
         database = directory(f'{database_path}/{config["analysis_settings"]["pointfinder"]["database"]}')
     log:
-        stdout = f'Logs/pointfinder_db.log'
+        stdout = f'Logs/setup_PointFinder.log'
     message:
-        "[PointFinder_db]: Setting up PointFinder_db"
+        "[setup_PointFinder]: Setting up PointFinder database"
     shell:
         """
         git clone https://bitbucket.org/genomicepidemiology/pointfinder_db.git {output.database} > {log.stdout} 2>&1
@@ -86,9 +86,9 @@ rule setup_DisinFinder:
     output:
         database = directory(f'{database_path}/{config["analysis_settings"]["disinfinder"]["database"]}')
     log:
-        stdout = f'Logs/disinfinder_db.log'
+        stdout = f'Logs/setup_DisinFinder.log'
     message:
-        "[DisinFinder_db]: Setting up DisinFinder_db"
+        "[setup_DisinFinder]: Setting up DisinFinder database"
     shell:
         """
         git clone https://bitbucket.org/genomicepidemiology/disinfinder_db.git {output.database} > {log.stdout} 2>&1
@@ -113,9 +113,9 @@ rule setup_VirulenceFinder:
     output:
         database = directory(f'{database_path}/{config["analysis_settings"]["virulencefinder"]["database"]}')
     log:
-        stdout = f'Logs/virulencefinder_db.log'
+        stdout = f'Logs/setup_VirulenceFinder.log'
     message:
-        "[VirulenceFinder_db]: Setting up VirulenceFinder_db"
+        "[setup_VirulenceFinder]: Setting up VirulenceFinder database"
     shell:
         """
         git clone https://bitbucket.org/genomicepidemiology/virulencefinder_db.git {output.database} > {log.stdout} 2>&1
@@ -140,9 +140,9 @@ rule setup_AMRFinder:
     output:
         database = directory(f'{database_path}/{config["analysis_settings"]["amrfinder"]["database"]}')
     log:
-        stdout = f'Logs/virulencefinder_db.log'
+        stdout = f'Logs/setup_AMRFinder.log'
     message:
-        "[AMRFinder_db]: Setting up VirulenceFinder_db"
+        "[setup_AMRFinder]: Setting up AMRFinderPlus database"
     shell:
         """
         amrfinder_update --database $(dirname {output.database})
