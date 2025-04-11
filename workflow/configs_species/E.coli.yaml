@@ -6,21 +6,21 @@
 analyses_to_run: 
 
     kmeraligner:
-        status : True
+        status : False
         Title : Kmer Aligner on two pair reads
         ID: 90
         additional_option : -matrix 
         database : resources/plasmidfinder_db/enterobacteriales
 
     emm_typing: 
-        status : True
+        status : False
         Title: Typing of M protein gene using blast against CDC curated alleles
         cov_threshold: 90
         emm_allele_file: resources/emm_typing/emm_alleles.fasta  # Fasta file with emm alleles
         emm_cluster_file: resources/emm_typing/emm_enn_mrp_subgroups.txt  # File with emm allele clusters
         
     assembly_lineage_determination: 
-        status : True
+        status : False
         Title: Lineage determination based on presence of specified SNPs when mapping genome assembly against reference genome
         percent_snp_threshold: 50
         nucmerargs : "\"\""
@@ -29,7 +29,7 @@ analyses_to_run:
         lineage_variant_file: resources/lineage_determination/Spyogenes_LOCs.tsv
 
     resistance_gene_detection: 
-        status : True
+        status : False
         Title: Presence of resistance gens tetM, ermA and ermB
         query_fasta_resistance_gene_detection: resources/AMR/AMR_genes.fasta  # Fasta file with AMR genes
         query_fasta_virulence_gene_detection: resources/virulence_factors/VFDB_genes.fasta  # Fasta file with virulence genes
@@ -37,7 +37,7 @@ analyses_to_run:
         cov_threshold: 80
         
     virulence_gene_detection: 
-        status : True
+        status : False
         Title: Presence of Streptococcal virulence genes from the Virulence Factor Database
 
     plasmidfinder: 
@@ -58,24 +58,24 @@ analyses_to_run:
         database: resources/virulencefinder_db  # VirulenceFinder database
 
     LRE-finder: 
-        status : True
+        status : False
         Title : LRE-Finder
         min_consensus_ID : 80
         additional_option : -1t1 -cge -matrix
         database: resources/lre-finder_db/elm  # Database for LRE-finder
 
     serotypefinder :
-        status : True
+        status : False
         Title : Serotypefinder
         database: resources/serotypefinder_db/  # SerotypeFinder database
     
     kleborate : 
-        status : True
+        status : False
         Title : Kleborate
         preset : kpsc
 
     CHtyper : 
-        status : True
+        status : False
         Title: Chtyper
         threshold : 0.90
         coverage : 0.60
@@ -88,7 +88,14 @@ analyses_to_run:
     #     database: resources/kmerfinder_db/kmerfinder_db_old/bacteria.ATG  # KmerFinder database for bacterial genomes
 
     cgMLSTFinder : 
-        status : True
+        status : False
         Title : cgMLST
         scheme : ecoli # choose between  salmonella,campylobacter,yersinia,clostridium,ecoli
         database: resources/cgmlstfinder_db/  # cgMLSTFinder database
+
+
+    amrfinder:
+        status : True
+        Title : NCBI resistance gene finder
+        database: resources/amrfinderplus/latest
+        organism: --organism Escherichia # Leave blank or insert --organism alongside one of the supported organisms, listed here: https://github.com/evolarjun/amr/wiki/Curated-organisms
