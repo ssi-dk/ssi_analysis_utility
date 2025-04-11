@@ -143,6 +143,14 @@ rule all:
                 if species_configs[sample_to_organism[s]]["analyses_to_run"]["cgMLSTFinder"]["status"] is True
             ]
         ),
+        expand(
+            "{out}/{sample}/amrfinder", 
+            sample=[
+                s for s in SAMPLES 
+                if species_configs[sample_to_organism[s]]["analyses_to_run"]["amrfinder"]["status"] is True
+            ],
+            out=OUT_FOLDER
+        ),
 
 include : "rules/db_setups.smk"
 include : "rules/finders.smk"

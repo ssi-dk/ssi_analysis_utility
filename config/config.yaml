@@ -15,7 +15,7 @@ input_manager:
 # and script required for the various analysis
 
 analysis_settings:
-    
+
     kmeraligner:
         yaml : ../envs/kmeraligner.yaml
 
@@ -70,7 +70,10 @@ analysis_settings:
         yaml : ../envs/CHtyper.yaml
         script: workflow/scripts/  # Path to CHTyper script directory
 
-    
+        
+    amrfinder:
+        yaml : ../envs/amrfinder.yaml
+            
     # Illumina lineage determination (commented out for now):
     # reference_fasta_file: /home/simonescrima/Desktop/ssi_analysis_utility/resources/lineage_determination/MGAS5005.fasta  # Fasta file for reference genome
     # lineage_variant_file: /home/simonescrima/Desktop/ssi_analysis_utility/resources/lineage_determination/Spyogenes_LOCs.tsv  # File with lineage variants
