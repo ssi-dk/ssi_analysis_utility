@@ -150,3 +150,35 @@ rule setup_AMRFinder:
         echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
         """
+
+rule setup_EcoliKmerAligner:
+    conda:
+        config["analysis_settings"]["kmeraligner"]["yaml"]
+    params:
+        db_prefix = 'ecoligenes'
+    output:
+        database = directory(f'{database_path}/{config["analysis_settings"]["kmeraligner"]["database"]}')
+    log:
+        stdout = f'Logs/Databases/setup_EcoliKmerAligner.log'
+    message:
+        "[setup_EcoliKmerAligner]: Setting up EcoliKmerAligner"
+    shell:
+        """
+        mkdir -p {output.database}
+        cmd="curl https://raw.githubusercontent.com/ssi-dk/ecoli_fbi/refs/heads/main/db/ecoligenes/ecoligenes.fsa -o {output.database}/{params.db_prefix}.fsa"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+
+        fasta={output.database}/ecoligenes.fsa
+
+        idx_prefix={output.database}/{params.db_prefix}
+        cmd="kma index -i $fasta -o $idx_prefix"
+
+        echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+
+        if [ -z $idx_prefix.comb.b ]; then
+            echo '[virulencefinder_db]: ERROR - $idx_prefix.comb.b was not created during KMA indexing. This likely means that the virulencefinder_db has changed. Post this message on our Github repository!' 2>&1 >> {log.stdout}
+        fi
+        """

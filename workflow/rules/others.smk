@@ -5,30 +5,29 @@
 rule kmeraligner:
     input:
         R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
-        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1]
+        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
+        database = rules.setup_EcoliKmerAligner.output.database
     params:
         # Path to the kmerfinder database, KMA aligner, and taxa file.
-        db_path = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["kmeraligner"]["database"],
         add_opt = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["kmeraligner"]["additional_option"],
-        prefix = "{out}/{sample}/kma/{sample}"
+        db_prefix = rules.setup_EcoliKmerAligner.params.db_prefix,
+        prefix = "%s/{sample}/kmeraligner/{sample}" %OUT_FOLDER
     output:
-        directory("{out}/{sample}/kma/")
+        directory("%s/{sample}/kmeraligner/" %OUT_FOLDER)
     conda:
         config["analysis_settings"]["kmeraligner"]["yaml"]
+    log:
+        stdout = 'Logs/{sample}/kmeraligner.log'
     message:
-        "kma  -ipe {input.R1} {input.R2} -o {params.prefix} -t_db {params.db_path} {params.add_opt}"
+        "[AMRFinder]: Running AMRFinderFinder on {wildcards.sample}"
     shell:
         """
-        # Check if the output directory exists, and skip if it does.
-        if [ -d {output} ]; 
-            then
-                echo "Directory {output} exists, skipping."
-                exit 1
-            else
-                mkdir {output}
-        fi 
-        # Run kmaaligner with the specified parameters and inputs.
-        kma  -ipe {input.R1} {input.R2} -o {params.prefix} -t_db {params.db_path} {params.add_opt}
+        mkdir -p {output}
+        
+        cmd="kma -ipe {input.R1} {input.R2} -o {params.prefix} {params.add_opt} -t_db {input.database}/{params.db_prefix}"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
         """
 
 

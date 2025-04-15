@@ -18,6 +18,7 @@ analysis_settings:
 
     kmeraligner:
         yaml : ../envs/kmeraligner.yaml
+        database: kmeraligner
 
     emm_typing:
         yaml : ../envs/emm_typing.yaml
