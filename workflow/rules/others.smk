@@ -32,42 +32,6 @@ rule kmeraligner:
         """
 
 
-
-# Rule for resistance gene detection using BLAST
-rule resistance_gene_detection:
-    input:
-        # Input: AMR gene database file and assembly file for the sample
-        amr_genes = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["resistance_gene_detection"]["query_fasta_resistance_gene_detection"],
-        assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample]  # Use wildcards to get the sample's assembly file
-    params:
-        # Parameters for BLAST, including identity and coverage thresholds
-        id_per = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["resistance_gene_detection"]["pident_threshold"],
-        cov_per = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["resistance_gene_detection"]["cov_threshold"],
-    output:
-        # Output is a directory to store BLAST results for the sample
-        directory("{out}/{sample}/blast/")
-    conda:
-        config["analysis_settings"]["resistance_gene_detection"]["yaml"]
-    shell:
-        """
-        # Check if the output directory exists, skip execution if it does
-        if [ -d {output} ]; 
-            then
-                echo "Directory {output} exists,skipping."
-                exit 1  # Exit without running if the directory exists
-            else
-                mkdir {output}  # Create the directory if it doesn't exist
-        fi
-
-        # Run BLAST with specified input and output options
-        blastn -query {input.amr_genes} \
-               -subject {input.assembly} \
-               -out {output}/blast_output.tsv \
-               -outfmt '6 qseqid sseqid pident length qlen qstart qend sstart send sseq evalue bitscore' \
-               -perc_identity {params.id_per} \
-               -qcov_hsp_perc {params.cov_per}
-        """
-
 # Rule for emm typing using BLAST
 rule emm_typing:
     input:
@@ -81,7 +45,7 @@ rule emm_typing:
         # Output is a directory to store emm typing results for the sample
         directory("{out}/{sample}/emm_typing/")
     conda:
-        config["analysis_settings"]["resistance_gene_detection"]["yaml"]
+        config["analysis_settings"]["emm_typing"]["yaml"]
     shell:
         """
         # Check if the output directory exists, skip execution if it does

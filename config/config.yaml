@@ -4,6 +4,7 @@
 
 input_manager:
     path: examples/samplesheet.tsv  # Path to the input samplesheet (CSV/TSV file)
+    database_path: resources
     config_species : workflow/configs_species/
     out_folder: examples/Results  # Folder where the analysis results will be saved
     
@@ -18,9 +19,6 @@ analysis_settings:
     kmeraligner:
         yaml : ../envs/kmeraligner.yaml
 
-    resistance_gene_detection:
-        yaml : ../envs/resistence_gene_detection.yaml
-
     emm_typing:
         yaml : ../envs/emm_typing.yaml
         
@@ -30,12 +28,23 @@ analysis_settings:
     
     plasmidfinder:
         yaml : ../envs/plasmidfinder.yaml
+        database: plasmidfinder_db
         
     resfinder:
         yaml : ../envs/resfinder.yaml
+        database: resfinder_db
+
+    pointfinder:
+        yaml : ../envs/pointfinder.yaml
+        database: pointfinder_db
+
+    disinfinder:
+        yaml : ../envs/disinfinder.yaml
+        database: disinfinder_db
 
     virulencefinder:
         yaml : ../envs/virulencefinder.yaml
+        database: virulencefinder_db
         
     LRE-finder:
         yaml : ../envs/LREfinder.yaml
@@ -43,9 +52,6 @@ analysis_settings:
         
     serotypefinder:
         yaml : ../envs/serotypefinder.yaml
-
-    # kmerfinder:
-    #     yaml : ../envs/kmerfinder.yaml
 
     cgMLSTFinder:
         yaml : ../envs/cgMLSTfinder.yaml
@@ -60,6 +66,7 @@ analysis_settings:
         
     amrfinder:
         yaml : ../envs/amrfinder.yaml
+        database: amrfinderplus/latest
 
     mlst:
         yaml : ../envs/mlst.yaml
