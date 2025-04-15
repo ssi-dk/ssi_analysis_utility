@@ -53,7 +53,7 @@ database_path = config['input_manager']['database_path']
 rule all:
     input:
         expand(
-            "%s/{sample}/kma/" %OUT_FOLDER, 
+            "%s/{sample}/kmeraligner/" %OUT_FOLDER, 
             sample=[
                 s for s in SAMPLES 
                 if species_configs[sample_to_organism[s]]["analyses_to_run"]["kmeraligner"]["status"] is True
