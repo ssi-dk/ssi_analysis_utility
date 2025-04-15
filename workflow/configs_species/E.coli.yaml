@@ -83,5 +83,4 @@ analyses_to_run:
     amrfinder:
         status : True
         Title : NCBI resistance gene finder
-        database: resources/amrfinderplus/latest
         organism: --organism Escherichia # Leave blank or insert --organism alongside one of the supported organisms, listed here: https://github.com/evolarjun/amr/wiki/Curated-organisms
