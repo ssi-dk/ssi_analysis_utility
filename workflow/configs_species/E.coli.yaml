@@ -6,7 +6,7 @@
 analyses_to_run: 
 
     kmeraligner:
-        status : False
+        status : True
         Title : Kmer Aligner on two pair reads
         ID: 90
         additional_option : -matrix 
