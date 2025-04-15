@@ -19,9 +19,6 @@ analysis_settings:
     kmeraligner:
         yaml : ../envs/kmeraligner.yaml
 
-    resistance_gene_detection:
-        yaml : ../envs/resistence_gene_detection.yaml
-
     emm_typing:
         yaml : ../envs/emm_typing.yaml
         
@@ -55,9 +52,6 @@ analysis_settings:
         
     serotypefinder:
         yaml : ../envs/serotypefinder.yaml
-
-    # kmerfinder:
-    #     yaml : ../envs/kmerfinder.yaml
 
     cgMLSTFinder:
         yaml : ../envs/cgMLSTfinder.yaml

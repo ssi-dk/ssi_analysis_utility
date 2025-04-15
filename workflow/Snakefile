@@ -67,13 +67,6 @@ rule all:
             ]
         ),       
         expand(
-            "%s/{sample}/blast/" %OUT_FOLDER, 
-            sample=[
-                s for s in SAMPLES 
-                if species_configs[sample_to_organism[s]]["analyses_to_run"]["resistance_gene_detection"]["status"] is True
-            ]
-        ),
-        expand(
             "%s/{sample}/assembly_lineage/" %OUT_FOLDER, 
             sample=[
                 s for s in SAMPLES 
@@ -129,13 +122,6 @@ rule all:
                 if species_configs[sample_to_organism[s]]["analyses_to_run"]["CHtyper"]["status"] is True
             ]
         ),
-        # expand(
-        #     "%s/{sample}/kmerfinder/" %OUT_FOLDER, 
-        #     sample=[
-        #         s for s in SAMPLES 
-        #         if species_configs[sample_to_organism[s]]["analyses_to_run"]["kmerfinder"]["status"] is True
-        #     ]
-        # ),
         expand(
             "%s/{sample}/cgmlstfinder/" %OUT_FOLDER,
             sample=[

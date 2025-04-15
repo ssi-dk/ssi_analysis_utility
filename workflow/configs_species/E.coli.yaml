@@ -27,14 +27,6 @@ analyses_to_run:
         deltafilterargs : "\"-q -r -o 100\""
         reference_fasta_file: resources/lineage_determination/MGAS5005.fasta
         lineage_variant_file: resources/lineage_determination/Spyogenes_LOCs.tsv
-
-    resistance_gene_detection: 
-        status : False
-        Title: Presence of resistance gens tetM, ermA and ermB
-        query_fasta_resistance_gene_detection: resources/AMR/AMR_genes.fasta  # Fasta file with AMR genes
-        query_fasta_virulence_gene_detection: resources/virulence_factors/VFDB_genes.fasta  # Fasta file with virulence genes
-        pident_threshold: 80
-        cov_threshold: 80
         
     virulence_gene_detection: 
         status : False
@@ -80,12 +72,6 @@ analyses_to_run:
         threshold : 0.90
         coverage : 0.60
         database: resources/chtyper_db/  # CHTyper database
-    
-    # kmerfinder : 
-    #     status : False
-    #     Title : Kmerfinder
-    #     taxa : resources/kmerfinder_db/kmerfinder_db_old/bacteria.tax
-    #     database: resources/kmerfinder_db/kmerfinder_db_old/bacteria.ATG  # KmerFinder database for bacterial genomes
 
     cgMLSTFinder : 
         status : False
