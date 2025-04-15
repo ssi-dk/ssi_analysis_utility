@@ -164,7 +164,8 @@ rule setup_EcoliKmerAligner:
         "[setup_EcoliKmerAligner]: Setting up EcoliKmerAligner"
     shell:
         """
-        cmd="wget https://raw.githubusercontent.com/ssi-dk/ecoli_fbi/refs/heads/main/db/ecoligenes/ecoligenes.fsa -P {output.database}"
+        mkdir -p {output.database}
+        cmd="curl https://raw.githubusercontent.com/ssi-dk/ecoli_fbi/refs/heads/main/db/ecoligenes/ecoligenes.fsa -o {output.database}/{params.db_prefix}.fsa"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
