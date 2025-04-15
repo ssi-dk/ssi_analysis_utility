@@ -63,11 +63,14 @@ analysis_settings:
     CHtyper:
         yaml : ../envs/CHtyper.yaml
         script: workflow/scripts/  # Path to CHTyper script directory
-
         
     amrfinder:
         yaml : ../envs/amrfinder.yaml
-        database: amrfinderplus/latest            
+        database: amrfinderplus/latest
+
+    mlst:
+        yaml : ../envs/mlst.yaml
+            
     # Illumina lineage determination (commented out for now):
     # reference_fasta_file: /home/simonescrima/Desktop/ssi_analysis_utility/resources/lineage_determination/MGAS5005.fasta  # Fasta file for reference genome
     # lineage_variant_file: /home/simonescrima/Desktop/ssi_analysis_utility/resources/lineage_determination/Spyogenes_LOCs.tsv  # File with lineage variants
