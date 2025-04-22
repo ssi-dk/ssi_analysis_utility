@@ -19,7 +19,7 @@ rule kmeraligner:
     log:
         stdout = 'Logs/{sample}/kmeraligner.log'
     message:
-        "[AMRFinder]: Running AMRFinderFinder on {wildcards.sample}"
+        "[EcoliKmerAligner]: Running EcoliKmerAligner on {wildcards.sample}"
     shell:
         """
         mkdir -p {output}

@@ -145,7 +145,7 @@ rule setup_AMRFinder:
         "[setup_AMRFinder]: Setting up AMRFinderPlus database"
     shell:
         """
-        cmd="amrfinder_update --database $(dirname {output.database})"
+        cmd="amrfinder_update --database $(dirname {output.database}) --force_update"
             
         echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
