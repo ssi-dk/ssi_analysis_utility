@@ -182,3 +182,20 @@ rule setup_EcoliKmerAligner:
             echo '[virulencefinder_db]: ERROR - $idx_prefix.comb.b was not created during KMA indexing. This likely means that the virulencefinder_db has changed. Post this message on our Github repository!' 2>&1 >> {log.stdout}
         fi
         """
+
+rule update_MLST:
+    conda:
+        config["analysis_settings"]["mlst"]["yaml"]
+    log:
+        stdout = f'Logs/Databases/update_MLST.log'
+    message:
+        "[setup_AMRFinder]: Updating MLST databases."
+    shell:
+        """
+        DIR=$(which mlst)
+        MLSTDIR="$DIR/../../db/pubmlst"
+
+
+        mlst-download_pub_mlst -d $MLSTDIR > {log.stdout} 2>&1
+        mlst-make_blast_db >> {log.stdout} 2>&1
+        """
