@@ -111,31 +111,29 @@ rule LREFinder:
         python {params.app_path}/LRE-Finder.py -ipe {input.R1} {input.R2} -o {params.prefix} -t_db {params.db_path} -ID {params.min_con_ID} {params.add_opt} 
         """
 
-# Rule: serotypefinder
+# Rule: SerotypeFinder
 # Identifies serotypes from Illumina paired-end reads.
 rule serotypefinder:
     input:
         R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
-        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1]
-    params:
-        # Path to the serotype database.
-        db_path = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["serotypefinder"]["database"],
+        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
+        database = rules.setup_SerotypeFinder.output.database
     output:
-        directory("OUT_FOLDER/{sample}/serotypefinder/")
+        directory("%s/{sample}/SerotypeFinder" %OUT_FOLDER)
     conda:
         config["analysis_settings"]["serotypefinder"]["yaml"]
+    log:
+        stdout = 'Logs/{sample}/SerotypeFinder.log'
+    message:
+        "[SerotypeFinder]: Running SerotypeFinder on {wildcards.sample}"
     shell:
         """
-        # Check if the output directory exists, and skip if it does.
-        if [ -d {output} ]; 
-            then
-                echo "Directory {output} exists, skipping."
-                exit 1
-            else
-                mkdir {output}
-        fi 
-        # Run serotypefinder with the specified inputs and database.
-        serotypefinder -i {input.R1} {input.R2} -o {output} -p {params.db_path} 
+        mkdir -p {output}
+
+        cmd="serotypefinder -i {input.R1} {input.R2} -o {output} -p {input.database} -x"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
         """
 
 # Rule: cgMLSTFinder

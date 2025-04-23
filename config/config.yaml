@@ -53,6 +53,7 @@ analysis_settings:
         
     serotypefinder:
         yaml : ../envs/serotypefinder.yaml
+        database: serotypefinder_db
 
     cgMLSTFinder:
         yaml : ../envs/cgMLSTfinder.yaml

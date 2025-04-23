@@ -57,7 +57,7 @@ analyses_to_run:
         database: resources/lre-finder_db/elm  # Database for LRE-finder
 
     serotypefinder :
-        status : False
+        status : True
         Title : Serotypefinder
         database: resources/serotypefinder_db/  # SerotypeFinder database
     
