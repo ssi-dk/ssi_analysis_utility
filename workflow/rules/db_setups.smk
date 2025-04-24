@@ -179,6 +179,6 @@ rule setup_EcoliKmerAligner:
         eval $cmd >> {log.stdout} 2>&1
 
         if [ -z $idx_prefix.comb.b ]; then
-            echo '[virulencefinder_db]: ERROR - $idx_prefix.comb.b was not created during KMA indexing. This likely means that the virulencefinder_db has changed. Post this message on our Github repository!' 2>&1 >> {log.stdout}
+            echo '[setup_EcoliKmerAligner]: ERROR - $idx_prefix.comb.b was not created during KMA indexing. This likely means that the EcoliKmerAligner database has changed. Post this message on our Github repository!' 2>&1 >> {log.stdout}
         fi
         """
