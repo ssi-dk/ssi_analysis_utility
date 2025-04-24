@@ -1,7 +1,0 @@
-include settings.ini
-include LICENSE
-include CONTRIBUTING.md
-include README.md
-recursive-exclude * __pycache__
-include ssi_analysis_utility/config/config.default.env
-include ssi_analysis_utility/config/config.default.yaml
