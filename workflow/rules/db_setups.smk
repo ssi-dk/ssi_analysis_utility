@@ -189,7 +189,7 @@ rule update_MLST:
     log:
         stdout = f'Logs/Databases/update_MLST.log'
     message:
-        "[setup_AMRFinder]: Updating MLST databases."
+        "[setup_AMRFinder]: Updating MLST databases - This WILL take a long time -> Follow the update_MLST.log for more information."
     shell:
         """
         DIR=$(which mlst)
