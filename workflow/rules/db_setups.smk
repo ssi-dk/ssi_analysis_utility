@@ -186,16 +186,22 @@ rule setup_EcoliKmerAligner:
 rule update_MLST:
     conda:
         config["analysis_settings"]["mlst"]["yaml"]
+    output:
+        datefile = f'{database_path}/mlst/creation.date'
     log:
         stdout = f'Logs/Databases/update_MLST.log'
     message:
-        "[setup_AMRFinder]: Updating MLST databases - This WILL take a long time -> Follow the update_MLST.log for more information."
+        "[update_MLST]: Updating MLST databases."
+    threads:
+        max(math.floor(workflow.cores // 2), 6)
     shell:
         """
         DIR=$(which mlst)
         MLSTDIR="$DIR/../../db/pubmlst"
 
 
-        mlst-download_pub_mlst -d $MLSTDIR > {log.stdout} 2>&1
+        mlst-download_pub_mlst -d $MLSTDIR -j {threads} > {log.stdout} 2>&1
         mlst-make_blast_db >> {log.stdout} 2>&1
+
+        date -I > {output.datefile}
         """

@@ -4,6 +4,7 @@ import os
 import yaml
 from scripts import convert_external_genome
 import warnings
+import math
 
 configfile: "config/config.yaml"
 
