@@ -11,11 +11,11 @@ rule kmeraligner:
         # Path to the kmerfinder database, KMA aligner, and taxa file.
         add_opt = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["kmeraligner"]["additional_option"],
         db_prefix = rules.setup_EcoliKmerAligner.params.db_prefix,
-        prefix = "%s/{sample}/kmeraligner/{sample}" %OUT_FOLDER
+        prefix = "%s/{sample}/kmeraligner/{sample}" %out_path
     output:
-        directory("%s/{sample}/kmeraligner/" %OUT_FOLDER)
+        directory("%s/{sample}/kmeraligner/" %out_path)
     conda:
-        config["analysis_settings"]["kmeraligner"]["yaml"]
+        "../envs/kmeraligner.yaml"
     log:
         stdout = 'Logs/{sample}/kmeraligner.log'
     message:
@@ -42,9 +42,9 @@ rule emm_typing:
         cov_per = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["emm_typing"]["cov_threshold"],
     output:
         # Output is a directory to store emm typing results for the sample
-        directory("{out}/{sample}/emm_typing/")
+        directory("%s/{sample}/emm_typing/" %out_path)
     conda:
-        config["analysis_settings"]["emm_typing"]["yaml"]
+        "../envs/emm_typing.yaml"
     shell:
         """
         # Check if the output directory exists, skip execution if it does
@@ -72,17 +72,17 @@ rule assembly_lineage_determination:
         assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample]
     output:
         # Output is a directory to store lineage determination results
-        directory("{out}/{sample}/assembly_lineage/")
+        directory("%s/{sample}/assembly_lineage/" %out_path)
     params:
         # Various parameters including delta file name, frankenfasta file, and arguments for nucmer and deltafilter
-        app_path = config["analysis_settings"]["assembly_lineage_determination"]["script"],
+        app_path = "workflow/scripts/",
         name = lambda wildcards: wildcards.sample,
         nucmerargs = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["assembly_lineage_determination"]["nucmerargs"],
         deltafile= lambda wildcards: wildcards.sample + ".filtered.delta",
         frankenfasta = lambda wildcards: wildcards.sample + ".frankenfasta",
         deltafilterargs= lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["assembly_lineage_determination"]["deltafilterargs"]
     conda: 
-        config["analysis_settings"]["assembly_lineage_determination"]["yaml"]
+        "../envs/assembly_lineage_determination.yaml"
     shell:
         """ 
         nucmer_path=$(which nucmer)
@@ -107,9 +107,9 @@ rule kleborate:
         preset = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["kleborate"]["preset"],
     output:
         # Output is a directory to store Kleborate results
-        directory("{out}/{sample}/kleborate/")
+        directory("%s/{sample}/kleborate/" %out_path)
     conda:
-        config["analysis_settings"]["kleborate"]["yaml"]
+        "../envs/kleborate.yaml"
     message:
         "kleborate -a {input.assembly}  -o {output} -p {params.preset} "
     shell:
@@ -132,15 +132,15 @@ rule CHtyper:
         assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample]
     params:
         # Parameters for CHtyper including application path, database, threshold, coverage, and BLAST options
-        app_path = config["analysis_settings"]["CHtyper"]["script"],
+        app_path = "workflow/scripts/",
         database = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["CHtyper"]["database"],
         threshold = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["CHtyper"]["threshold"],
         coverage = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["CHtyper"]["coverage"],
     output:
         # Output is a directory to store CHtyper results
-        directory("{out}/{sample}/chtyper/")
+        directory("%s/{sample}/chtyper/" %out_path)
     conda:
-        config["analysis_settings"]["CHtyper"]["yaml"]
+        "../envs/CHtyper.yaml"
     shell:
         """
         # Check if the output directory exists, skip execution if it does

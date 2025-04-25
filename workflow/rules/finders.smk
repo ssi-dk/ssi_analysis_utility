@@ -10,9 +10,9 @@ rule PlasmidFinder:
         database = rules.setup_PlasmidFinder.output.database
     output:
         # Output directory for plasmidfinder results.
-        directory("%s/{sample}/PlasmidFinder" %OUT_FOLDER)
+        directory("%s/{sample}/PlasmidFinder" %out_path)
     conda:
-        config["analysis_settings"]["plasmidfinder"]["yaml"]
+        "../envs/plasmidfinder.yaml"
     log:
         stdout = 'Logs/{sample}/PlasmidFinder.log'
     message:
@@ -37,9 +37,9 @@ rule ResFinder:
         point_database = rules.setup_PointFinder.output.database,
         disin_database = rules.setup_DisinFinder.output.database
     output:
-        directory("%s/{sample}/ResFinder" %OUT_FOLDER)
+        directory("%s/{sample}/ResFinder" %out_path)
     conda:
-        config["analysis_settings"]["resfinder"]["yaml"]
+        "../envs/resfinder.yaml"
     log:
         stdout = 'Logs/{sample}/ResFinder.log'
     message:
@@ -62,9 +62,9 @@ rule VirulenceFinder:
         R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
         database = rules.setup_VirulenceFinder.output.database
     output:
-        directory("%s/{sample}/VirulenceFinder" %OUT_FOLDER)
+        directory("%s/{sample}/VirulenceFinder" %out_path)
     conda:
-        config["analysis_settings"]["virulencefinder"]["yaml"]
+        "../envs/virulencefinder.yaml"
     log:
         stdout = 'Logs/{sample}/VirulenceFinder.log'
     message:
@@ -88,14 +88,14 @@ rule LREFinder:
     params:
         # Path to the LRE database, application, and additional options.
         db_path = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["LRE-finder"]["database"],
-        app_path = config["analysis_settings"]["LRE-finder"]["script"],
+        app_path = "workflow/scripts/",
         min_con_ID = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["LRE-finder"]["min_consensus_ID"],
         add_opt = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["LRE-finder"]["additional_option"],
-        prefix = "OUT_FOLDER/{sample}/lre-finder/{sample}"
+        prefix = "out_path/{sample}/lre-finder/{sample}"
     conda:
-        config["analysis_settings"]["LRE-finder"]["yaml"]
+        "../envs/LREfinder.yaml"
     output:
-        directory("OUT_FOLDER/{sample}/lre-finder/")
+        directory("%s/{sample}/lre-finder/" %out_path)
     shell:
         """
         # Check if the output directory exists, and skip if it does.
@@ -121,9 +121,9 @@ rule serotypefinder:
         # Path to the serotype database.
         db_path = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["serotypefinder"]["database"],
     output:
-        directory("OUT_FOLDER/{sample}/serotypefinder/")
+        directory("%s/{sample}/serotypefinder/" %out_path)
     conda:
-        config["analysis_settings"]["serotypefinder"]["yaml"]
+        "../envs/serotypefinder.yaml"
     shell:
         """
         # Check if the output directory exists, and skip if it does.
@@ -146,13 +146,13 @@ rule cgMLSTFinder:
         R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1]
     params:
         # Path to the cgMLSTFinder app, database, and KMA aligner.
-        app_path = config["analysis_settings"]["cgMLSTFinder"]["script"],
+        app_path = "workflow/scripts/",
         db_path = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["cgMLSTFinder"]["database"],
         scheme = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["cgMLSTFinder"]["scheme"],
     output:
-        directory("OUT_FOLDER/{sample}/cgmlstfinder/")
+        directory("%s/{sample}/cgmlstfinder/" %out_path)
     conda:
-        config["analysis_settings"]["cgMLSTFinder"]["yaml"]   
+        "../envs/cgMLSTfinder.yaml"   
     shell:
         """
         # Check if the output directory exists, and skip if it does.
@@ -178,9 +178,9 @@ rule AMRFinder:
         organism = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["amrfinder"]["organism"]
     output:
         # "{out}/{sample}/amrfinder/{sample}.tsv"
-        directory("%s/{sample}/AMRFinder" %OUT_FOLDER)
+        directory("%s/{sample}/AMRFinder" %out_path)
     conda:
-        config["analysis_settings"]["amrfinder"]["yaml"]
+        "../envs/amrfinder.yaml"
     log:
         stdout = 'Logs/{sample}/AMRFinder.log'
     message:

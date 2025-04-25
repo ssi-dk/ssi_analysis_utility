@@ -4,10 +4,10 @@ rule MLST:
     input:
         assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample],
     output:
-        # mlst_file = "%s/{sample}/MLST/{sample}.tsv" %OUT_FOLDER
-        directory("%s/{sample}/MLST" %OUT_FOLDER)
+        # mlst_file = "%s/{sample}/MLST/{sample}.tsv" %out_path
+        directory("%s/{sample}/MLST" %out_path)
     conda:
-        config["analysis_settings"]["mlst"]["yaml"]
+        "../envs/mlst.yaml"
     log:
     	stdout = "Logs/{sample}/MLST.log"
     message:

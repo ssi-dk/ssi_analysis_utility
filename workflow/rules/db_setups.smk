@@ -1,8 +1,8 @@
 rule setup_PlasmidFinder:
     conda:
-        config["analysis_settings"]["plasmidfinder"]["yaml"]
+        "../envs/plasmidfinder.yaml"
     output: 
-        database = directory(f'{database_path}/{config["analysis_settings"]["plasmidfinder"]["database"]}')
+        database = directory(f'{database_path}/plasmidfinder_db')
     log:
         stdout = f'Logs/Databases/setup_PlasmidFinder.log'
     message:
@@ -27,9 +27,9 @@ rule setup_PlasmidFinder:
 
 rule setup_ResFinder:
     conda:
-        config["analysis_settings"]["resfinder"]["yaml"]
+        "../envs/resfinder.yaml"
     output:
-        database = directory(f'{database_path}/{config["analysis_settings"]["resfinder"]["database"]}')
+        database = directory(f'{database_path}/resfinder_db')
     log:
         stdout = f'Logs/Databases/setup_ResFinder.log'
     message:
@@ -54,9 +54,9 @@ rule setup_ResFinder:
 
 rule setup_PointFinder:
     conda:
-        config["analysis_settings"]["resfinder"]["yaml"]
+        "../envs/resfinder.yaml"
     output:
-        database = directory(f'{database_path}/{config["analysis_settings"]["pointfinder"]["database"]}')
+        database = directory(f'{database_path}/pointfinder_db')
     log:
         stdout = f'Logs/Databases/setup_PointFinder.log'
     message:
@@ -82,9 +82,9 @@ rule setup_PointFinder:
 
 rule setup_DisinFinder:
     conda:
-        config["analysis_settings"]["resfinder"]["yaml"]
+        "../envs/resfinder.yaml"
     output:
-        database = directory(f'{database_path}/{config["analysis_settings"]["disinfinder"]["database"]}')
+        database = directory(f'{database_path}/disinfinder_db')
     log:
         stdout = f'Logs/Databases/setup_DisinFinder.log'
     message:
@@ -109,9 +109,9 @@ rule setup_DisinFinder:
 
 rule setup_VirulenceFinder:
     conda:
-        config["analysis_settings"]["virulencefinder"]["yaml"]
+        "../envs/virulencefinder.yaml"
     output:
-        database = directory(f'{database_path}/{config["analysis_settings"]["virulencefinder"]["database"]}')
+        database = directory(f'{database_path}/virulencefinder_db')
     log:
         stdout = f'Logs/Databases/setup_VirulenceFinder.log'
     message:
@@ -136,9 +136,9 @@ rule setup_VirulenceFinder:
 
 rule setup_AMRFinder:
     conda:
-        config["analysis_settings"]["amrfinder"]["yaml"]
+        "../envs/amrfinder.yaml"
     output:
-        database = directory(f'{database_path}/{config["analysis_settings"]["amrfinder"]["database"]}')
+        database = directory(f'{database_path}/amrfinderplus/latest')
     log:
         stdout = f'Logs/Databases/setup_AMRFinder.log'
     message:
@@ -153,11 +153,11 @@ rule setup_AMRFinder:
 
 rule setup_EcoliKmerAligner:
     conda:
-        config["analysis_settings"]["kmeraligner"]["yaml"]
+        "../envs/kmeraligner.yaml"
     params:
         db_prefix = 'ecoligenes'
     output:
-        database = directory(f'{database_path}/{config["analysis_settings"]["kmeraligner"]["database"]}')
+        database = directory(f'{database_path}/ecolikmeraligner')
     log:
         stdout = f'Logs/Databases/setup_EcoliKmerAligner.log'
     message:
