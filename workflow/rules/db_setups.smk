@@ -22,6 +22,8 @@ rule setup_PlasmidFinder:
                 echo '[plasmidfinder_db]: ERROR - $idx_prefix.comb.b was not created during KMA indexing. This likely means that the plasmidfinder_db has changed. Post this message on our Github repository!' 2>&1 >> {log.stdout}
             fi
         done
+        
+        date -I > {output.database}/creation.date
         """
 
 
@@ -49,6 +51,8 @@ rule setup_ResFinder:
                 echo '[resfinder_db]: ERROR - $idx_prefix.comb.b was not created during KMA indexing. This likely means that the resfinder_db has changed. Post this message on our Github repository!' 2>&1 >> {log.stdout}
             fi
         done
+        
+        date -I > {output.database}/creation.date
         """
 
 
@@ -77,6 +81,8 @@ rule setup_PointFinder:
                 echo '[pointfinder_db]: ERROR - $idx_prefix.comb.b was not created during KMA indexing. This likely means that the pointfinder_db has changed. Post this message on our Github repository!' 2>&1 >> {log.stdout}
             fi
         done
+        
+        date -I > {output.database}/creation.date
         """
 
 
@@ -104,6 +110,8 @@ rule setup_DisinFinder:
                 echo '[disinfinder_db]: ERROR - $idx_prefix.comb.b was not created during KMA indexing. This likely means that the disinfinder_db has changed. Post this message on our Github repository!' 2>&1 >> {log.stdout}
             fi
         done
+        
+        date -I > {output.database}/creation.date
         """
 
 
@@ -131,6 +139,8 @@ rule setup_VirulenceFinder:
                 echo '[virulencefinder_db]: ERROR - $idx_prefix.comb.b was not created during KMA indexing. This likely means that the virulencefinder_db has changed. Post this message on our Github repository!' 2>&1 >> {log.stdout}
             fi
         done
+        
+        date -I > {output.database}/creation.date
         """
 
 
@@ -149,6 +159,8 @@ rule setup_AMRFinder:
             
         echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
+
+        date -I > {output.database}/creation.date
         """
 
 rule setup_EcoliKmerAligner:
@@ -181,4 +193,6 @@ rule setup_EcoliKmerAligner:
         if [ -z $idx_prefix.comb.b ]; then
             echo '[virulencefinder_db]: ERROR - $idx_prefix.comb.b was not created during KMA indexing. This likely means that the virulencefinder_db has changed. Post this message on our Github repository!' 2>&1 >> {log.stdout}
         fi
+
+        date -I > {output.database}/creation.date
         """
