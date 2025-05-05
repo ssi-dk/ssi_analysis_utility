@@ -145,7 +145,7 @@ rule setup_AMRFinder:
         "[setup_AMRFinder]: Setting up AMRFinderPlus database"
     shell:
         """
-        cmd="amrfinder_update --database $(dirname {output.database}) --force_update"
+        cmd="amrfinder_update --database $(dirname {output.database})"
             
         echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
@@ -181,4 +181,75 @@ rule setup_EcoliKmerAligner:
         if [ -z $idx_prefix.comb.b ]; then
             echo '[virulencefinder_db]: ERROR - $idx_prefix.comb.b was not created during KMA indexing. This likely means that the virulencefinder_db has changed. Post this message on our Github repository!' 2>&1 >> {log.stdout}
         fi
+        """
+
+rule setup_CdiffKmerAligner:
+    conda:
+        config["analysis_settings"]["cdiffkmeraligner"]["yaml"]
+    output:
+        database = directory(f'{database_path}/{config["analysis_settings"]["cdiffkmeraligner"]["database"]}')
+    log:
+        stdout = f'Logs/Databases/setup_CdiffKmerAligner.log'
+    message:
+        "[setup_CdiffKmerAligner]: Setting up CdiffKmerAligner"
+    params:
+        accession_loci = "AM180355.1:tcdA,tcdB,tcdC AF271719.1:cdtA,cdtB",
+        db_toxin = "Cdiff_Toxin",
+        TR_repeat_sequences = "TR6 TR10",
+        TR_repeat_types = "TR6 TR10 TRST"
+    shell:
+        r"""
+        mkdir -p {output.database}
+        > {output.database}/{params.db_toxin}.txt
+        > {output.database}/{params.db_toxin}.bed6
+        > {output.database}/{params.db_toxin}.fasta
+
+        for item in {params.accession_loci}; do
+            acc=$(echo $item | cut -d':' -f1)
+            loci=$(echo $item | cut -d':' -f2 | tr ',' ' ')
+
+            cmd="python resources/genbank_fetcher.py \
+                -a $acc --locus $loci \
+                -o {output.database}/{params.db_toxin}.txt \
+                --bed {output.database}/{params.db_toxin}.bed6 \
+                --fasta {output.database}/{params.db_toxin}.fasta \
+                --merge 500 --append"
+
+            echo -e \"\nExecuting command:\n$cmd\n\" >> {log.stdout} 2>&1
+            eval $cmd >> {log.stdout} 2>&1
+        done
+
+        fasta={output.database}/{params.db_toxin}.fasta
+
+        cmd="samtools faidx -i $fasta"
+        echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+
+        idx_prefix={output.database}/{params.db_toxin}
+
+        cmd="kma index -i $fasta -o $idx_prefix"
+        echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+
+        if [ ! -f "$idx_prefix.comb.b" ]; then
+            echo '[CdiffKmerAligner]: ERROR - $idx_prefix.comb.b not created' 2>&1 >> {log.stdout}
+        fi
+
+        # TR-type repeat sequence downloads
+        for TR in {params.TR_repeat_sequences}; do
+            cmd="curl https://raw.githubusercontent.com/ssi-dk/cdiff_fbi/refs/heads/raah_dev/db/TRST/${{TR}}_repeat_sequences.fa \
+                -o {output.database}/${{TR}}_repeat_sequences.fa"
+
+            echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
+            eval $cmd >> {log.stdout} 2>&1
+        done
+
+        # TR-type repeat types downloads
+        for TR in {params.TR_repeat_types}; do
+            cmd="curl https://raw.githubusercontent.com/ssi-dk/cdiff_fbi/refs/heads/raah_dev/db/TRST/${{TR}}_repeat_types.txt \
+                -o {output.database}/${{TR}}_repeat_types.txt"
+
+            echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
+            eval $cmd >> {log.stdout} 2>&1
+        done
         """
