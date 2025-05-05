@@ -20,6 +20,13 @@ analysis_settings:
         yaml : ../envs/kmeraligner.yaml
         database: kmeraligner
 
+    Clostridioides_difficile_db:
+        yaml: ../envs/DatabaseFetch.yaml
+        database: Clostridioides_difficile_db
+
+    htslib:
+        yaml : ../envs/htslib.yaml
+
     emm_typing:
         yaml : ../envs/emm_typing.yaml
         
