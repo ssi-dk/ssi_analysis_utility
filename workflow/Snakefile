@@ -102,7 +102,7 @@ rule all:
             ]
         ),
         expand(
-            "%s/{sample}/serotypefinder/" %OUT_FOLDER, 
+            "%s/{sample}/SerotypeFinder/" %OUT_FOLDER, 
             sample=[
                 s for s in SAMPLES 
                 if species_configs[sample_to_organism[s]]["analyses_to_run"]["serotypefinder"]["status"] is True

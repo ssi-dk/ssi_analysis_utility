@@ -134,6 +134,33 @@ rule setup_VirulenceFinder:
         """
 
 
+rule setup_SerotypeFinder:
+    conda:
+        config["analysis_settings"]["serotypefinder"]["yaml"]
+    output:
+        database = directory(f'{database_path}/{config["analysis_settings"]["serotypefinder"]["database"]}')
+    log:
+        stdout = f'Logs/Databases/setup_SerotypeFinder.log'
+    message:
+        "[setup_SerotypeFinder]: Setting up SerotypeFinder database"
+    shell:
+        """
+        git clone https://bitbucket.org/genomicepidemiology/serotypefinder_db.git {output.database} > {log.stdout} 2>&1
+
+        for fasta in $(find {output.database} -iname '*.fsa'); do
+            idx_prefix={output.database}/$(basename $fasta .fsa)
+            cmd="kma index -i $fasta -o $idx_prefix"
+            
+            echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
+            eval $cmd >> {log.stdout} 2>&1
+            
+            if [ -z $idx_prefix.comb.b ]; then
+                echo '[serotypefinder_db]: ERROR - $idx_prefix.comb.b was not created during KMA indexing. This likely means that the serotypefinder_db has changed. Post this message on our Github repository!' 2>&1 >> {log.stdout}
+            fi
+        done
+        """
+
+
 rule setup_AMRFinder:
     conda:
         config["analysis_settings"]["amrfinder"]["yaml"]
