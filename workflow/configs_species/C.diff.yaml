@@ -6,7 +6,7 @@
 analyses_to_run: 
 
     kmeraligner:
-        status : True
+        status : False
         Title : Kmer Aligner on two pair reads
         ID: 90
         additional_option : -matrix 
@@ -14,7 +14,7 @@ analyses_to_run:
         wrangler: workflow/scripts/KMA_wrangler.py
 
     cdiffkmeraligner:
-        status : False
+        status : True
         Title : Kmer Aligner for Clostridium difficile TR and Toxin detection
         ID: 91
         additional_option : -nc -nf -sam 4 -vcf 2
@@ -88,33 +88,36 @@ analyses_to_run:
         database: resources/cgmlstfinder_db/  # cgMLSTFinder database
 
     amrfinder:
-        status : True
+        status : False
         Title : NCBI resistance gene finder
-        organism: --organism Escherichia # Leave blank or insert --organism alongside one of the supported organisms, listed here: https://github.com/evolarjun/amr/wiki/Curated-organisms
+        organism: --organism Clostridioides difficile # Leave blank or insert --organism alongside one of the supported organisms, listed here: https://github.com/evolarjun/amr/wiki/Curated-organisms
         wrangler: workflow/scripts/AMR_wrangler.py
 
     mlst:
         status : False
         Title : MLST by Torsten Seeman
-
+    
     samtools_view:
-        status : False
+        status : True
         Title : samtools filtering
         ID: 91
-        additional_option : -b -q 20 -F 4
+        additional_option : -b -q 20 -F 3844 
+        # https://broadinstitute.github.io/picard/explain-flags.html
+        # 4 (unmapped) + 256 (not primary alignment) + 512 (failed quality) + 1024 (duplicate) + 2048 (supplementary) = 3844
+        # Consider removing reads which is not in proper pair
 
     samtools_sort:
-        status : False
+        status : True
         Title : samtools sort
         ID: 91
         additional_option : -n 
     
     samtools_idx:
-        status : False
+        status : True
         Title : samtools index
         ID: 91
 
     bcftools_genotypecall:
-        status : False
+        status : True
         Title : bcftools mpileup | bcftools call
         ID: 91

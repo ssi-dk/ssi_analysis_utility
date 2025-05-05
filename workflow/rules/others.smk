@@ -19,7 +19,7 @@ rule kmeraligner:
     log:
         stdout = 'Logs/{sample}/kmeraligner.log'
     message:
-        "[EcoliKmerAligner]: Running EcoliKmerAligner on {wildcards.sample}"
+        "[AMRFinder]: Running AMRFinderFinder on {wildcards.sample}"
     shell:
         """
         mkdir -p {output}
@@ -30,6 +30,34 @@ rule kmeraligner:
         eval $cmd >> {log.stdout} 2>&1
         """
 
+# Rule: kmeraligner
+# Identifies microbial species or strain using k-mer-based alignment.
+rule cdiffkmeraligner:
+    input:
+        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
+        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
+        database = rules.setup_CdiffToxin.output.database
+    params:
+        db_prefix = "Cdiff_Toxin",
+        add_opt = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["cdiffkmeraligner"]["additional_option"],
+        prefix = "%s/{sample}/cdiffkmeraligner/{sample}" % OUT_FOLDER
+    output:
+        sam = "%s/{sample}/cdiffkmeraligner/{sample}.sam" % OUT_FOLDER
+    conda:
+        config["analysis_settings"]["Clostridioides_difficile_db"]["yaml"]
+    log:
+        stdout = 'Logs/{sample}/cdiffkmeraligner.log'
+    message:
+        "[cdiffkmeraligner]: Running Clostridium difficile kmer aligner on {wildcards.sample}"
+    shell:
+        """
+        mkdir -p $(dirname {output.sam})
+
+        cmd="kma -ipe {input.R1} {input.R2} -o {params.prefix} {params.add_opt} -t_db {input.database}/{params.db_prefix} > {output.sam}"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+        """
 
 # Rule for emm typing using BLAST
 rule emm_typing:
@@ -157,3 +185,71 @@ rule CHtyper:
         # Run CHtyper Python script with the specified parameters
         python {params.app_path}/CHTyper-1.0.py -i {input.assembly}  -o {output} -p {params.database} -t {params.threshold} -l {params.coverage} -b $blastn
         """
+
+# Rule: samtools filter
+rule samtools_view:
+    input:
+        sam = "{folder}/{sample}/{tool}/{sample}.sam"
+    output:
+        filtered_bam = "{folder}/{sample}/{tool}/{sample}.filtered.bam"
+    params:
+        add_opt = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["samtools_view"]["additional_option"],
+    conda:
+        config["analysis_settings"]["htslib"]["yaml"]
+    message:
+        "[samtools_view]: Filtering {input.sam} to {output.filtered_bam}"
+    shell:
+        """
+        echo "Filtering {input.sam} -> {output.filtered_bam}"
+        samtools view {params.add_opt} {input.sam} -o {output.filtered_bam}
+        """
+
+rule samtools_sort:
+    input:
+        bam = "{folder}/{sample}/{tool}/{sample}.filtered.bam"
+    output:
+        sorted_bam = "{folder}/{sample}/{tool}/{sample}.filtered.sorted.bam"
+    conda:
+        config["analysis_settings"]["htslib"]["yaml"]
+    message:
+        "[samtools_sort]: Sorting {input.bam} -> {output.sorted_bam}"
+    shell:
+        """
+        echo "Sorting {input.bam} -> {output.sorted_bam}"
+        samtools sort -o {output.sorted_bam} {input.bam}
+        """
+
+rule samtools_index:
+    input:
+        bam = "{folder}/{sample}/{tool}/{sample}.filtered.sorted.bam"
+    output:
+        bai = "{folder}/{sample}/{tool}/{sample}.filtered.sorted.bam.bai"
+    conda:
+        config["analysis_settings"]["htslib"]["yaml"]
+    message:
+        "[samtools_index]: Indexing {input.bam} -> {output.bai}"
+    shell:
+        """
+        echo "Indexing {input.bam} -> {output.bai}"
+        samtools index {input.bam}
+        """
+
+# Rule: bcftools_genotypecall
+# Identifies microbial species or strain using k-mer-based alignment.
+rule bcftools_genotypecall:
+    input:
+        bam = "{folder}/{sample}/{tool}/{sample}.filtered.sorted.bam",
+        database = rules.setup_CdiffToxin.output.database
+    params:
+        db_prefix = rules.setup_CdiffToxin.params.db_toxin
+    output:
+        genotypecall = "{folder}/{sample}/{tool}/{sample}.calls.bcf"
+    conda:
+        config["analysis_settings"]["htslib"]["yaml"]
+    message:
+        "[bcftools_genotypecall]: Genotype calling {input.bam} -> {output.genotypecall}"
+    shell:
+        """
+        bcftools mpileup -Ou -f {input.database}/{params.db_prefix}.fasta {input.bam} | bcftools call -mv -Ob -o {output.genotypecall}
+        """
+

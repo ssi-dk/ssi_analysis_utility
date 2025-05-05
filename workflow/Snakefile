@@ -24,7 +24,26 @@ SAMPLES = CSV_DATA['sample_name'].tolist()
 sample_to_illumina = {row['sample_name']: row['Illumina_read_files'].split(',') for idx, row in CSV_DATA.iterrows()}
 sample_to_nanopore = {row['sample_name']: row['Nanopore_read_file'] for idx, row in CSV_DATA.iterrows()}
 sample_to_assembly_file = {row['sample_name']: row['assembly_file'] for idx, row in CSV_DATA.iterrows()}
-sample_to_organism = {row['sample_name']: row['organism'] for idx, row in CSV_DATA.iterrows()}
+
+species_name_map = {
+    "Clostridioides difficile": "C.diff",
+    "Clostridium difficile": "C.diff",
+    "C. difficile": "C.diff",
+    "C difficile": "C.diff",
+    "C. diff": "C.diff",
+    "C.diff": "C.diff",
+    "Escherichia coli": "E.coli",
+    "E coli": "E.coli",
+    "E.coli": "E.coli",
+    # Add more mappings here
+}
+
+sample_to_organism = {
+    row['sample_name']: species_name_map.get(row['organism'], row['organism'])
+    for idx, row in CSV_DATA.iterrows()
+}
+
+#sample_to_organism = {row['sample_name']: row['organism'] for idx, row in CSV_DATA.iterrows()}
 
 # Load species-specific configurations dynamically
 species_configs = {}
@@ -42,6 +61,9 @@ for species in set(sample_to_organism.values()):
 
 database_path = config['input_manager']['database_path']
 
+### Define rules where samtools is necessary
+
+TOOLS_WITH_SAM_OUTPUT = ["cdiffkmeraligner"]
 
 ##############################################################################
 #
@@ -57,6 +79,13 @@ rule all:
             sample=[
                 s for s in SAMPLES 
                 if species_configs[sample_to_organism[s]]["analyses_to_run"]["kmeraligner"]["status"] is True
+            ]
+        ),
+        expand(
+            "%s/{sample}/cdiffkmeraligner/{sample}.sam" % OUT_FOLDER,
+            sample=[
+                s for s in SAMPLES 
+                if species_configs[sample_to_organism[s]]["analyses_to_run"]["cdiffkmeraligner"]["status"] is True
             ]
         ),
         expand(
@@ -145,10 +174,54 @@ rule all:
             ],
             out=OUT_FOLDER
         ),
+        expand(
+            "%s/{sample}/{tool}/{sample}.filtered.bam" % OUT_FOLDER,
+            sample=[
+                s for s in SAMPLES
+                for tool in TOOLS_WITH_SAM_OUTPUT
+                if species_configs[sample_to_organism[s]]["analyses_to_run"][tool]["status"] is True
+                and species_configs[sample_to_organism[s]]["analyses_to_run"]["samtools_view"]["status"] is True
+            ],
+            tool=TOOLS_WITH_SAM_OUTPUT
+        ),
+        expand(
+            "%s/{sample}/{tool}/{sample}.filtered.sorted.bam" % OUT_FOLDER,
+            sample=[
+                s for s in SAMPLES
+                for tool in TOOLS_WITH_SAM_OUTPUT
+                if species_configs[sample_to_organism[s]]["analyses_to_run"][tool]["status"] is True
+                and species_configs[sample_to_organism[s]]["analyses_to_run"]["samtools_view"]["status"] is True
+                and species_configs[sample_to_organism[s]]["analyses_to_run"]["samtools_sort"]["status"] is True
+            ],
+            tool=TOOLS_WITH_SAM_OUTPUT
+        ),
+        expand(
+            "%s/{sample}/{tool}/{sample}.filtered.sorted.bam.bai" % OUT_FOLDER,
+            sample=[
+                s for s in SAMPLES
+                for tool in TOOLS_WITH_SAM_OUTPUT
+                if species_configs[sample_to_organism[s]]["analyses_to_run"][tool]["status"] is True
+                and species_configs[sample_to_organism[s]]["analyses_to_run"]["samtools_view"]["status"] is True
+                and species_configs[sample_to_organism[s]]["analyses_to_run"]["samtools_sort"]["status"] is True
+                and species_configs[sample_to_organism[s]]["analyses_to_run"]["samtools_idx"]["status"] is True
+            ],
+            tool=TOOLS_WITH_SAM_OUTPUT
+        ),
+        expand(
+            "%s/{sample}/{tool}/{sample}.calls.bcf" % OUT_FOLDER,
+            sample=[
+                s for s in SAMPLES
+                for tool in TOOLS_WITH_SAM_OUTPUT
+                if species_configs[sample_to_organism[s]]["analyses_to_run"][tool]["status"] is True
+                and species_configs[sample_to_organism[s]]["analyses_to_run"]["samtools_view"]["status"] is True
+                and species_configs[sample_to_organism[s]]["analyses_to_run"]["samtools_sort"]["status"] is True
+                and species_configs[sample_to_organism[s]]["analyses_to_run"]["samtools_idx"]["status"] is True
+                and species_configs[sample_to_organism[s]]["analyses_to_run"]["bcftools_genotypecall"]["status"] is True
+            ],
+            tool=TOOLS_WITH_SAM_OUTPUT
+        ),
 
 include : "rules/db_setups.smk"
 include : "rules/finders.smk"
 include : "rules/characterizers.smk"
 include : "rules/others.smk"
-
-
