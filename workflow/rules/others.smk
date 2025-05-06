@@ -250,6 +250,6 @@ rule bcftools_genotypecall:
         "[bcftools_genotypecall]: Genotype calling {input.bam} -> {output.genotypecall}"
     shell:
         """
-        bcftools mpileup -Ou -f {input.database}/{params.db_prefix}.fasta {input.bam} | bcftools call -mv -Ob -o {output.genotypecall}
+        bcftools mpileup -Ou -f {input.database}/{params.db_prefix}.fasta {input.bam} | bcftools call -mv -Ob --ploidy 1 -o {output.genotypecall}
         """
 
