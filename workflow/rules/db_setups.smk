@@ -1,3 +1,4 @@
+
 rule setup_PlasmidFinder:
     conda:
         config["analysis_settings"]["plasmidfinder"]["yaml"]
@@ -192,16 +193,12 @@ rule update_MLST:
         stdout = f'Logs/Databases/update_MLST.log'
     message:
         "[update_MLST]: Updating MLST databases."
-    threads:
-        max(math.floor(workflow.cores // 2), 6)
     shell:
         """
         DIR=$(which mlst)
         MLSTDIR="$DIR/../../db/pubmlst"
 
 
-        mlst-download_pub_mlst -d $MLSTDIR -j {threads} > {log.stdout} 2>&1
-        mlst-make_blast_db >> {log.stdout} 2>&1
-
-        date -I > {output.datefile}
+        mlst-download_pub_mlst -d $MLSTDIR  > {log.stdout} 2>&1
+        mlst-make_blast_db >> {log.stdout} 2>&1 && date -I > {output.datefile}
         """
