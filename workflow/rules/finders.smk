@@ -136,35 +136,6 @@ rule serotypefinder:
         eval $cmd >> {log.stdout} 2>&1
         """
 
-# Rule: cgMLSTFinder
-# Runs cgMLSTFinder for comparative genomic typing.
-rule cgMLSTFinder:
-    input:
-        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
-        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1]
-    params:
-        # Path to the cgMLSTFinder app, database, and KMA aligner.
-        app_path = config["analysis_settings"]["cgMLSTFinder"]["script"],
-        db_path = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["cgMLSTFinder"]["database"],
-        scheme = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["cgMLSTFinder"]["scheme"],
-    output:
-        directory("OUT_FOLDER/{sample}/cgmlstfinder/")
-    conda:
-        config["analysis_settings"]["cgMLSTFinder"]["yaml"]   
-    shell:
-        """
-        # Check if the output directory exists, and skip if it does.
-        if [ -d {output} ]; 
-            then
-                echo "Directory {output} exists, skipping."
-                exit 1
-            else
-                mkdir {output}
-        fi 
-        # Run cgMLSTFinder with the specified inputs, outputs, and scheme.
-        python {params.app_path}/cgMLST.py  -i {input.R1},{input.R2} -o {output} -db {params.db_path}  -s {params.scheme}
-        """
-
 # Rule: AMRFinder
 # Runs AMRFinder to identify acquired resistance genes in the sample.
 rule AMRFinder:
