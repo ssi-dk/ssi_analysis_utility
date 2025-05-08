@@ -1,6 +1,13 @@
 channels:
   - bioconda
   - conda-forge
+  - defaults
 dependencies:
-  - samtools=1.17
-  - bcftools=1.17
+  - htslib=1.16
+  - samtools=1.16
+  - bcftools=1.16
+  - libcurl=7.88.1
+  - libnghttp2=1.51.0
+  - c-ares=1.18.1
+  - libdeflate=1.13
+  - openssl=1.1.1t

@@ -78,6 +78,9 @@ analysis_settings:
 
     mlst:
         yaml : ../envs/mlst.yaml
+    
+    skesa:
+        yaml : ../envs/skesa.yaml
             
     # Illumina lineage determination (commented out for now):
     # reference_fasta_file: /home/simonescrima/Desktop/ssi_analysis_utility/resources/lineage_determination/MGAS5005.fasta  # Fasta file for reference genome

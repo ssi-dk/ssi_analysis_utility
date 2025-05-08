@@ -13,9 +13,9 @@ analyses_to_run:
         database : resources/plasmidfinder_db/enterobacteriales
         wrangler: workflow/scripts/KMA_wrangler.py
 
-    cdiffkmeraligner:
+    Cdiff_KMA_Toxin:
         status : False
-        Title : Kmer Aligner for Clostridium difficile TR and Toxin detection
+        Title : Kmer Aligner for Clostridium difficile Toxin detection
         ID: 91
         additional_option : -nc -nf -sam 4 -vcf 2
         database : resources/Clostridioides_difficile_db/Toxin/
@@ -96,6 +96,9 @@ analyses_to_run:
     mlst:
         status : False
         Title : MLST by Torsten Seeman
+
+    skesa:
+        status : False
 
     samtools_view:
         status : False

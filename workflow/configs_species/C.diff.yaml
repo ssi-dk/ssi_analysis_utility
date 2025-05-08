@@ -13,11 +13,11 @@ analyses_to_run:
         database : resources/plasmidfinder_db/enterobacteriales
         wrangler: workflow/scripts/KMA_wrangler.py
 
-    cdiffkmeraligner:
+    Cdiff_KMA_Toxin:
         status : True
-        Title : Kmer Aligner for Clostridium difficile TR and Toxin detection
+        Title : Kmer Aligner for Clostridium difficile Toxin detection
         ID: 91
-        additional_option : -nc -nf -sam 4 -vcf 2
+        additional_option : -ref_fsa -nf -sam 4 -vcf 2 
         database : resources/Clostridioides_difficile_db/Toxin/
 
     emm_typing: 
@@ -97,14 +97,17 @@ analyses_to_run:
         status : False
         Title : MLST by Torsten Seeman
     
+    skesa:
+        status : True
+
     samtools_view:
         status : True
         Title : samtools filtering
         ID: 91
-        additional_option : -b -q 20 -F 3844 
+        additional_option : -b -q 20 -F 4 
         # https://broadinstitute.github.io/picard/explain-flags.html
         # 4 (unmapped) + 256 (not primary alignment) + 512 (failed quality) + 1024 (duplicate) + 2048 (supplementary) = 3844
-        # Consider removing reads which is not in proper pair
+        # Consider removing reads which is not in proper pair #3844
 
     samtools_sort:
         status : True
