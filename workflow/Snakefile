@@ -222,6 +222,16 @@ rule all:
             ],
             tool=TOOLS_WITH_SAM_OUTPUT
         ),
+        expand(
+            "%s/{sample}/GenotypeCalls/{sample}.{tool}.calls.bcf.csi" % OUT_FOLDER,
+            sample=[
+                s for s in SAMPLES
+                for tool in TOOLS_WITH_SAM_OUTPUT
+                if species_configs[sample_to_organism[s]]["analyses_to_run"][tool]["status"] is True
+                and species_configs[sample_to_organism[s]]["analyses_to_run"]["bcftools_index"]["status"] is True
+            ],
+            tool=TOOLS_WITH_SAM_OUTPUT
+        ),
 
 include : "rules/db_setups.smk"
 include : "rules/finders.smk"

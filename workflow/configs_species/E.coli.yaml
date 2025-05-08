@@ -121,3 +121,8 @@ analyses_to_run:
         status : False
         Title : bcftools mpileup | bcftools call
         ID: 91
+        
+    bcftools_index:
+        status : True
+        Title : bcftools index
+        ID: 91

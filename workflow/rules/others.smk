@@ -253,10 +253,23 @@ rule bcftools_genotypecall:
         """
         bcftools mpileup -Ob -f {input.database}/{params.db_prefix}.fasta {input.sorted_bam} -o {output.mpileup}
         bcftools call -mv -Ob --ploidy 1 {output.mpileup} -o {output.genotypecall}
-        bcftools index {output.mpileup}
         bcftools index {output.genotypecall}
         """
 
+rule bcftools_index:
+    input:
+        bcf_call = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.calls.bcf"
+    output:
+        bcf_csi = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.calls.bcf.csi"
+    conda:
+        config["analysis_settings"]["htslib"]["yaml"]
+    message:
+        "[bcftools_index]: Indexing {input.bcf_call} -> {output.bcf_csi}"
+    shell:
+        """
+        echo "Indexing {input.bcf_call} -> {output.bcf_csi}"
+        bcftools index {input.bcf_call}
+        """
 
 # Rule: Skesa_assembly
 #  DeBruijn graph-based de-novo assembler for microbial genomes
