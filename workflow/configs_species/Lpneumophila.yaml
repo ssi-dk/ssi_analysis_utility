@@ -6,7 +6,7 @@
 analyses_to_run: 
 
     kmeraligner:
-        status : True
+        status : False
         Title : Kmer Aligner on two pair reads
         ID: 90
         additional_option : -matrix 
@@ -33,7 +33,7 @@ analyses_to_run:
         Title: Presence of Streptococcal virulence genes from the Virulence Factor Database
 
     plasmidfinder: 
-        status : True
+        status : False
         Title : Plasmidfinder
         database: resources/plasmidfinder_db/  # Path to PlasmidFinder database
 
@@ -45,7 +45,7 @@ analyses_to_run:
         disinfinder_db: resources/disinfinder_db/  # DisinFinder database for disinfectant resistance
 
     virulencefinder : 
-        status : True
+        status : False
         Title : Virulence finder
         database: resources/virulencefinder_db  # VirulenceFinder database
 
@@ -80,7 +80,7 @@ analyses_to_run:
         database: resources/cgmlstfinder_db/  # cgMLSTFinder database
 
     amrfinder:
-        status : True
+        status : False
         Title : NCBI resistance gene finder
         organism: --organism Escherichia # Leave blank or insert --organism alongside one of the supported organisms, listed here: https://github.com/evolarjun/amr/wiki/Curated-organisms
 
@@ -88,6 +88,13 @@ analyses_to_run:
         status : True
         Title : MLST by Torsten Seeman
 
+    Legionella_SBT:
+        status : True
+        Title : Legionella Sequence Based Typing
+
+    lag1_detection:
+        status : True
+        Title : Detection of lag1 gene
 
     meningotype:
         status : True
