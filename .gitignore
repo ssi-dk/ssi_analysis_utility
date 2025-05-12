@@ -5,4 +5,4 @@ examples/Results/
 examples/results/
 examples/Dataset/reads/*gz
 resources/
-
+!resources/Legionella/lag1_reference.fasta

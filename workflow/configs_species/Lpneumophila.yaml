@@ -38,7 +38,7 @@ analyses_to_run:
         database: resources/plasmidfinder_db/  # Path to PlasmidFinder database
 
     resfinder: 
-        status : True 
+        status : False 
         Title : Resfinder
         resfinder_db: resources/resfinder_db/ # ResFinder database for AMR detection
         pointfinder_db: resources/pointfinder_db/  # PointFinder database for AMR point mutations
@@ -85,7 +85,7 @@ analyses_to_run:
         organism: --organism Escherichia # Leave blank or insert --organism alongside one of the supported organisms, listed here: https://github.com/evolarjun/amr/wiki/Curated-organisms
 
     mlst:
-        status : True
+        status : False
         Title : MLST by Torsten Seeman
 
     Legionella_SBT:
@@ -95,7 +95,8 @@ analyses_to_run:
     lag1_detection:
         status : True
         Title : Detection of lag1 gene
+        reference_fasta: resources/Legionella/lag1_reference.fasta
 
     meningotype:
-        status : True
+        status : False
         Title : Sero- and genotyping of N. meningitidis

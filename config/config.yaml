@@ -79,6 +79,12 @@ analysis_settings:
     mlst:
         yaml : ../envs/mlst.yaml
 
+    Legionella_SBT:
+        yaml : ../envs/legionellaSBT.yaml
+
+    lag1_detection:
+        yaml : ../envs/blast.yaml
+
     meningotype:
         yaml : ../envs/meningotype.yaml
     

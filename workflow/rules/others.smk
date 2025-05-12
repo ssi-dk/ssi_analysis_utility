@@ -157,3 +157,25 @@ rule CHtyper:
         # Run CHtyper Python script with the specified parameters
         python {params.app_path}/CHTyper-1.0.py -i {input.assembly}  -o {output} -p {params.database} -t {params.threshold} -l {params.coverage} -b $blastn
         """
+
+rule lag_1_detection:
+    input:
+        # Input: Assembly file for the sample
+        assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample]
+    params:
+        # Path to lag1 reference fasta file
+        lag1_reference_fasta = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["lag1_detection"]["reference_fasta"],
+    output:
+        folder = directory("{out}/{sample}/lag1_detection"),
+        tsv = directory("{out}/{sample}/lag1_detection/lag1_blast.tsv")
+    conda:
+        config["analysis_settings"]["lag1_detection"]["yaml"]
+    shell:
+        """
+        if [ ! -f {output.tsv} ];
+            then
+                mkdir -p {output.folder}
+                blastn -query {params.lag1_reference_fasta} -subject {input.assembly} -out {output.tsv} -outfmt "6 qseqid sseqid pident length qlen qstart qend sstart send sseq evalue bitscore"
+        fi
+        
+        """

@@ -1,0 +1,11 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - blast
+  - bwa
+  - samtools
+  - bcftools
+  - pip
+  - pip:
+    - legionella_sbt
