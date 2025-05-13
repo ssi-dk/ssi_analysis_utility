@@ -17,10 +17,10 @@ ecoli_kma_threshold = {
 }
 
 cdiff_kma_threshold = {
-    "tcdA": [92,92,10],
-    "tcdB": [92,92,10],
-    "tcdC": [92,92,10],
-    "cdtAB": [92,92,10],
+    "tcdA": [90,90,10],
+    "tcdB": [90,90,10],
+    "tcdC": [90,90,10],
+    "cdtAB": [90,90,10],
     "other": [98, 98,10]
 }
 
