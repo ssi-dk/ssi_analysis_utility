@@ -88,7 +88,29 @@ analyses_to_run:
         status : True
         Title : MLST by Torsten Seeman
 
+    Legionella_SBT:
+        status : False
+        Title : Legionella Sequence Based Typing
+
+    lag1_detection:
+        status : False
+        Title : Detection of lag1 gene
+        reference_fasta: resources/Legionella/lag1_reference.fasta
 
     meningotype:
-        status : True
+        status : False
         Title : Sero- and genotyping of N. meningitidis
+
+    emm_typing:
+        status : False
+        Title : Emm typing of Beta-haemolytic Streptococcus
+
+    Legionella_summary:
+        status : False
+        Title : Summarize Legionella results to tsv
+
+    Spyogenes_summary:
+        status : False
+        Title : Summarize Streptococcus pyogenes results to tsv
+
+        

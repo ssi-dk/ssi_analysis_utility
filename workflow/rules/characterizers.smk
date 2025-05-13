@@ -22,26 +22,78 @@ rule MLST:
         eval $cmd >> {log.stdout} 2>&1
     	"""
 
+# Rule Legionella_SBT:
+# Runs Multi Locus Sequence Type to determine the ST profile of isolate
+rule Legionella_SBT:
+    input:
+        assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample],
+        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
+        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1]
+
+    output:
+        directory("%s/{sample}/Legionella_SBT" %OUT_FOLDER)
+    conda:
+        config["analysis_settings"]["Legionella_SBT"]["yaml"]
+    log:
+    	stdout = "Logs/{sample}/Legionella_SBT.log"
+    message:
+    	"[Legionella SBT]: Running Legionella SBT on {wildcards.sample}"
+    shell:
+        """
+        mkdir -p {output}
+
+        cmd="legionella_sbt --assembly_file {input.assembly} --r1_file {input.R1} --r2_file {input.R2} --output_folder {output}"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+    	"""
+       
+
 # Rule meningotype:
 # Runs Multi Locus Sequence Type to determine the ST profile of isolate
 rule meningotype:
     input:
         assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample],
     output:
-        # mlst_file = "%s/{sample}/MLST/{sample}.tsv" %OUT_FOLDER
         directory("%s/{sample}/meningotype" %OUT_FOLDER)
     conda:
         config["analysis_settings"]["meningotype"]["yaml"]
     log:
-    	stdout = "Logs/{sample}/MLST.log"
+    	stdout = "Logs/{sample}/meningotype.log"
     message:
-    	"[MLST]: Running MLST on {wildcards.sample}"
+    	"[Meningotype]: Running Meningotype on {wildcards.sample}"
     shell:
         """
         mkdir -p {output}
 
-        cmd="mlst {input.assembly} --label $(basename {input.assembly} .fasta) > {output}/{wildcards.sample}.tsv"
+        cmd="meningotype --all {input.assembly} > {output}/meningotype.tsv"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
     	"""
+
+
+# Rule emm_typing:
+# Runs Multi Locus Sequence Type to determine the ST profile of isolate
+rule emm_typing:
+    input:
+        assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample],
+    output:
+        directory("%s/{sample}/emm_typing" %OUT_FOLDER)
+    conda:
+        config["analysis_settings"]["emm_typing"]["yaml"]
+    params:
+        emm_allele_fasta = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["emm_typing"]["emm_allele_fasta"],
+    log:
+    	stdout = "Logs/{sample}/emm_typing.log"
+    message:
+    	"[EMM typing]: Running EMM typing on {wildcards.sample}"
+    shell:
+        """
+        mkdir -p {output}
+
+        blastn -query {params.emm_allele_fasta} -subject {input.assembly} -qcov_hsp_perc 90 -out {output}/blast.tsv -outfmt "6 qseqid sseqid pident length qlen qstart qend sstart send sseq evalue bitscore"
+
+    	"""
+
+

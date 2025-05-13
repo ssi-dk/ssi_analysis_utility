@@ -153,10 +153,51 @@ rule all:
             ],
             out=OUT_FOLDER
         ),
+        expand(
+            "{out}/{sample}/Legionella_SBT", 
+            sample=[
+                s for s in SAMPLES 
+                if species_configs[sample_to_organism[s]]["analyses_to_run"]["Legionella_SBT"]["status"] is True
+            ],
+            out=OUT_FOLDER
+        ),
+        expand(
+            "{out}/{sample}/lag1_detection", 
+            sample=[
+                s for s in SAMPLES 
+                if species_configs[sample_to_organism[s]]["analyses_to_run"]["lag1_detection"]["status"] is True
+            ],
+            out=OUT_FOLDER
+        ),
+        expand(
+            "{out}/{sample}/emm_typing", 
+            sample=[
+                s for s in SAMPLES 
+                if species_configs[sample_to_organism[s]]["analyses_to_run"]["emm_typing"]["status"] is True
+            ],
+            out=OUT_FOLDER
+        ),
+        expand(
+            "{out}/{sample}/Legionella_summary", 
+            sample=[
+                s for s in SAMPLES 
+                if species_configs[sample_to_organism[s]]["analyses_to_run"]["Legionella_summary"]["status"] is True
+            ],
+            out=OUT_FOLDER
+        ),
+        expand(
+            "{out}/{sample}/Spyogenes_summary", 
+            sample=[
+                s for s in SAMPLES 
+                if species_configs[sample_to_organism[s]]["analyses_to_run"]["Spyogenes_summary"]["status"] is True
+            ],
+            out=OUT_FOLDER
+        ),
 
 include : "rules/db_setups.smk"
 include : "rules/finders.smk"
 include : "rules/characterizers.smk"
 include : "rules/others.smk"
+include : "rules/summarizers.smk"
 
 
