@@ -1,11 +1,15 @@
+#!/usr/bin/env python3
 import pandas as pd
 import argparse
+import re
 import os
 from typing import List, Dict
 import pysam
 import logging
 from logging_utils import setup_logging
 from thresholds import get_kma_thresholds_for_species, get_threshold
+from Bio import SeqIO
+from Bio.Seq import Seq
 
 # ========================= KMA FILE HANDLING =========================
 def process_res_file(res_file_path: str, thresholds: Dict[str, List[int]]) -> pd.DataFrame:
@@ -107,7 +111,7 @@ def summarize_single_sample(sample_name: str, res_path: str, verbose_flag: int =
     logging.info(f"Successfully processed sample: {sample_name}")
     return output_data, filtered_df
 
-# ========================= TOXIN VARIATION FILE HANDLING =========================
+# ========================= TOXIN VARIATION FILE HANDLING BCF =========================
 
 def load_toxin_coordinates(bed6_path: str) -> Dict[str, Dict[str, str | int]]:
     """
@@ -432,6 +436,79 @@ def find_matching_contig(filtered_df: pd.DataFrame, gene_name: str) -> str:
         return matches.iloc[0]["#Template"]
     raise ValueError(f"No contig found for gene: {gene_name}")
 
+# ========================= TRST FILE HANDLING - assembly =========================
+
+def parse_fasta(filepath):
+    return {record.id: str(record.seq) for record in SeqIO.parse(filepath, "fasta")}
+
+def parse_types(filepath, fragments):
+    types = {}
+    with open(filepath) as f:
+        for line in f:
+            if ",\t" in line:
+                key, pattern = line.strip().split(",\t")
+                try:
+                    types[key] = ''.join(fragments[p] for p in pattern.split("-"))
+                except KeyError:
+                    continue
+    return types
+
+def find_matches(sequence, patterns):
+    hits = []
+    for name, pattern in patterns.items():
+        pattern_seq = Seq(pattern)
+        if re.search(str(pattern_seq), sequence, re.IGNORECASE) or re.search(str(pattern_seq.reverse_complement()), sequence, re.IGNORECASE):
+            hits.append(name)
+    return hits
+
+def load_trst_types(filepath):
+    trst_table = []
+    with open(filepath) as f:
+        for line in f:
+            trst, tr6, tr10 = line.strip().split("\t")
+            trst_table.append((trst, tr6, tr10))
+    return trst_table
+
+def match_trst(rTR6, rTR10, trst_table):
+    for trst, tr6, tr10 in trst_table:
+        if tr6 in rTR6 and tr10 in rTR10:
+            return trst
+    return "Unknown"
+
+def run_trst_typing_on_fasta(fasta_path, db_dir):
+    TR6_frags = parse_fasta(os.path.join(db_dir, "TR6_repeat_sequences.fa"))
+    TR10_frags = parse_fasta(os.path.join(db_dir, "TR10_repeat_sequences.fa"))
+
+    TR6_types = parse_types(os.path.join(db_dir, "TR6_repeat_types.txt"), TR6_frags)
+    TR10_types = parse_types(os.path.join(db_dir, "TR10_repeat_types.txt"), TR10_frags)
+
+    trst_table = load_trst_types(os.path.join(db_dir, "TRST_repeat_types.txt"))
+
+    all_TR6_hits = set()
+    all_TR10_hits = set()
+    contig_count = 0
+
+    for record in SeqIO.parse(fasta_path, "fasta"):
+        contig_count += 1
+        seq = str(record.seq)
+
+        rTR6 = find_matches(seq, TR6_types)
+        rTR10 = find_matches(seq, TR10_types)
+
+        all_TR6_hits.update(rTR6)
+        all_TR10_hits.update(rTR10)
+
+    # Try to find a matching TRST
+    for trst, tr6, tr10 in trst_table:
+        if tr6 in all_TR6_hits and tr10 in all_TR10_hits:
+            return {"TRST": trst, "TR6": tr6, "TR10": tr10}
+
+    # No match found → preserve raw TR6/TR10 hits if available
+    TR6_val = ";".join(sorted(all_TR6_hits)) if all_TR6_hits else "Unknown"
+    TR10_val = ";".join(sorted(all_TR10_hits)) if all_TR10_hits else "Unknown"
+
+    return {"TRST": "Unknown", "TR6": TR6_val, "TR10": TR10_val}
+
 def main(args: argparse.Namespace) -> None:
     samplesheet_path = os.path.abspath(args.samplesheet)
 
@@ -458,7 +535,8 @@ def main(args: argparse.Namespace) -> None:
     input_columns += ["nanopore_read_file", "assembly_file", "organism", "variant", "notes"]
     summary_columns = ["tcdA", "tcdB", "tcdC", "cdtAB", "Other", "verbose"]
     variation_columns = ["tcdC117", "tcdCdel", "deletion_details"]
-    desired_columns = input_columns + summary_columns + variation_columns
+    TRST_columns = ["TRST", "TR6", "TR10"]
+    desired_columns = input_columns + summary_columns + variation_columns + TRST_columns
 
     # Load coordinates from BED
     coord_dict = load_toxin_coordinates("resources/Clostridioides_difficile_db/Toxin/Cdiff_Toxin.bed6")
@@ -484,10 +562,10 @@ def main(args: argparse.Namespace) -> None:
     for idx, row in df.iterrows():
         row_dict = row.to_dict()
         sample = row_dict["sample_name"]
-        res_path = f"examples/Results/{sample}/Cdiff_KMA_Toxin/{sample}.res"
-        bcf_path = f"examples/Results/{sample}/GenotypeCalls/{sample}.Cdiff_KMA_Toxin.calls.bcf"
-        bcf_indel_path = f"examples/Results/{sample}/GenotypeCalls/{sample}.Cdiff_KMA_Toxin.indels.bcf"
         print(f"\n================= Processing sample: {sample} =================")
+
+        # -------------------------- KMA --------------------------
+        res_path = f"examples/Results/{sample}/Cdiff_KMA_Toxin/{sample}.res"
 
         # Threshold loading
         try:
@@ -499,6 +577,10 @@ def main(args: argparse.Namespace) -> None:
         # Summarize result
         result_dict, filtered_df = summarize_single_sample(sample, res_path, verbose_flag=args.verbose, thresholds=thresholds)
         row_dict.update(result_dict)
+
+        # ----------------------- BCFtools variations -----------------------
+        bcf_path = f"examples/Results/{sample}/GenotypeCalls/{sample}.Cdiff_KMA_Toxin.calls.bcf"
+        bcf_indel_path = f"examples/Results/{sample}/GenotypeCalls/{sample}.Cdiff_KMA_Toxin.indels.bcf"
 
         if filtered_df.empty:
             row_dict["tcdC117"] = "-"
@@ -546,6 +628,21 @@ def main(args: argparse.Namespace) -> None:
                 logging.warning(f"Failed tcdC deletion check for {sample}: {e}")
                 row_dict["tcdCdel"] = "-"
 
+        # ----------------------- TRST Typing -----------------------
+        assembly_path = f"examples/Results/{sample}/skesa/{sample}.contigs.fasta"
+        trst_db_path = os.path.join("resources", "Clostridioides_difficile_db", "TRST")
+
+        try:
+            trst_result = run_trst_typing_on_fasta(assembly_path, trst_db_path)
+            row_dict["TRST"] = trst_result["TRST"]
+            row_dict["TR6"] = trst_result["TR6"]
+            row_dict["TR10"] = trst_result["TR10"]
+        except Exception as e:
+            logging.warning(f"TRST typing failed for {sample}: {e}")
+            row_dict["TRST"] = "-"
+            row_dict["TR6"] = "-"
+            row_dict["TR10"] = "-"
+
         # Final formatting
         for col in desired_columns:
             row_dict.setdefault(col, "-")
@@ -575,37 +672,3 @@ if __name__ == "__main__":
     parser.add_argument("--split", type=int, choices=[0, 1], default=0, help="Split Illumina_read_files into Read1/Read2 (default: 0)")
     args = parser.parse_args()
     main(args)
-
-
-
-
-def check_variant_at_position(bcf_path: str, contig: str, pos: int) -> str:
-    print("inside check_variant_at_position")
-    try:
-        bcf = pysam.VariantFile(bcf_path)
-        print(bcf)
-        for rec in bcf.fetch(contig, pos - 1, pos):
-            print(f"RECORD IS {rec}")
-            if rec.pos == pos:
-                return "Present"
-        return "-"
-    except Exception as e:
-        logging.warning(f"Could not read or query BCF {bcf_path}: {e}")
-        return "-"
-    
-def find_contig_for_gene(filtered_df: pd.DataFrame, gene_name: str) -> str:
-    """
-    Extracts the actual contig name from a KMA template in the .res file,
-    based on a known gene (e.g., 'tcdC').
-
-    Args:
-        filtered_df (pd.DataFrame): Filtered KMA result DataFrame.
-        gene_name (str): Target gene to match (e.g., 'tcdC').
-
-    Returns:
-        str: Extracted contig name (e.g., 'AM180355.1')
-    """
-    for template in filtered_df["#Template"]:
-        if gene_name in template:
-            return template.split("_")[0]
-    raise ValueError(f"No contig found for gene {gene_name} in templates.")
