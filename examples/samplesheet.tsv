@@ -4,3 +4,4 @@ ERR14229029	examples/Dataset/reads/ERR14229029_1.fastq.gz,examples/Dataset/reads
 NZ_CP064367.1	Na	Na	examples/Dataset/assemblies/NZ_CP064367.1.fasta	Nmeningitidis	Serotype A	Na
 Legionella_example1	examples/Dataset/reads/Legionella_example1_S67_L555_R1_001.fastq.gz,examples/Dataset/reads/Legionella_example1_S67_L555_R2_001.fastq.gz	Na	examples/Dataset/assemblies/Legionella_example1.fasta	Lpneumophila	Na	Na
 GAS-2022-1029	Na	Na	examples/Dataset/assemblies/GAS-2022-1029.fasta	Spyogenes	Na	Na
+GCF_015828745.1	Na	Na	examples/Dataset/assemblies/GCF_015828745.1_ASM1582874v1_genomic.fna	Hinfluenzae	Na	Na

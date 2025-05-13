@@ -97,3 +97,26 @@ rule emm_typing:
     	"""
 
 
+
+rule Hinfluenzae_biotype:
+    input:
+        assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample],
+    output:
+        directory("%s/{sample}/Hinfluenzae_biotype" %OUT_FOLDER)
+    conda:
+        config["analysis_settings"]["Hinfluenzae_biotype"]["yaml"]
+    params:
+        biotype_genes_reference_fasta = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Hinfluenzae_biotype"]["biotype_gene_references"],
+    log:
+    	stdout = "Logs/{sample}/Hinfluenzae_biotype.log"
+    message:
+    	"[Haemophilus influenzae biotype]: Checking for Haemophilus influenzae biotype genes {wildcards.sample}"
+    shell:
+        """
+        mkdir -p {output}
+
+        blastn -query {params.biotype_genes_reference_fasta} -subject {input.assembly} -out {output}/blast.tsv -outfmt "6 qseqid sseqid pident length qlen qstart qend sstart send sseq evalue bitscore"
+
+    	"""
+
+      
