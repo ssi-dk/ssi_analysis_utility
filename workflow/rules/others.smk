@@ -42,7 +42,11 @@ rule Cdiff_KMA_Toxin:
         add_opt = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Cdiff_KMA_Toxin"]["additional_option"],
         prefix = "%s/{sample}/Cdiff_KMA_Toxin/{sample}" % OUT_FOLDER
     output:
-        sam = "%s/{sample}/Cdiff_KMA_Toxin/{sample}.sam" % OUT_FOLDER
+        aln = temp("%s/{sample}/Cdiff_KMA_Toxin/{sample}.aln" % OUT_FOLDER),
+        res = "%s/{sample}/Cdiff_KMA_Toxin/{sample}.res" % OUT_FOLDER,
+        fsa = "%s/{sample}/Cdiff_KMA_Toxin/{sample}.fsa" % OUT_FOLDER,
+        sam = temp("%s/{sample}/Cdiff_KMA_Toxin/{sample}.sam" % OUT_FOLDER),
+        vcf_gz = temp("%s/{sample}/Cdiff_KMA_Toxin/{sample}.vcf.gz" % OUT_FOLDER),
     conda:
         config["analysis_settings"]["Clostridioides_difficile_db"]["yaml"]
     log:
@@ -191,7 +195,7 @@ rule samtools_view:
     input:
         sam = "{folder}/{sample}/{tool}/{sample}.sam"
     output:
-        filtered_bam = "{folder}/{sample}/FilteredBAM/{sample}.{tool}.filtered.bam"
+        filtered_bam = temp("{folder}/{sample}/FilteredBAM/{sample}.{tool}.filtered.bam")
     params:
         add_opt = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["samtools_view"]["additional_option"],
     conda:
@@ -208,7 +212,7 @@ rule samtools_sort:
     input:
         filtered_bam = "{folder}/{sample}/FilteredBAM/{sample}.{tool}.filtered.bam"
     output:
-        sorted_bam = "{folder}/{sample}/FilteredBAM/{sample}.{tool}.filtered.sorted.bam"
+        sorted_bam = temp("{folder}/{sample}/FilteredBAM/{sample}.{tool}.filtered.sorted.bam")
     conda:
         config["analysis_settings"]["htslib"]["yaml"]
     message:
@@ -223,7 +227,7 @@ rule samtools_index:
     input:
         sorted_bam = "{folder}/{sample}/FilteredBAM/{sample}.{tool}.filtered.sorted.bam"
     output:
-        bam_bai = "{folder}/{sample}/FilteredBAM/{sample}.{tool}.filtered.sorted.bam.bai"
+        bam_bai = temp("{folder}/{sample}/FilteredBAM/{sample}.{tool}.filtered.sorted.bam.bai")
     conda:
         config["analysis_settings"]["htslib"]["yaml"]
     message:
@@ -244,7 +248,7 @@ rule bcftools_mpileup:
     params:
         db_prefix = rules.setup_CdiffToxin.params.db_toxin
     output:
-        mpileup = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.mpileup.bcf"
+        mpileup = temp("{folder}/{sample}/GenotypeCalls/{sample}.{tool}.mpileup.bcf")
     conda:
         config["analysis_settings"]["htslib"]["yaml"]
     message:
@@ -261,6 +265,7 @@ rule bcftools_view_filter:
         database = rules.setup_CdiffToxin.output.database,
     output:
         indels_only = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.indels.bcf",
+        bcf_idx = temp("{folder}/{sample}/GenotypeCalls/{sample}.{tool}.mpileup.bcf.csi")
     params:
         db_prefix = rules.setup_CdiffToxin.params.db_toxin,
         region = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["bcftools_view_filter"]["region"],
@@ -276,7 +281,7 @@ rule bcftools_view_filter:
         # Check if the index exists, and if not, index the BCF file first
         if [ ! -f {input.bcf}.csi ]; then
             echo "Indexing {input.bcf}"
-            bcftools index {input.bcf}
+            bcftools index {input.bcf} -o {output.bcf_idx}
         fi
 
         cmd="bcftools view -r {params.region} {params.add_opt} -Ob -o {output.indels_only} {input.bcf}"
