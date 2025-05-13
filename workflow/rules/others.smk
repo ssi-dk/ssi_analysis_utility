@@ -236,39 +236,83 @@ rule samtools_index:
 
 # Rule: bcftools_genotypecall
 # Identifies microbial species or strain using k-mer-based alignment.
-rule bcftools_genotypecall:
+        
+rule bcftools_mpileup:
     input:
         sorted_bam = "{folder}/{sample}/FilteredBAM/{sample}.{tool}.filtered.sorted.bam",
         database = rules.setup_CdiffToxin.output.database
     params:
         db_prefix = rules.setup_CdiffToxin.params.db_toxin
     output:
-        mpileup = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.mpileup.bcf",
+        mpileup = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.mpileup.bcf"
+    conda:
+        config["analysis_settings"]["htslib"]["yaml"]
+    message:
+        "[bcftools_mpileup]: Generating mpileup {input.sorted_bam} -> {output.mpileup}"
+    shell:
+        """
+        bcftools mpileup -Ob -f {input.database}/{params.db_prefix}.fasta {input.sorted_bam} -o {output.mpileup}
+        """
+        
+# Rule: bcftools_view_filter
+rule bcftools_view_filter:
+    input:
+        bcf = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.mpileup.bcf",
+        database = rules.setup_CdiffToxin.output.database,
+    output:
+        indels_only = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.indels.bcf",
+    params:
+        db_prefix = rules.setup_CdiffToxin.params.db_toxin,
+        region = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["bcftools_view_filter"]["region"],
+        add_opt = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["bcftools_view_filter"]["additional_option"],
+    conda:
+        config["analysis_settings"]["htslib"]["yaml"],
+    log:
+        stdout = '{folder}/{sample}/GenotypeCalls/{sample}.{tool}.bcftools_filter.log'
+    message:
+        "[bcftools_view_filter]: Filtering the mpileup from {input.bcf}",
+    shell:
+        """
+        # Check if the index exists, and if not, index the BCF file first
+        if [ ! -f {input.bcf}.csi ]; then
+            echo "Indexing {input.bcf}"
+            bcftools index {input.bcf}
+        fi
+
+        cmd="bcftools view -r {params.region} {params.add_opt} -Ob -o {output.indels_only} {input.bcf}"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+        """
+
+
+rule bcftools_call:
+    input:
+        mpileup = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.mpileup.bcf"
+    output:
         genotypecall = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.calls.bcf"
     conda:
         config["analysis_settings"]["htslib"]["yaml"]
     message:
-        "[bcftools_genotypecall]: Genotype calling {input.sorted_bam} -> {output.genotypecall}"
+        "[bcftools_call]: Calling genotypes from {input.mpileup} -> {output.genotypecall}"
     shell:
         """
-        bcftools mpileup -Ob -f {input.database}/{params.db_prefix}.fasta {input.sorted_bam} -o {output.mpileup}
-        bcftools call -mv -Ob --ploidy 1 {output.mpileup} -o {output.genotypecall}
-        bcftools index {output.genotypecall}
+        bcftools call -mv -Ob --ploidy 1 {input.mpileup} -o {output.genotypecall}
         """
 
 rule bcftools_index:
     input:
-        bcf_call = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.calls.bcf"
+        bcf = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.{tag}.bcf"
     output:
-        bcf_csi = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.calls.bcf.csi"
+        csi = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.{tag}.bcf.csi"
     conda:
         config["analysis_settings"]["htslib"]["yaml"]
     message:
-        "[bcftools_index]: Indexing {input.bcf_call} -> {output.bcf_csi}"
+        "[bcftools_index]: Indexing {input.bcf} -> {output.csi}"
     shell:
         """
-        echo "Indexing {input.bcf_call} -> {output.bcf_csi}"
-        bcftools index {input.bcf_call}
+        echo "Indexing {input.bcf} -> {output.csi}"
+        bcftools index -f {input.bcf}
         """
 
 # Rule: Skesa_assembly

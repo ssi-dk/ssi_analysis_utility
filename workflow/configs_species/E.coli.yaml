@@ -117,10 +117,12 @@ analyses_to_run:
         Title : samtools index
         ID: 91
 
-    bcftools_genotypecall:
-        status : False
-        Title : bcftools mpileup | bcftools call
+    bcftools_view_filter:
+        status: True
+        Title: Filter INDELs from mpileup
         ID: 91
+        additional_option: INFO/DP>10
+        region: ''
         
     bcftools_index:
         status : True
