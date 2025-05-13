@@ -257,33 +257,25 @@ def check_deletions_in_region(
     bcf_path: str,
     contig: str,
     gene_name: str,
-    coord_dict: Dict[str, Dict[str, str | int]],
-    target_regions: dict[int, tuple[int, int]],  # already in contig-relative forward coordinates
+    target_regions: dict[int, tuple[int, int]],
     region_buffer: int = 5,
-    length_tolerance: int = 1
+    length_tolerance: int = 1,
+    min_overlap_fraction: float = 0.4
 ) -> tuple[str, str]:
     """
-    Scan for deletions overlapping BCF regions (with ±region_buffer) and matching length (±tolerance).
-    
-    Args:
-        bcf_path (str): Path to BCF file.
-        contig (str): Contig name in BCF (e.g. AM180355.1_tcdC_...).
-        gene_name (str): Gene symbol (e.g., tcdC).
-        coord_dict (dict): Gene coordinate dictionary.
-        target_regions (dict): Pre-converted region coords: {length: (start, end)} in forward strand.
-        region_buffer (int): Buffer size (in nt) to apply symmetrically to region boundaries.
-        length_tolerance (int): Allowed deviation for matching deletion lengths.
-
-    Returns:
-        Tuple[str, str]: (matched deletion keys like "18;36", detailed string like "pos_REF_ALT_len")
+    Scan for deletions overlapping BCF regions with multi-tiered matching:
+    1. Exact single match
+    2. Compound match (sum of multiple deletions)
+    3. Fallback to overlap threshold
     """
     print(f"Scanning deletions in {bcf_path} for {gene_name}")
     try:
         bcf = pysam.VariantFile(bcf_path)
         matched_lengths = []
         deletion_info = []
+        deletions = []  # Store all deletions for possible compound matching
 
-        # Pad each region explicitly by ±region_buffer
+        # Pad target regions
         padded_regions = {
             expected_len: (
                 max(1, region_start - region_buffer),
@@ -292,42 +284,137 @@ def check_deletions_in_region(
             for expected_len, (region_start, region_end) in target_regions.items()
         }
 
+        # Pass 1: Scan and collect deletions
         for rec in bcf.fetch(contig):
             ref = rec.ref
             alt = rec.alts[0] if rec.alts else None
             pos = rec.pos
 
-            if alt and len(ref) > len(alt):  # deletion
+            if alt and len(ref) > len(alt):
                 del_len = len(ref) - len(alt)
                 del_start = pos
                 del_end = pos + del_len - 1
-                deletion_info.append(f"{pos}_{ref}_{alt}_{del_len}")
+                detail_str = f"{pos}_{ref}_{alt}_{del_len}"
+                deletions.append((del_start, del_end, del_len, detail_str))
+                deletion_info.append(detail_str)
+
+                print(f"\nDeletion: {del_len}bp at {del_start}-{del_end}")
 
                 for expected_len, (region_start, region_end) in padded_regions.items():
-                    if abs(del_len - expected_len) > length_tolerance:
+                    print(f" → Comparing to expected {expected_len}bp region {region_start}-{region_end}")
+
+                    # 1. Exact match
+                    if del_len == expected_len and region_start <= del_start and del_end <= region_end:
+                        print(f"Exact match: {del_len}bp deletion fully within expected region.")
+                        return (
+                            str(expected_len),
+                            detail_str
+                        )
+
+        # Pass 2: Compound match (combine 2 deletions)
+        for expected_len, (region_start, region_end) in padded_regions.items():
+            for i in range(len(deletions)):
+                for j in range(i + 1, len(deletions)):
+                    s1, e1, l1, d1 = deletions[i]
+                    s2, e2, l2, d2 = deletions[j]
+
+                    combined_len = l1 + l2
+                    combined_start = min(s1, s2)
+                    combined_end = max(e1, e2)
+
+                    if combined_len != expected_len:
                         continue
 
-                    # Compute overlap
-                    overlap_start = max(del_start, region_start)
-                    overlap_end = min(del_end, region_end)
+                    overlap_start = max(combined_start, region_start)
+                    overlap_end = min(combined_end, region_end)
                     overlap = max(0, overlap_end - overlap_start + 1)
-                    target_len = region_end - region_start + 1
 
-                    print(f"{del_len}bp deletion at {del_start}-{del_end} vs region {region_start}-{region_end} (overlap={overlap})")
+                    if overlap == 0:
+                        continue
 
-                    if overlap / target_len >= 0.6:
-                        print(f"Matched deletion {expected_len}bp at {del_start}-{del_end}")
-                        matched_lengths.append(str(expected_len))
-                        break
+                    combined_detail = f"{d1}+{d2}"
 
-        return (
-            ";".join(sorted(set(matched_lengths))) if matched_lengths else "-",
-            ";".join(deletion_info) if deletion_info else "-"
-        )
+                    if region_start <= combined_start and combined_end <= region_end:
+                        print(f"Compound deletion is fully within region and matches expected {expected_len}bp exactly.")
+                        return str(expected_len), combined_detail
+                    else:
+                        print(f"Compound deletion overlaps expected {expected_len}bp but isn't fully contained.")
+                        print(f"    Returning as compound_{expected_len}")
+                        return f"compound_{expected_len}", combined_detail
+
+        # Pass 3: Fallback to partial match (with overlap threshold)
+        for del_start, del_end, del_len, detail_str in deletions:
+            for expected_len, (region_start, region_end) in padded_regions.items():
+                if abs(del_len - expected_len) > length_tolerance:
+                    continue
+
+                overlap_start = max(del_start, region_start)
+                overlap_end = min(del_end, region_end)
+                overlap = max(0, overlap_end - overlap_start + 1)
+                target_len = region_end - region_start + 1
+                overlap_fraction = overlap / target_len
+
+                print(f" → Checking fallback for expected {expected_len}bp")
+                print(f"    Overlap: {overlap} / {target_len} = {overlap_fraction:.2f}")
+
+                if overlap_fraction >= min_overlap_fraction:
+                    print(f"Accepted fallback match for {expected_len}bp (overlap match).")
+                    return (
+                        str(expected_len),
+                        detail_str
+                    )
+
+        # Nothing matched
+        print("No deletions matched the target regions.")
+        return "-", ";".join(deletion_info) if deletion_info else "-"
 
     except Exception as e:
         print(f"Error while scanning deletions: {e}")
         return "-", "-"
+
+def verify_bcf(bcf_path: str, indels_bcf_path: str, contig: str, target_regions: dict[int, tuple[int, int]], region_buffer: int = 5, length_tolerance: int = 1) -> tuple[str, str]:
+    """
+    Verify deletions in two BCF files: the main BCF and the indels BCF.
+
+    Args:
+        bcf_path (str): Path to the main BCF file.
+        indels_bcf_path (str): Path to the indels BCF file.
+        contig (str): Contig name.
+        target_regions (dict): Target deletion regions (already converted to forward strand).
+        region_buffer (int): Buffer size (in nt) applied symmetrically to region boundaries.
+        length_tolerance (int): Allowed deviation for matching deletion lengths.
+
+    Returns:
+        tuple[str, str]: Deletion status and details (e.g., "18;36" for matched deletions and "pos_REF_ALT_len" for deletion details).
+    """
+    print(f"Verifying deletions in BCF files: {bcf_path} and {indels_bcf_path}")
+
+    # Check deletions in the main BCF first
+    del_status, del_details = check_deletions_in_region(
+        bcf_path=bcf_path,
+        contig=contig,
+        gene_name="tcdC",
+        target_regions=target_regions,
+        region_buffer=region_buffer,
+        length_tolerance=length_tolerance
+    )
+
+    if del_status == "-" or del_status == "":
+        print(f"No deletions found in main BCF ({bcf_path}), checking indels BCF.")
+        # If no deletions found or status is "-", check the indels BCF
+        del_status, del_details = check_deletions_in_region(
+            bcf_path=indels_bcf_path,
+            contig=contig,
+            gene_name="tcdC",
+            target_regions=target_regions,
+            region_buffer=region_buffer,
+            length_tolerance=length_tolerance
+        )
+
+        if del_status == "-" or del_status == "":
+            print(f"No deletions found in indels BCF ({indels_bcf_path}).")
+    
+    return del_status, del_details
 
 def find_matching_contig(filtered_df: pd.DataFrame, gene_name: str) -> str:
     """
@@ -399,7 +486,7 @@ def main(args: argparse.Namespace) -> None:
         sample = row_dict["sample_name"]
         res_path = f"examples/Results/{sample}/Cdiff_KMA_Toxin/{sample}.res"
         bcf_path = f"examples/Results/{sample}/GenotypeCalls/{sample}.Cdiff_KMA_Toxin.calls.bcf"
-
+        bcf_indel_path = f"examples/Results/{sample}/GenotypeCalls/{sample}.Cdiff_KMA_Toxin.indels.bcf"
         print(f"\n================= Processing sample: {sample} =================")
 
         # Threshold loading
@@ -422,7 +509,7 @@ def main(args: argparse.Namespace) -> None:
 
                 # --- SNP check: tcdC position 117 (gene-relative) ---
                 _, genomic_pos = gene_pos_to_genomic("tcdC", 117, coord_dict)
-                print(f"📍 Position 117 in tcdC maps to contig pos: {genomic_pos}")
+                print(f"Position 117 in tcdC maps to contig pos: {genomic_pos}")
 
                 variant_status, extra_verbose = check_tcdC117_variant(
                     bcf_path, contig, genomic_pos, range=20, expected_ref="T", expected_alt="A"
@@ -443,11 +530,11 @@ def main(args: argparse.Namespace) -> None:
                 gene_length = coord_dict["tcdC"]["length"]
                 converted_regions = convert_reverse_strand_regions(tcdC_deletion_regions, gene_length)
 
-                del_status, del_details = check_deletions_in_region(
+                # With this:
+                del_status, del_details = verify_bcf(
                     bcf_path=bcf_path,
+                    indels_bcf_path=bcf_indel_path,
                     contig=contig,
-                    gene_name="tcdC",
-                    coord_dict=coord_dict,
                     target_regions=converted_regions,
                     region_buffer=5,
                     length_tolerance=1
