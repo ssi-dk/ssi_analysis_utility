@@ -193,6 +193,15 @@ rule all:
             ],
             out=OUT_FOLDER
         ),
+        expand(
+            "{out}/{sample}/Hinfluenzae_biotype", 
+            sample=[
+                s for s in SAMPLES 
+                if species_configs[sample_to_organism[s]]["analyses_to_run"]["Hinfluenzae_biotype"]["status"] is True
+            ],
+            out=OUT_FOLDER
+        ),
+
 
 include : "rules/db_setups.smk"
 include : "rules/finders.smk"

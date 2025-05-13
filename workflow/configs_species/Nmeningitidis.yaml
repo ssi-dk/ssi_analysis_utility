@@ -111,3 +111,8 @@ analyses_to_run:
     Spyogenes_summary:
         status : False
         Title : Summarize Streptococcus pyogenes results to tsv
+
+    Hinfluenzae_biotype:
+        status : False
+        Title : Biotyping of Haemophilus influenzae
+        biotype_gene_references: resources/Hinfluenzae/biotype_gene_references.fasta

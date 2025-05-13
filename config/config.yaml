@@ -90,6 +90,9 @@ analysis_settings:
     
     SB_summarizers:
         yaml : ../envs/SB_summarizers.yaml
+
+    Hinfluenzae_biotype:
+        yaml : ../envs/blast.yaml
             
     # Illumina lineage determination (commented out for now):
     # reference_fasta_file: /home/simonescrima/Desktop/ssi_analysis_utility/resources/lineage_determination/MGAS5005.fasta  # Fasta file for reference genome
