@@ -99,3 +99,15 @@ analyses_to_run:
     meningotype:
         status : True
         Title : Sero- and genotyping of N. meningitidis
+
+    emm_typing:
+        status : False
+        Title : Emm typing of Beta-haemolytic Streptococcus
+
+    Legionella_summary:
+        status : False
+        Title : Summarize Legionella results to tsv
+
+    Spyogenes_summary:
+        status : False
+        Title : Summarize Streptococcus pyogenes results to tsv

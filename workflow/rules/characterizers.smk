@@ -66,10 +66,34 @@ rule meningotype:
         """
         mkdir -p {output}
 
-        cmd="meningotype --all {input.assembly} > {output}/{wildcards.sample}.tsv"
+        cmd="meningotype --all {input.assembly} > {output}/meningotype.tsv"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
     	"""
 
-        
+
+# Rule emm_typing:
+# Runs Multi Locus Sequence Type to determine the ST profile of isolate
+rule emm_typing:
+    input:
+        assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample],
+    output:
+        directory("%s/{sample}/emm_typing" %OUT_FOLDER)
+    conda:
+        config["analysis_settings"]["emm_typing"]["yaml"]
+    params:
+        emm_allele_fasta = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["emm_typing"]["emm_allele_fasta"],
+    log:
+    	stdout = "Logs/{sample}/emm_typing.log"
+    message:
+    	"[EMM typing]: Running EMM typing on {wildcards.sample}"
+    shell:
+        """
+        mkdir -p {output}
+
+        blastn -query {params.emm_allele_fasta} -subject {input.assembly} -qcov_hsp_perc 90 -out {output}/blast.tsv -outfmt "6 qseqid sseqid pident length qlen qstart qend sstart send sseq evalue bitscore"
+
+    	"""
+
+

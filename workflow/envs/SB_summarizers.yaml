@@ -1,0 +1,7 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - pip
+  - pip:
+    - ssi-analysis-result-parsers>=0.0.17

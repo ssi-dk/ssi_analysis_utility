@@ -31,39 +31,6 @@ rule kmeraligner:
         """
 
 
-# Rule for emm typing using BLAST
-rule emm_typing:
-    input:
-        # Input: emm allele files and assembly file for the sample
-        emm_allele_files = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["emm_typing"]["emm_allele_file"],
-        assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample]
-    params:
-        # Parameter for coverage threshold
-        cov_per = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["emm_typing"]["cov_threshold"],
-    output:
-        # Output is a directory to store emm typing results for the sample
-        directory("{out}/{sample}/emm_typing/")
-    conda:
-        config["analysis_settings"]["emm_typing"]["yaml"]
-    shell:
-        """
-        # Check if the output directory exists, skip execution if it does
-        if [ -d {output} ]; 
-            then
-                echo "Directory {output} exists,skipping."
-                exit 1
-            else
-                mkdir {output}  # Create the directory if it doesn't exist
-        fi
-
-        # Run BLAST for emm typing with specified input and output options
-        blastn -query {input.emm_allele_files} \
-               -subject {input.assembly} \
-               -qcov_hsp_perc {params.cov_per} \
-               -out {output}/blast_output.tsv \
-               -outfmt '6 qseqid sseqid pident length qlen qstart qend sstart send sseq evalue bitscore'
-        """
-
 # Rule for determining assembly lineage using nucmer and delta files
 rule assembly_lineage_determination:
     input:
@@ -166,16 +133,15 @@ rule lag_1_detection:
         # Path to lag1 reference fasta file
         lag1_reference_fasta = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["lag1_detection"]["reference_fasta"],
     output:
-        folder = directory("{out}/{sample}/lag1_detection"),
-        tsv = directory("{out}/{sample}/lag1_detection/lag1_blast.tsv")
+        directory("{out}/{sample}/lag1_detection")
     conda:
         config["analysis_settings"]["lag1_detection"]["yaml"]
     shell:
         """
-        if [ ! -f {output.tsv} ];
+        if [ ! -d {output} ];
             then
-                mkdir -p {output.folder}
-                blastn -query {params.lag1_reference_fasta} -subject {input.assembly} -out {output.tsv} -outfmt "6 qseqid sseqid pident length qlen qstart qend sstart send sseq evalue bitscore"
+                mkdir -p {output}
+        blastn -query {params.lag1_reference_fasta} -subject {input.assembly} -out {output}/blast.tsv -outfmt "6 qseqid sseqid pident length qlen qstart qend sstart send sseq evalue bitscore"
         fi
         
         """

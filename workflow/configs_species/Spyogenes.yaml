@@ -80,37 +80,35 @@ analyses_to_run:
         database: resources/cgmlstfinder_db/  # cgMLSTFinder database
 
     amrfinder:
-        status : False
+        status : True
         Title : NCBI resistance gene finder
-        organism: --organism Escherichia # Leave blank or insert --organism alongside one of the supported organisms, listed here: https://github.com/evolarjun/amr/wiki/Curated-organisms
+        organism: --organism Streptococcus_pyogenes # Leave blank or insert --organism alongside one of the supported organisms, listed here: https://github.com/evolarjun/amr/wiki/Curated-organisms
 
     mlst:
-        status : False
+        status : True
         Title : MLST by Torsten Seeman
 
     Legionella_SBT:
-        status : True
+        status : False
         Title : Legionella Sequence Based Typing
 
     lag1_detection:
-        status : True
-        Title : Detection of lag1 gene
-        reference_fasta: resources/Legionella/lag1_reference.fasta
+        status : False
+        Title : Detection of lag1 gene in Legionella
 
     meningotype:
         status : False
         Title : Sero- and genotyping of N. meningitidis
 
     emm_typing:
-        status : False
+        status : True
         Title : Emm typing of Beta-haemolytic Streptococcus
         emm_allele_fasta: resources/Spyogenes/emm_alleles.fasta
 
     Legionella_summary:
-        status : True
+        status : False
         Title : Summarize Legionella results to tsv
 
     Spyogenes_summary:
-        status : False
+        status : True
         Title : Summarize Streptococcus pyogenes results to tsv
-        
