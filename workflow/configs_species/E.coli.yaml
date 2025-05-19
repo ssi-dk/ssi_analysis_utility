@@ -60,18 +60,6 @@ analyses_to_run:
         status : True
         Title : Serotypefinder
         database: resources/serotypefinder_db/  # SerotypeFinder database
-    
-    # kleborate : 
-    #     status : False
-    #     Title : Kleborate
-    #     preset : kpsc
-
-    # CHtyper : 
-    #     status : False
-    #     Title: Chtyper
-    #     threshold : 0.90
-    #     coverage : 0.60
-    #     database: resources/chtyper_db/  # CHTyper database
 
     # cgMLSTFinder : 
     #     status : False
