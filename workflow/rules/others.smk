@@ -7,7 +7,7 @@ rule kmeraligner:
         R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
         R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
         database = rules.setup_EcoliKmerAligner.output.database
-    params:
+    params:https://github.com/ssi-dk/ssi_analysis_utility/pull/27/conflict?name=workflow%252Frules%252Fothers.smk&ancestor_oid=e79506d7abf3b40aa40fe99634c6df1d95294c25&base_oid=3d3052a2fe8766848b70d3a043a4935f375dd72e&head_oid=6dbbf350966b37383610ba6db007c97c51168b39
         # Path to the kmerfinder database, KMA aligner, and taxa file.
         add_opt = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["kmeraligner"]["additional_option"],
         db_prefix = rules.setup_EcoliKmerAligner.params.db_prefix,
@@ -63,6 +63,8 @@ rule assembly_lineage_determination:
                                                             --name {params.name} \
                                                             --outputdir {output} \
         """
+
+ 
 
 # Rule for Kleborate typing (pathogen typing based on assembly)
 rule kleborate:

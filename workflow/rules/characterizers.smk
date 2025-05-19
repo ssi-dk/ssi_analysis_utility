@@ -3,6 +3,7 @@
 rule MLST:
     input:
         assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample],
+        datefile = rules.update_MLST.output.datefile
     output:
         # mlst_file = "%s/{sample}/MLST/{sample}.tsv" %OUT_FOLDER
         directory("%s/{sample}/MLST" %OUT_FOLDER)

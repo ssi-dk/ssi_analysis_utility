@@ -4,6 +4,7 @@ import os
 import yaml
 from scripts import convert_external_genome
 import warnings
+import math
 
 configfile: "config/config.yaml"
 
@@ -102,31 +103,10 @@ rule all:
             ]
         ),
         expand(
-            "%s/{sample}/serotypefinder/" %OUT_FOLDER, 
+            "%s/{sample}/SerotypeFinder/" %OUT_FOLDER, 
             sample=[
                 s for s in SAMPLES 
                 if species_configs[sample_to_organism[s]]["analyses_to_run"]["serotypefinder"]["status"] is True
-            ]
-        ),
-        expand(
-            "%s/{sample}/kleborate/" %OUT_FOLDER, 
-            sample=[
-                s for s in SAMPLES 
-                if species_configs[sample_to_organism[s]]["analyses_to_run"]["kleborate"]["status"] is True
-            ]
-        ),
-        expand(
-            "%s/{sample}/chtyper/" %OUT_FOLDER, 
-            sample=[
-                s for s in SAMPLES 
-                if species_configs[sample_to_organism[s]]["analyses_to_run"]["CHtyper"]["status"] is True
-            ]
-        ),
-        expand(
-            "%s/{sample}/cgmlstfinder/" %OUT_FOLDER,
-            sample=[
-                s for s in SAMPLES 
-                if species_configs[sample_to_organism[s]]["analyses_to_run"]["cgMLSTFinder"]["status"] is True
             ]
         ),
         expand(
