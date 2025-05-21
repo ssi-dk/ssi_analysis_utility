@@ -1,5 +1,8 @@
 # 🧬 SSI Analysis Utility
 
+[![Snakemake](https://img.shields.io/badge/snakemake-v7.32-blue?logo=snakemake)](https://snakemake.readthedocs.io/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+
 **ssi_analysis_utility** is a modular, reproducible **bioinformatics pipeline** built for bacterial genome analysis. 
 
 It integrates various tools for antimicrobial resistance profiling, sequence typing, virulence detection, and more. Designed for flexibility and transparency, it leverages **Snakemake** for workflow management and **nbdev** for literate programming.
@@ -12,22 +15,23 @@ It integrates various tools for antimicrobial resistance profiling, sequence typ
 - [📚 Table of Contents](#-table-of-contents)
 - [📁 Project Structure](#-project-structure)
 - [🚀 Getting Started](#-getting-started)
-
+- [🧫 Supported Databases](#-supported-databases)
+- [📊 Running Pipeline](#-running-pipeline)
 ---
 
 ## 📁 Project Structure
 
 ### 📁 `ssi_analysis_utility/`
-The core Python module implementing the logic for sample management, configuration parsing, and pipeline execution. This package is designed to be importable and modular.
+The core Python module implements the logic for sample management, configuration parsing, and pipeline execution. This package is designed to be importable and modular.
 
 ### 📁 `workflow/`
-Contains all Snakemake-related files: rule definitions, species-specific configs, conda environments, and helper scripts. This is the heart of the pipeline's execution logic.
+Contains all Snakemake-related files: rule definitions, species-specific configs, conda environments, and helper scripts.
 
 ### 📁 `examples/`
 Includes test data, example results, and template samplesheets to demonstrate pipeline functionality and structure.
 
 ### 📁 `resources/`
-Houses important external datasets and pre-built KMA or tool-specific databases (e.g., for AMRFinder, kmeraligner, etc.).
+Stores the important external datasets and pre-built KMA or tool-specific databases (e.g., for AMRFinder, kmeraligner, etc.).
 
 ### 📁 `nbs/`
 Notebook-based documentation and exploratory development environment built using `nbdev`. These include tutorials, demos, and tests.
@@ -175,19 +179,19 @@ The structure below shows all information within the directory after running two
 
 ## 🚀 Getting Started
 
-### 📦 Requirements
-**📝 **:  
+### 📦 Requirements:
 - 🧪 [Conda (Miniconda or Anaconda)](https://docs.conda.io/en/latest/miniconda.html) >=24.7.1
-- 🧬 [Snakemake](https://snakemake.readthedocs.io/en/stable/) (automatically installed via conda env)
+- 🧬 [Snakemake](https://snakemake.readthedocs.io/en/stable/)
+  
+### 📝 Prepare a sample sheet:  
+For inspiration, inspect the example sheet found in [`examples/samplesheet.tsv`](examples/samplesheet.tsv)
 
-**📝 Prepare a sample sheet**:  
-   For inspiration, inspect the example sheet found in [`examples/samplesheet.tsv`](examples/samplesheet.t
-
-
+| sample_name   | Illumina_read_files                                                                                      | Nanopore_read_file | assembly_file | organism              | variant | notes |
+|---------------|-----------------------------------------------------------------------------------------------------------|---------------------|----------------|------------------------|---------|-------|
+| SRR10518319   | examples/Dataset/reads/SRR10518319_1.fastq.gz,examples/Dataset/reads/SRR10518319_2.fastq.gz              | Na                  | SRR10518319.fasta| Clostridioides difficile | Na      | ST2   |
 ---
 
-### 📦 Requirements
-
+### 📦 Installation
  
 1. **Clone the repository:**
    ```bash
@@ -195,13 +199,117 @@ The structure below shows all information within the directory after running two
    cd ssi_analysis_utility
    ```
 
-
 2. **Create and activate the conda environment:**
    ```bash
     conda env create -f conda.dev.env.yaml
     conda activate ssi_analysis_dev
    ```
-3. **Run the pipeline using Snakemake:**
+
+### 📦 Configuration files
+
+**Input manager configuration:**
+
+The most predominant configuration file ([`ssi_analysis_utility/config/config.yaml`](ssi_analysis_utility/config/config.yaml)) determines the default input files and the desired databases to be updated using a specific environment when running the pipeline initially
+
+```yaml
+####################### INPUT MANAGER #######################################
+input_manager:
+    path: examples/samplesheet.tsv       # Path to the input samplesheet (CSV/TSV file)
+    database_path: resources
+    config_species: workflow/configs_species/
+    out_folder: examples/Results         # Folder where the analysis results will be saved
+
+###################### ANALYSIS & TOOLS SETTINGS ############################
+analysis_settings:
+
+    kmeraligner:
+        yaml: ../envs/kmeraligner.yaml
+        database: kmeraligner
+
+    Clostridioides_difficile_db:
+        yaml: ../envs/DatabaseFetch.yaml
+        database: Clostridioides_difficile_db
+
+.
+.
+.
+   skesa:
+        yaml : ../envs/skesa.yaml
+```
+
+**Species-specific configurations:**
+
+Specific species might require unique tools when running the pipeline or different parameters for tools shared across numerous species. The options which distinguish them are defined in the species-specific configuration files, such as *Clostridioides difficile* specific ([`ssi_analysis_utility/workflow/configs_species/C.diff.yaml`](ssi_analysis_utility/workflow/configs_species/C.diff.yaml))
+
+
+```yaml
+analyses_to_run: 
+
+    kmeraligner:
+        status : False
+        Title : Kmer Aligner on two pair reads
+        ID: 90
+        additional_option : -matrix 
+        database : resources/plasmidfinder_db/enterobacteriales
+        wrangler: workflow/scripts/KMA_wrangler.py
+
+    Cdiff_KMA_Toxin:
+        status : True
+        Title : Kmer Aligner for Clostridium difficile Toxin detection
+        ID: 91
+        additional_option : -ref_fsa -nf -sam 4 -vcf 2 
+        database : resources/Clostridioides_difficile_db/Toxin/
+.
+.
+.
+    bcftools_view_filter:
+        status: True
+        Title: Filter INDELs from mpileup
+        ID: 91
+        additional_option: -v indels -i 'INFO/DP>10'
+        region: AM180355.1_tcdC_804309_805008
+```
+
+
+## 🧫 Supported Databases
+
+When cloning the repository, the databases have not been downloaded. The source for each database is defined in the database setup snakemake file (ssi_analysis_utility/workflow/rules/db_setups.smk). The current database includes:
+
+**AMR Profiling**
+- `setup_AMRFinder`: Sets up AMRFinderPlus for AMR gene and mutation detection (multi-species).
+- `setup_ResFinder`: Prepares ResFinder for acquired AMR gene identification.
+- `setup_PointFinder`: Indexes PointFinder for chromosomal resistance mutations (e.g., *E. coli*, *Salmonella*).
+- `setup_DisinFinder`: Installs DisinFinder for disinfectant resistance gene detection.
+
+**Virulence & Plasmids**
+- `setup_PlasmidFinder`: Sets up PlasmidFinder for plasmid replicon detection (e.g., *E. coli*).
+- `setup_VirulenceFinder`: Sets up VirulenceFinder for virulence gene detection (e.g., *E. coli*).
+
+**Typing & Subtyping**
+- `setup_EcoliKmerAligner`: Downloads and indexes k-mer gene set for *E. coli* typing.
+- `setup_CdiffToxin`: Builds *Clostridioides difficile* toxin gene database from GenBank.
+- `setup_CdiffTRST`: Downloads TRST repeat files for *C. difficile* strain typing.
+
+
+### 📦 Update databases:
+
+   1. When running the entire pipeline, the species-specific pipeline (based on the organism provided in the sample sheet) is determined, and based on the configuration files, it automatically downloads the required databases for the species-specific analysis.
+      
+   2. It is also possible for the user to manually download or update all databases
+      ```bash
+      snakemake --use-conda --cores all setup_all_databases
+      ```
+    
+   3. It is also possible for the user to manually download or update specific databases
+
+      **Clostridioides difficile toxin database**
+      ```bash
+      snakemake --use-conda --cores 1 setup_CdiffToxin
+      ```
+
+## 📊 Running pipeline
+
+### 📦 Run the pipeline using Snakemake:
    
    To execute the full workflow using all available cores:
    ```bash
@@ -213,89 +321,19 @@ The structure below shows all information within the directory after running two
    snakemake --use-conda --cores all --rerun-incomplete
    ```
 
-    To run a specific rule (e.g., cdiff_kma):
-    ```bash
-    snakemake --use-conda --cores 1 cdiff_kma
-    ```
+   To run a specific rule (e.g., cdiff_kma):
+   ```bash
+   snakemake --use-conda --cores 1 cdiff_kma
+   ```
 
-    To preview what will run without executing (dry-run):
-    ```bash
-    snakemake -n
-    ```
-
-
-
-# Species specific pipeline
-
-## Overview
-
-This Snakemake pipeline automates genomic analyses for antimcrobial surveillance. It integrates tools used in the Danish antimicrobial surveilance and includes detection of resistance genes, virulence factors, and plasmid replicons, in addition to several characterizations tools such as MLST and SerotypeFinder.
-
-
-
-# Setup
-## Requirements
-* snakemake
-* conda>=24.7.1
-
-## Installation
-
-1. (Recommendation) Use Micromamba or the like to set up an environment with the above requirement.
-
-2.  Clone the repository to desired location (e.g. ~/repos/ssi_analysis_utility):
-
-    ``` bash
-    git clone https://github.com/ssi-dk/ssi_analysis_utility.git ~/repos/ssi_analysis_utility
-    ```
-
-# Execution
-
-## Quick start
-For first time use and testing, execute **Step 1** and **Step 2**
-1. Navigate into the repository (e.g. `cd ~/repos/ssi_analysis_utility`)
-
-. Run `snakemake` with the `--use-conda` flag and dedicate the desired amount of threads (e.g. `4`) using `--cores 4` 
-
-    ``` bash
-    snakemake --use-conda --cores 4
-    ```
-
-## Running the Pipeline
-
-
-1.  Prepare a sample sheet, for inspiration inspect the example sheet found in `examples/samplesheet.tsv` of the repository:
-
-**Required fields:**
-* sample_name # Name of the sample, will be used to name result files
-* Illumina_read_files # Expects Paired-end read file locations, comma-separated
-* assembly_file # Path to sample assembly file, used for blast based analysis
-* organism # Used for specifying the sample specific configurations, must follow the same naming conventions as seen for the configuration files located in the repository folder `workflow/configs_species` 
-
-*Future planned fields:*
-* Nanopore_read_file
-
-2.  Inspect the species specific configuration files located in the repository folder `workflow/configs_species`.
-For each analysis module determine whether to include in the pipe by setting its `status` to `True` for includion or `False` for dismissing
-
-3. Set the overall configuration file located in `config/config.yaml`, for more details inspect the below **Configuration** section
-
-4. Execute Snakemake:
-    ```bash
-    snakemake --use-conda --cores <N cores>
-    ```
-5.  Inspect the output results files located at the location specified in the `out_folder` filed of the `config/config.yaml` file. For more details on the output, see **Output Structure** section below 
-
-## Configuration
-To configure the pipeline and determine input and output, update the input_manager section of the configuration file found in `config/config.yaml` of the repository.
-* Set path to the samplesheet by updating the `path` variable.
-* Define the location for where to store and locate databases for the analysis tools using the `database_path` variable.
-* Leave the `config_species` variable, only there for debugging and development reasons.
-* Determine the location on where to provide output for each analysis by updating the `out_folder` variable.
-
-### Output Structure
+   To preview what will run without executing (dry-run):
+   ```bash
+   snakemake -n
+   ```
+### 📂 Output folder structure
 
 Results are organized inside the `out_folder` variable specified within the `config/config.yaml` file, (e.g. Results). Analysis output are stored according to {Sample}/{Tool}:
-
+```text
     Results/
     ├── sample1/
     │   ├── analysis_1/
@@ -306,21 +344,24 @@ Results are organized inside the `out_folder` variable specified within the `con
     |   ├── analysis_2/
     |   └──...
     └──...
+```
 
-## Running status
-Each rule of the species specific pipeline are determined inside the `workflow/rules` folder. Logs are generated according to the rule names, so if any step fails, inspect the log file for further details. Log files are organised in a similar manner to the results and can be located in the `Logs` folder of the reporistory.
+### 📝 Species-specific results - extending samplesheet
 
-# Analysis step
-Currently supported tools with automatic setup include
+Depending on the chosen tools used for analysis, individual species require specific information extracted from similar output data files, defined using the species-specific config files. This final species-specific output functions extracts from the Output folder structure the necessary information and extends the original [`examples/samplesheet.tsv`](examples/samplesheet.tsv) file with specific information
 
-* ResFinder, DisinFinder, PointFinder
-* PlasmidFinder
-* VirulenceFinder
-* AMRFinder
-* MLST
-* KmerAligner for E. coli OH typing and more
+   **Clostridioides difficile specific final output**
+   ```bash
+   python workflow/scripts/Cdiff_KMA.py --samplesheet examples/samplesheet.tsv --outputfile Results/Cdiff_results.tsv
+   ```
 
-Planned future additions include
-* CHTyper
-* Kleborate
-* EMM-typing & Assembly_lineage_determination   # Currently included but not validated for automatic setup.
+   **Extended samplesheet output file**
+
+| sample_name   | Illumina_read_files| Nanopore_read_file | assembly_file | organism| variant | notes | tcdA | tcdB | tcdC | cdtAB | verbose | tcdC117 | tcdCdel | deletion_details | TRST | TR6 | TR10 
+|---------------|-----------------------------------------------------------------------------------------------------------|---------------------|----------------|------------------------|---------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|-------|
+| SRR10518319   | examples/Dataset/reads/SRR10518319_1.fastq.gz,examples/Dataset/reads/SRR10518319_2.fastq.gz| Na| SRR10518319.fasta| Clostridioides difficile | Na| ST2 | Positive | Positive | Positive | - | tcdB_283.94_100.00_99.97;tcdA_268.76_100.00_99.85;tcdC_256.69_100.00_99.86 | wt | - | - | tr046 | A001 | B038
+---
+
+                                        
+
+
