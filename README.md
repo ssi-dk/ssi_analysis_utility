@@ -86,13 +86,6 @@ The structure below shows all information within the directory after running two
 ├── input
 ├── nbs
 │   ├── 00_core.ipynb
-│   ├── 01_sample_manager.ipynb
-│   ├── 02_analysis_utility.ipynb
-│   ├── 03_pipeline_runner.ipynb
-│   ├── _quarto.yml
-│   ├── index.ipynb
-│   ├── nbdev.yml
-│   └── styles.css
 ├── pyproject.toml
 ├── resources
 │   ├── Clostridioides_difficile_db
@@ -121,8 +114,6 @@ The structure below shows all information within the directory after running two
 ├── settings.ini
 ├── setup.py
 ├── ssi_analysis_utility
-│   ├── __init__.py
-│   ├── _modidx.py
 │   ├── analysis_utility.py
 │   ├── config
 │   │   ├── config.default.env
@@ -134,41 +125,16 @@ The structure below shows all information within the directory after running two
     ├── Snakefile
     ├── configs_species
     │   ├── C.diff.yaml
-    │   ├── E.coli.yaml
-    │   └── example_species.yaml
     ├── envs
-    │   ├── CHtyper.yaml
     │   ├── DatabaseFetch.yaml
-    │   ├── LREfinder.yaml
-    │   ├── amrfinder.yaml
-    │   ├── assembly_lineage_determination.yaml
-    │   ├── cgMLSTfinder.yaml
-    │   ├── emm_typing.yaml
-    │   ├── htslib.yaml
-    │   ├── kleborate.yaml
-    │   ├── kmeraligner.yaml
-    │   ├── kmerfinder.yaml
-    │   ├── mlst.yaml
-    │   ├── plasmidfinder.yaml
-    │   ├── resfinder.yaml
-    │   ├── resistence_gene_detection.yaml
-    │   ├── serotypefinder.yaml
     │   ├── skesa.yaml
-    │   └── virulencefinder.yaml
     ├── rules
     │   ├── characterizers.smk
     │   ├── db_setups.smk
     │   ├── finders.smk
     │   └── others.smk
     └── scripts
-        ├── CHTyper-1.0.py
         ├── Cdiff_KMA.py
-        ├── KMA_wrangler.py
-        ├── LRE-Finder.py
-        ├── __pycache__
-        ├── blaster.py
-        ├── cgMLST.py
-        ├── convert_external_genome.py
         ├── genbank_fetcher.py
         ├── logging_utils.py
         └── thresholds.py
