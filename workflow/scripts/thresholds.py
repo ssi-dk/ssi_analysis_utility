@@ -24,6 +24,25 @@ cdiff_kma_threshold = {
     "other": [98, 98,10]
 }
 
+### Cdiff deletion thresholds
+deletion_gt_thresholds = {
+    "del117_1": [0.85,1,1], # [IMF, IDV, DP]
+    "del330_347_18": [0.01,1,1],
+    "del330_347_36": [0.01,1,1],
+    "del341_379_39": [0.01,1,1],
+    "del313_366_54": [0.01,1,1]
+}
+
+### Cdiff deletion thresholds
+# [percent of 'N' in region for ambiguous deletions]
+deletion_consensus_thresholds = { 
+    "del117_1": [0.90], 
+    "del330_347_18": [0.90],
+    "del330_347_36": [0.80],
+    "del341_379_39": [0.80],
+    "del313_366_54": [0.80]
+}
+
 ### AMRfinderplus thresholds
 
 ecoli_amr_threshold = {
@@ -69,6 +88,25 @@ def get_kma_thresholds_for_species(organism_name: str) -> Dict[str, List[int]]:
     elif organism_name.strip().lower() in ["c.diff", "c diff", "clostridium difficile", "clostridioides difficile"]:
         return cdiff_kma_threshold
     raise ValueError(f"No KMA thresholds for: {organism_name}")
+
+def get_deletion_threshold(deletion_key: str, thresholds: Dict[str, List[float]]) -> List[float]:
+    """
+    Returns the [IMF, IDV, DP] threshold list for a given deletion ID.
+    
+    Args:
+        deletion_key (str): Deletion ID, e.g. 'del330_347_18'
+
+    Returns:
+        List[float]: List containing [IMF, IDV, DP] thresholds
+
+    Raises:
+        ValueError if the key is not found
+    """
+    for key in thresholds:
+        if key in deletion_key:
+            return thresholds[key]
+    raise ValueError(f"No deletion thresholds found for: {deletion_key}")
+
 
 def get_amr_thresholds_for_species(organism_name: str) -> Dict[str, List[int]]:
     if organism_name.strip().lower() in ["e.coli", "e coli", "escherichia coli"]:

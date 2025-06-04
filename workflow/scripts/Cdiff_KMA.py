@@ -7,7 +7,7 @@ from typing import List, Dict
 import pysam
 import logging
 from logging_utils import setup_logging
-from thresholds import get_kma_thresholds_for_species, get_threshold
+from thresholds import get_kma_thresholds_for_species, get_threshold, get_deletion_threshold, deletion_gt_thresholds
 from Bio import SeqIO
 from Bio.Seq import Seq
 
@@ -20,14 +20,15 @@ def process_res_file(res_file_path: str, thresholds: Dict[str, List[int]]) -> pd
     except pd.errors.EmptyDataError:
         raise ValueError(f"File is empty or not properly formatted: {res_file_path}")
 
-    required_columns = {"#Template", "Template_Coverage", "Query_Identity", "Depth"}
+    # query_identity can be penalized more if the consensus
+    required_columns = {"#Template", "Template_length","Template_Coverage", "Template_Identity", "Depth"}
     if not required_columns.issubset(res_df.columns):
         raise ValueError(f"Missing expected columns in {res_file_path}. Found: {', '.join(res_df.columns)}")
 
     res_df["threshold"] = res_df["#Template"].apply(lambda x: get_threshold(x, thresholds))
     res_df_filtered = res_df[
         (res_df["Template_Coverage"] >= res_df["threshold"].apply(lambda x: x[0])) &
-        (res_df["Query_Identity"] >= res_df["threshold"].apply(lambda x: x[1])) &
+        (res_df["Template_Identity"] >= res_df["threshold"].apply(lambda x: x[1])) &
         (res_df["Depth"] >= res_df["threshold"].apply(lambda x: x[2]))
     ]
     return res_df_filtered
@@ -102,10 +103,12 @@ def summarize_single_sample(sample_name: str, res_path: str, verbose_flag: int =
 
             if len(parts) >= 2:
                 gene = parts[1]
-                depth = row["Depth"]
-                coverage = row["Template_Coverage"]
-                identity = row["Query_Identity"]
-                verbose_parts.append(f"{gene}_{depth:.2f}_{coverage:.2f}_{identity:.2f}")
+                length = row["Template_length"]
+                coverage = row["Template_Coverage"] # breadth of coverage
+                adjusted_coverage = min(coverage, 100.0)
+                depth = row["Depth"] # depth of ceverage
+                identity = row["Template_Identity"] 
+                verbose_parts.append(f"{gene}_{length}_{adjusted_coverage:.2f}_{identity:.2f}_{depth:.2f}")
         output_data["verbose"] = ";".join(verbose_parts)
 
     logging.info(f"Successfully processed sample: {sample_name}")
@@ -169,7 +172,7 @@ def convert_reverse_strand_regions(regions: dict[int, tuple[int, int]], gene_len
         converted_start = gene_length - (end - 1)
         converted_end = gene_length - (start - 1)
         converted[key] = (min(converted_start, converted_end), max(converted_start, converted_end))
-        print(f"original start:{start}-{end} \t converted:{converted_start}-{converted_end}")
+        #print(f"original start:{start}-{end} \t converted:{converted_start}-{converted_end}")
     return converted
 
 def gene_pos_to_genomic(gene_name: str, pos_in_gene: int, coord_dict: Dict[str, Dict[str, str | int]]) -> tuple[str, int]:
@@ -257,6 +260,34 @@ def check_tcdC117_variant(bcf_path: str, contig: str, pos: int, range: int,expec
         #print(f"Error reading BCF at {contig}:{pos}: {e}")
         return "-", ""
 
+def filter_deletion_details(detail_str: str) -> str:
+    """
+    Filters a deletion detail string by removing entries with 0-length deletions.
+
+    Args:
+        detail_str (str): A string of the format "pos1_REF_ALT_len+pos2_REF_ALT_len+..."
+
+    Returns:
+        str: Filtered string with only actual deletions (len > 0), or '-' if none remain.
+    """
+    if not detail_str:
+        return "-"
+
+    parts = detail_str.split("+")
+    valid_parts = []
+
+    for part in parts:
+        fields = part.split("_")
+        if len(fields) == 4:
+            try:
+                if int(fields[3]) > 0:
+                    valid_parts.append(part)
+            except ValueError:
+                continue  # skip malformed entries
+        else:
+            continue  # skip incomplete entries
+
+    return "+".join(valid_parts) if valid_parts else "-"
 
 def merge_overlapping_deletions_sliced(deletions: List[tuple[int, int, str]]) -> tuple[int, str, int]:
     """
@@ -288,6 +319,7 @@ def check_deletions_in_region(
     bcf_path: str,
     contig: str,
     gene_name: str,
+    orig_regions: dict[int, tuple[int, int]],
     target_regions: dict[int, tuple[int, int]],
     region_buffer: int = 5,
     length_tolerance: int = 1,
@@ -300,26 +332,80 @@ def check_deletions_in_region(
     try:
         bcf = pysam.VariantFile(bcf_path)
         raw_deletions = []
+        filtered_records = []
 
-        # Step 1: Extract all deletions
-        print("[STEP 1] Extracting deletions")
+        # Step 0: Filter on variant entries.
+        print("[STEP 0] Filtering deletions based on thresholds for QUAL == 0")
         for rec in bcf.fetch(contig):
             ref = rec.ref
             alt = rec.alts[0] if rec.alts else None
             pos = rec.pos
+            qual = rec.qual
 
-            if alt and len(ref) > len(alt):
+            IMF = rec.info.get("IMF", 0)
+            IDV = rec.info.get("IDV", 0)
+            DP = rec.info.get("DP", 0)
+                       
+            if float(qual) > 0:
+                filtered_records.append((pos, ref, alt))
+                continue
+            else:
+                print(f"variant: \t pos:{pos} : ref:{ref} \t alt:{alt} \t qual:{qual} \t IMF:{IMF} \t IDV:{IDV} \t DP:{DP}")
+                # Skip non-deletions
+                if not alt or len(ref) <= len(alt):
+                    continue
+                
+                # Now apply deletion-specific filtering
                 del_len = len(ref) - len(alt)
-                del_start = pos
-                del_end = pos + del_len - 1
-                raw_deletions.append((del_start, del_end, del_len, f"{pos}_{ref}_{alt}_{del_len}"))
+                matched = False
+
+                for expected_len, (region_start, region_end) in target_regions.items():
+                    if del_len != expected_len:
+                        continue
+
+                    del_len = len(ref) - len(alt)
+                    del_start = pos
+                    del_end = pos + del_len - 1
+
+                    orig_del_reg = orig_regions[del_len]
+                    
+                    deletion_key = f"del{orig_del_reg[0]}_{orig_del_reg[1]}_{del_len}"
+                    print(f"deletion key: {deletion_key}")
+
+                    try:
+                        thresholds = get_deletion_threshold(deletion_key, deletion_gt_thresholds)
+                        print(f"  → Loaded thresholds for {deletion_key}: IMF ≥ {thresholds[0]}, IDV ≥ {thresholds[1]}, DP ≥ {thresholds[2]}")
+                    except ValueError:
+                        continue  # no thresholds for this deletion
+
+                    if IMF >= thresholds[0] and IDV >= thresholds[1] and DP >= thresholds[2]:
+                        filtered_records.append((pos, ref, alt))
+                        print(f"  [PASS] variant {pos}:{ref}-{alt} passed {deletion_key} threshold check")
+                    else:
+                        print(f"  [FAIL] variant {pos}:{ref}-{alt} failed {deletion_key} failed threshold check")
+                    matched = True
+                    break  # use only first matching region
+
+                if not matched:
+                    print("  [SKIP] No matching deletion region found for filtering.")
+
+        # Step 1: Extract all deletions.
+        print("[STEP 1] Extracting deletions")
+        raw_deletions = []
+        for pos, ref, alt in filtered_records:
+            del_len = len(ref) - len(alt)
+            del_start = pos
+            del_end = pos + del_len - 1
+            detail_str = f"{pos}_{ref}_{alt}_{del_len}"
+            raw_deletions.append((del_start, del_end, del_len, detail_str))
+            if del_len >0:
                 print(f"  → Deletion: {del_len}bp at {del_start}-{del_end}")
 
         if not raw_deletions:
             print("[INFO] No deletions found.")
             return "-", "-",0
 
-        # Step 2: Merge overlapping deletions
+        # Step 2: Merge overlapping deletions.
         print("[STEP 2] Merging overlapping deletions")
         merged_deletions = []
         raw_deletions.sort()
@@ -334,7 +420,7 @@ def check_deletions_in_region(
                 current = list(d)
         merged_deletions.append(tuple(current))
 
-        # Step 3: Exact match
+        # Step 3: Exact match.
         print("[STEP 3] Checking for exact matches")
         padded_regions = {
             expected_len: (
@@ -346,22 +432,32 @@ def check_deletions_in_region(
 
         for del_start, del_end, _, detail_str in merged_deletions:
             actual_len = del_end - del_start + 1
-            print(f"\n  → Merged deletion: {actual_len}bp at {del_start}-{del_end}")
+
+            if actual_len > 0:
+                print(f"  → Merged deletion: {actual_len}bp at {del_start}-{del_end}")
+    
             for expected_len, (region_start, region_end) in padded_regions.items():
-                print(f"    Comparing to expected {expected_len}bp region {region_start}-{region_end}")
+                if actual_len > 0:
+                    print(f"    Comparing to expected {expected_len}bp region (± 5 nt): {region_start}-{region_end}")
+                
                 if actual_len == expected_len and region_start <= del_start and del_end <= region_end:
                     print(f"[MATCH] Exact match: {expected_len}bp deletion")
                     return str(expected_len), detail_str, int(expected_len)
 
-        # Step 4: Fallback partial match
+        # Step 4: Fallback partial match.
         print("[STEP 4] Checking partial overlaps")
         for del_start, del_end, _, detail_str in merged_deletions:
             actual_len = del_end - del_start + 1
-            print(f"  → Checking merged deletion {actual_len}bp at {del_start}-{del_end}")
+    
+            if actual_len > 0:
+                print(f"  → Checking merged deletion {actual_len}bp at {del_start}-{del_end}")
+    
             for expected_len, (region_start, region_end) in padded_regions.items():
                 if abs(actual_len - expected_len) > length_tolerance:
-                    print(f"    Skipped {actual_len}bp vs {expected_len}bp: outside length tolerance")
+                    if actual_len > 0:
+                        print(f"    Skipped {actual_len}bp vs {expected_len}bp: outside length tolerance")
                     continue
+    
                 overlap_start = max(del_start, region_start)
                 overlap_end = min(del_end, region_end)
                 overlap = max(0, overlap_end - overlap_start + 1)
@@ -372,30 +468,36 @@ def check_deletions_in_region(
                     print(f"[MATCH] Fallback partial match for {expected_len}bp (≥ {min_overlap_fraction})")
                     return f"partial_{expected_len}", detail_str, int(expected_len)
 
-        # Step 5: Recovered early match (start-proximal rescue)
+        # Step 5: Recovered early match (start-proximal rescue).
         print("[STEP 5] Checking for rescued match based on early alignment")
         for expected_len, (region_start, region_end) in padded_regions.items():
             for del_start, del_end, _, detail_str in merged_deletions:
                 actual_len = del_end - del_start + 1
                 dist = abs(del_start - region_start)
-                print(f"  → Checking {actual_len}bp deletion at {del_start}-{del_end} vs start {region_start} (dist={dist})")
+
+                if actual_len > 0:
+                    print(f"  → Checking {actual_len}bp deletion at {del_start}-{del_end} vs region {region_start}-{region_end} with distance between start coordinate {dist} nt")
+
                 if actual_len == expected_len and dist <= 5:
                     print(f"[MATCH] Rescued early match for {expected_len}bp deletion at {del_start}-{del_end}")
                     return f"rescued_{expected_len}", detail_str, int(expected_len)
 
-        # Step 6: Ambiguous overlap (last resort)
+        # Step 6: Ambiguous overlap (last resort).
         print("[STEP 6] Checking for ambiguous overlaps")
-        print(f"merged deletions {merged_deletions}")
+        #print(f"  → merged deletions {merged_deletions}")
         for del_start, del_end, _, detail_str in merged_deletions:
+            if del_len <= 0:
+                continue
+            
             for expected_len, (region_start, region_end) in padded_regions.items():
                 if del_end >= region_start and del_start <= region_end:
-                    print(f"[AMBIGUOUS] Deletion at {del_start}-{del_end} overlaps expected {expected_len}bp region")
+                    print(f"  → [AMBIGUOUS] Deletion at {min(del_start,del_end)}-{max(del_start,del_end)} overlaps expected {expected_len}bp region")
                     # Extract actual ref seqs from detail_str like: "321_REF1_ALT1_LEN+330_REF2_ALT2_LEN"
                     deletion_details = detail_str.split("+")
                     parsed = []
                     for d in deletion_details:
                         parts = d.split("_")
-                        print(f"PARTS {parts}")
+                        #print(f"PARTS {parts}")
                         if len(parts) >= 4:
                             s, ref, alt, del_len = parts
                             parsed.append((int(s), int(s)+len(ref)-1, ref))
@@ -404,17 +506,19 @@ def check_deletions_in_region(
                     merged_info = f"{merged_start}_{merged_seq}_{merged_seq[0]}_{merged_len-1}"
                     return f"ambiguous_{expected_len}", merged_info, int(expected_len)
         
-        # Step 7: Nothing matched
-        print("[INFO] No deletions matched any target region.")
+        # Step 7: Nothing matched.
+        print("[STEP 7] No deletions matched any target region.")
         all_details = ";".join([d[3] for d in merged_deletions])
         # for the merged deletions think about what you want to insert here
-        return "-", all_details, int(merged_deletions[2])
+        return "-", all_details, int(merged_deletions[2][2])
 
     except Exception as e:
         print(f"[ERROR] While scanning deletions: {e}")
-        return "-", "-"
+        return "-", "-", 0
 
-def verify_bcf(bcf_path: str, indels_bcf_path: str, contig: str, target_regions: dict[int, tuple[int, int]], region_buffer: int = 5, length_tolerance: int = 1) -> tuple[str, str,int]:
+def verify_bcf(bcf_path: str, indels_bcf_path: str, contig: str, 
+               orig_regions: dict[int, tuple[int, int]], target_regions: dict[int, tuple[int, int]], 
+               region_buffer: int = 5, length_tolerance: int = 1) -> tuple[str, str,int]:
     """
     Verify deletions in two BCF files: the main BCF and the indels BCF.
     
@@ -430,13 +534,14 @@ def verify_bcf(bcf_path: str, indels_bcf_path: str, contig: str, target_regions:
         tuple[str, str]: Deletion status and details (e.g., "18;36" for matched deletions and "pos_REF_ALT_len" for deletion details).
     """
 
-    print(f"Verifying deletions in BCF files: {bcf_path} and {indels_bcf_path}")
+    #print(f"Verifying deletions in BCF files: {bcf_path} and {indels_bcf_path}")
+    #print("\n[INFO] First attempt: scanning primary BCF")
 
-    print("\n[INFO] First attempt: scanning primary BCF")
     del_status, del_details, expected_del_len = check_deletions_in_region(
         bcf_path=bcf_path,
         contig=contig,
         gene_name="tcdC",
+        orig_regions=orig_regions,
         target_regions=target_regions,
         region_buffer=region_buffer,
         length_tolerance=length_tolerance
@@ -444,18 +549,22 @@ def verify_bcf(bcf_path: str, indels_bcf_path: str, contig: str, target_regions:
 
     # If result is ambiguous or no confident match, try the indels file
     if del_status.startswith("ambiguous") or del_status in ("-", "", None):
-        print(f"[INFO] No confident deletion in main BCF. Now checking indels BCF: {indels_bcf_path}")
+        print(f"[INFO] No confident deletion in main BCF {bcf_path}. Now checking indels BCF: {indels_bcf_path}")
         del_status_indels, del_details_indels, expected_del_len = check_deletions_in_region(
             bcf_path=indels_bcf_path,
             contig=contig,
             gene_name="tcdC",
+            orig_regions=orig_regions,
             target_regions=target_regions,
             region_buffer=region_buffer,
             length_tolerance=length_tolerance
         )
-
+        #print(f"orig region {orig_regions} target region {target_regions}")
         if del_status_indels not in ("-", "", None):
-            print(f"[INFO] Found confident call in indels BCF: {del_status_indels}")
+            if del_status_indels.startswith("ambiguous"):
+                print(f"[INFO] Found ambiguous deletion in indels BCF: {del_status_indels}")
+            else:
+                print(f"[INFO] Found confident deletion in indels BCF with length {del_status_indels} and expected length {expected_del_len}")
             return del_status_indels, del_details_indels, expected_del_len
         else:
             print("[INFO] Still no confident match even in indels BCF.")
@@ -501,9 +610,13 @@ def extract_consensus_indel_seq(
         if del_expected_len not in converted_regions:
             raise ValueError(f"Deletion length {del_expected_len} not found in regions")
 
+        print("[STEP 8] Checking the consensus sequence for deleted regions")
+
         start, end = converted_regions[del_expected_len]
         fasta = pysam.FastaFile(fasta_path)
         seq = fasta.fetch(contig, start, end)
+
+        print(f"  → Consensus sequence region: {start}-{end}")
 
         n_count = seq.upper().count("N")
         n_percent = (n_count / len(seq)) * 100 if len(seq) > 0 else 0
@@ -664,7 +777,7 @@ def main(args: argparse.Namespace) -> None:
             try:
                 contig = find_matching_contig(filtered_df, "tcdC")
                 _, genomic_pos = gene_pos_to_genomic("tcdC", 117, coord_dict)
-                print(f"Position 117 in tcdC maps to contig pos: {genomic_pos}")
+                #print(f"Position 117 in tcdC maps to contig pos: {genomic_pos}")
 
                 variant_status, extra_verbose = check_tcdC117_variant(
                     bcf_path, contig, genomic_pos, range=20, expected_ref="T", expected_alt="A"
@@ -687,13 +800,15 @@ def main(args: argparse.Namespace) -> None:
                     bcf_path=bcf_path,
                     indels_bcf_path=bcf_indel_path,
                     contig=contig,
+                    orig_regions=tcdC_deletion_regions,
                     target_regions=converted_regions,
                     region_buffer=5,
                     length_tolerance=1
                 )
                 row_dict["tcdCdel"] = del_status
-                row_dict["deletion_details"] = del_details
-                print(tcdC_deletion_regions.keys())
+                
+                row_dict["deletion_details"] = filter_deletion_details(del_details)
+                #print(f"deletion region keys {tcdC_deletion_regions.keys()} and values {tcdC_deletion_regions.values()}")
 
                 if del_expected_len in tcdC_deletion_regions:
                     fasta_path = f"examples/Results/{sample}/Cdiff_KMA_Toxin/{sample}.fsa"
