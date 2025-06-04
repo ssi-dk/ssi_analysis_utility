@@ -26,21 +26,21 @@ cdiff_kma_threshold = {
 
 ### Cdiff deletion thresholds
 deletion_gt_thresholds = {
-    "del117_1": [0.85,1,1], # [IMF, IDV, DP]
-    "del330_347_18": [0.01,1,1],
-    "del330_347_36": [0.01,1,1],
-    "del341_379_39": [0.01,1,1],
-    "del313_366_54": [0.01,1,1]
+    "del117_1": [0.70,1,1], # [IMF, IDV, DP]
+    "del330_347_18": [0.70,5,10],
+    "del330_347_36": [0.70,5,10],
+    "del341_379_39": [0.70,5,10],
+    "del313_366_54": [0.70,5,10]
 }
 
 ### Cdiff deletion thresholds
 # [percent of 'N' in region for ambiguous deletions]
 deletion_consensus_thresholds = { 
-    "del117_1": [0.90], 
-    "del330_347_18": [0.90],
-    "del330_347_36": [0.80],
-    "del341_379_39": [0.80],
-    "del313_366_54": [0.80]
+    "del117_1": [99], 
+    "del330_347_18": [85],
+    "del330_347_36": [70],
+    "del341_379_39": [70],
+    "del313_366_54": [70]
 }
 
 ### AMRfinderplus thresholds

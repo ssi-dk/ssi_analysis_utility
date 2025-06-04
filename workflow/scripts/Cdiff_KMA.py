@@ -7,7 +7,7 @@ from typing import List, Dict
 import pysam
 import logging
 from logging_utils import setup_logging
-from thresholds import get_kma_thresholds_for_species, get_threshold, get_deletion_threshold, deletion_gt_thresholds
+from thresholds import get_kma_thresholds_for_species, get_threshold, get_deletion_threshold, deletion_gt_thresholds, deletion_consensus_thresholds
 from Bio import SeqIO
 from Bio.Seq import Seq
 
@@ -323,7 +323,8 @@ def check_deletions_in_region(
     target_regions: dict[int, tuple[int, int]],
     region_buffer: int = 5,
     length_tolerance: int = 1,
-    min_overlap_fraction: float = 0.4
+    min_overlap_fraction: float = 0.4,
+    use_indels_thresholds: bool = False  # <-- NEW PARAMETER
 ) -> tuple[str, str, int]:
     """
     Scan for deletions in a BCF, merge overlapping ones, and match merged spans to expected regions.
@@ -347,7 +348,8 @@ def check_deletions_in_region(
             DP = rec.info.get("DP", 0)
                        
             if float(qual) > 0:
-                filtered_records.append((pos, ref, alt))
+                if not use_indels_thresholds:
+                    filtered_records.append((pos, ref, alt))
                 continue
             else:
                 print(f"variant: \t pos:{pos} : ref:{ref} \t alt:{alt} \t qual:{qual} \t IMF:{IMF} \t IDV:{IDV} \t DP:{DP}")
@@ -372,19 +374,25 @@ def check_deletions_in_region(
                     deletion_key = f"del{orig_del_reg[0]}_{orig_del_reg[1]}_{del_len}"
                     print(f"deletion key: {deletion_key}")
 
-                    try:
-                        thresholds = get_deletion_threshold(deletion_key, deletion_gt_thresholds)
-                        print(f"  → Loaded thresholds for {deletion_key}: IMF ≥ {thresholds[0]}, IDV ≥ {thresholds[1]}, DP ≥ {thresholds[2]}")
-                    except ValueError:
-                        continue  # no thresholds for this deletion
+                    if use_indels_thresholds:
+                        try:
+                            thresholds = get_deletion_threshold(deletion_key, deletion_gt_thresholds)
+                            print(f"  → Loaded thresholds for {deletion_key}: IMF ≥ {thresholds[0]}, IDV ≥ {thresholds[1]}, DP ≥ {thresholds[2]}")
+                        except ValueError:
+                            continue  # no thresholds for this deletion
 
-                    if IMF >= thresholds[0] and IDV >= thresholds[1] and DP >= thresholds[2]:
-                        filtered_records.append((pos, ref, alt))
-                        print(f"  [PASS] variant {pos}:{ref}-{alt} passed {deletion_key} threshold check")
+                        if IMF >= thresholds[0] and IDV >= thresholds[1] and DP >= thresholds[2]:
+                            filtered_records.append((pos, ref, alt))
+                            print(f"  [PASS] variant {pos}:{ref}-{alt} passed {deletion_key} threshold check")
+                        else:
+                            print(f"  [FAIL] variant {pos}:{ref}-{alt} failed {deletion_key} failed threshold check")                
+                        matched = True
+                        break  # use only first matching region
                     else:
-                        print(f"  [FAIL] variant {pos}:{ref}-{alt} failed {deletion_key} failed threshold check")
-                    matched = True
-                    break  # use only first matching region
+                        filtered_records.append((pos, ref, alt))
+                        print(f"  [NO FILTER] accepted variant {pos}:{ref}-{alt} without thresholds")
+                        matched = True
+                        break  # use only first matching region
 
                 if not matched:
                     print("  [SKIP] No matching deletion region found for filtering.")
@@ -544,7 +552,8 @@ def verify_bcf(bcf_path: str, indels_bcf_path: str, contig: str,
         orig_regions=orig_regions,
         target_regions=target_regions,
         region_buffer=region_buffer,
-        length_tolerance=length_tolerance
+        length_tolerance=length_tolerance,
+        use_indels_thresholds=False
     )
 
     # If result is ambiguous or no confident match, try the indels file
@@ -557,7 +566,8 @@ def verify_bcf(bcf_path: str, indels_bcf_path: str, contig: str,
             orig_regions=orig_regions,
             target_regions=target_regions,
             region_buffer=region_buffer,
-            length_tolerance=length_tolerance
+            length_tolerance=length_tolerance,
+            use_indels_thresholds=True
         )
         #print(f"orig region {orig_regions} target region {target_regions}")
         if del_status_indels not in ("-", "", None):
@@ -625,6 +635,46 @@ def extract_consensus_indel_seq(
     except Exception as e:
         logging.warning(f"Failed to extract/annotate from {contig}:{del_expected_len} in {fasta_path}: {e}")
         return "-"
+
+def evaluate_ambiguous_consensus(deletion_label: str, consensus_str: str, thresholds: dict) -> str:
+    """
+    Upgrade 'ambiguous_XX' to 'likely_XX' if %N ≥ threshold in deletion_consensus_thresholds.
+
+    Args:
+        deletion_label (str): e.g. 'ambiguous_39'
+        consensus_str (str): e.g. 'ATGCNNNN_88.88'
+        thresholds (dict): mapping of deletion keys to [N% threshold]
+
+    Returns:
+        str: updated deletion label ('likely_XX' or original ambiguous)
+    """
+    if not deletion_label.startswith("ambiguous") or "_" not in consensus_str:
+        return deletion_label
+
+    try:
+        n_percent = float(consensus_str.strip().split("_")[-1])
+    except Exception:
+        return deletion_label
+
+    try:
+        print("[STEP 9] Checking support for deletions within consensus sequence using thresholds")
+
+        del_len = deletion_label.split("_")[1]
+        for key, value in thresholds.items():
+            if key.endswith(f"_{del_len}"):
+                required_n = value[0]
+                print(f"  → Checking consensus sequence with current label {deletion_label}")
+                if n_percent >= required_n:  # upgraded if enough Ns
+                    deletion_label = deletion_label.replace("ambiguous", "likely")
+                    print(f"  → Consensus sequence with {n_percent}% N's passed thresholds of {required_n}% N's - supporting deletion, changing label: {deletion_label}")
+                    return deletion_label
+                else:
+                    print(f"  → Consensus sequence with {n_percent}% N's failed thresholds of {required_n}% N's - keeping label: {deletion_label}")
+                break
+    except Exception:
+        pass
+
+    return deletion_label
 
 # ========================= TRST FILE HANDLING - assembly =========================
 
@@ -814,6 +864,15 @@ def main(args: argparse.Namespace) -> None:
                     fasta_path = f"examples/Results/{sample}/Cdiff_KMA_Toxin/{sample}.fsa"
                     tcdC_seq_with_n =extract_consensus_indel_seq(fasta_path,contig,del_expected_len,converted_regions)
                     row_dict["deletion_consensus"] = tcdC_seq_with_n
+
+                    # Evaluate if ambiguous should be upgraded to likely
+                    if row_dict["tcdCdel"].startswith("ambiguous") and row_dict["deletion_consensus"] != "-":
+                        row_dict["tcdCdel"] = evaluate_ambiguous_consensus(
+                            row_dict["tcdCdel"],
+                            row_dict["deletion_consensus"],
+                            deletion_consensus_thresholds
+                        )
+                    
                 else:
                     row_dict["deletion_consensus"] = "-"
             except Exception as e:
