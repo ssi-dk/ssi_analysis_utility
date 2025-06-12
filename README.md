@@ -13,10 +13,105 @@ It integrates various tools for antimicrobial resistance profiling, sequence typ
 
 - [🧬 SSI Analysis Utility](#-ssi-analysis-utility)
 - [📚 Table of Contents](#-table-of-contents)
-- [📁 Project Structure](#-project-structure)
 - [🚀 Getting Started](#-getting-started)
+- [📁 Project Structure](#-project-structure)
 - [🧫 Supported Databases](#-supported-databases)
 - [📊 Running Pipeline](#-running-pipeline)
+---
+
+## 🚀 Getting Started
+
+### 📦 Requirements:
+- 🧪 [Conda (Miniconda or Anaconda)](https://docs.conda.io/en/latest/miniconda.html) >=24.7.1
+- 🧬 [Snakemake](https://snakemake.readthedocs.io/en/stable/)
+  
+### 📝 Prepare a sample sheet:  
+For inspiration, inspect the example sheet found in [`examples/samplesheet.tsv`](examples/samplesheet.tsv)
+
+| sample_name   | Illumina_read_files                                                                                      | Nanopore_read_file | assembly_file | organism              | variant | notes |
+|---------------|-----------------------------------------------------------------------------------------------------------|---------------------|----------------|------------------------|---------|-------|
+| SRR10518319   | examples/Dataset/reads/SRR10518319_1.fastq.gz,examples/Dataset/reads/SRR10518319_2.fastq.gz              | Na                  | SRR10518319.fasta| Clostridioides difficile | Na      | ST2   |
+---
+
+### 📦 Installation
+ 
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/your-org/ssi_analysis_utility.git
+   cd ssi_analysis_utility
+   ```
+
+2. **Create and activate the conda environment:**
+   ```bash
+    conda env create -f conda.dev.env.yaml
+    conda activate ssi_analysis_dev
+   ```
+
+### 📦 Configuration files
+
+**Input manager configuration:**
+
+The most predominant configuration file ([`ssi_analysis_utility/config/config.yaml`](ssi_analysis_utility/config/config.yaml)) determines the default input files and the desired databases to be updated using a specific environment when running the pipeline initially
+
+```yaml
+####################### INPUT MANAGER #######################################
+input_manager:
+    path: examples/samplesheet.tsv       # Path to the input samplesheet (CSV/TSV file)
+    database_path: resources
+    config_species: workflow/configs_species/
+    out_folder: examples/Results         # Folder where the analysis results will be saved
+
+###################### ANALYSIS & TOOLS SETTINGS ############################
+analysis_settings:
+
+    kmeraligner:
+        yaml: ../envs/kmeraligner.yaml
+        database: kmeraligner
+
+    Clostridioides_difficile_db:
+        yaml: ../envs/DatabaseFetch.yaml
+        database: Clostridioides_difficile_db
+
+.
+.
+.
+   skesa:
+        yaml : ../envs/skesa.yaml
+```
+
+**Species-specific configurations:**
+
+Specific species might require unique tools when running the pipeline or different parameters for tools shared across numerous species. The options which distinguish them are defined in the species-specific configuration files, such as *Clostridioides difficile* specific ([`ssi_analysis_utility/workflow/configs_species/C.diff.yaml`](ssi_analysis_utility/workflow/configs_species/C.diff.yaml))
+
+
+```yaml
+analyses_to_run: 
+
+    kmeraligner:
+        status : False
+        Title : Kmer Aligner on two pair reads
+        ID: 90
+        additional_option : -matrix 
+        database : resources/plasmidfinder_db/enterobacteriales
+        wrangler: workflow/scripts/KMA_wrangler.py
+
+    Cdiff_KMA_Toxin:
+        status : True
+        Title : Kmer Aligner for Clostridium difficile Toxin detection
+        ID: 91
+        additional_option : -ref_fsa -nf -sam 4 -vcf 2 
+        database : resources/Clostridioides_difficile_db/Toxin/
+.
+.
+.
+    bcftools_view_filter:
+        status: True
+        Title: Filter INDELs from mpileup
+        ID: 91
+        additional_option: -v indels -i 'INFO/DP>10'
+        region: AM180355.1_tcdC_804309_805008
+```
+
 ---
 
 ## 📁 Project Structure
@@ -142,100 +237,6 @@ The structure below shows all information within the directory after running two
 </details>
 
 ---
-
-## 🚀 Getting Started
-
-### 📦 Requirements:
-- 🧪 [Conda (Miniconda or Anaconda)](https://docs.conda.io/en/latest/miniconda.html) >=24.7.1
-- 🧬 [Snakemake](https://snakemake.readthedocs.io/en/stable/)
-  
-### 📝 Prepare a sample sheet:  
-For inspiration, inspect the example sheet found in [`examples/samplesheet.tsv`](examples/samplesheet.tsv)
-
-| sample_name   | Illumina_read_files                                                                                      | Nanopore_read_file | assembly_file | organism              | variant | notes |
-|---------------|-----------------------------------------------------------------------------------------------------------|---------------------|----------------|------------------------|---------|-------|
-| SRR10518319   | examples/Dataset/reads/SRR10518319_1.fastq.gz,examples/Dataset/reads/SRR10518319_2.fastq.gz              | Na                  | SRR10518319.fasta| Clostridioides difficile | Na      | ST2   |
----
-
-### 📦 Installation
- 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/your-org/ssi_analysis_utility.git
-   cd ssi_analysis_utility
-   ```
-
-2. **Create and activate the conda environment:**
-   ```bash
-    conda env create -f conda.dev.env.yaml
-    conda activate ssi_analysis_dev
-   ```
-
-### 📦 Configuration files
-
-**Input manager configuration:**
-
-The most predominant configuration file ([`ssi_analysis_utility/config/config.yaml`](ssi_analysis_utility/config/config.yaml)) determines the default input files and the desired databases to be updated using a specific environment when running the pipeline initially
-
-```yaml
-####################### INPUT MANAGER #######################################
-input_manager:
-    path: examples/samplesheet.tsv       # Path to the input samplesheet (CSV/TSV file)
-    database_path: resources
-    config_species: workflow/configs_species/
-    out_folder: examples/Results         # Folder where the analysis results will be saved
-
-###################### ANALYSIS & TOOLS SETTINGS ############################
-analysis_settings:
-
-    kmeraligner:
-        yaml: ../envs/kmeraligner.yaml
-        database: kmeraligner
-
-    Clostridioides_difficile_db:
-        yaml: ../envs/DatabaseFetch.yaml
-        database: Clostridioides_difficile_db
-
-.
-.
-.
-   skesa:
-        yaml : ../envs/skesa.yaml
-```
-
-**Species-specific configurations:**
-
-Specific species might require unique tools when running the pipeline or different parameters for tools shared across numerous species. The options which distinguish them are defined in the species-specific configuration files, such as *Clostridioides difficile* specific ([`ssi_analysis_utility/workflow/configs_species/C.diff.yaml`](ssi_analysis_utility/workflow/configs_species/C.diff.yaml))
-
-
-```yaml
-analyses_to_run: 
-
-    kmeraligner:
-        status : False
-        Title : Kmer Aligner on two pair reads
-        ID: 90
-        additional_option : -matrix 
-        database : resources/plasmidfinder_db/enterobacteriales
-        wrangler: workflow/scripts/KMA_wrangler.py
-
-    Cdiff_KMA_Toxin:
-        status : True
-        Title : Kmer Aligner for Clostridium difficile Toxin detection
-        ID: 91
-        additional_option : -ref_fsa -nf -sam 4 -vcf 2 
-        database : resources/Clostridioides_difficile_db/Toxin/
-.
-.
-.
-    bcftools_view_filter:
-        status: True
-        Title: Filter INDELs from mpileup
-        ID: 91
-        additional_option: -v indels -i 'INFO/DP>10'
-        region: AM180355.1_tcdC_804309_805008
-```
-
 
 ## 🧫 Supported Databases
 
