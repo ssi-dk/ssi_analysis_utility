@@ -338,14 +338,14 @@ The snakemake pipeline will always depend on the config files and overall struct
 This section describes how to extend the pipeline to accommodate new bacterial species through coding with the example of "Clostridioides difficile". 
 
 ### 📌 Quick Navigation
-- [🧪 Databases](#-databases)
-- [⚙️ Species configurations](#-species-configurations)
-- [📜 Workflow](#-workflow)
-- [🐍 Snakefile](#-snakefile)
-- 
+- [🧪 Species Databases](#-species-databases)
+- [⚙️ Species Configurations](#-species-configurations)
+- [🐍 Species Workflow](#-species-workflow)
+- [🧾 Species Data Wrangling](#-species-data-wrangling)
+
 ---
 
-### 🧪 Databases
+### 🧪 Species Databases
 
 If a species requires a new database, the following files need to be altered:
 1. `config/config.yaml` : add the database 
@@ -390,8 +390,7 @@ rule setup_all_databases:
 ```
 
 ---
-### ⚙️ Species configurations
-**Test data**
+### ⚙️ Species Configurations
 
 During development, test data might be required:
 1. `examples/Dataset/reads/dl_script.sh` : add the SRA link for simpler download of multiple samples from same or different species
@@ -461,6 +460,9 @@ analyses_to_run:
         additional_option : -nc -nf -sam 4 -vcf 2
         database : resources/Clostridioides_difficile_db/Toxin/
 ```
+
+### 🐍 Species Workflow
+
 5. `workflow/rules/others.smk` : Once the status of the species-specific rules have been set, the corresponding rule and expected output is defined.
 ```yaml
 rule Cdiff_KMA_Toxin:
@@ -518,8 +520,7 @@ include : "rules/finders.smk"
 include : "rules/characterizers.smk"
 include : "rules/others.smk"
 ```
-
-**Data wrangling scripts**
+### 🧾 Species Data Wrangling
 
 7. Once the snakemake rules have been completed, the results is present in the defined sample specific folders. Depending on the species, different output information is relevant. As such, each species has its own data wrangling script. e.g `workflow/scripts/Cdiff_wrangler.py` or `workflow/scripts/Ecoli_wrangler.py`.
    * When creating a new data wrangling script for a species, the convention is that it should at least take as input the [`examples/samplesheet.tsv`](examples/samplesheet.tsv)
