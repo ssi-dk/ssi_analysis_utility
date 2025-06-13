@@ -11,8 +11,6 @@ It integrates various tools for antimicrobial resistance profiling, sequence typ
 
 ## 📚 Table of Contents
 
-- [🧬 SSI Analysis Utility](#-ssi-analysis-utility)
-- [📚 Table of Contents](#-table-of-contents)
 - [🚀 Getting Started](#-getting-started)
 - [📁 Project Structure](#-project-structure)
 - [🧫 Supported Databases](#-supported-databases)
