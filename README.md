@@ -522,7 +522,7 @@ include : "rules/others.smk"
 
 7. Once the snakemake rules have been completed, the results is present in the defined sample specific folders. Depending on the species, different output information is relevant. As such, each species has its own data wrangling script. e.g `workflow/scripts/Cdiff_wrangler.py` or `workflow/scripts/Ecoli_wrangler.py`.
    * When creating a new data wrangling script for a species, the convention is that it should at least take as input the [`examples/samplesheet.tsv`](examples/samplesheet.tsv)
-   * The output should extend the columns of the [`examples/samplesheet.tsv`](examples/samplesheet.tsv) as explained in section [Species-specific results – extending samplesheet](#species-specific-results---extending-samplesheet)
+   * The output should extend the columns of the [`examples/samplesheet.tsv`](examples/samplesheet.tsv) as explained in section [Species-specific results – extending samplesheet](#-species-specific-results---extending-samplesheet)
 
 8. `workflow/scripts/thresholds.py` : contains the thresholds used for all species to filter on the input data, such as removing low-quality alignment information etc. This is to ensure that if two species need to apply the same threshold to output files created from the same Snakemake rule, it can easily be imported as opposed to redefined.
 ```yaml
