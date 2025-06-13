@@ -338,7 +338,7 @@ This section describes how to extend the pipeline to accommodate new bacterial s
 
 ### 📌 Quick Navigation
 - [🧪 Species Databases](#-species-databases)
-- [⚙️ Species Databases2](#-species-databases2)
+- [📝 Species Configuration](#-species-configuration)
 - [🐍 Species Workflow](#-species-workflow)
 - [🧾 Species Data Wrangling](#-species-data-wrangling)
 
@@ -388,7 +388,7 @@ rule setup_all_databases:
         rules.setup_CdiffToxin.output.database,
 ```
 
-### ⚙️ Species Databases2
+### 📝 Species Configuration
 
 During development, test data might be required:
 1. `examples/Dataset/reads/dl_script.sh` : add the SRA link for simpler download of multiple samples from same or different species
