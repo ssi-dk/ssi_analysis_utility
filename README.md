@@ -52,7 +52,7 @@ For inspiration, inspect the example sheet found in [`examples/samplesheet.tsv`]
 
 **Input manager configuration:**
 
-The most predominant configuration file ([`ssi_analysis_utility/config/config.yaml`](ssi_analysis_utility/config/config.yaml)) determines the default input files and the desired databases to be updated using a specific environment when running the pipeline initially
+The main configuration file ([`ssi_analysis_utility/config/config.yaml`](ssi_analysis_utility/config/config.yaml)) specifies default input files and defines the databases to be updated using the specified environment during the pipeline execution.
 
 ```yaml
 ####################### INPUT MANAGER #######################################
@@ -82,7 +82,7 @@ analysis_settings:
 
 **Species-specific configurations:**
 
-Specific species might require unique tools when running the pipeline or different parameters for tools shared across numerous species. The options which distinguish them are defined in the species-specific configuration files, such as *Clostridioides difficile* specific ([`ssi_analysis_utility/workflow/configs_species/C.diff.yaml`](ssi_analysis_utility/workflow/configs_species/C.diff.yaml))
+Certain species may require different tools than those currently defined or tool-specific parameters that differ from those used in other species. The options which distinguish them are defined in the species-specific configuration files, such as *Clostridioides difficile* specific ([`ssi_analysis_utility/workflow/configs_species/C.diff.yaml`](ssi_analysis_utility/workflow/configs_species/C.diff.yaml))
 
 
 ```yaml
@@ -316,8 +316,7 @@ Results are organized inside the `out_folder` variable specified within the `con
 
 ### 📝 Species-specific results - extending samplesheet
 
-Depending on the chosen tools used for analysis, individual species require specific information extracted from similar output data files, defined using the species-specific config files. This final species-specific output function extracts from the Output folder structure the necessary information and extends the original [`examples/samplesheet.tsv`](examples/samplesheet.tsv) file with specific information
-
+Depending on the chosen tools used for analysis, individual species require specific information extracted from similar output data files, defined using the species-specific config files. The final species-specific output function extracts relevant information from the output folder and appends it to the original [`examples/samplesheet.tsv`](examples/samplesheet.tsv).
    **Clostridioides difficile specific final output**
    ```bash
    python workflow/scripts/Cdiff_KMA.py --samplesheet examples/samplesheet.tsv --outputfile Results/Cdiff_results.tsv
