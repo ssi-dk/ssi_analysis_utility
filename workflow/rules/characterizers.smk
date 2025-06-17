@@ -22,3 +22,26 @@ rule MLST:
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
     	"""
+
+# Rule meningotype
+# Runs meningotype on SPAdes assembled contigs to perform serotyping of N. Meningmeningitidis contigs
+rule meningotype:
+    input:
+        assembly = rules.spades.output.assembly
+    output:
+        directory("%s/{sample}/meningotype" %OUT_FOLDER)
+    conda:
+        config["analysis_settings"]["meningotype"]["yaml"]
+    log:
+        stdout = "Logs/{sample}/meningotype.log"
+    message:
+    	"[Meningotype]: Running Meningotype on {wildcards.sample}"
+    shell:
+        """
+        mkdir -p {output}
+
+        cmd="meningotype --all {input.assembly} > {output}/meningotype.tsv 2> {log.stdout}"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+    	"""
