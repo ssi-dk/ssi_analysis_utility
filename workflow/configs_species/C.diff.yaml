@@ -69,23 +69,23 @@ analyses_to_run:
         Title : Serotypefinder
         database: resources/serotypefinder_db/  # SerotypeFinder database
     
-    kleborate : 
-        status : False
-        Title : Kleborate
-        preset : kpsc
+    # kleborate : 
+    #     status : False
+    #     Title : Kleborate
+    #     preset : kpsc
 
-    CHtyper : 
-        status : False
-        Title: Chtyper
-        threshold : 0.90
-        coverage : 0.60
-        database: resources/chtyper_db/  # CHTyper database
+    # CHtyper : 
+    #     status : False
+    #     Title: Chtyper
+    #     threshold : 0.90
+    #     coverage : 0.60
+    #     database: resources/chtyper_db/  # CHTyper database
 
-    cgMLSTFinder : 
-        status : False
-        Title : cgMLST
-        scheme : ecoli # choose between  salmonella,campylobacter,yersinia,clostridium,ecoli
-        database: resources/cgmlstfinder_db/  # cgMLSTFinder database
+    # cgMLSTFinder : 
+    #     status : False
+    #     Title : cgMLST
+    #     scheme : ecoli # choose between  salmonella,campylobacter,yersinia,clostridium,ecoli
+    #     database: resources/cgmlstfinder_db/  # cgMLSTFinder database
 
     amrfinder:
         status : False
