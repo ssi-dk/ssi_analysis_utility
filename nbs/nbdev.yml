@@ -1,9 +1,0 @@
-project:
-  output-dir: _docs
-
-website:
-  title: "ssi_analysis_utility"
-  site-url: "https://$GIT_USER_NAME.github.io/ssi_analysis_utility"
-  description: "TODO"
-  repo-branch: main
-  repo-url: "https://github.com/$GIT_USER_NAME/ssi_analysis_utility"
