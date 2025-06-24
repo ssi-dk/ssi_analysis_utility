@@ -327,14 +327,22 @@ rule skesa_assembly:
         R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
         R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
     output:
-        directory("{folder}/{sample}/skesa")
+        assembly = "%s/{sample}/skesa/{sample}.contigs.fasta" %OUT_FOLDER
     conda:
         config["analysis_settings"]["skesa"]["yaml"]
+    log:
+        stdout = "Logs/{sample}/skesa.log"
     message:
-        "[skesa_assembly]: Perform assembly using skesa -> {output}"
+        "[skesa_assembly]: Perform assembly using skesa on {wildcards.sample}, this will take some time!"
+    threads:
+        min(workflow.cores, 8)
     shell:
         """
-        mkdir -p {output}
+        mkdir -p $(dirname {output.assembly})
         
-        skesa --reads {input.R1},{input.R2} --contigs_out {output}/{wildcards.sample}.contigs.fasta
+        cmd="skesa --reads {input.R1},{input.R2} --contigs_out {output.assembly} --cores {threads}"
+w
+
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
         """

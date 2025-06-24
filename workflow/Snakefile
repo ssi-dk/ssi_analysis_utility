@@ -183,14 +183,6 @@ rule all:
             out=OUT_FOLDER
         ),
         expand(
-            "{out}/{sample}/skesa", 
-            sample=[
-                s for s in SAMPLES 
-                if species_configs[sample_to_organism[s]]["analyses_to_run"]["skesa"]["status"] is True
-            ],
-            out=OUT_FOLDER
-        ),
-        expand(
             "%s/{sample}/GenotypeCalls/{sample}.{tool}.calls.bcf" % OUT_FOLDER,
             sample=[s for s in SAMPLES for tool in TOOLS_WITH_SAM_OUTPUT
                     if species_configs[sample_to_organism[s]]["analyses_to_run"][tool]["status"] is True],
