@@ -118,6 +118,14 @@ rule all:
             ]
         ),
         expand(
+            "%s/{sample}/KMA_results/{sample}_KMA.tsv" % OUT_FOLDER,
+            sample=[
+                s for s in SAMPLES
+                if "KMA_filter" in species_configs[sample_to_organism[s]]["analyses_to_run"] and
+                species_configs[sample_to_organism[s]]["analyses_to_run"]["KMA_filter"].get("status", False)
+            ]
+        ),
+        expand(
             "%s/{sample}/emm_typing/" %OUT_FOLDER, 
             sample=[
                 s for s in SAMPLES 

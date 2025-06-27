@@ -63,6 +63,33 @@ rule Cdiff_KMA_Toxin:
         eval $cmd >> {log.stdout} 2>&1
         """
 
+rule KMA_filter:
+    input:
+        kma_res = lambda wildcards: os.path.join(
+            OUT_FOLDER,
+            wildcards.sample,
+            species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["KMA_filter"]["input_folder"],
+            f"{wildcards.sample}.res"
+        )
+    output:
+        filtered_tsv = f"{OUT_FOLDER}" + "/{sample}/KMA_results/{sample}_KMA.tsv"
+    params:
+        add_opt = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["KMA_filter"]["additional_option"],
+        log_dir = lambda wildcards: f"{OUT_FOLDER}/{wildcards.sample}",
+        id = lambda wildcards: f"{wildcards.sample}",
+    conda:
+        config["analysis_settings"]["KMA_filter"]["yaml"]
+    log:
+        stdout = "Logs/{sample}/KMAfilter.log"
+    message:
+        "[KMA_filter]: Filtering KMA .res result for {wildcards.sample}"
+    shell:
+        """
+        mkdir -p $(dirname {output.filtered_tsv})
+
+        python workflow/scripts/KMAfilter.py --KMA_res {input.kma_res} --sample_id {params.id} --output {output.filtered_tsv} {params.add_opt} --log_dir {params.log_dir} > {log.stdout} 2>&1
+        """
+
 # Rule for emm typing using BLAST
 rule emm_typing:
     input:
@@ -341,7 +368,6 @@ rule skesa_assembly:
         mkdir -p $(dirname {output.assembly})
         
         cmd="skesa --reads {input.R1},{input.R2} --contigs_out {output.assembly} --cores {threads}"
-w
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1

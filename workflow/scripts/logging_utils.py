@@ -42,4 +42,5 @@ def setup_logging(log_dir: str, sample_name: str, notes: str) -> None:
     console_handler.setFormatter(logging.Formatter("%(message)s"))
     logger.addHandler(console_handler)
 
-    logging.info(f"Logging started for {log_file}")
+    logging.info(f"===============================================")
+    logging.info(f"Logging started for sample {sample_name} in {log_file}")

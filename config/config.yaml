@@ -24,6 +24,9 @@ analysis_settings:
         yaml: ../envs/DatabaseFetch.yaml
         database: Clostridioides_difficile_db
 
+    KMA_filter:
+        yaml: ../envs/python_functions.yaml
+
     htslib:
         yaml : ../envs/htslib.yaml
 

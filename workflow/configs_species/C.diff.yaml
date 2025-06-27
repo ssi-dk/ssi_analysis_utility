@@ -20,6 +20,13 @@ analyses_to_run:
         additional_option : -ref_fsa -nf -sam 4 -vcf 2 
         database : resources/Clostridioides_difficile_db/Toxin/
 
+    KMA_filter:
+        status : True
+        Title : Kmer Aligner for Clostridium difficile Toxin detection
+        ID: 92
+        input_folder: Cdiff_KMA_Toxin
+        additional_option : --Gene_list tcdA tcdB tcdC cdtAB --organism "Clostridioides difficile" --suffix tsv
+
     emm_typing: 
         status : False
         Title: Typing of M protein gene using blast against CDC curated alleles
