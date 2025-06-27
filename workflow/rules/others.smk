@@ -75,12 +75,12 @@ rule KMA_filter:
         filtered_tsv = f"{OUT_FOLDER}" + "/{sample}/KMA_results/{sample}_KMA.tsv"
     params:
         add_opt = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["KMA_filter"]["additional_option"],
-        log_dir = lambda wildcards: f"{OUT_FOLDER}/{wildcards.sample}",
+        log_dir = lambda wildcards: f"{OUT_FOLDER}/{wildcards.sample}/KMA_results/",
         id = lambda wildcards: f"{wildcards.sample}",
     conda:
         config["analysis_settings"]["KMA_filter"]["yaml"]
     log:
-        stdout = "Logs/{sample}/KMAfilter.log"
+        stdout = "Logs/{sample}/KMA_results/{sample}_KMA_filter.log"
     message:
         "[KMA_filter]: Filtering KMA .res result for {wildcards.sample}"
     shell:

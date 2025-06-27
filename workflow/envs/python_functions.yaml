@@ -6,6 +6,7 @@ channels:
 dependencies:
   - python=3.10
   - pandas
+  - pyyaml
   - pip
   - pip:
       - typer  # optional if you later switch to it

@@ -5,17 +5,64 @@ from typing import List, Dict
 import os
 import sys
 import logging
+import yaml
+
+# Add utility paths
 sys.path.insert(0, os.path.abspath("../scripts"))
 from logging_utils import setup_logging
-from thresholds import get_kma_thresholds_for_species, get_threshold
+
+# ------------------------- Threshold Handling ------------------------- #
+
+def load_thresholds_from_config(organism: str, config_dir="workflow/configs_species") -> Dict[str, List[int]]:
+    """
+    Load thresholds from species-specific YAML config.
+
+    Args:
+        organism (str): Organism name, e.g., "Clostridioides difficile"
+        config_dir (str): Path to species config directory
+
+    Returns:
+        Dict[str, List[int]]: Dictionary of gene-specific thresholds
+    """
+    species_map = {
+        "Clostridioides difficile": "C.diff",
+        "Clostridium difficile": "C.diff",
+        "C. difficile": "C.diff",
+        "E. coli": "E.coli",
+        "Escherichia coli": "E.coli",
+        "E.coli": "E.coli",
+    }
+
+    species_key = species_map.get(organism.strip(), organism.strip())
+    config_path = os.path.join(config_dir, f"{species_key}.yaml")
+
+    logging.info(f"Loading thresholds from config for: {organism} from config file {config_path}")
+
+    if not os.path.exists(config_path):
+        raise FileNotFoundError(f"Species config not found: {config_path}")
+    
+    with open(config_path, "r") as f:
+        config = yaml.safe_load(f)
+
+    try:
+        thresholds = config["analyses_to_run"]["KMA_filter"]["thresholds"]
+        return thresholds
+    except KeyError:
+        raise ValueError(f"Thresholds not defined in: {config_path}")
+
+def get_threshold(template_name: str, thresholds: Dict[str, List[int]]) -> List[int]:
+    """
+    Match template name to threshold in dictionary.
+    """
+    for key in thresholds:
+        if key in template_name:
+            return thresholds[key]
+    return thresholds["other"]
+
+# ------------------------- KMA Processing Logic ------------------------- #
 
 def process_kma_res(res_file: str, thresholds: Dict[str, List[int]]) -> pd.DataFrame:
-    try:
-        df = pd.read_csv(res_file, sep="\t")
-    except FileNotFoundError:
-        raise FileNotFoundError(f"File not found: {res_file}")
-    except pd.errors.EmptyDataError:
-        raise ValueError(f"File is empty or malformed: {res_file}")
+    df = pd.read_csv(res_file, sep="\t")
 
     required_cols = {"#Template", "Template_length", "Template_Coverage", "Template_Identity", "Depth"}
     if not required_cols.issubset(df.columns):
@@ -45,10 +92,7 @@ def summarize_filtered_hits(sample_id: str, organism: str, filtered_df: pd.DataF
     for _, row in filtered_df.iterrows():
         template = row["#Template"]
         parts = template.split("__") if "__" in template else template.split("_")
-        if len(parts) >= 2:
-            gene = parts[1]
-        else:
-            gene = parts[0]
+        gene = parts[1] if len(parts) >= 2 else parts[0]
 
         if gene.lower() in known_genes:
             result[gene] = "Positive"
@@ -57,7 +101,7 @@ def summarize_filtered_hits(sample_id: str, organism: str, filtered_df: pd.DataF
 
         if verbose_flag:
             verbose_parts.append(
-                f"{gene}_{row['Template_length']}_{min(row['Template_Coverage'],100.0):.2f}_{row['Template_Identity']:.2f}_{row['Depth']:.2f}"
+                f"{gene}_{row['Template_length']}_{min(row['Template_Coverage'], 100.0):.2f}_{row['Template_Identity']:.2f}_{row['Depth']:.2f}"
             )
 
     if other_genes:
@@ -71,19 +115,17 @@ def summarize_filtered_hits(sample_id: str, organism: str, filtered_df: pd.DataF
     })
     return result
 
+# ------------------------- Main CLI Entry ------------------------- #
+
 def main(args):
-    log_dir = args.log_dir 
-    setup_logging(log_dir, args.sample_id, "kma_filtering")
+    setup_logging(args.log_dir, args.sample_id, "kma_filtering")
 
     try:
-        logging.info(f"Loading thresholds for organism: {args.organism}")
-        thresholds = get_kma_thresholds_for_species(args.organism)
+        thresholds = load_thresholds_from_config(args.organism)
 
-        #for gene, thresh in thresholds.items():
-        #    logging.info(f"Threshold for {gene}: Coverage>={thresh[0]}, Identity>={thresh[1]}, Depth>={thresh[2]}")
         logging.info(f"Processing KMA .res file: {args.KMA_res}")
-
         filtered_df = process_kma_res(args.KMA_res, thresholds)
+
         result_dict = summarize_filtered_hits(args.sample_id, args.organism, filtered_df, args.Gene_list, verbose_flag=args.verbose)
     except Exception as e:
         logging.error(f"Error processing {args.sample_id}: {e}")
@@ -95,19 +137,16 @@ def main(args):
         })
 
     output_df = pd.DataFrame([result_dict])
-
-    # Reorder columns: sample_id, organism, then all others
     cols = output_df.columns.tolist()
     first_cols = ["sample_id", "organism"]
-    remaining_cols = [col for col in cols if col not in first_cols]
-    output_df = output_df[first_cols + remaining_cols]
+    output_df = output_df[first_cols + [col for col in cols if col not in first_cols]]
 
     sep = "\t" if args.suffix == "tsv" else "," if args.suffix == "csv" else " "
     output_df.to_csv(args.output, sep=sep, index=False)
     logging.info(f"Summary written to: {args.output}")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Filter KMA .res file using gene thresholds.")
+    parser = argparse.ArgumentParser(description="Filter KMA .res file using gene thresholds from YAML config.")
     parser.add_argument("--KMA_res", required=True, help="Input KMA .res file")
     parser.add_argument("--Gene_list", nargs="+", required=True, help="List of gene symbols to track")
     parser.add_argument("--organism", required=True, help="Species name for threshold loading")
