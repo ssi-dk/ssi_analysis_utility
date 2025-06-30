@@ -16,14 +16,6 @@ ecoli_kma_threshold = {
     "other": [98, 98]
 }
 
-cdiff_kma_threshold = {
-    "tcdA": [90,90,10],
-    "tcdB": [90,90,10],
-    "tcdC": [90,90,10],
-    "cdtAB": [90,90,10],
-    "other": [98, 98,10]
-}
-
 ### Cdiff deletion thresholds
 deletion_gt_thresholds = {
     "del117_1": [0.70,1,1], # [IMF, IDV, DP]
