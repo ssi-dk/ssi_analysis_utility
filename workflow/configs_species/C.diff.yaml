@@ -116,6 +116,13 @@ analyses_to_run:
     skesa:
         status : False
 
+    Repeat_identifier:
+        status : True
+        Title : Repeat identifier
+        ID: 92
+        repeats: TR6 TR10 TRST 
+        database: resources/Clostridioides_difficile_db/TRST
+
     samtools_view:
         status : True
         Title : samtools filtering

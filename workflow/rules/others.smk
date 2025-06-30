@@ -353,7 +353,7 @@ rule spades_assembly:
         R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
         R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
     output:
-        directory("%s/{sample}/spades/" %OUT_FOLDER)
+        contigs = "%s/{sample}/spades/contigs.fasta" %OUT_FOLDER
     conda:
         config["analysis_settings"]["spades"]["yaml"]
     log:
@@ -364,13 +364,11 @@ rule spades_assembly:
         min(workflow.cores, 8)
     shell:
         """
-        cmd="spades.py -1 {input.R1} -2 {input.R2} --threads {threads} --isolate --only-assembler -o {output}"
+        cmd="spades.py -1 {input.R1} -2 {input.R2} --threads {threads} --isolate --only-assembler -o $(dirname {output.contigs})"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
         """
-
-# spades.py -1 examples/Dataset/reads/SRR10518319_1.fastq.gz -2 examples/Dataset/reads/SRR10518319_2.fastq.gz --only-assembler --threads 8 -o examples/test --isolate
 
 # Rule: Skesa_assembly
 #  DeBruijn graph-based de-novo assembler for microbial genomes
@@ -396,4 +394,35 @@ rule spades_assembly:
 #
 #        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
 #        eval $cmd >> {log.stdout} 2>&1
-#        """
+#        """      
+
+rule Repeat_Identifier:
+    input:
+        fasta = lambda wildcards: os.path.join(
+            OUT_FOLDER,
+            wildcards.sample,
+            wildcards.assembler,
+            {
+                "spades": "contigs.fasta",
+                "skesa": f"{wildcards.sample}.contigs.fasta"
+            }[wildcards.assembler]
+        )
+    output:
+        result = "%s/{sample}/Repeat_identifier/{assembler}_{sample}_repeat.tsv" %OUT_FOLDER
+    params:
+        repeats = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Repeat_identifier"]["repeats"],
+        database = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Repeat_identifier"]["database"],
+        out_dir = "%s/{sample}/Repeat_identifier" %OUT_FOLDER,
+        sample_id = lambda wildcards: f"{wildcards.sample}",
+    conda:
+        config["analysis_settings"]["Repeat_identifier"]["yaml"]
+    log:
+        stdout = "Logs/{sample}/{assembler}_{sample}_repeat.log"
+    message:
+        "[Repeat_identifier]: Running repeat analysis for {wildcards.sample} using ({wildcards.assembler}) contigs"
+    shell:
+        """
+        mkdir -p {params.out_dir}
+
+        python workflow/scripts/Repeat_Identifier.py --sample_id {params.sample_id} --fasta {input.fasta} --repeats {params.repeats} --db_dir {params.database} --output {output.result} --suffix tsv > {log.stdout} 2>&1
+        """
