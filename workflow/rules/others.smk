@@ -347,28 +347,53 @@ rule bcftools_index:
         bcftools index -f {input.bcf}
         """
 
-# Rule: Skesa_assembly
-#  DeBruijn graph-based de-novo assembler for microbial genomes
-rule skesa_assembly:
+# Rule: spades_assembly
+rule spades_assembly:
     input:
         R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
         R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
     output:
-        assembly = "%s/{sample}/skesa/{sample}.contigs.fasta" %OUT_FOLDER
+        directory("%s/{sample}/spades/" %OUT_FOLDER)
     conda:
-        config["analysis_settings"]["skesa"]["yaml"]
+        config["analysis_settings"]["spades"]["yaml"]
     log:
-        stdout = "Logs/{sample}/skesa.log"
+        stdout = "Logs/{sample}/spades.log"
     message:
-        "[skesa_assembly]: Perform assembly using skesa on {wildcards.sample}, this will take some time!"
+        "[spades_assembly]: Perform assembly using spades on {wildcards.sample}, this will take some time!"
     threads:
         min(workflow.cores, 8)
     shell:
         """
-        mkdir -p $(dirname {output.assembly})
-        
-        cmd="skesa --reads {input.R1},{input.R2} --contigs_out {output.assembly} --cores {threads}"
+        cmd="spades.py -1 {input.R1} -2 {input.R2} --threads {threads} --isolate --only-assembler -o {output}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
         """
+
+# spades.py -1 examples/Dataset/reads/SRR10518319_1.fastq.gz -2 examples/Dataset/reads/SRR10518319_2.fastq.gz --only-assembler --threads 8 -o examples/test --isolate
+
+# Rule: Skesa_assembly
+#  DeBruijn graph-based de-novo assembler for microbial genomes
+#rule skesa_assembly:
+#    input:
+#        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
+#        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
+#    output:
+#        assembly = "%s/{sample}/skesa/{sample}.contigs.fasta" %OUT_FOLDER
+#    conda:
+#        config["analysis_settings"]["skesa"]["yaml"]
+#    log:
+#        stdout = "Logs/{sample}/skesa.log"
+#    message:
+#        "[skesa_assembly]: Perform assembly using skesa on {wildcards.sample}, this will take some time!"
+#    threads:
+#        min(workflow.cores, 8)
+#    shell:
+#        """
+#        mkdir -p $(dirname {output.assembly})
+#        
+#        cmd="skesa --reads {input.R1},{input.R2} --contigs_out {output.assembly} --cores {threads}"
+#
+#        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+#        eval $cmd >> {log.stdout} 2>&1
+#        """

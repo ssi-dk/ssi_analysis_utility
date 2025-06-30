@@ -110,8 +110,11 @@ analyses_to_run:
         status : False
         Title : MLST by Torsten Seeman
     
-    skesa:
+    spades:
         status : True
+        
+    skesa:
+        status : False
 
     samtools_view:
         status : True
