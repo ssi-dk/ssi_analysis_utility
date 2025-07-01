@@ -1,13 +1,73 @@
 #!/usr/bin/env python3
 import pandas as pd
 import argparse
-import re
 import os
+import sys
 from typing import List, Dict
 import pysam
 import logging
 from logging_utils import setup_logging
+import yaml
 from thresholds import get_deletion_threshold, deletion_gt_thresholds, deletion_consensus_thresholds
+#sys.path.insert(0, os.path.abspath("../scripts"))
+
+# ========================= Helper files =========================
+
+def load_variant_detection_config(organism: str, config_dir="workflow/configs_species") -> dict:
+    """
+    Load variant detection thresholds and region info from a species-specific YAML config file.
+
+    Args:
+        organism (str): Full organism name, e.g. "Clostridioides difficile"
+        config_dir (str): Directory containing species YAML files.
+
+    Returns:
+        dict: Dictionary with keys:
+            - genomic_coord (str)
+            - snp_info (dict)
+            - deletion_regions (dict[int] -> (start, end))
+            - variant_gt_thresholds (dict[str] -> list[float|int])
+    """
+    species_map = {
+        "Clostridioides difficile": "C.diff",
+        "Clostridium difficile": "C.diff",
+        "C. difficile": "C.diff",
+        "E. coli": "E.coli",
+        "Escherichia coli": "E.coli",
+        "E.coli": "E.coli",
+    }
+
+    species_key = species_map.get(organism.strip(), organism.strip())
+    config_path = os.path.join(config_dir, f"{species_key}.yaml")
+
+    if not os.path.exists(config_path):
+        raise FileNotFoundError(f"Species config not found: {config_path}")
+    
+    with open(config_path, "r") as f:
+        config = yaml.safe_load(f)
+
+    try:
+        variant_block = config["analyses_to_run"]["Variant_detection"]
+        bed_path = variant_block["genomic_coord"]
+        snp_info = variant_block.get("snp_info", {})
+        raw_deletions = variant_block.get("deletion_regions", {})
+        raw_thresholds = variant_block.get("variant_gt_thresholds", {})
+    except KeyError as e:
+        raise ValueError(f"Missing required Variant_detection fields in config: {e}")
+
+    deletion_regions = {}
+    for key, val in raw_deletions.items():
+        # del_330_347_18: [330, 347, 70, "tcdC"] → 18: (330, 347)
+        length = int(key.split("_")[-1])
+        start, end = val[0], val[1]
+        deletion_regions[length] = (start, end)
+
+    return {
+        "genomic_coord": bed_path,
+        "snp_info": snp_info,
+        "deletion_regions": deletion_regions,
+        "variant_gt_thresholds": raw_thresholds,
+    }
 
 # ========================= KMA FILE HANDLING =========================
 def process_res_file(res_file_path: str) -> pd.DataFrame:
@@ -575,150 +635,113 @@ def evaluate_ambiguous_consensus(deletion_label: str, consensus_str: str, thresh
     return deletion_label
 
 def main(args: argparse.Namespace) -> None:
-    samplesheet_path = os.path.abspath(args.samplesheet)
+    setup_logging(args.log_dir, args.sample_id, "variant_handling")
 
-    if not os.path.exists(samplesheet_path):
-        logging.info(f"Samplesheet not found: {samplesheet_path}")
-        exit(1)
+    sample = args.sample_id
+    organism = args.organism
+    logging.info(f"\n================= Processing sample: {sample} =================")
 
-    df = pd.read_csv(samplesheet_path, sep="\t")
-    df.columns = df.columns.str.strip().str.lower()
-
-    if args.split == 1:
-        input_columns = ["sample_name", "read1", "read2"]
-        if "illumina_read_files" in df.columns:
-            logging.info("Splitting illumina_read_files column into read1 and read2...")
-            df[["read1", "read2"]] = df["illumina_read_files"].str.split(",", expand=True)
-    elif "read1" in df.columns and "read2" in df.columns:
-        input_columns = ["sample_name", "read1", "read2"]
-    elif "illumina_read_files" in df.columns:
-        input_columns = ["sample_name", "illumina_read_files"]
-    else:
-        raise ValueError("No suitable Illumina read columns found (read1/read2 or illumina_read_files).")
-
-    # All expected columns
-    input_columns += ["nanopore_read_file", "assembly_file", "organism", "variant", "notes"]
-    variation_columns = ["tcdC117", "tcdCdel", "deletion_details", "deletion_consensus"]
-    desired_columns = input_columns + variation_columns
-
-    # Load coordinates from BED
-    coord_dict = load_toxin_coordinates("resources/Clostridioides_difficile_db/Toxin/Cdiff_Toxin.bed6")
-
-    # Reverse-strand gene-relative deletion regions
-    """
-    18 + 39 https://pmc.ncbi.nlm.nih.gov/articles/PMC1828959/ 
-    18 https://journals.asm.org/doi/pdf/10.1128/jcm.02340-15
-    
-    ALL
-    https://journals.asm.org/doi/10.1128/jcm.00866-08
-    """
-    tcdC_deletion_regions = {
-        18: (330, 347),
-        36: (301, 336),
-        39: (341, 379),
-        54: (313, 366)
+    row_dict = {
+        "sample_id": sample,
+        "organism": organism,
     }
 
-    result_rows = []
+    # Output columns
+    first_cols = ["sample_id", "organism"]
+    variation_columns = ["tcdC117", "tcdCdel", "deletion_details", "deletion_consensus"]
+    desired_columns = first_cols + variation_columns
 
-    for idx, row in df.iterrows():
-        row_dict = row.to_dict()
-        sample = row_dict["sample_name"]
-        logging.info(f"\n================= Processing sample: {sample} =================")
+    # Load BED file based on organism
+    # Load variant detection config
+    variant_config = load_variant_detection_config(organism)
 
-        # -------------------------- KMA --------------------------
+    bed_path = variant_config["genomic_coord"]
+    coord_dict = load_toxin_coordinates(bed_path)
+
+    tcdC_deletion_regions = variant_config["deletion_regions"]
+    deletion_gt_thresholds = variant_config["variant_gt_thresholds"]
+    print(deletion_gt_thresholds)
+    try:
         res_path = f"examples/Results/{sample}/Cdiff_KMA_Toxin/{sample}.res"
-
         res_df = process_res_file(res_path)
 
-        # ----------------------- BCFtools variations -----------------------
         bcf_path = f"examples/Results/{sample}/GenotypeCalls/{sample}.Cdiff_KMA_Toxin.calls.bcf"
         bcf_indel_path = f"examples/Results/{sample}/GenotypeCalls/{sample}.Cdiff_KMA_Toxin.indels.bcf"
 
         if res_df.empty:
             row_dict["tcdC117"] = "-"
             row_dict["tcdCdel"] = "-"
+            row_dict["deletion_details"] = "-"
             row_dict["deletion_consensus"] = "-"
         else:
-            try:
-                contig = find_matching_contig(res_df, "tcdC")
-                _, genomic_pos = gene_pos_to_genomic("tcdC", 117, coord_dict)
+            contig = find_matching_contig(res_df, "tcdC")
+            _, genomic_pos = gene_pos_to_genomic("tcdC", 117, coord_dict)
 
-                variant_status, extra_verbose = check_tcdC117_variant(
-                    bcf_path, contig, genomic_pos, range=20, expected_ref="T", expected_alt="A"
-                )
-                row_dict["tcdC117"] = variant_status
-                if variant_status != "wt":
-                    extra_info = f"tcdC117:{variant_status}" + (f"_{extra_verbose}" if extra_verbose else "")
-                    if "deletion_details" not in row_dict or row_dict["deletion_details"] in ("-", ""):
-                        row_dict["deletion_details"] = extra_info
-                    else:
-                        row_dict["deletion_details"] += f"+{extra_info}"
+            variant_status, extra_verbose = check_tcdC117_variant(
+                bcf_path, contig, genomic_pos, range=20, expected_ref="T", expected_alt="A"
+            )
+            row_dict["tcdC117"] = variant_status
+            if variant_status != "wt":
+                extra_info = f"tcdC117:{variant_status}" + (f"_{extra_verbose}" if extra_verbose else "")
+                row_dict["deletion_details"] = extra_info
+            else:
+                row_dict["deletion_details"] = "-"
 
-            except Exception as e:
-                logging.warning(f"Failed tcdC117 SNP check for {sample}: {e}")
-                row_dict["tcdC117"] = "-"
+            gene_length = coord_dict["tcdC"]["length"]
+            converted_regions = convert_reverse_strand_regions(tcdC_deletion_regions, gene_length)
 
-            try:
-                gene_length = coord_dict["tcdC"]["length"]
-                converted_regions = convert_reverse_strand_regions(tcdC_deletion_regions, gene_length)
+            del_status, del_details, del_expected_len = verify_bcf(
+                bcf_path=bcf_path,
+                indels_bcf_path=bcf_indel_path,
+                contig=contig,
+                orig_regions=tcdC_deletion_regions,
+                target_regions=converted_regions,
+                region_buffer=5,
+                length_tolerance=1
+            )
+            row_dict["tcdCdel"] = del_status
+            row_dict["deletion_details"] = filter_deletion_details(del_details)
 
-                del_status, del_details, del_expected_len = verify_bcf(
-                    bcf_path=bcf_path,
-                    indels_bcf_path=bcf_indel_path,
-                    contig=contig,
-                    orig_regions=tcdC_deletion_regions,
-                    target_regions=converted_regions,
-                    region_buffer=5,
-                    length_tolerance=1
-                )
-                row_dict["tcdCdel"] = del_status
-                
-                row_dict["deletion_details"] = filter_deletion_details(del_details)
+            if del_expected_len in tcdC_deletion_regions:
+                fasta_path = f"examples/Results/{sample}/Cdiff_KMA_Toxin/{sample}.fsa"
+                consensus_str = extract_consensus_indel_seq(fasta_path, contig, del_expected_len, converted_regions)
+                row_dict["deletion_consensus"] = consensus_str
 
-                if del_expected_len in tcdC_deletion_regions:
-                    fasta_path = f"examples/Results/{sample}/Cdiff_KMA_Toxin/{sample}.fsa"
-                    tcdC_seq_with_n =extract_consensus_indel_seq(fasta_path,contig,del_expected_len,converted_regions)
-                    row_dict["deletion_consensus"] = tcdC_seq_with_n
-
-                    # Evaluate if ambiguous should be upgraded to likely
-                    if row_dict["tcdCdel"].startswith("ambiguous") and row_dict["deletion_consensus"] != "-":
-                        row_dict["tcdCdel"] = evaluate_ambiguous_consensus(
-                            row_dict["tcdCdel"],
-                            row_dict["deletion_consensus"],
-                            deletion_consensus_thresholds
-                        )
-                    
-                else:
-                    row_dict["deletion_consensus"] = "-"
-            except Exception as e:
-                logging.warning(f"Failed tcdC deletion check or FASTA extraction for {sample}: {e}")
-                row_dict["tcdCdel"] = "-"
+                if del_status.startswith("ambiguous") and consensus_str != "-":
+                    row_dict["tcdCdel"] = evaluate_ambiguous_consensus(
+                        del_status,
+                        consensus_str,
+                        deletion_consensus_thresholds
+                    )
+            else:
                 row_dict["deletion_consensus"] = "-"
 
-        for col in desired_columns:
-            row_dict.setdefault(col, "-")
-        result_rows.append(row_dict)
+    except Exception as e:
+        logging.warning(f"[ERROR] Sample {sample} processing failed: {e}")
+        row_dict["tcdC117"] = "-"
+        row_dict["tcdCdel"] = "-"
+        row_dict["deletion_details"] = "-"
+        row_dict["deletion_consensus"] = "-"
 
-        if args.outputfile is None:
-            output_path = os.path.join("examples", "Results", sample, "kma", f"{sample}_kma.{args.suffix}")
-            os.makedirs(os.path.dirname(output_path), exist_ok=True)
-            pd.DataFrame([row_dict])[desired_columns].to_csv(output_path, sep="\t" if args.suffix == "tsv" else ",", index=False)
-            logging.info(f"Wrote per-sample summary: {output_path}")
+    for col in desired_columns:
+        row_dict.setdefault(col, "-")
 
-    if args.outputfile:
-        for row_dict in result_rows:
-            for col in desired_columns:
-                row_dict.setdefault(col, "-")
-        pd.DataFrame(result_rows)[desired_columns].to_csv(args.outputfile, sep="\t" if args.suffix == "tsv" else ",", index=False)
-        logging.info(f"Wrote merged summary: {args.outputfile}")
+    pd.DataFrame([row_dict])[desired_columns].to_csv(
+        args.outputfile,
+        sep="\t" if args.suffix == "tsv" else ",",
+        index=False
+    )
+    logging.info(f"Wrote summary to: {args.outputfile}")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Append C. difficile KMA .res summary info to a samplesheet.")
-    parser.add_argument("-ss", "--samplesheet", required=True, help="Path to the input samplesheet .tsv file")
+    parser.add_argument("--sample_id", required=True, help="Sample name to process")
+    parser.add_argument("--organism", required=True, help="Organism name (used to load species-specific resources)")
     parser.add_argument("-o", "--outputfile", default=None, help="Output filename. Default: per-sample output only")
     parser.add_argument("--suffix", choices=["tsv", "csv"], default="tsv", help="Output format. Default: tsv")
     parser.add_argument("--verbose", type=int, choices=[0, 1], default=1, help="Include verbose output. Default: 1")
-    parser.add_argument("--split", type=int, choices=[0, 1], default=0, help="Split Illumina_read_files into Read1/Read2 (default: 0)")
+    parser.add_argument("--log_dir", default="examples/Log")
+
     args = parser.parse_args()
     main(args)
