@@ -81,25 +81,6 @@ def get_kma_thresholds_for_species(organism_name: str) -> Dict[str, List[int]]:
         return cdiff_kma_threshold
     raise ValueError(f"No KMA thresholds for: {organism_name}")
 
-def get_deletion_threshold(deletion_key: str, thresholds: Dict[str, List[float]]) -> List[float]:
-    """
-    Returns the [IMF, IDV, DP] threshold list for a given deletion ID.
-    
-    Args:
-        deletion_key (str): Deletion ID, e.g. 'del330_347_18'
-
-    Returns:
-        List[float]: List containing [IMF, IDV, DP] thresholds
-
-    Raises:
-        ValueError if the key is not found
-    """
-    for key in thresholds:
-        if key in deletion_key:
-            return thresholds[key]
-    raise ValueError(f"No deletion thresholds found for: {deletion_key}")
-
-
 def get_amr_thresholds_for_species(organism_name: str) -> Dict[str, List[int]]:
     if organism_name.strip().lower() in ["e.coli", "e coli", "escherichia coli"]:
         return ecoli_amr_threshold

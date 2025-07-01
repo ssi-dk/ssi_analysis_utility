@@ -8,10 +8,27 @@ import pysam
 import logging
 from logging_utils import setup_logging
 import yaml
-from thresholds import get_deletion_threshold, deletion_gt_thresholds, deletion_consensus_thresholds
 #sys.path.insert(0, os.path.abspath("../scripts"))
 
 # ========================= Helper files =========================
+
+def get_deletion_threshold(deletion_key: str, thresholds: Dict[str, List[float]]) -> List[float]:
+    """
+    Returns the [IMF, IDV, DP] threshold list for a given deletion ID.
+    
+    Args:
+        deletion_key (str): Deletion ID, e.g. 'del330_347_18'
+
+    Returns:
+        List[float]: List containing [IMF, IDV, DP] thresholds
+
+    Raises:
+        ValueError if the key is not found
+    """
+    for key in thresholds:
+        if key in deletion_key:
+            return thresholds[key]
+    raise ValueError(f"No deletion thresholds found for: {deletion_key}")
 
 def load_variant_detection_config(organism: str, config_dir="workflow/configs_species") -> dict:
     """
@@ -52,6 +69,7 @@ def load_variant_detection_config(organism: str, config_dir="workflow/configs_sp
         snp_info = variant_block.get("snp_info", {})
         raw_deletions = variant_block.get("deletion_regions", {})
         raw_thresholds = variant_block.get("variant_gt_thresholds", {})
+        consensus = variant_block.get("deletion_consensus_thresholds",{})
     except KeyError as e:
         raise ValueError(f"Missing required Variant_detection fields in config: {e}")
 
@@ -67,6 +85,7 @@ def load_variant_detection_config(organism: str, config_dir="workflow/configs_sp
         "snp_info": snp_info,
         "deletion_regions": deletion_regions,
         "variant_gt_thresholds": raw_thresholds,
+        "deletion_consensus_thresholds": consensus
     }
 
 # ========================= KMA FILE HANDLING =========================
@@ -281,10 +300,11 @@ def check_deletions_in_region(
     gene_name: str,
     orig_regions: dict[int, tuple[int, int]],
     target_regions: dict[int, tuple[int, int]],
+    deletion_gt_thresholds: dict[str, list[float,int, int]],
     region_buffer: int = 5,
     length_tolerance: int = 1,
     min_overlap_fraction: float = 0.4,
-    use_indels_thresholds: bool = False 
+    use_indels_thresholds: bool = False,
 ) -> tuple[str, str, int]:
     """
     Scan for deletions in a BCF, merge overlapping ones, and match merged spans to expected regions.
@@ -336,6 +356,8 @@ def check_deletions_in_region(
                     if use_indels_thresholds:
                         try:
                             thresholds = get_deletion_threshold(deletion_key, deletion_gt_thresholds)
+                            print(thresholds)
+                            print("\n\nAFSFSAFFSAFSAFSFSAFSA\n\n")
                             logging.info(f"  → Loaded thresholds for {deletion_key}: IMF ≥ {thresholds[0]}, IDV ≥ {thresholds[1]}, DP ≥ {thresholds[2]}")
                         except ValueError:
                             continue  # no thresholds for this deletion
@@ -486,7 +508,7 @@ def check_deletions_in_region(
         return "-", "-", 0
 
 def verify_bcf(bcf_path: str, indels_bcf_path: str, contig: str, 
-               orig_regions: dict[int, tuple[int, int]], target_regions: dict[int, tuple[int, int]], 
+               orig_regions: dict[int, tuple[int, int]], target_regions: dict[int, tuple[int, int]],deletion_thresholds: dict[str, list[float,int, int]],
                region_buffer: int = 5, length_tolerance: int = 1) -> tuple[str, str,int]:
     """
     Verify deletions in two BCF files: the main BCF and the indels BCF.
@@ -509,9 +531,10 @@ def verify_bcf(bcf_path: str, indels_bcf_path: str, contig: str,
         gene_name="tcdC",
         orig_regions=orig_regions,
         target_regions=target_regions,
+        deletion_gt_thresholds=deletion_thresholds,
         region_buffer=region_buffer,
         length_tolerance=length_tolerance,
-        use_indels_thresholds=False
+        use_indels_thresholds=True
     )
 
     # If result is ambiguous or no confident match, try the indels file
@@ -523,6 +546,7 @@ def verify_bcf(bcf_path: str, indels_bcf_path: str, contig: str,
             gene_name="tcdC",
             orig_regions=orig_regions,
             target_regions=target_regions,
+            deletion_gt_thresholds=deletion_thresholds,
             region_buffer=region_buffer,
             length_tolerance=length_tolerance,
             use_indels_thresholds=True
@@ -655,12 +679,17 @@ def main(args: argparse.Namespace) -> None:
     # Load variant detection config
     variant_config = load_variant_detection_config(organism)
 
+    print(variant_config)
+    print(variant_config["variant_gt_thresholds"]["del330_347_18"][0:3])
+    print("aSF ")
+    #print(deletion_consensus_thresholds)
+    #exit(1)
     bed_path = variant_config["genomic_coord"]
     coord_dict = load_toxin_coordinates(bed_path)
 
     tcdC_deletion_regions = variant_config["deletion_regions"]
-    deletion_gt_thresholds = variant_config["variant_gt_thresholds"]
-    print(deletion_gt_thresholds)
+    deletion_gt_thresholds2 = variant_config["variant_gt_thresholds"]
+
     try:
         res_path = f"examples/Results/{sample}/Cdiff_KMA_Toxin/{sample}.res"
         res_df = process_res_file(res_path)
@@ -696,6 +725,7 @@ def main(args: argparse.Namespace) -> None:
                 contig=contig,
                 orig_regions=tcdC_deletion_regions,
                 target_regions=converted_regions,
+                deletion_thresholds = deletion_gt_thresholds2,
                 region_buffer=5,
                 length_tolerance=1
             )
@@ -711,7 +741,7 @@ def main(args: argparse.Namespace) -> None:
                     row_dict["tcdCdel"] = evaluate_ambiguous_consensus(
                         del_status,
                         consensus_str,
-                        deletion_consensus_thresholds
+                        variant_config["deletion_consensus_thresholds"]
                     )
             else:
                 row_dict["deletion_consensus"] = "-"
