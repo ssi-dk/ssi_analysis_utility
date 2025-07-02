@@ -770,8 +770,8 @@ if __name__ == "__main__":
     parser.add_argument("--organism", required=True, help="Organism name (used to load species-specific resources)")
     parser.add_argument("-o", "--outputfile", default=None, help="Output filename. Default: per-sample output only")
     parser.add_argument("--suffix", choices=["tsv", "csv"], default="tsv", help="Output format. Default: tsv")
-    parser.add_argument("--verbose", type=int, choices=[0, 1], default=1, help="Include verbose output. Default: 1")
     parser.add_argument("--log_dir", default="examples/Log")
 
     args = parser.parse_args()
     main(args)
+    #python workflow/scripts/Cdiff_wrangler_variant.py --sample_id SRR2915766 --organism "Clostridioides difficile" -o test.tsv --suffix tsv

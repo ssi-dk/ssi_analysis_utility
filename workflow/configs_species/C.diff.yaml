@@ -164,19 +164,20 @@ analyses_to_run:
         snp_info:
             snp_1: [117,"A","T","tcdC"] # [genomic position within the loci, reference, alternative]
         deletion_regions:
-            del_330_347_18: [330, 347] # [coordinate start within the region, coordinate end within the region , percent N in consensus region]
-            del_330_347_36: [301, 336]
-            del_341_379_39: [341, 379]
-            del_313_366_54: [313, 366]
+            del117_1: [117,118]
+            del330_347_18: [330, 347] # [coordinate start within the region, coordinate end within the region , percent N in consensus region]
+            del301_336_36: [301, 336]
+            del341_379_39: [341, 379]
+            del313_366_54: [313, 366]
         deletion_consensus_thresholds:
             del117_1: [99]
             del330_347_18: [85]
-            del330_347_36: [70]
+            del301_336_36: [70]
             del341_379_39: [70]
             del313_366_54: [70]
         variant_gt_thresholds:
             del117_1: [0.7, 1, 1]
             del330_347_18: [0.70,5,10]
-            del330_347_36: [0.70,5,10]
+            del301_336_36: [0.70,5,10]
             del341_379_39: [0.70,5,10]
             del313_366_54: [0.70,5,10]
