@@ -75,6 +75,9 @@ analysis_settings:
     spades:
         yaml : ../envs/spades.yaml
     
+    skesa:
+        yaml : ../envs/skesa.yaml
+        
     Repeat_identifier:
         yaml: ../envs/python_functions.yaml
 
