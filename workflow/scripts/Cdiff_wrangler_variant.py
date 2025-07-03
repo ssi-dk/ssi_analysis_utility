@@ -210,6 +210,7 @@ def check_tcdC117_variant(bcf_path: str, contig: str, pos: int, range: int,expec
     """
 
     try:
+        logging.info("Checking variant for contig {contig} at position {pos}")
         bcf = pysam.VariantFile(bcf_path)
         for rec in bcf.fetch(contig, pos-range, pos+range):
 
@@ -219,17 +220,17 @@ def check_tcdC117_variant(bcf_path: str, contig: str, pos: int, range: int,expec
             if rec.pos == pos:
                 # Case 1: variation fitting the A>T
                 if ref == expected_ref and alt == expected_alt:
-                    logging.info("Case 1: A>T SNP present at 117")
+                    logging.info("\tCase 1: A>T SNP present at 117")
                     return "A>T", ""
                 # Case 2: different variation
                 else:
-                    logging.info("Case 2: Different SNP present at 117")
+                    logging.info("\tCase 2: Different SNP present at 117")
                     return "other", f"{rec.pos}_{ref}_{alt}"
             # Case 3: Deletion spanning the position
             elif rec.pos < pos:
                 deletion_end = rec.pos + len(ref) - 1
                 if deletion_end >= pos and any(len(a) < len(ref) for a in rec.alts if a is not None):
-                    logging.info("Case 3: A deletion spans the position at 117")
+                    logging.info("\tCase 3: A deletion spans the position at 117")
                     return "del", f"{rec.pos}_{ref}_{alt}"
 
         logging.info("No variant found at or around position.")
@@ -303,7 +304,7 @@ def check_deletions_in_region(
     deletion_gt_thresholds: dict[str, list[float,int, int]],
     region_buffer: int = 5,
     length_tolerance: int = 1,
-    min_overlap_fraction: float = 0.4,
+    min_overlap_fraction: float = 0.2,
     use_indels_thresholds: bool = False,
 ) -> tuple[str, str, int]:
     """
@@ -339,25 +340,17 @@ def check_deletions_in_region(
                 
                 # Now apply deletion-specific filtering
                 del_len = len(ref) - len(alt)
-                matched = False
 
                 for expected_len, (region_start, region_end) in target_regions.items():
                     if del_len != expected_len:
                         continue
 
-                    del_len = len(ref) - len(alt)
-                    del_start = pos
-                    del_end = pos + del_len - 1
-
                     orig_del_reg = orig_regions[del_len]
-                    
                     deletion_key = f"del{orig_del_reg[0]}_{orig_del_reg[1]}_{del_len}"
 
                     if use_indels_thresholds:
                         try:
                             thresholds = get_deletion_threshold(deletion_key, deletion_gt_thresholds)
-                            print(thresholds)
-                            print("\n\nAFSFSAFFSAFSAFSFSAFSA\n\n")
                             logging.info(f"  → Loaded thresholds for {deletion_key}: IMF ≥ {thresholds[0]}, IDV ≥ {thresholds[1]}, DP ≥ {thresholds[2]}")
                         except ValueError:
                             continue  # no thresholds for this deletion
@@ -367,17 +360,15 @@ def check_deletions_in_region(
                             logging.info(f"  [PASS] variant {pos}:{ref}-{alt} passed {deletion_key} threshold check")
                         else:
                             logging.info(f"  [FAIL] variant {pos}:{ref}-{alt} failed {deletion_key} failed threshold check")                
-                        matched = True
-                        break  # use only first matching region
+
                     else:
                         filtered_records.append((pos, ref, alt))
                         logging.info(f"  [NO FILTER] accepted variant {pos}:{ref}-{alt} without thresholds")
-                        matched = True
-                        break  # use only first matching region
 
-                if not matched:
-                    logging.info("  [SKIP] No matching deletion region found for filtering.")
-
+        if not filtered_records:
+            logging.info("[INFO] No deletions passed filters.")
+            return "-", "-", 0
+        
         # Step 1: Extract all deletions.
         logging.info("[STEP 1] Extracting deletions")
         raw_deletions = []
@@ -409,8 +400,7 @@ def check_deletions_in_region(
                 current = list(d)
         merged_deletions.append(tuple(current))
 
-        # Step 3: Exact match.
-        logging.info("[STEP 3] Checking for exact matches")
+        # STEP 3–6: Match logic (exact, partial, rescued, ambiguous)
         padded_regions = {
             expected_len: (
                 max(1, region_start - region_buffer),
@@ -419,89 +409,95 @@ def check_deletions_in_region(
             for expected_len, (region_start, region_end) in target_regions.items()
         }
 
+        matched_labels = []
+        matched_details = []
+
         for del_start, del_end, _, detail_str in merged_deletions:
             actual_len = del_end - del_start + 1
+            matched = False
 
-            if actual_len > 0:
-                logging.info(f"  → Merged deletion: {actual_len}bp at {del_start}-{del_end}")
+            logging.info(f"  → Merged deletion: {actual_len}bp at {del_start}-{del_end}")
+
+            if not matched:
+                logging.info("[STEP 3] Checking for exact matches")
+                for expected_len, (region_start, region_end) in padded_regions.items():
+                    logging.info(f"    Comparing to expected {expected_len}bp region (± {region_buffer} nt): {region_start}-{region_end}")
+                    if actual_len == expected_len and region_start <= del_start and del_end <= region_end:
+                        logging.info(f"[MATCH] Exact match: {expected_len}bp deletion")
+                        matched_labels.append(str(expected_len))
+                        matched_details.append(detail_str)
+                        matched = True
+                        break  # move to next deletion
     
-            for expected_len, (region_start, region_end) in padded_regions.items():
-                if actual_len > 0:
-                    logging.info(f"    Comparing to expected {expected_len}bp region (± 5 nt): {region_start}-{region_end}")
-                
-                if actual_len == expected_len and region_start <= del_start and del_end <= region_end:
-                    logging.info(f"[MATCH] Exact match: {expected_len}bp deletion")
-                    return str(expected_len), detail_str, int(expected_len)
+            if not matched:
+                # Step 4: Fallback partial match.
+                logging.info("[STEP 4] Checking partial overlaps")
+                for expected_len, (region_start, region_end) in padded_regions.items():
+                    if abs(actual_len - expected_len) > length_tolerance:
+                        if actual_len > 0:
+                            logging.info(f"    Skipped {actual_len}bp vs {expected_len}bp: outside length tolerance")
+                        continue
 
-        # Step 4: Fallback partial match.
-        logging.info("[STEP 4] Checking partial overlaps")
-        for del_start, del_end, _, detail_str in merged_deletions:
-            actual_len = del_end - del_start + 1
-    
-            if actual_len > 0:
-                logging.info(f"  → Checking merged deletion {actual_len}bp at {del_start}-{del_end}")
-    
-            for expected_len, (region_start, region_end) in padded_regions.items():
-                if abs(actual_len - expected_len) > length_tolerance:
-                    if actual_len > 0:
-                        logging.info(f"    Skipped {actual_len}bp vs {expected_len}bp: outside length tolerance")
-                    continue
-    
-                overlap_start = max(del_start, region_start)
-                overlap_end = min(del_end, region_end)
-                overlap = max(0, overlap_end - overlap_start + 1)
-                target_len = region_end - region_start + 1
-                overlap_fraction = overlap / target_len
-                logging.info(f"    → Fallback for {expected_len}bp: overlap = {overlap}/{target_len} = {overlap_fraction:.2f}")
-                if overlap_fraction >= min_overlap_fraction:
-                    logging.info(f"[MATCH] Fallback partial match for {expected_len}bp (≥ {min_overlap_fraction})")
-                    return f"partial_{expected_len}", detail_str, int(expected_len)
+                    overlap_start = max(del_start, region_start)
+                    overlap_end = min(del_end, region_end)
+                    overlap = max(0, overlap_end - overlap_start + 1)
+                    target_len = region_end - region_start + 1
+                    overlap_fraction = overlap / target_len
+                    logging.info(f"    → Fallback for {expected_len}bp: overlap = {overlap}/{target_len} = {overlap_fraction:.2f}")
+                    if overlap_fraction >= min_overlap_fraction:
+                        logging.info(f"[MATCH] Fallback partial match for {expected_len}bp (≥ {min_overlap_fraction})")
+                        matched_labels.append(f"partial_{expected_len}")
+                        matched_details.append(detail_str)
+                        matched = True
+                        break
 
-        # Step 5: Recovered early match (start-proximal rescue).
-        logging.info("[STEP 5] Checking for rescued match based on early alignment")
-        for expected_len, (region_start, region_end) in padded_regions.items():
-            for del_start, del_end, _, detail_str in merged_deletions:
-                actual_len = del_end - del_start + 1
-                dist = abs(del_start - region_start)
+            if not matched:
+                # Step 5: Recovered early match (start-proximal rescue).
+                logging.info("[STEP 5] Checking for rescued match based on early alignment")
+                for expected_len, (region_start, region_end) in padded_regions.items():
+                    for del_start, del_end, _, detail_str in merged_deletions:
+                        dist = abs(del_start - region_start)
 
-                if actual_len > 0:
-                    logging.info(f"  → Checking {actual_len}bp deletion at {del_start}-{del_end} vs region {region_start}-{region_end} with distance between start coordinate {dist} nt")
+                        if actual_len > 0:
+                            logging.info(f"  → Checking {actual_len}bp deletion at {del_start}-{del_end} vs region {region_start}-{region_end} with distance between start coordinate {dist} nt")
 
-                if actual_len == expected_len and dist <= 5:
-                    logging.info(f"[MATCH] Rescued early match for {expected_len}bp deletion at {del_start}-{del_end}")
-                    return f"rescued_{expected_len}", detail_str, int(expected_len)
-
-        # Step 6: Ambiguous overlap (last resort).
-        logging.info("[STEP 6] Checking for ambiguous overlaps")
-        for del_start, del_end, _, detail_str in merged_deletions:
-            if del_len <= 0:
-                continue
+                        if actual_len == expected_len and dist <= 5:
+                            logging.info(f"[MATCH] Rescued early match for {expected_len}bp deletion at {del_start}-{del_end}")
+                            matched_labels.append(f"rescued_{expected_len}")
+                            matched_details.append(detail_str)
+                            matched = True
+                            break
             
-            for expected_len, (region_start, region_end) in padded_regions.items():
-                if del_end >= region_start and del_start <= region_end:
-                    logging.info(f"  → [AMBIGUOUS] Deletion at {min(del_start,del_end)}-{max(del_start,del_end)} overlaps expected {expected_len}bp region")
-                    # Extract actual ref seqs from detail_str like: "321_REF1_ALT1_LEN+330_REF2_ALT2_LEN"
-                    deletion_details = detail_str.split("+")
-                    parsed = []
-                    for d in deletion_details:
-                        parts = d.split("_")
-
-                        if len(parts) >= 4:
-                            s, ref, alt, del_len = parts
-                            parsed.append((int(s), int(s)+len(ref)-1, ref))
-
-                    merged_start, merged_seq, merged_len = merge_overlapping_deletions_sliced(parsed)
-                    merged_info = f"{merged_start}_{merged_seq}_{merged_seq[0]}_{merged_len-1}"
-                    return f"ambiguous_{expected_len}", merged_info, int(expected_len)
+            if not matched:
+                # Step 6: Ambiguous overlap (last resort).
+                logging.info("[STEP 6] Checking for ambiguous overlaps")
+                for expected_len, (region_start, region_end) in padded_regions.items():
+                    if del_end >= region_start and del_start <= region_end:
+                        logging.info(f"  → [AMBIGUOUS] Deletion at {min(del_start,del_end)}-{max(del_start,del_end)} overlaps expected {expected_len}bp region")
+                        # Extract actual ref seqs from detail_str like: "321_REF1_ALT1_LEN+330_REF2_ALT2_LEN"
+                        
+                        deletion_details = detail_str.split("+")
+                        parsed = []
+                        for d in deletion_details:
+                            parts = d.split("_")
+                            if len(parts) >= 4:
+                                s, ref, alt, del_len = parts
+                                parsed.append((int(s), int(s) + len(ref) - 1, ref))
+                        merged_start, merged_seq, merged_len = merge_overlapping_deletions_sliced(parsed)
+                        merged_info = f"{merged_start}_{merged_seq}_{merged_seq[0]}_{merged_len-1}"
+                        matched_labels.append(f"ambiguous_{expected_len}")
+                        matched_details.append(merged_info)
+                        matched = True
+                        break
         
         # Step 7: Nothing matched.
         logging.info("[STEP 7] No deletions matched any target region.")
-        all_details = ";".join([d[3] for d in merged_deletions])
-        # for the merged deletions think about what you want to insert here
-        if merged_deletions:
-            return "-", all_details, int(merged_deletions[0][2])
+        if matched_labels:
+            max_len = max([int(lbl.split("_")[-1]) if "_" in lbl else int(lbl) for lbl in matched_labels])
+            return ";".join(matched_labels), ";".join(matched_details), max_len
         else:
-            return "-", "-", 0
+            all_details = ";".join([d[3] for d in merged_deletions])
+            return "-", all_details, int(merged_deletions[0][2])
 
     except Exception as e:
         logging.error(f"[ERROR] While scanning deletions: {e}")
