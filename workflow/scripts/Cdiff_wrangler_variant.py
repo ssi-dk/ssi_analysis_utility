@@ -492,7 +492,7 @@ def check_deletions_in_region(
                             matched_details.append(detail_str)
                             matched = True
                             break
-            
+
             if not matched:
                 # Step 7: Ambiguous overlap (last resort).
                 logging.info("[STEP 7] Checking for ambiguous overlaps")
@@ -515,8 +515,21 @@ def check_deletions_in_region(
                         matched = True
                         break
         
-        # Step 8: Nothing matched.
-        logging.info("[STEP 8] No deletions matched any target region.")
+            # Step 8: Potential deletion match (near-miss in length but within the expected region)
+            if not matched:
+                logging.info("[STEP 8] Checking for potential deletion match (length ±2bp, start ±5nt)")
+                for expected_len, (region_start, region_end) in padded_regions.items():
+                    if abs(actual_len - expected_len) <= 2:
+                        dist = abs(del_start - region_start)
+                        if dist <= 5:
+                            logging.info(f"[MATCH] Potential match: deletion {actual_len}bp at {del_start}-{del_end} is near expected {expected_len}bp region at {region_start}-{region_end}")
+                            matched_labels.append(f"potential_del_{expected_len}")
+                            matched_details.append(detail_str)
+                            matched = True
+                            break
+
+        # Step 9: Nothing matched.
+        logging.info("[STEP 9] No deletions matched any target region.")
         if matched_labels:
             max_len = max([int(lbl.split("_")[-1]) if "_" in lbl else int(lbl) for lbl in matched_labels])
             return ";".join(matched_labels), ";".join(matched_details), max_len
