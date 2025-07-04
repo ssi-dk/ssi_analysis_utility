@@ -196,7 +196,13 @@ def gene_pos_to_genomic(gene_name: str, pos_in_gene: int, coord_dict: Dict[str, 
 
     return contig, genomic_pos
 
-def check_tcdC117_variant(bcf_path: str, contig: str, pos: int, range: int,expected_ref="T", expected_alt="A") -> str:
+def check_snp_variant(
+        bcf_path: str, 
+        contig: str, 
+        pos: int, 
+        range: int,
+        expected_ref="T", 
+        expected_alt="A") -> str:
     """
     Check for a specific variant at a position in the BCF, considering strand orientation.
     
@@ -307,6 +313,8 @@ def check_deletions_in_region(
     region_buffer: int = 5,
     length_tolerance: int = 1,
     min_overlap_fraction: float = 0.3,
+    near_length_tolerance: int = 2,
+    near_start_offset: int = 5,
     use_indels_thresholds: bool = False,
 ) -> tuple[str, str, int]:
     """
@@ -455,7 +463,7 @@ def check_deletions_in_region(
     
             if not matched:
                 # Step 5: Fallback partial match.
-                logging.info("[STEP 5] Checking partial overlaps")
+                logging.info(f"[STEP 5] Checking partial overlaps with overlap percentage {min_overlap_fraction*100}%")
                 for expected_len, (region_start, region_end) in padded_regions.items():
                     if abs(actual_len - expected_len) > length_tolerance:
                         if actual_len > 0:
@@ -517,11 +525,11 @@ def check_deletions_in_region(
         
             # Step 8: Potential deletion match (near-miss in length but within the expected region)
             if not matched:
-                logging.info("[STEP 8] Checking for potential deletion match (length ±2bp, start ±5nt)")
+                logging.info(f"[STEP 8] Checking for potential deletion match (length ±{near_length_tolerance}bp, start ±5nt)")
                 for expected_len, (region_start, region_end) in padded_regions.items():
-                    if abs(actual_len - expected_len) <= 2:
+                    if abs(actual_len - expected_len) <= near_length_tolerance:
                         dist = abs(del_start - region_start)
-                        if dist <= 5:
+                        if dist <= near_start_offset:
                             logging.info(f"[MATCH] Potential match: deletion {actual_len}bp at {del_start}-{del_end} is near expected {expected_len}bp region at {region_start}-{region_end}")
                             matched_labels.append(f"potential_del_{expected_len}")
                             matched_details.append(detail_str)
@@ -541,9 +549,18 @@ def check_deletions_in_region(
         logging.error(f"[ERROR] While scanning deletions: {e}")
         return "-", "-", 0
 
-def verify_bcf(bcf_path: str, indels_bcf_path: str, contig: str, 
-               orig_regions: dict[int, tuple[int, int]], target_regions: dict[int, tuple[int, int]],deletion_thresholds: dict[str, list[float,int, int]],
-               region_buffer: int = 5, length_tolerance: int = 1) -> tuple[str, str,int]:
+def verify_bcf(bcf_path: str, 
+               indels_bcf_path: str, 
+               contig: str,
+               gene_name: str, 
+               orig_regions: dict[int, tuple[int, int]], 
+               target_regions: dict[int, tuple[int, int]],
+               deletion_thresholds: dict[str, list[float,int, int]],
+               region_buffer: int = 5, 
+               length_tolerance: int = 1,
+               min_overlap_fraction: float = 0.3,
+               near_length_tolerance: int = 2,
+               near_start_offset: int = 5) -> tuple[str, str,int]:
     """
     Verify deletions in two BCF files: the main BCF and the indels BCF.
     
@@ -562,12 +579,15 @@ def verify_bcf(bcf_path: str, indels_bcf_path: str, contig: str,
     del_status, del_details, expected_del_len = check_deletions_in_region(
         bcf_path=bcf_path,
         contig=contig,
-        gene_name="tcdC",
+        gene_name=gene_name,
         orig_regions=orig_regions,
         target_regions=target_regions,
         deletion_gt_thresholds=deletion_thresholds,
         region_buffer=region_buffer,
         length_tolerance=length_tolerance,
+        min_overlap_fraction=min_overlap_fraction,
+        near_length_tolerance=near_length_tolerance,
+        near_start_offset=near_start_offset,
         use_indels_thresholds=True
     )
 
@@ -583,6 +603,9 @@ def verify_bcf(bcf_path: str, indels_bcf_path: str, contig: str,
             deletion_gt_thresholds=deletion_thresholds,
             region_buffer=region_buffer,
             length_tolerance=length_tolerance,
+            min_overlap_fraction=min_overlap_fraction,
+            near_length_tolerance=near_length_tolerance,
+            near_start_offset=near_start_offset,
             use_indels_thresholds=True
         )
 
@@ -704,109 +727,137 @@ def main(args: argparse.Namespace) -> None:
         "organism": organism,
     }
 
-    # Output columns
-    first_cols = ["sample_id", "organism"]
-    variation_columns = ["tcdC117", "tcdCdel", "deletion_details", "deletion_consensus"]
-    desired_columns = first_cols + variation_columns
-    deletion_details_list = []
-
-    # Load BED file based on organism
     # Load variant detection config
     variant_config = load_variant_detection_config(organism)
-
-    print(variant_config)
-    print(variant_config["variant_gt_thresholds"]["del330_347_18"][0:3])
-    #print(deletion_consensus_thresholds)
-    #exit(1)
     bed_path = variant_config["genomic_coord"]
     coord_dict = load_toxin_coordinates(bed_path)
-
+    snp_info_dict = variant_config["snp_info"]
     tcdC_deletion_regions = variant_config["deletion_regions"]
     deletion_gt_thresholds2 = variant_config["variant_gt_thresholds"]
+    deletion_consensus_thresholds = variant_config["deletion_consensus_thresholds"]
 
+    # Prepare output columns
+    first_cols = ["sample_id", "organism"]
+    snp_columns = [f"{entry[3]}_{snp_id}" for snp_id, entry in snp_info_dict.items()]
+    variation_columns = []
+    for gene in args.gene_list:
+        variation_columns.extend([
+            f"{gene}del",
+            f"{gene}_deletion_details",
+            f"{gene}_deletion_consensus"
+        ])
+    desired_columns = first_cols + snp_columns + variation_columns
+
+    # Input files
     try:
         res_path = f"examples/Results/{sample}/Cdiff_KMA_Toxin/{sample}.res"
         res_df = process_res_file(res_path)
 
         bcf_path = f"examples/Results/{sample}/GenotypeCalls/{sample}.Cdiff_KMA_Toxin.calls.bcf"
         bcf_indel_path = f"examples/Results/{sample}/GenotypeCalls/{sample}.Cdiff_KMA_Toxin.indels.bcf"
+    except Exception as e:
+        logging.warning(f"[ERROR] Sample {sample} failed loading inputs: {e}")
+        for gene in args.gene_list:
+            for suffix in ["del", "deletion_details", "deletion_consensus"]:
+                row_dict[f"{gene}_{suffix}"] = "-"
+        for snp_id, entry in snp_info_dict.items():
+            row_dict[f"{entry[3]}_{snp_id}"] = "-"
+        pd.DataFrame([row_dict])[desired_columns].to_csv(
+            args.outputfile,
+            sep="\t" if args.suffix == "tsv" else ",",
+            index=False
+        )
+        return
 
-        if res_df.empty:
-            row_dict["tcdC117"] = "-"
-            row_dict["tcdCdel"] = "-"
-            row_dict["deletion_details"] = "-"
-            row_dict["deletion_consensus"] = "-"
-        else:
-            contig = find_matching_contig(res_df, "tcdC")
-            _, genomic_pos = gene_pos_to_genomic("tcdC", 117, coord_dict)
+    # --- SNP CHECK LOOP ---
+    for snp_id, (gene_pos, ref, alt, gene_name) in snp_info_dict.items():
+        try:
+            contig = find_matching_contig(res_df, gene_name)
+            _, genomic_pos = gene_pos_to_genomic(gene_name, gene_pos, coord_dict)
 
-            variant_status, extra_verbose = check_tcdC117_variant(
-                bcf_path, contig, genomic_pos, range=20, expected_ref="T", expected_alt="A"
+            variant_status, extra = check_snp_variant(
+                bcf_path, contig, genomic_pos, range=20,
+                expected_ref=ref, expected_alt=alt
             )
-            row_dict["tcdC117"] = variant_status
+
+            snp_col = f"{gene_name}_{snp_id}"
+            row_dict[snp_col] = variant_status
+
             if variant_status != "wt":
-                logging.info("Succesfully identified variant at position 117")
-                extra_info = f"tcdC117:{variant_status}" + (f"_{extra_verbose}" if extra_verbose else "")
-                #row_dict["deletion_details"] = extra_info
-                deletion_details_list.append(extra_info)
-                
-                # Remove 1bp deletion from regions to avoid duplicate scanning
-                if variant_status == "del":
-                    if 1 in tcdC_deletion_regions:
-                        del tcdC_deletion_regions[1]
-            else:
-                logging.info("wildtype at position 117")
-                row_dict["deletion_details"] = "-"
+                logging.info(f"[INFO] Variant found at {gene_name}{gene_pos}: {variant_status}")
+                detail_key = f"{gene_name}_deletion_details"
+                row_dict.setdefault(detail_key, "")
+                row_dict[detail_key] += f"{gene_name}{gene_pos}:{variant_status}" + (f"_{extra};" if extra else ";")
 
+        except Exception as e:
+            logging.warning(f"[WARN] SNP check failed for {snp_id} in {gene_name}: {e}")
+            row_dict[f"{gene_name}_{snp_id}"] = "-"
 
-            logging.info(f"Converts genomic coordinates to search for further deletions")
-            gene_length = coord_dict["tcdC"]["length"]
-            converted_regions = convert_reverse_strand_regions(tcdC_deletion_regions, gene_length)
-            
-            del_status, del_details, del_expected_len = verify_bcf(
+    # --- DELETION CHECK LOOP ---
+    for gene in args.gene_list:
+        logging.info(f"\n[INFO] Processing gene: {gene}")
+        deletion_details_list = []
+        try:
+            contig = find_matching_contig(res_df, gene)
+
+            orig_regions = {
+                k: v for k, v in tcdC_deletion_regions.items()
+                if not (variant_status == "del" and k == 1)
+            }
+            gene_length = coord_dict[gene]["length"]
+            converted_regions = convert_reverse_strand_regions(orig_regions, gene_length)
+
+            del_status, del_details, del_len = verify_bcf(
                 bcf_path=bcf_path,
                 indels_bcf_path=bcf_indel_path,
                 contig=contig,
-                orig_regions=tcdC_deletion_regions,
+                gene_name=gene,
+                orig_regions=orig_regions,
                 target_regions=converted_regions,
-                deletion_thresholds = deletion_gt_thresholds2,
-                region_buffer=5,
-                length_tolerance=1
+                deletion_thresholds=deletion_gt_thresholds2,
+                region_buffer=args.deletion_region_buffer,
+                length_tolerance=args.partial_match_length_tolerance,
+                min_overlap_fraction=args.partial_overlap,
+                near_length_tolerance=args.nearby_match_length_tolerance,
+                near_start_offset=args.potential_start_offset
             )
-            row_dict["tcdCdel"] = del_status
-            #row_dict["deletion_details"] = filter_deletion_details(del_details)
-            
-            filtered_main = filter_deletion_details(del_details)
-            if filtered_main != "-":
-                deletion_details_list.append(filtered_main)
-            
-            # Join all pieces together
-            row_dict["deletion_details"] = ";".join(deletion_details_list) if deletion_details_list else "-"
 
-            if del_expected_len in tcdC_deletion_regions:
+            row_dict[f"{gene}del"] = del_status
+            filtered_detail = filter_deletion_details(del_details)
+            if filtered_detail != "-":
+                deletion_details_list.append(filtered_detail)
+
+            # Append to existing details from SNPs
+            detail_key = f"{gene}_deletion_details"
+            existing_details = row_dict.get(detail_key, "-")
+            existing_parts = [] if existing_details == "-" else [existing_details.strip(";")]
+            combined = ";".join(existing_parts + deletion_details_list)
+            row_dict[detail_key] = combined if combined else "-"
+
+            # Extract consensus sequence if a known-length deletion was found
+            if del_len in orig_regions:
                 fasta_path = f"examples/Results/{sample}/Cdiff_KMA_Toxin/{sample}.fsa"
-                consensus_str = extract_consensus_indel_seq(fasta_path, contig, del_expected_len, converted_regions)
-                row_dict["deletion_consensus"] = consensus_str
-
-                if del_status.startswith("ambiguous") and consensus_str != "-":
-                    row_dict["tcdCdel"] = evaluate_ambiguous_consensus(
+                consensus = extract_consensus_indel_seq(fasta_path, contig, del_len, converted_regions)
+                row_dict[f"{gene}_deletion_consensus"] = consensus
+                if del_status.startswith("ambiguous") and consensus != "-":
+                    row_dict[f"{gene}del"] = evaluate_ambiguous_consensus(
                         del_status,
-                        consensus_str,
-                        variant_config["deletion_consensus_thresholds"]
+                        consensus,
+                        deletion_consensus_thresholds
                     )
             else:
-                row_dict["deletion_consensus"] = "-"
+                row_dict[f"{gene}_deletion_consensus"] = "-"
 
-    except Exception as e:
-        logging.warning(f"[ERROR] Sample {sample} processing failed: {e}")
-        row_dict["tcdC117"] = "-"
-        row_dict["tcdCdel"] = "-"
-        row_dict["deletion_details"] = "-"
-        row_dict["deletion_consensus"] = "-"
+        except Exception as e:
+            logging.warning(f"[WARN] Processing failed for gene {gene}: {e}")
+            for suffix in ["del", "deletion_details", "deletion_consensus"]:
+                row_dict[f"{gene}_{suffix}"] = "-"
 
+    # Fill in missing columns with "-"
     for col in desired_columns:
         row_dict.setdefault(col, "-")
 
+    # Write output
     pd.DataFrame([row_dict])[desired_columns].to_csv(
         args.outputfile,
         sep="\t" if args.suffix == "tsv" else ",",
@@ -822,7 +873,43 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--outputfile", default=None, help="Output filename. Default: per-sample output only")
     parser.add_argument("--suffix", choices=["tsv", "csv"], default="tsv", help="Output format. Default: tsv")
     parser.add_argument("--log_dir", default="examples/Log")
-
+    parser.add_argument(
+        "--gene_list",
+        nargs="+",
+        required=True,
+        help="List of genes to process (e.g., --gene_list tcdC tcdA cdtA)"
+    )
+    # --- Deletion detection flexibility ---
+    parser.add_argument(
+        "--partial_overlap",
+        type=float,
+        default=0.3,
+        help="Allowed ± difference in deletion length for *partial* overlap matches. Default: 1"
+    )
+    parser.add_argument(
+        "--partial_match_length_tolerance",
+        type=int,
+        default=1,
+        help="Allowed ± difference in deletion length for *partial* overlap matches. Default: 1"
+    )
+    parser.add_argument(
+        "--deletion_region_buffer",
+        type=int,
+        default=5,
+        help="Number of bp to extend each deletion region when scanning for variants. Used in region padding. Default: 5"
+    )
+    parser.add_argument(
+        "--nearby_match_length_tolerance",
+        type=int,
+        default=2,
+        help="Allowed ± difference in deletion length for *nearby positional* matches (potential_del). Default: 2"
+    )
+    parser.add_argument(
+        "--potential_start_offset",
+        type=int,
+        default=5,
+        help="Allowed ± offset in position when identifying near-miss deletions for *potential_del*. Default: 5"
+    )
     args = parser.parse_args()
     main(args)
     #python workflow/scripts/Cdiff_wrangler_variant.py --sample_id SRR2915766 --organism "Clostridioides difficile" -o test.tsv --suffix tsv
