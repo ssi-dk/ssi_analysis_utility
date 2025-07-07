@@ -372,8 +372,6 @@ rule Variant_identifier:
         id = lambda wildcards: wildcards.sample,
         region_buffer = 5,
         overlap = 0.3,
-        start_offset = 5,
-        near_length = 5
     log:
         stdout = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.Variant_identifier.log"
     conda:
@@ -382,7 +380,7 @@ rule Variant_identifier:
         "[Variant Identification]: Filtering KMA .res, KMA consensus .fsa, genotype calls and indels for {wildcards.sample}"
     shell:
         """       
-        python workflow/scripts/Cdiff_wrangler_variant.py --sample_id {params.id}  --res {params.kma_res} --fsa {params.kma_fsa} --call {input.genotype_call} --indels {input.indels_only} {params.add_opt} -o {output.filtered_tsv} --deletion_region_buffer {params.region_buffer} --partial_overlap {params.overlap} --nearby_match_length_tolerance {params.near_length} --potential_start_offset {params.start_offset}
+        python workflow/scripts/Cdiff_wrangler_variant.py --sample_id {params.id}  --res {params.kma_res} --fsa {params.kma_fsa} --call {input.genotype_call} --indels {input.indels_only} {params.add_opt} -o {output.filtered_tsv} --deletion_region_buffer {params.region_buffer} --partial_overlap {params.overlap}
         """
 
 # Rule: spades_assembly

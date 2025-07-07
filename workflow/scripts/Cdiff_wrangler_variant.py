@@ -10,7 +10,12 @@ from logging_utils import setup_logging
 import yaml
 sys.path.insert(0, os.path.abspath("../scripts"))
 
-# ========================= Helper files =========================
+# ========================= Helper functions =========================
+
+def reverse_complement(seq: str) -> str:
+    complement = {"A": "T", "T": "A", "G": "C", "C": "G", "N": "N"}
+    return ''.join(complement.get(base.upper(), base) for base in reversed(seq))
+
 def is_in_any_region(pos: int, regions: List[tuple[int, int]]) -> bool:
     return any(start <= pos <= end for start, end in regions)
 
@@ -201,8 +206,9 @@ def check_snp_variant(
         contig: str, 
         pos: int, 
         range: int,
-        expected_ref="T", 
-        expected_alt="A") -> str:
+        expected_ref: str, 
+        expected_alt: str,
+        strand: str) -> tuple[str, str]:
     """
     Check for a specific variant at a position in the BCF, considering strand orientation.
     
@@ -224,22 +230,31 @@ def check_snp_variant(
 
             ref = rec.ref
             alt = rec.alts[0] if rec.alts else None
-             
+            
+            ref_to_use = ref
+            alt_to_use = alt
+
+            if strand == "-":
+                ref_to_use = reverse_complement(ref)
+                alt_to_use = reverse_complement(alt)
+
             if rec.pos == pos:
                 # Case 1: variation fitting the A>T
                 if ref == expected_ref and alt == expected_alt:
-                    logging.info("\tCase 1: A>T SNP present at 117")
-                    return "A>T", ""
+                    logging.info(f"\tCase 1: {ref}>{expected_ref} and {alt}>{expected_alt} SNP present at 117")
+                    return f"snp", ""
+            
                 # Case 2: different variation
                 else:
                     logging.info("\tCase 2: Different SNP present at 117")
-                    return "other", f"{rec.pos}_{ref}_{alt}"
+                    return "other", f"{rec.pos}_{ref_to_use}_{alt_to_use}"
+            
             # Case 3: Deletion spanning the position
             elif rec.pos < pos:
                 deletion_end = rec.pos + len(ref) - 1
                 if deletion_end >= pos and any(len(a) < len(ref) for a in rec.alts if a is not None):
-                    logging.info(f"\tCase 3: A deletion spans the position at 117 from {rec.pos} to {deletion_end}")
-                    return "del", f"{rec.pos}_{ref}_{alt}"
+                    logging.info(f"\tCase 3: A deletion spans the position at {pos} from {rec.pos} to {deletion_end}")
+                    return f"del", ""
 
         logging.info("No variant found at or around position.")
         return "wt", ""
@@ -313,8 +328,6 @@ def check_deletions_in_region(
     region_buffer: int = 5,
     length_tolerance: int = 1,
     min_overlap_fraction: float = 0.3,
-    near_length_tolerance: int = 2,
-    near_start_offset: int = 5,
     use_indels_thresholds: bool = False,
 ) -> tuple[str, str, int]:
     """
@@ -433,13 +446,6 @@ def check_deletions_in_region(
         merged_deletions.append(tuple(current))
 
         # STEP 3–6: Match logic (exact, partial, rescued, ambiguous)
-        """padded_regions = {
-            expected_len: (
-                max(1, region_start - region_buffer),
-                region_end + region_buffer
-            )
-            for expected_len, (region_start, region_end) in target_regions.items()
-        }"""
 
         matched_labels = []
         matched_details = []
@@ -522,19 +528,6 @@ def check_deletions_in_region(
                         matched_details.append(merged_info)
                         matched = True
                         break
-        
-            # Step 8: Potential deletion match (near-miss in length but within the expected region)
-            if not matched:
-                logging.info(f"[STEP 8] Checking for potential deletion match (length ±{near_length_tolerance}bp, start ±5nt)")
-                for expected_len, (region_start, region_end) in padded_regions.items():
-                    if abs(actual_len - expected_len) <= near_length_tolerance:
-                        dist = abs(del_start - region_start)
-                        if dist <= near_start_offset:
-                            logging.info(f"[MATCH] Potential match: deletion {actual_len}bp at {del_start}-{del_end} is near expected {expected_len}bp region at {region_start}-{region_end}")
-                            matched_labels.append(f"potential_del_{expected_len}")
-                            matched_details.append(detail_str)
-                            matched = True
-                            break
 
         # Step 9: Nothing matched.
         logging.info("[STEP 9] No deletions matched any target region.")
@@ -558,9 +551,7 @@ def verify_bcf(bcf_path: str,
                deletion_thresholds: dict[str, list[float,int, int]],
                region_buffer: int = 5, 
                length_tolerance: int = 1,
-               min_overlap_fraction: float = 0.3,
-               near_length_tolerance: int = 2,
-               near_start_offset: int = 5) -> tuple[str, str,int]:
+               min_overlap_fraction: float = 0.3) -> tuple[str, str,int]:
     """
     Verify deletions in two BCF files: the main BCF and the indels BCF.
     
@@ -586,8 +577,6 @@ def verify_bcf(bcf_path: str,
         region_buffer=region_buffer,
         length_tolerance=length_tolerance,
         min_overlap_fraction=min_overlap_fraction,
-        near_length_tolerance=near_length_tolerance,
-        near_start_offset=near_start_offset,
         use_indels_thresholds=True
     )
 
@@ -604,8 +593,6 @@ def verify_bcf(bcf_path: str,
             region_buffer=region_buffer,
             length_tolerance=length_tolerance,
             min_overlap_fraction=min_overlap_fraction,
-            near_length_tolerance=near_length_tolerance,
-            near_start_offset=near_start_offset,
             use_indels_thresholds=True
         )
 
@@ -738,7 +725,14 @@ def main(args: argparse.Namespace) -> None:
 
     # Prepare output columns
     first_cols = ["sample_id", "organism"]
-    snp_columns = [f"{entry[3]}_{snp_id}" for snp_id, entry in snp_info_dict.items()]
+    #snp_columns = [f"{entry[3]}_{snp_id}" for snp_id, entry in snp_info_dict.items()]
+    
+    gene_snp_map = {}
+    for snp_id, entry in snp_info_dict.items():
+        gene = entry[3]
+        gene_snp_map.setdefault(gene, []).append((snp_id, entry))
+    snp_columns = [f"{gene}_snp" for gene in gene_snp_map]
+
     variation_columns = []
     for gene in args.gene_list:
         variation_columns.extend([
@@ -779,29 +773,44 @@ def main(args: argparse.Namespace) -> None:
     # --- SNP CHECK LOOP ---
     logging.info(f"\n[SNP CHECK LOOP]\n")
 
-    for snp_id, (gene_pos, ref, alt, gene_name) in snp_info_dict.items():
-        logging.info(f"[INFO] Checking potential snp at {snp_id}:{gene_name}:{gene_pos}:{ref}:{alt}")
+    for gene, snps in gene_snp_map.items():
+        snp_outputs = []
         try:
-            contig = find_matching_contig(res_df, gene_name)
-            _, genomic_pos = gene_pos_to_genomic(gene_name, gene_pos, coord_dict)
+            contig = find_matching_contig(res_df, gene)
+            for snp_id, (gene_pos, ref, alt, gene_name, strand) in snps:
+                logging.info(f"[INFO] Checking potential snp at {snp_id}:{gene_name}:{gene_pos}:{ref}:{alt}")
+    
+                _, genomic_pos = gene_pos_to_genomic(gene_name, gene_pos, coord_dict)
 
-            variant_status, extra = check_snp_variant(
-                bcf_path, contig, genomic_pos, range=20,
-                expected_ref=ref, expected_alt=alt
-            )
+                # Convert ref/alt if strand is minus
+                ref_to_use = ref # A 
+                alt_to_use = alt # T
+                if strand == "-":
+                    ref_to_use = reverse_complement(ref) # T
+                    alt_to_use = reverse_complement(alt) # A
+                    logging.info(f"  → Strand is '-', using reverse complements: {ref}→{ref_to_use}, {alt}→{alt_to_use}")
 
-            snp_col = f"{gene_name}_{snp_id}"
-            row_dict[snp_col] = variant_status
+                snp_info_str = f"{gene_pos}:{ref}>{alt}"
 
-            if variant_status != "wt":
-                logging.info(f"[INFO] Variant found at {gene_name}{gene_pos}: {variant_status}")
-                detail_key = f"{gene_name}_deletion_details"
-                row_dict.setdefault(detail_key, "")
-                row_dict[detail_key] += f"{gene_name}{gene_pos}:{variant_status}" + (f"_{extra};" if extra else ";")
+                variant_status, extra = check_snp_variant(
+                    bcf_path, contig, genomic_pos, range=20,
+                    expected_ref=ref_to_use, expected_alt=alt_to_use,
+                    info_snp_str=snp_info_str,strand=strand
+                )
+                
+                if variant_status == "snp":
+                    snp_outputs.append(f"{gene_pos}_{ref}>{alt}")
+                elif variant_status == "wt":
+                    snp_outputs.append(f"{gene_pos}_wt")
+                elif variant_status == "del":
+                    snp_outputs.append(f"{gene_pos}_del")  # 1bp deletion, treat as SNP
+                elif variant_status == "other":
+                    snp_outputs.append(f"{gene_pos}_other:{extra}")
 
+            row_dict[f"{gene}_snp"] = ";".join(snp_outputs) if snp_outputs else "-"
         except Exception as e:
-            logging.warning(f"[WARN] SNP check failed for {snp_id} in {gene_name}: {e}")
-            row_dict[f"{gene_name}_{snp_id}"] = "-"
+            logging.warning(f"[WARN] SNP check failed for gene {gene}: {e}")
+            row_dict[f"{gene}_snp"] = "-"
 
     logging.info(f"\n[DELETION CHECK LOOP]\n")
     # --- DELETION CHECK LOOP ---
@@ -811,10 +820,8 @@ def main(args: argparse.Namespace) -> None:
         try:
             contig = find_matching_contig(res_df, gene)
 
-            orig_regions = {
-                k: v for k, v in tcdC_deletion_regions.items()
-                if not (variant_status == "del" and k == 1)
-            }
+            orig_regions = {k: v for k, v in tcdC_deletion_regions.items() if k > 1}
+
             gene_length = coord_dict[gene]["length"]
             converted_regions = convert_reverse_strand_regions(orig_regions, gene_length)
 
@@ -829,10 +836,10 @@ def main(args: argparse.Namespace) -> None:
                 region_buffer=args.deletion_region_buffer,
                 length_tolerance=args.partial_match_length_tolerance,
                 min_overlap_fraction=args.partial_overlap,
-                near_length_tolerance=args.nearby_match_length_tolerance,
-                near_start_offset=args.potential_start_offset
             )
-
+            #near_length_tolerance=args.nearby_match_length_tolerance,
+            #near_start_offset=args.potential_start_offset
+            
             row_dict[f"{gene}del"] = del_status
             filtered_detail = filter_deletion_details(del_details)
             if filtered_detail != "-":
@@ -911,18 +918,6 @@ if __name__ == "__main__":
         type=int,
         default=5,
         help="Number of bp to extend each deletion region when scanning for variants. Used in region padding. Default: 5"
-    )
-    parser.add_argument(
-        "--nearby_match_length_tolerance",
-        type=int,
-        default=2,
-        help="Allowed ± difference in deletion length for *nearby positional* matches (potential_del). Default: 2"
-    )
-    parser.add_argument(
-        "--potential_start_offset",
-        type=int,
-        default=5,
-        help="Allowed ± offset in position when identifying near-miss deletions for *potential_del*. Default: 5"
     )
     args = parser.parse_args()
     main(args)
