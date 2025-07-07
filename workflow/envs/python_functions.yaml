@@ -8,6 +8,7 @@ dependencies:
   - pandas
   - pyyaml
   - biopython
+  - pysam
   - pip
   - pip:
       - typer  # optional if you later switch to it

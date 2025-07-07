@@ -8,7 +8,7 @@ import pysam
 import logging
 from logging_utils import setup_logging
 import yaml
-#sys.path.insert(0, os.path.abspath("../scripts"))
+sys.path.insert(0, os.path.abspath("../scripts"))
 
 # ========================= Helper files =========================
 def is_in_any_region(pos: int, regions: List[tuple[int, int]]) -> bool:
@@ -320,7 +320,7 @@ def check_deletions_in_region(
     """
     Scan for deletions in a BCF, merge overlapping ones, and match merged spans to expected regions.
     """
-    logging.info(f"\n[INFO] Scanning deletions in {bcf_path} for {gene_name}")
+    logging.info(f"\n[INFO] Scanning deletions in {bcf_path} for {gene_name}\n")
     try:
         bcf = pysam.VariantFile(bcf_path)
         raw_deletions = []
@@ -337,11 +337,11 @@ def check_deletions_in_region(
             for expected_len, (region_start, region_end) in target_regions.items()
         }
         region_spans = list(padded_regions.values())
-
+        logging.info(f"{padded_regions}")
         logging.info(f"[INFO] Will scan BCF only within {len(region_spans)} buffered target regions")
 
         # Step 1: Filter on variant entries.
-        logging.info("[STEP 1] Filtering deletions based on thresholds for QUAL == 0, thresholds and the spanning region")
+        logging.info("\n[STEP 1] Filtering deletions based on thresholds for QUAL == 0, thresholds and the spanning region")
         for rec in bcf.fetch(contig):
             if not is_in_any_region(rec.pos, region_spans):
                 continue  # irrelevant variants
@@ -659,7 +659,7 @@ def extract_consensus_indel_seq(
         if del_expected_len not in converted_regions:
             raise ValueError(f"Deletion length {del_expected_len} not found in regions")
 
-        logging.info("[STEP 8] Checking the consensus sequence for deleted regions")
+        logging.info("[STEP 10] Checking the consensus sequence for deleted regions")
 
         start, end = converted_regions[del_expected_len]
         fasta = pysam.FastaFile(fasta_path)
@@ -750,11 +750,18 @@ def main(args: argparse.Namespace) -> None:
 
     # Input files
     try:
-        res_path = f"examples/Results/{sample}/Cdiff_KMA_Toxin/{sample}.res"
-        res_df = process_res_file(res_path)
+        #res_path = f"examples/Results/{sample}/Cdiff_KMA_Toxin/{sample}.res"
+        #res_df = process_res_file(res_path)
+        #bcf_path = f"examples/Results/{sample}/GenotypeCalls/{sample}.Cdiff_KMA_Toxin.calls.bcf"
+        #bcf_indel_path = f"examples/Results/{sample}/GenotypeCalls/{sample}.Cdiff_KMA_Toxin.indels.bcf"
+        #fasta_path = f"examples/Results/{sample}/Cdiff_KMA_Toxin/{sample}.fsa"
 
-        bcf_path = f"examples/Results/{sample}/GenotypeCalls/{sample}.Cdiff_KMA_Toxin.calls.bcf"
-        bcf_indel_path = f"examples/Results/{sample}/GenotypeCalls/{sample}.Cdiff_KMA_Toxin.indels.bcf"
+        res_path = args.res
+        res_df = process_res_file(res_path)
+        bcf_path = args.call
+        bcf_indel_path = args.indels
+        fasta_path = args.fsa
+
     except Exception as e:
         logging.warning(f"[ERROR] Sample {sample} failed loading inputs: {e}")
         for gene in args.gene_list:
@@ -770,7 +777,10 @@ def main(args: argparse.Namespace) -> None:
         return
 
     # --- SNP CHECK LOOP ---
+    logging.info(f"\n[SNP CHECK LOOP]\n")
+
     for snp_id, (gene_pos, ref, alt, gene_name) in snp_info_dict.items():
+        logging.info(f"[INFO] Checking potential snp at {snp_id}:{gene_name}:{gene_pos}:{ref}:{alt}")
         try:
             contig = find_matching_contig(res_df, gene_name)
             _, genomic_pos = gene_pos_to_genomic(gene_name, gene_pos, coord_dict)
@@ -793,6 +803,7 @@ def main(args: argparse.Namespace) -> None:
             logging.warning(f"[WARN] SNP check failed for {snp_id} in {gene_name}: {e}")
             row_dict[f"{gene_name}_{snp_id}"] = "-"
 
+    logging.info(f"\n[DELETION CHECK LOOP]\n")
     # --- DELETION CHECK LOOP ---
     for gene in args.gene_list:
         logging.info(f"\n[INFO] Processing gene: {gene}")
@@ -836,7 +847,6 @@ def main(args: argparse.Namespace) -> None:
 
             # Extract consensus sequence if a known-length deletion was found
             if del_len in orig_regions:
-                fasta_path = f"examples/Results/{sample}/Cdiff_KMA_Toxin/{sample}.fsa"
                 consensus = extract_consensus_indel_seq(fasta_path, contig, del_len, converted_regions)
                 row_dict[f"{gene}_deletion_consensus"] = consensus
                 if del_status.startswith("ambiguous") and consensus != "-":
@@ -873,6 +883,10 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--outputfile", default=None, help="Output filename. Default: per-sample output only")
     parser.add_argument("--suffix", choices=["tsv", "csv"], default="tsv", help="Output format. Default: tsv")
     parser.add_argument("--log_dir", default="examples/Log")
+    parser.add_argument("--call", required=True, help="Called genotypes")
+    parser.add_argument("--indels", required=True, help="Pileup files")
+    parser.add_argument("--res", required=True, help="KMA alignment results")
+    parser.add_argument("--fsa", required=True, help="Consensus sequence")
     parser.add_argument(
         "--gene_list",
         nargs="+",

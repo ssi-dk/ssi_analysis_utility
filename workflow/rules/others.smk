@@ -267,7 +267,7 @@ rule samtools_index:
 
 # Rule: bcftools_genotypecall
 # Identifies microbial species or strain using k-mer-based alignment.
-        
+
 rule bcftools_mpileup:
     input:
         sorted_bam = "{folder}/{sample}/FilteredBAM/{sample}.{tool}.filtered.sorted.bam",
@@ -347,6 +347,44 @@ rule bcftools_index:
         bcftools index -f {input.bcf}
         """
 
+rule Variant_identifier:
+    input:
+        genotype_call = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.calls.bcf",
+        indels_only = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.indels.bcf"
+    output:
+        filtered_tsv = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.variants.tsv"
+    params:
+        input_folder = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["KMA_filter"]["input_folder"],
+        kma_res = lambda wildcards: os.path.join(
+            OUT_FOLDER,
+            wildcards.sample,
+            species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["KMA_filter"]["input_folder"],
+            f"{wildcards.sample}.res"
+        ),
+        kma_fsa = lambda wildcards: os.path.join(
+            OUT_FOLDER,
+            wildcards.sample,
+            species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["KMA_filter"]["input_folder"],
+            f"{wildcards.sample}.fsa"
+        ),
+        add_opt = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Variant_detection"]["additional_option"],
+        log_dir = lambda wildcards: f"{OUT_FOLDER}/{wildcards.sample}/GenotypeCalls/",
+        id = lambda wildcards: wildcards.sample,
+        region_buffer = 5,
+        overlap = 0.3,
+        start_offset = 5,
+        near_length = 5
+    log:
+        stdout = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.Variant_identifier.log"
+    conda:
+        config["analysis_settings"]["Variant_identifier"]["yaml"]
+    message:
+        "[Variant Identification]: Filtering KMA .res, KMA consensus .fsa, genotype calls and indels for {wildcards.sample}"
+    shell:
+        """       
+        python workflow/scripts/Cdiff_wrangler_variant.py --sample_id {params.id}  --res {params.kma_res} --fsa {params.kma_fsa} --call {input.genotype_call} --indels {input.indels_only} {params.add_opt} -o {output.filtered_tsv} --deletion_region_buffer {params.region_buffer} --partial_overlap {params.overlap} --nearby_match_length_tolerance {params.near_length} --potential_start_offset {params.start_offset}
+        """
+
 # Rule: spades_assembly
 rule spades_assembly:
     input:
@@ -372,29 +410,29 @@ rule spades_assembly:
 
 # Rule: Skesa_assembly
 #  DeBruijn graph-based de-novo assembler for microbial genomes
-#rule skesa_assembly:
-#    input:
-#        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
-#        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
-#    output:
-#        assembly = "%s/{sample}/skesa/{sample}.contigs.fasta" %OUT_FOLDER
-#    conda:
-#        config["analysis_settings"]["skesa"]["yaml"]
-#    log:
-#        stdout = "Logs/{sample}/skesa.log"
-#    message:
-#        "[skesa_assembly]: Perform assembly using skesa on {wildcards.sample}, this will take some time!"
-#    threads:
-#        min(workflow.cores, 8)
-#    shell:
-#        """
-#        mkdir -p $(dirname {output.assembly})
-#        
-#        cmd="skesa --reads {input.R1},{input.R2} --contigs_out {output.assembly} --cores {threads}"
-#
-#        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-#        eval $cmd >> {log.stdout} 2>&1
-#        """      
+rule skesa_assembly:
+    input:
+        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
+        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
+    output:
+        assembly = "%s/{sample}/skesa/{sample}.contigs.fasta" %OUT_FOLDER
+    conda:
+        config["analysis_settings"]["skesa"]["yaml"]
+    log:
+        stdout = "Logs/{sample}/skesa.log"
+    message:
+        "[skesa_assembly]: Perform assembly using skesa on {wildcards.sample}, this will take some time!"
+    threads:
+        min(workflow.cores, 8)
+    shell:
+        """
+        mkdir -p $(dirname {output.assembly})
+        
+        cmd="skesa --reads {input.R1},{input.R2} --contigs_out {output.assembly} --cores {threads}"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+        """      
 
 rule Repeat_Identifier:
     input:
@@ -412,17 +450,18 @@ rule Repeat_Identifier:
     params:
         repeats = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Repeat_identifier"]["repeats"],
         database = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Repeat_identifier"]["database"],
+        combo_table = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Repeat_identifier"]["combos"], 
         out_dir = "%s/{sample}/Repeat_identifier" %OUT_FOLDER,
         sample_id = lambda wildcards: f"{wildcards.sample}",
     conda:
         config["analysis_settings"]["Repeat_identifier"]["yaml"]
     log:
-        stdout = "Logs/{sample}/{assembler}_{sample}_repeat.log"
+        stdout = "%s/{sample}/Repeat_identifier/{assembler}_{sample}_repeat.log" %OUT_FOLDER
     message:
         "[Repeat_identifier]: Running repeat analysis for {wildcards.sample} using ({wildcards.assembler}) contigs"
     shell:
         """
         mkdir -p {params.out_dir}
 
-        python workflow/scripts/Repeat_Identifier.py --sample_id {params.sample_id} --fasta {input.fasta} --repeats {params.repeats} --db_dir {params.database} --output {output.result} --suffix tsv > {log.stdout} 2>&1
+        python workflow/scripts/Repeat_Identifier.py --sample_id {params.sample_id} --fasta {input.fasta} --repeats {params.repeats} --combos {params.combo_table} --db_dir {params.database} --output {output.result} --suffix tsv > {log.stdout} 2>&1
         """

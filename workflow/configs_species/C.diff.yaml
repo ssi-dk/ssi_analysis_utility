@@ -160,7 +160,7 @@ analyses_to_run:
         status : True
         Title : Detecting variants for C.diff 
         ID: 93
-        additional_option : --organism "Clostridioides difficile" --suffix tsv
+        additional_option : --gene_list tcdC --organism "Clostridioides difficile" --suffix tsv
         genomic_coord : resources/Clostridioides_difficile_db/Toxin/Cdiff_Toxin.bed6
         snp_info:
             snp_1: [117,"A","T","tcdC"] # [genomic position within the loci, reference, alternative]
@@ -178,8 +178,8 @@ analyses_to_run:
             del313_366_54: [70]
         variant_gt_thresholds:
             del117_1: [0.7, 1, 1]
-            del330_347_18: [0.70,5,10]
-            del301_336_36: [0.70,5,10]
-            del341_379_39: [0.70,5,10]
-            del313_366_54: [0.70,5,10]
+            del330_347_18: [0.10,5,10]
+            del301_336_36: [0.10,5,10]
+            del341_379_39: [0.10,5,10]
+            del313_366_54: [0.10,5,10]
         #
