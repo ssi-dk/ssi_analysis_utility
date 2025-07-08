@@ -634,6 +634,7 @@ def extract_consensus_indel_seq(
     contig: str,
     del_expected_len: int,
     converted_regions: dict[int, tuple[int, int]],
+    thresholds: dict[str, List[float]]
 ) -> str:
     """
     Extracts the gene region from FASTA using deletion length key, and annotates with %N.
@@ -661,8 +662,18 @@ def extract_consensus_indel_seq(
 
         n_count = seq.upper().count("N")
         n_percent = (n_count / len(seq)) * 100 if len(seq) > 0 else 0
-        return f"{seq}_{n_percent:.2f}"
+        
+        # Get threshold
+        key_matches = [k for k in thresholds if k.endswith(f"_{del_expected_len}")]
+        if not key_matches:
+            raise ValueError(f"No consensus N threshold defined for deletion length {del_expected_len}")
+        required_n = thresholds[key_matches[0]][0]
 
+        if n_percent >= required_n:
+            return f"{start}-{end}_{seq}_{n_percent:.2f}"
+        else:
+            logging.info(f"[INFO] Sequence at {start}-{end} has {n_percent:.2f}% N < {required_n}% threshold — skipping output.")
+            return "-"
     except Exception as e:
         logging.warning(f"Failed to extract/annotate from {contig}:{del_expected_len} in {fasta_path}: {e}")
         return "-"
@@ -707,6 +718,77 @@ def evaluate_ambiguous_consensus(deletion_label: str, consensus_str: str, thresh
 
     return deletion_label
 
+def extract_most_ambiguous_consensus(
+    fasta_path: str,
+    contig: str,
+    converted_regions: dict[int, tuple[int, int]],
+    thresholds: dict[str, List[float]]
+) -> str:
+    """
+    Evaluate all expected deletion regions and return the most ambiguous region
+    where %N exceeds the threshold. If none pass, return the best fallback (%N only).
+
+    Returns:
+        - "start-end_SEQUENCE_%N" if above threshold
+        - "start-end_N=%N%" if no region passes threshold
+        - "-" on failure
+    """
+    best_seq = "-"
+    best_region = "-"
+    best_percent = -1.0
+    best_score = -1.0
+    best_len = None
+
+    fallback_percent = -1.0
+    fallback_region = "-"
+    fallback_seq = "-"
+    fallback_len = None
+
+    try:
+        fasta = pysam.FastaFile(fasta_path)
+    except Exception as e:
+        logging.warning(f"Could not open FASTA file {fasta_path}: {e}")
+        return "-"
+
+    for del_len, (start, end) in converted_regions.items():
+        try:
+            seq = fasta.fetch(contig, start, end)
+            region_len = end - start + 1
+            n_count = seq.upper().count("N")
+            percent_n = (n_count / region_len) * 100 if region_len > 0 else 0
+            threshold_key = [k for k in thresholds if k.endswith(f"_{del_len}")]
+            required_n = thresholds[threshold_key[0]][0] if threshold_key else 100.0
+
+            logging.info(f"Checked region {start}-{end} ({region_len}bp): {percent_n:.2f}% Ns")
+
+            # Save fallback candidate
+            if percent_n > fallback_percent:
+                fallback_percent = percent_n
+                fallback_region = f"{start}-{end}"
+                fallback_seq = seq
+                fallback_len = del_len
+
+            # Only score regions that pass the threshold
+            if percent_n >= required_n:
+                score = percent_n * region_len
+                if score > best_score:
+                    best_score = score
+                    best_percent = percent_n
+                    best_region = f"{start}-{end}"
+                    best_seq = seq
+                    best_len = del_len
+
+        except Exception as e:
+            logging.warning(f"Consensus extraction failed for region {start}-{end}: {e}")
+            continue
+
+    # Return best high-confidence region with sequence
+    if best_len is not None:
+        return f"{best_region}_{best_seq}_{best_percent:.2f}"
+
+    return "-"
+
+#################### MAIN #######################
 def main(args: argparse.Namespace) -> None:
     setup_logging(args.log_dir, args.sample_id, "variant_handling")
 
@@ -856,18 +938,41 @@ def main(args: argparse.Namespace) -> None:
             combined = ";".join(existing_parts + deletion_details_list)
             row_dict[detail_key] = combined if combined else "-"
 
-            # Extract consensus sequence if a known-length deletion was found
+            # Step B: Extract consensus based on best region (confident or most ambiguous)
             if del_len in orig_regions:
-                consensus = extract_consensus_indel_seq(fasta_path, contig, del_len, converted_regions)
+                # Confident deletion match → extract directly
+                consensus = extract_consensus_indel_seq(fasta_path, 
+                                                        contig, 
+                                                        del_len, 
+                                                        converted_regions,
+                                                        deletion_consensus_thresholds)
                 row_dict[f"{gene}_deletion_consensus"] = consensus
+
                 if del_status.startswith("ambiguous") and consensus != "-":
                     row_dict[f"{gene}del"] = evaluate_ambiguous_consensus(
                         del_status,
                         consensus,
                         deletion_consensus_thresholds
                     )
+
             else:
-                row_dict[f"{gene}_deletion_consensus"] = "-"
+                # No confident deletion → scan all regions and report highest-%N one
+                consensus = extract_most_ambiguous_consensus(
+                    fasta_path=fasta_path,
+                    contig=contig,
+                    converted_regions=converted_regions,
+                    thresholds=deletion_consensus_thresholds
+                )
+                row_dict[f"{gene}_deletion_consensus"] = consensus
+                
+                if del_status in ("-", "", None) and consensus not in ("-", "", None):
+                    try:
+                        region_part = consensus.split("_")[0]
+                        start, end = map(int, region_part.split("-"))
+                        region_len = end - start + 1
+                        row_dict[f"{gene}_deletion_details"] = f"likely_{region_len}"
+                    except Exception as e:
+                        logging.warning(f"[WARN] Failed to calculate likely_ region length from consensus: {consensus} — {e}")
 
         except Exception as e:
             logging.warning(f"[WARN] Processing failed for gene {gene}: {e}")
