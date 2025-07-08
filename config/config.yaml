@@ -7,8 +7,17 @@ input_manager:
     database_path: resources
     config_species : workflow/configs_species/
     out_folder: examples/Results  # Folder where the analysis results will be saved
-    
 
+species_map:
+  Clostridium difficile: C.diff
+  Clostridioides difficile: C.diff
+  C. difficile: C.diff
+  C difficile: C.diff
+  C. diff: C.diff
+  C.diff: C.diff
+  Escherichia coli: E.coli
+  E coli: E.coli
+  E.coli: E.coli
 
 ###################### ANALYSIS & TOOLS SETTINGS ############################
 # This section provides paths to the yaml file for the conda environemt,

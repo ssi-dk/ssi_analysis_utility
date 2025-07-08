@@ -111,7 +111,7 @@ analyses_to_run:
         Title : MLST by Torsten Seeman
     
     spades:
-        status : True
+        status : False
         
     skesa:
         status : True
@@ -171,10 +171,10 @@ analyses_to_run:
             del341_379_39: [341, 379]
             del313_366_54: [313, 366]
         deletion_consensus_thresholds:
-            del330_347_18: [85]
-            del301_336_36: [70]
-            del341_379_39: [70]
-            del313_366_54: [70]
+            del330_347_18: [30]
+            del301_336_36: [30]
+            del341_379_39: [30]
+            del313_366_54: [30]
         variant_gt_thresholds:
             del330_347_18: [0.10,5,10]
             del301_336_36: [0.10,5,10]

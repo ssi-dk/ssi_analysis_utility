@@ -12,6 +12,31 @@ sys.path.insert(0, os.path.abspath("../scripts"))
 
 # ========================= Helper functions =========================
 
+def species_mapping(config_path: str, organism: str) -> str:
+    """
+    Given a config file and an organism name, return the normalized species key.
+
+    Args:
+        config_path (str): Path to the pipeline config.yaml file
+        organism (str): Organism name input (e.g. "C. difficile")
+
+    Returns:
+        str: Normalized species name (e.g. "C.diff") for use in species-specific YAML lookup.
+
+    Raises:
+        ValueError: If the organism is not found in the mapping
+    """
+    with open(config_path, "r") as f:
+        config = yaml.safe_load(f)
+
+    species_map = config.get("species_map", {})
+    cleaned = organism.strip()
+
+    if cleaned not in species_map:
+        raise ValueError(f"Organism '{organism}' not found in species_map section of {config_path}")
+
+    return species_map[cleaned]
+
 def reverse_complement(seq: str) -> str:
     complement = {"A": "T", "T": "A", "G": "C", "C": "G", "N": "N"}
     return ''.join(complement.get(base.upper(), base) for base in reversed(seq))
@@ -37,31 +62,11 @@ def get_deletion_threshold(deletion_key: str, thresholds: Dict[str, List[float]]
             return thresholds[key]
     raise ValueError(f"No deletion thresholds found for: {deletion_key}")
 
-def load_variant_detection_config(organism: str, config_dir="workflow/configs_species") -> dict:
+def load_variant_detection_config(organism: str, config_dir="workflow/configs_species", pipeline_config="config/config.yaml") -> dict:
     """
-    Load variant detection thresholds and region info from a species-specific YAML config file.
-
-    Args:
-        organism (str): Full organism name, e.g. "Clostridioides difficile"
-        config_dir (str): Directory containing species YAML files.
-
-    Returns:
-        dict: Dictionary with keys:
-            - genomic_coord (str)
-            - snp_info (dict)
-            - deletion_regions (dict[int] -> (start, end))
-            - variant_gt_thresholds (dict[str] -> list[float|int])
+    Load species-specific variant detection config based on mapping from master pipeline config.
     """
-    species_map = {
-        "Clostridioides difficile": "C.diff",
-        "Clostridium difficile": "C.diff",
-        "C. difficile": "C.diff",
-        "E. coli": "E.coli",
-        "Escherichia coli": "E.coli",
-        "E.coli": "E.coli",
-    }
-
-    species_key = species_map.get(organism.strip(), organism.strip())
+    species_key = species_mapping(pipeline_config, organism)
     config_path = os.path.join(config_dir, f"{species_key}.yaml")
 
     if not os.path.exists(config_path):
@@ -167,7 +172,7 @@ def convert_reverse_strand_regions(regions: dict[int, tuple[int, int]], gene_len
         converted_start = gene_length - (end - 1)
         converted_end = gene_length - (start - 1)
         converted[key] = (min(converted_start, converted_end), max(converted_start, converted_end))
-        logging.info(f"Converted regions - original start:{start}-{end} \t converted:{converted_start}-{converted_end}")
+        logging.info(f"Entry {key} with converted regions - original start:{start}-{end} \t converted:{converted_start}-{converted_end}")
     return converted
 
 def gene_pos_to_genomic(gene_name: str, pos_in_gene: int, coord_dict: Dict[str, Dict[str, str | int]]) -> tuple[str, int]:
@@ -790,12 +795,11 @@ def main(args: argparse.Namespace) -> None:
                     alt_to_use = reverse_complement(alt) # A
                     logging.info(f"  → Strand is '-', using reverse complements: {ref}→{ref_to_use}, {alt}→{alt_to_use}")
 
-                snp_info_str = f"{gene_pos}:{ref}>{alt}"
+                logging.info(f"→ SNP check: gene={gene}, pos={genomic_pos}, ref={ref_to_use}, alt={alt_to_use}, strand={strand}")
 
                 variant_status, extra = check_snp_variant(
                     bcf_path, contig, genomic_pos, range=20,
-                    expected_ref=ref_to_use, expected_alt=alt_to_use,
-                    info_snp_str=snp_info_str,strand=strand
+                    expected_ref=ref_to_use, expected_alt=alt_to_use,strand=strand
                 )
                 
                 if variant_status == "snp":
