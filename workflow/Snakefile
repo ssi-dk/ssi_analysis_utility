@@ -26,27 +26,27 @@ sample_to_illumina = {row['sample_name']: row['Illumina_read_files'].split(',') 
 sample_to_nanopore = {row['sample_name']: row['Nanopore_read_file'] for idx, row in CSV_DATA.iterrows()}
 sample_to_assembly_file = {row['sample_name']: row['assembly_file'] for idx, row in CSV_DATA.iterrows()}
 
-species_name_map = {
-    "Clostridioides difficile": "C.diff",
-    "Clostridium difficile": "C.diff",
-    "C. difficile": "C.diff",
-    "C difficile": "C.diff",
-    "C. diff": "C.diff",
-    "C.diff": "C.diff",
-    "Escherichia coli": "E.coli",
-    "E coli": "E.coli",
-    "E.coli": "E.coli",
-    # Add more mappings here
-}
+# ------------------ Species Mapping (from config) ------------------
 
+# Load species_name_map from config file
+species_name_map = config.get("species_map", {})
+
+# Map each sample species (from sample sheet information) to the normalized species name used for the Species specific config
 sample_to_organism = {
     row['sample_name']: species_name_map.get(row['organism'], row['organism'])
     for idx, row in CSV_DATA.iterrows()
 }
 
-#sample_to_organism = {row['sample_name']: row['organism'] for idx, row in CSV_DATA.iterrows()}
+# Debug check if species have not properly been mapped
+unmapped_species = {
+    row['organism'] for idx, row in CSV_DATA.iterrows()
+    if row['organism'] not in species_name_map
+}
+if unmapped_species:
+    warnings.warn(f"The following species are not mapped in config['species_map']: {unmapped_species}", UserWarning)
 
-# Load species-specific configurations dynamically
+# ------------------ Load Species-Specific Configs ------------------
+
 species_configs = {}
 for species in set(sample_to_organism.values()):
     species_config_path = SPECIES_PATH + f"{species}.yaml"
