@@ -1,3 +1,87 @@
+rule setup_Ecoli_alignment_db:
+    conda:
+        config["analysis_settings"]["Escherichia_coli_db"]["yaml"]
+    params:
+        db_prefix = 'ecoligenes'
+    output:
+        database = directory(f'{database_path}/{config["analysis_settings"]["Escherichia_coli_db"]["database"]}')
+    log:
+        stdout = f'Logs/Databases/setup_Ecoli_alignment_db.log'
+    message:
+        "[setup_Ecoli_alignment_db]: Setting up Ecoli alignment database"
+    shell:
+        """
+        mkdir -p {output.database}
+        cmd="curl https://raw.githubusercontent.com/ssi-dk/ecoli_fbi/refs/heads/main/db/ecoligenes/ecoligenes.fsa -o {output.database}/{params.db_prefix}.fsa"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+
+        fasta={output.database}/ecoligenes.fsa
+
+        idx_prefix={output.database}/{params.db_prefix}
+        cmd="kma index -i $fasta -o $idx_prefix"
+
+        echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+
+        if [ -z $idx_prefix.comb.b ]; then
+            echo '[setup_Ecoli_alignment_db]: ERROR - $idx_prefix.comb.b was not created during KMA indexing. This likely means that the setup_Ecoli_alignment_db database has changed. Post this message on our Github repository!' 2>&1 >> {log.stdout}
+        fi
+
+        date -I > {output.database}/creation.date
+        """
+
+rule setup_CdiffToxin:
+    conda:
+        config["analysis_settings"]["Clostridioides_difficile_db"]["yaml"]
+    output:
+        database = directory(f'{database_path}/{config["analysis_settings"]["Clostridioides_difficile_db"]["database"]}/Toxin')
+    params:
+        accession_loci = "AM180355.1:tcdA,tcdB,tcdC AF271719.1:cdtA,cdtB",
+        db_toxin = "Cdiff_Toxin"
+    log:
+        stdout = f'Logs/Databases/setup_CdiffToxin.log'
+    message:
+        "[setup_CdiffToxin]: Setting up C. difficile toxin database"
+    shell:
+        r"""
+        set -euo pipefail
+        mkdir -p {output.database}
+        > {output.database}/{params.db_toxin}.txt
+        > {output.database}/{params.db_toxin}.bed6
+        > {output.database}/{params.db_toxin}.fasta
+
+        for item in {params.accession_loci}; do
+            acc=$(echo $item | cut -d':' -f1)
+            loci=$(echo $item | cut -d':' -f2 | tr ',' ' ')
+
+            cmd="python workflow/scripts/genbank_fetcher.py \
+                -a $acc --locus $loci \
+                -o {output.database}/{params.db_toxin}.txt \
+                --bed {output.database}/{params.db_toxin}.bed6 \
+                --fasta {output.database}/{params.db_toxin}.fasta \
+                --merge 500 --append"
+
+            echo -e \"\nExecuting command:\n$cmd\n\" >> {log.stdout}
+            eval $cmd >> {log.stdout} 2>&1
+        done
+
+        fasta={output.database}/{params.db_toxin}.fasta
+
+        cmd="samtools faidx $fasta"
+        echo "Executing command:\n$cmd\n" >> {log.stdout}
+        eval $cmd >> {log.stdout} 2>&1
+
+        idx_prefix={output.database}/{params.db_toxin}
+        cmd="kma index -i $fasta -o $idx_prefix"
+        echo "Executing command:\n$cmd\n" >> {log.stdout}
+        eval $cmd >> {log.stdout} 2>&1
+
+        if [ ! -f "$idx_prefix.comb.b" ]; then
+            echo '[CdiffToxin]: ERROR - $idx_prefix.comb.b not created' >> {log.stdout}
+        fi
+        """
 
 rule setup_PlasmidFinder:
     conda:
@@ -85,7 +169,6 @@ rule setup_PointFinder:
         
         date -I > {output.database}/creation.date
         """
-
 
 rule setup_DisinFinder:
     conda:
@@ -191,40 +274,6 @@ rule setup_AMRFinder:
         date -I > {output.database}/creation.date
         """
 
-rule setup_EcoliKmerAligner:
-    conda:
-        config["analysis_settings"]["kmeraligner"]["yaml"]
-    params:
-        db_prefix = 'ecoligenes'
-    output:
-        database = directory(f'{database_path}/{config["analysis_settings"]["kmeraligner"]["database"]}')
-    log:
-        stdout = f'Logs/Databases/setup_EcoliKmerAligner.log'
-    message:
-        "[setup_EcoliKmerAligner]: Setting up EcoliKmerAligner"
-    shell:
-        """
-        mkdir -p {output.database}
-        cmd="curl https://raw.githubusercontent.com/ssi-dk/ecoli_fbi/refs/heads/main/db/ecoligenes/ecoligenes.fsa -o {output.database}/{params.db_prefix}.fsa"
-
-        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-        eval $cmd >> {log.stdout} 2>&1
-
-        fasta={output.database}/ecoligenes.fsa
-
-        idx_prefix={output.database}/{params.db_prefix}
-        cmd="kma index -i $fasta -o $idx_prefix"
-
-        echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
-        eval $cmd >> {log.stdout} 2>&1
-
-        if [ -z $idx_prefix.comb.b ]; then
-            echo '[setup_EcoliKmerAligner]: ERROR - $idx_prefix.comb.b was not created during KMA indexing. This likely means that the EcoliKmerAligner database has changed. Post this message on our Github repository!' 2>&1 >> {log.stdout}
-        fi
-
-        date -I > {output.database}/creation.date
-        """
-
 rule update_MLST:
     conda:
         config["analysis_settings"]["mlst"]["yaml"]
@@ -242,57 +291,6 @@ rule update_MLST:
 
         mlst-download_pub_mlst -d $MLSTDIR  > {log.stdout} 2>&1
         mlst-make_blast_db >> {log.stdout} 2>&1 && date -I > {output.datefile}
-        """
-
-rule setup_CdiffToxin:
-    conda:
-        config["analysis_settings"]["Clostridioides_difficile_db"]["yaml"]
-    output:
-        database = directory(f'{database_path}/{config["analysis_settings"]["Clostridioides_difficile_db"]["database"]}/Toxin')
-    params:
-        accession_loci = "AM180355.1:tcdA,tcdB,tcdC AF271719.1:cdtA,cdtB",
-        db_toxin = "Cdiff_Toxin"
-    log:
-        stdout = f'Logs/Databases/setup_CdiffToxin.log'
-    message:
-        "[setup_CdiffToxin]: Setting up C. difficile toxin database"
-    shell:
-        r"""
-        set -euo pipefail
-        mkdir -p {output.database}
-        > {output.database}/{params.db_toxin}.txt
-        > {output.database}/{params.db_toxin}.bed6
-        > {output.database}/{params.db_toxin}.fasta
-
-        for item in {params.accession_loci}; do
-            acc=$(echo $item | cut -d':' -f1)
-            loci=$(echo $item | cut -d':' -f2 | tr ',' ' ')
-
-            cmd="python workflow/scripts/genbank_fetcher.py \
-                -a $acc --locus $loci \
-                -o {output.database}/{params.db_toxin}.txt \
-                --bed {output.database}/{params.db_toxin}.bed6 \
-                --fasta {output.database}/{params.db_toxin}.fasta \
-                --merge 500 --append"
-
-            echo -e \"\nExecuting command:\n$cmd\n\" >> {log.stdout}
-            eval $cmd >> {log.stdout} 2>&1
-        done
-
-        fasta={output.database}/{params.db_toxin}.fasta
-
-        cmd="samtools faidx $fasta"
-        echo "Executing command:\n$cmd\n" >> {log.stdout}
-        eval $cmd >> {log.stdout} 2>&1
-
-        idx_prefix={output.database}/{params.db_toxin}
-        cmd="kma index -i $fasta -o $idx_prefix"
-        echo "Executing command:\n$cmd\n" >> {log.stdout}
-        eval $cmd >> {log.stdout} 2>&1
-
-        if [ ! -f "$idx_prefix.comb.b" ]; then
-            echo '[CdiffToxin]: ERROR - $idx_prefix.comb.b not created' >> {log.stdout}
-        fi
         """
 
 rule setup_CdiffTRST:
@@ -331,12 +329,12 @@ rule setup_CdiffTRST:
 
 rule setup_all_databases:
     input:
-        rules.setup_EcoliKmerAligner.output.database,
+        rules.setup_Ecoli_alignment_db.output.database,
+        rules.setup_CdiffToxin.output.database,
         rules.setup_PlasmidFinder.output.database,
         rules.setup_ResFinder.output.database,
         rules.setup_PointFinder.output.database,
         rules.setup_DisinFinder.output.database,
         rules.setup_VirulenceFinder.output.database,
         rules.setup_AMRFinder.output.database,
-        rules.setup_CdiffToxin.output.database,
         rules.setup_CdiffTRST.output.database

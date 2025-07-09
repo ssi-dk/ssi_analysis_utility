@@ -25,9 +25,12 @@ species_map:
 
 analysis_settings:
 
-    kmeraligner:
+    KMA:
         yaml : ../envs/kmeraligner.yaml
-        database: kmeraligner
+    
+    Escherichia_coli_db:
+        yaml : ../envs/kmeraligner.yaml
+        database: Escherichia_coli_db
 
     Clostridioides_difficile_db:
         yaml: ../envs/DatabaseFetch.yaml

@@ -2,6 +2,9 @@
 # This config defines analyses for the specified bacterial species e.g E.Coli  
 # and associated parameters.
 
+alignment_database: 
+    db: setup_Ecoli_alignment_db
+    kma_db_prefix: ecoligenes
 
 analyses_to_run: 
 
@@ -9,16 +12,25 @@ analyses_to_run:
         status : True
         Title : Kmer Aligner on two pair reads
         ID: 90
-        additional_option : -matrix 
-        database : resources/plasmidfinder_db/enterobacteriales
-        wrangler: workflow/scripts/KMA_wrangler.py
+        additional_option :  -nc -ref_fsa -nf -sam 4
 
-    Cdiff_KMA_Toxin:
-        status : False
-        Title : Kmer Aligner for Clostridium difficile Toxin detection
-        ID: 91
-        additional_option : -nc -nf -sam 4 -vcf 2
-        database : resources/Clostridioides_difficile_db/Toxin/
+    KMA_filter:
+        status : True
+        Title : Kmer Aligner for Escherichia coli OH and stx typing
+        ID: 92
+        input_folder: kmeraligner
+        additional_option : --Gene_list stx wzx wzy wzt wzm fliC fli eae ehxA --organism "Escherichia coli" --suffix tsv
+        thresholds:
+            stx: [90, 90, 10]
+            wzx: [90, 90, 10]
+            wzy: [90, 90, 10]
+            wzt: [90, 90, 10]
+            wzm: [90, 90, 10]
+            fliC: [90, 90, 10]
+            fli: [90, 90, 10]
+            eae: [90, 90, 10]
+            ehxA: [90, 90, 10]
+            other: [98, 98, 10]
 
     emm_typing: 
         status : False
@@ -36,9 +48,9 @@ analyses_to_run:
         reference_fasta_file: resources/lineage_determination/MGAS5005.fasta
         lineage_variant_file: resources/lineage_determination/Spyogenes_LOCs.tsv
         
-    # virulence_gene_detection: 
-    #     status : False
-    #     Title: Presence of Streptococcal virulence genes from the Virulence Factor Database
+    virulence_gene_detection: 
+        status : False
+        Title: Presence of Streptococcal virulence genes from the Virulence Factor Database
 
     plasmidfinder: 
         status : False
@@ -65,30 +77,12 @@ analyses_to_run:
         database: resources/lre-finder_db/elm  # Database for LRE-finder
 
     serotypefinder :
-        status : True
+        status : False
         Title : Serotypefinder
         database: resources/serotypefinder_db/  # SerotypeFinder database
     
-    # kleborate : 
-    #     status : False
-    #     Title : Kleborate
-    #     preset : kpsc
-
-    # CHtyper : 
-    #     status : False
-    #     Title: Chtyper
-    #     threshold : 0.90
-    #     coverage : 0.60
-    #     database: resources/chtyper_db/  # CHTyper database
-
-    # cgMLSTFinder : 
-    #     status : False
-    #     Title : cgMLST
-    #     scheme : ecoli # choose between  salmonella,campylobacter,yersinia,clostridium,ecoli
-    #     database: resources/cgmlstfinder_db/  # cgMLSTFinder database
-
     amrfinder:
-        status : True
+        status : False
         Title : NCBI resistance gene finder
         organism: --organism Escherichia # Leave blank or insert --organism alongside one of the supported organisms, listed here: https://github.com/evolarjun/amr/wiki/Curated-organisms
         wrangler: workflow/scripts/AMR_wrangler.py
@@ -97,34 +91,57 @@ analyses_to_run:
         status : False
         Title : MLST by Torsten Seeman
 
+    spades:
+        status : False
+    
     skesa:
         status : False
 
+    Repeat_identifier:
+        status : False
+        Title : Repeat identifier
+        ID: 92
+        repeats: TR6 TR10
+        combos: TRST 
+        database: resources/Clostridioides_difficile_db/TRST
+
     samtools_view:
         status : False
-        Title : samtools filtering
-        ID: 91
-        additional_option : -b -q 20 -F 4
-
+        additional_option : -b -q 20 -F 4 
+    
     samtools_sort:
         status : False
-        Title : samtools sort
-        ID: 91
         additional_option : -n 
     
     samtools_idx:
         status : False
-        Title : samtools index
-        ID: 91
 
     bcftools_view_filter:
-        status: True
-        Title: Filter INDELs from mpileup
-        ID: 91
-        additional_option: INFO/DP>10
-        region: ''
-        
+        status: False
+        additional_option: -v indels -i 'INFO/DP>10'
+        region: " "
+
     bcftools_index:
-        status : True
-        Title : bcftools index
-        ID: 91
+        status : False
+    
+    bcftools_mpileup:
+        status : False
+    
+    bcftools_call:
+        status : False
+    
+    Variant_detection:
+        status : False
+        Title : Detecting variants for C.diff 
+        ID: 93
+        additional_option : --gene_list tcdC --organism "Clostridioides difficile" --suffix tsv
+        genomic_coord : resources/Clostridioides_difficile_db/Toxin/Cdiff_Toxin.bed6
+        snp_info: #https://pubmed.ncbi.nlm.nih.gov/24374512/
+            snp_117: [117,"A","T","tcdC","-"] # [genomic position within the loci, reference, alternative]
+        deletion_regions:
+            del330_347_18: [330, 347] # [coordinate start within the region, coordinate end within the region , percent N in consensus region]
+        deletion_consensus_thresholds:
+            del330_347_18: [70]
+
+        variant_gt_thresholds:
+            del330_347_18: [0.10,5,10]

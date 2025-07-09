@@ -64,37 +64,9 @@ database_path = config['input_manager']['database_path']
 
 ### Define rules where samtools is necessary
 
-TOOLS_WITH_SAM_OUTPUT = ["Cdiff_KMA_Toxin"]
+TOOLS_WITH_SAM_OUTPUT = ["kmeraligner"]
 ASM_TO_REPEAT_IDENTIFICATION = ["spades","skesa"]
 
-# ------------------ BAM BAI targets generated automatically ------------------
-
-bam_bai_targets = expand(
-    "{folder}/{sample}/FilteredBAM/{sample}.{tool}.filtered.sorted.bam.bai",
-    folder=OUT_FOLDER,
-    sample=[
-        s for s in SAMPLES
-        for tool in TOOLS_WITH_SAM_OUTPUT
-        if species_configs[sample_to_organism[s]]["analyses_to_run"][tool]["status"] is True
-        and species_configs[sample_to_organism[s]]["analyses_to_run"]["samtools_idx"]["status"] is True
-    ],
-    tool=TOOLS_WITH_SAM_OUTPUT
-)
-
-# ------------------ BCF Index (.bcf.csi) Targets ------------------ #
-
-bcf_csi_targets = expand(
-    "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.{tag}.bcf.csi",
-    folder=OUT_FOLDER,
-    sample=[
-        s for s in SAMPLES
-        for tool in TOOLS_WITH_SAM_OUTPUT
-        if species_configs[sample_to_organism[s]]["analyses_to_run"][tool]["status"] is True
-        and species_configs[sample_to_organism[s]]["analyses_to_run"]["bcftools_index"]["status"] is True
-    ],
-    tool=TOOLS_WITH_SAM_OUTPUT,
-    tag=["calls", "indels"]  #this enables indexing of all bcf files
-)
 ##############################################################################
 #
 #                              Snakefile 
@@ -105,17 +77,10 @@ bcf_csi_targets = expand(
 rule all:
     input:
         expand(
-            "%s/{sample}/kmeraligner/" %OUT_FOLDER, 
+            f"{OUT_FOLDER}" + "/{sample}/kmeraligner/{sample}.res",
             sample=[
-                s for s in SAMPLES 
-                if species_configs[sample_to_organism[s]]["analyses_to_run"]["kmeraligner"]["status"] is True
-            ]
-        ),
-        expand(
-            "%s/{sample}/Cdiff_KMA_Toxin/{sample}.sam" % OUT_FOLDER,
-            sample=[
-                s for s in SAMPLES 
-                if species_configs[sample_to_organism[s]]["analyses_to_run"]["Cdiff_KMA_Toxin"]["status"] is True
+                s for s in SAMPLES
+                if species_configs[sample_to_organism[s]]["analyses_to_run"].get("kmeraligner", {}).get("status", False)
             ]
         ),
         expand(
@@ -219,16 +184,45 @@ rule all:
             ] # creates a list of assembly tools needed to match with each sample -> e.g ["spades", "skesa","spades", "skesa"] to create all combinations of samples and assembly tools
         ),
         expand(
+            "{folder}/{sample}/FilteredBAM/{sample}.{tool}.filtered.sorted.bam.bai",
+            folder=OUT_FOLDER,
+            sample=[
+                s for s in SAMPLES
+                for tool in TOOLS_WITH_SAM_OUTPUT
+                if species_configs[sample_to_organism[s]]["analyses_to_run"][tool]["status"] is True
+                and species_configs[sample_to_organism[s]]["analyses_to_run"]["samtools_idx"]["status"] is True
+            ],
+            tool=TOOLS_WITH_SAM_OUTPUT
+        ),
+        expand(
+            "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.{tag}.bcf.csi",
+            folder=OUT_FOLDER,
+            sample=[
+                s for s in SAMPLES
+                for tool in TOOLS_WITH_SAM_OUTPUT
+                if species_configs[sample_to_organism[s]]["analyses_to_run"][tool]["status"] is True
+                and species_configs[sample_to_organism[s]]["analyses_to_run"]["bcftools_index"]["status"] is True
+            ],
+            tool=TOOLS_WITH_SAM_OUTPUT,
+            tag=["calls", "indels"]  #this enables indexing of all bcf files
+        ),
+        expand(
             "%s/{sample}/GenotypeCalls/{sample}.{tool}.calls.bcf" % OUT_FOLDER,
-            sample=[s for s in SAMPLES for tool in TOOLS_WITH_SAM_OUTPUT
-                    if species_configs[sample_to_organism[s]]["analyses_to_run"][tool]["status"] is True],
+            sample=[
+                s for s in SAMPLES
+                for tool in TOOLS_WITH_SAM_OUTPUT
+                if species_configs[sample_to_organism[s]]["analyses_to_run"][tool]["status"] is True
+                and species_configs[sample_to_organism[s]]["analyses_to_run"]["bcftools_call"]["status"] is True
+            ],
             tool=TOOLS_WITH_SAM_OUTPUT
         ),
         expand(
             "%s/{sample}/GenotypeCalls/{sample}.{tool}.indels.bcf" % OUT_FOLDER,
             sample=[
                 s for s in SAMPLES
-                if species_configs[sample_to_organism[s]]["analyses_to_run"]["bcftools_view_filter"]["status"] is True
+                for tool in TOOLS_WITH_SAM_OUTPUT
+                if species_configs[sample_to_organism[s]]["analyses_to_run"][tool]["status"] is True
+                and species_configs[sample_to_organism[s]]["analyses_to_run"]["bcftools_view_filter"]["status"] is True
             ],
             tool=TOOLS_WITH_SAM_OUTPUT
         ),
@@ -236,12 +230,12 @@ rule all:
             "%s/{sample}/GenotypeCalls/{sample}.{tool}.variants.tsv" % OUT_FOLDER,
             sample=[
                 s for s in SAMPLES
-                if species_configs[sample_to_organism[s]]["analyses_to_run"]["Variant_detection"]["status"] is True
+                for tool in TOOLS_WITH_SAM_OUTPUT
+                if species_configs[sample_to_organism[s]]["analyses_to_run"][tool]["status"] is True
+                and species_configs[sample_to_organism[s]]["analyses_to_run"]["Variant_detection"]["status"] is True
             ],
             tool=TOOLS_WITH_SAM_OUTPUT
         ),
-        bam_bai_targets,
-        bcf_csi_targets  # dynamically include all BCF CSI indexes
 
 include : "rules/db_setups.smk"
 include : "rules/finders.smk"

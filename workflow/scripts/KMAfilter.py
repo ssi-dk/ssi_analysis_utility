@@ -11,36 +11,32 @@ import yaml
 sys.path.insert(0, os.path.abspath("../scripts"))
 from logging_utils import setup_logging
 
+# ------------------------- Species Mapping ------------------------- #
+
+def species_mapping(config_path: str, organism: str) -> str:
+    """
+    Given a config file and an organism name, return the normalized species key.
+    """
+    with open(config_path, "r") as f:
+        config = yaml.safe_load(f)
+
+    species_map = config.get("species_map", {})
+    cleaned = organism.strip()
+
+    if cleaned not in species_map:
+        raise ValueError(f"Organism '{organism}' not found in species_map section of {config_path}")
+
+    return species_map[cleaned]
+
 # ------------------------- Threshold Handling ------------------------- #
 
-def load_thresholds_from_config(organism: str, config_dir="workflow/configs_species") -> Dict[str, List[int]]:
-    """
-    Load thresholds from species-specific YAML config.
-
-    Args:
-        organism (str): Organism name, e.g., "Clostridioides difficile"
-        config_dir (str): Path to species config directory
-
-    Returns:
-        Dict[str, List[int]]: Dictionary of gene-specific thresholds
-    """
-    species_map = {
-        "Clostridioides difficile": "C.diff",
-        "Clostridium difficile": "C.diff",
-        "C. difficile": "C.diff",
-        "E. coli": "E.coli",
-        "Escherichia coli": "E.coli",
-        "E.coli": "E.coli",
-    }
-
-    species_key = species_map.get(organism.strip(), organism.strip())
+def load_thresholds_from_config(species_key: str, config_dir="workflow/configs_species") -> Dict[str, List[int]]:
     config_path = os.path.join(config_dir, f"{species_key}.yaml")
-
-    logging.info(f"Loading thresholds from config for: {organism} from config file {config_path}")
+    logging.info(f"Loading thresholds for species key: {species_key} from {config_path}")
 
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"Species config not found: {config_path}")
-    
+
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
 
@@ -115,18 +111,104 @@ def summarize_filtered_hits(sample_id: str, organism: str, filtered_df: pd.DataF
     })
     return result
 
+def summarize_ecoli_hits(sample_id: str, organism: str, filtered_df: pd.DataFrame, verbose_flag: int = 1) -> Dict[str, str]:
+    NA = "-"
+    output = {
+        "sample_id": sample_id,
+        "organism": organism,
+        "stx": NA,
+        "OH": NA
+    }
+
+    presence_genes = {"eae", "ehxA"}
+    gene_map = {"wzx", "wzy", "wzt", "wzm"}
+    stx_alleles = set()
+    verbose_parts = []
+    other_genes = set()
+    gene_hits = {}
+
+    fli = NA
+    fliC = NA
+    wzx_allele = wzy_allele = wzt_allele = wzm_allele = NA
+
+    for _, row in filtered_df.iterrows():
+        template = row["#Template"]
+        parts = template.split("__")
+        gene = parts[1] if len(parts) >= 2 else parts[0]
+        allele = parts[2] if len(parts) >= 3 else NA
+
+        # Keep original gene hit for explicit reporting
+        gene_hits[gene] = "Positive"
+
+        # Collect OH parts
+        if gene == "wzx":
+            wzx_allele = allele
+        elif gene == "wzy":
+            wzy_allele = allele
+        elif gene == "wzt":
+            wzt_allele = allele
+        elif gene == "wzm":
+            wzm_allele = allele
+        elif gene == "fli":
+            fli = allele
+        elif gene == "fliC":
+            fliC = allele
+        elif gene in presence_genes:
+            gene_hits[gene] = "Positive"
+        elif gene.startswith("stx"):
+            stx_alleles.add(allele)
+        else:
+            other_genes.add(gene)
+
+        if verbose_flag:
+            verbose_parts.append(
+                f"{gene}_{allele}_{row['Template_length']}_{min(row['Template_Coverage'], 100.0):.2f}_{row['Template_Identity']:.2f}_{row['Depth']:.2f}"
+            )
+
+    # O-type logic (preserve gene columns)
+    Otype = "-"
+    if wzx_allele != NA and wzy_allele != NA and wzt_allele == NA and wzm_allele == NA and wzx_allele == wzy_allele:
+        Otype = wzx_allele
+    elif wzt_allele != NA and wzm_allele != NA and wzx_allele == NA and wzy_allele == NA and wzt_allele == wzm_allele:
+        Otype = wzt_allele
+
+    # H-type logic
+    Htype = fli if fli != NA else fliC
+    if Otype != "-" or Htype != "-":
+        output["OH"] = f"{Otype};{Htype}"
+
+    # stx logic
+    if stx_alleles:
+        output["stx"] = ";".join(sorted(stx_alleles))
+
+    # Keep raw hit gene columns
+    for gene in sorted(gene_hits):
+        output[gene] = gene_hits[gene]
+
+    if other_genes:
+        output["Other"] = ";".join(sorted(other_genes))
+    if verbose_parts:
+        output["verbose"] = ";".join(verbose_parts)
+
+    return output
+
 # ------------------------- Main CLI Entry ------------------------- #
 
 def main(args):
     setup_logging(args.log_dir, args.sample_id, "kma_filtering")
 
     try:
-        thresholds = load_thresholds_from_config(args.organism)
+        pipeline_config="config/config.yaml"
+        species_key = species_mapping(pipeline_config, args.organism)
+        thresholds = load_thresholds_from_config(species_key)
 
         logging.info(f"Processing KMA .res file: {args.KMA_res}")
         filtered_df = process_kma_res(args.KMA_res, thresholds)
 
-        result_dict = summarize_filtered_hits(args.sample_id, args.organism, filtered_df, args.Gene_list, verbose_flag=args.verbose)
+        if species_key == "E.coli":
+            result_dict = summarize_ecoli_hits(args.sample_id, args.organism, filtered_df, verbose_flag=args.verbose)
+        else:
+            result_dict = summarize_filtered_hits(args.sample_id, args.organism, filtered_df, args.Gene_list, verbose_flag=args.verbose)
     except Exception as e:
         logging.error(f"Error processing {args.sample_id}: {e}")
         result_dict = {gene: "-" for gene in args.Gene_list}

@@ -4,60 +4,31 @@
 # Identifies microbial species or strain using k-mer-based alignment.
 rule kmeraligner:
     input:
-        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
-        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
-        database = rules.setup_EcoliKmerAligner.output.database
+        R1 = lambda wc: sample_to_illumina[wc.sample][0],
+        R2 = lambda wc: sample_to_illumina[wc.sample][1],
+        db_dir = lambda wc: getattr(
+            rules,
+            species_configs[sample_to_organism[wc.sample]]["alignment_database"]["db"]
+        ).output.database
     params:
-        # Path to the kmerfinder database, KMA aligner, and taxa file.
-        add_opt = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["kmeraligner"]["additional_option"],
-        db_prefix = rules.setup_EcoliKmerAligner.params.db_prefix,
-        prefix = "%s/{sample}/kmeraligner/{sample}" %OUT_FOLDER
+        add_opt = lambda wc: species_configs[sample_to_organism[wc.sample]]["analyses_to_run"]["kmeraligner"]["additional_option"],
+        prefix = lambda wc: f"{OUT_FOLDER}/{wc.sample}/kmeraligner/{wc.sample}",
+        db_prefix = lambda wc: species_configs[sample_to_organism[wc.sample]]["alignment_database"]["kma_db_prefix"]
     output:
-        directory("%s/{sample}/kmeraligner/" %OUT_FOLDER)
+        res = f"{OUT_FOLDER}" + "/{sample}/kmeraligner/{sample}.res",
+        fsa = f"{OUT_FOLDER}" + "/{sample}/kmeraligner/{sample}.fsa",
+        sam = f"{OUT_FOLDER}" + "/{sample}/kmeraligner/{sample}.sam",
     conda:
-        config["analysis_settings"]["kmeraligner"]["yaml"]
+        config["analysis_settings"]["KMA"]["yaml"]
     log:
         stdout = 'Logs/{sample}/kmeraligner.log'
     message:
         "[kmeraligner]: Running KMA on {wildcards.sample}"
     shell:
         """
-        mkdir -p {output}
-        
-        cmd="kma -ipe {input.R1} {input.R2} -o {params.prefix} {params.add_opt} -t_db {input.database}/{params.db_prefix}"
+        mkdir -p $(dirname {output.res})
 
-        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-        eval $cmd >> {log.stdout} 2>&1
-        """
-
-# Rule: kmeraligner
-# Identifies microbial species or strain using k-mer-based alignment.
-rule Cdiff_KMA_Toxin:
-    input:
-        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
-        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
-        database = rules.setup_CdiffToxin.output.database
-    params:
-        db_prefix = "Cdiff_Toxin",
-        add_opt = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Cdiff_KMA_Toxin"]["additional_option"],
-        prefix = "%s/{sample}/Cdiff_KMA_Toxin/{sample}" % OUT_FOLDER
-    output:
-        aln = temp("%s/{sample}/Cdiff_KMA_Toxin/{sample}.aln" % OUT_FOLDER),
-        res = "%s/{sample}/Cdiff_KMA_Toxin/{sample}.res" % OUT_FOLDER,
-        fsa = "%s/{sample}/Cdiff_KMA_Toxin/{sample}.fsa" % OUT_FOLDER,
-        sam = temp("%s/{sample}/Cdiff_KMA_Toxin/{sample}.sam" % OUT_FOLDER),
-        vcf_gz = temp("%s/{sample}/Cdiff_KMA_Toxin/{sample}.vcf.gz" % OUT_FOLDER),
-    conda:
-        config["analysis_settings"]["Clostridioides_difficile_db"]["yaml"]
-    log:
-        stdout = 'Logs/{sample}/Cdiff_KMA_Toxin.log'
-    message:
-        "[Cdiff_KMA_Toxin]: Running Clostridium difficile kmer aligner on {wildcards.sample}"
-    shell:
-        """
-        mkdir -p $(dirname {output.sam})
-
-        cmd="kma -ipe {input.R1} {input.R2} -o {params.prefix} {params.add_opt} -t_db {input.database}/{params.db_prefix} > {output.sam}"
+        cmd="kma -ipe {input.R1} {input.R2} -o {params.prefix} {params.add_opt} -t_db {input.db_dir}/{params.db_prefix} > {output.sam}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
@@ -218,13 +189,30 @@ rule assembly_lineage_determination:
 #         """
 
 # Rule: samtools filter
+
+
+rule samtools_index:
+    input:
+        bam = "{folder}/{sample}/FilteredBAM/{sample}.{tool}.filtered.sorted.bam"
+    output:
+        bai = temp("{folder}/{sample}/FilteredBAM/{sample}.{tool}.filtered.sorted.bam.bai")
+    conda:
+        config["analysis_settings"]["htslib"]["yaml"]
+    message:
+        "[samtools_index]: Indexing {input.bam} -> {output.bai}"
+    shell:
+        """
+        echo "Indexing {input.bam} -> {output.bai}"
+        samtools index {input.bam}
+        """
+
 rule samtools_view:
     input:
         sam = "{folder}/{sample}/{tool}/{sample}.sam"
     output:
-        filtered_bam = temp("{folder}/{sample}/FilteredBAM/{sample}.{tool}.filtered.bam")
+        filtered_bam = "{folder}/{sample}/FilteredBAM/{sample}.{tool}.filtered.bam"
     params:
-        add_opt = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["samtools_view"]["additional_option"],
+        add_opt = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["samtools_view"]["additional_option"]
     conda:
         config["analysis_settings"]["htslib"]["yaml"]
     message:
@@ -237,99 +225,17 @@ rule samtools_view:
 
 rule samtools_sort:
     input:
-        filtered_bam = "{folder}/{sample}/FilteredBAM/{sample}.{tool}.filtered.bam"
+        bam = "{folder}/{sample}/FilteredBAM/{sample}.{tool}.filtered.bam",
     output:
-        sorted_bam = temp("{folder}/{sample}/FilteredBAM/{sample}.{tool}.filtered.sorted.bam")
-    conda:
-        config["analysis_settings"]["htslib"]["yaml"]
-    message:
-        "[samtools_sort]: Sorting {input.filtered_bam} -> {output.sorted_bam}"
-    shell:
-        """
-        echo "Sorting {input.filtered_bam} -> {output.sorted_bam}"
-        samtools sort -o {output.sorted_bam} {input.filtered_bam}
-        """
-
-rule samtools_index:
-    input:
         sorted_bam = "{folder}/{sample}/FilteredBAM/{sample}.{tool}.filtered.sorted.bam"
-    output:
-        bam_bai = temp("{folder}/{sample}/FilteredBAM/{sample}.{tool}.filtered.sorted.bam.bai")
     conda:
         config["analysis_settings"]["htslib"]["yaml"]
     message:
-        "[samtools_index]: Indexing {input.sorted_bam} -> {output.bam_bai}"
+        "[samtools_sort]: Sorting {input.bam} -> {output.sorted_bam}"
     shell:
         """
-        echo "Indexing {input.sorted_bam} -> {output.bam_bai}"
-        samtools index {input.sorted_bam}
-        """
-
-# Rule: bcftools_genotypecall
-# Identifies microbial species or strain using k-mer-based alignment.
-
-rule bcftools_mpileup:
-    input:
-        sorted_bam = "{folder}/{sample}/FilteredBAM/{sample}.{tool}.filtered.sorted.bam",
-        database = rules.setup_CdiffToxin.output.database
-    params:
-        db_prefix = rules.setup_CdiffToxin.params.db_toxin
-    output:
-        mpileup = temp("{folder}/{sample}/GenotypeCalls/{sample}.{tool}.mpileup.bcf")
-    conda:
-        config["analysis_settings"]["htslib"]["yaml"]
-    message:
-        "[bcftools_mpileup]: Generating mpileup {input.sorted_bam} -> {output.mpileup}"
-    shell:
-        """
-        bcftools mpileup -Ob -f {input.database}/{params.db_prefix}.fasta {input.sorted_bam} -o {output.mpileup}
-        """
-        
-# Rule: bcftools_view_filter
-rule bcftools_view_filter:
-    input:
-        bcf = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.mpileup.bcf",
-        database = rules.setup_CdiffToxin.output.database,
-    output:
-        indels_only = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.indels.bcf",
-        bcf_idx = temp("{folder}/{sample}/GenotypeCalls/{sample}.{tool}.mpileup.bcf.csi")
-    params:
-        db_prefix = rules.setup_CdiffToxin.params.db_toxin,
-        region = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["bcftools_view_filter"]["region"],
-        add_opt = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["bcftools_view_filter"]["additional_option"],
-    conda:
-        config["analysis_settings"]["htslib"]["yaml"],
-    log:
-        stdout = '{folder}/{sample}/GenotypeCalls/{sample}.{tool}.bcftools_filter.log'
-    message:
-        "[bcftools_view_filter]: Filtering the mpileup from {input.bcf}",
-    shell:
-        """
-        # Check if the index exists, and if not, index the BCF file first
-        if [ ! -f {input.bcf}.csi ]; then
-            echo "Indexing {input.bcf}"
-            bcftools index {input.bcf} -o {output.bcf_idx}
-        fi
-
-        cmd="bcftools view -r {params.region} {params.add_opt} -Ob -o {output.indels_only} {input.bcf}"
-
-        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-        eval $cmd >> {log.stdout} 2>&1
-        """
-
-
-rule bcftools_call:
-    input:
-        mpileup = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.mpileup.bcf"
-    output:
-        genotypecall = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.calls.bcf"
-    conda:
-        config["analysis_settings"]["htslib"]["yaml"]
-    message:
-        "[bcftools_call]: Calling genotypes from {input.mpileup} -> {output.genotypecall}"
-    shell:
-        """
-        bcftools call -mv -Ob --ploidy 1 {input.mpileup} -o {output.genotypecall}
+        echo "Sorting {input.bam} -> {output.sorted_bam}"
+        samtools sort -o {output.sorted_bam} {input.bam}
         """
 
 rule bcftools_index:
@@ -346,13 +252,75 @@ rule bcftools_index:
         echo "Indexing {input.bcf} -> {output.csi}"
         bcftools index -f {input.bcf}
         """
+rule bcftools_mpileup:
+    input:
+        bam = rules.samtools_sort.output.sorted_bam,
+        bai = rules.samtools_index.output.bai,
+        db_dir = lambda wc: getattr(
+            rules,
+            species_configs[sample_to_organism[wc.sample]]["alignment_database"]["db"]
+        ).output.database
+    params:
+        db_prefix = lambda wc: species_configs[sample_to_organism[wc.sample]]["alignment_database"]["kma_db_prefix"]
+    output:
+        mpileup = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.mpileup.bcf"
+    conda:
+        config["analysis_settings"]["htslib"]["yaml"]
+    message:
+        "[bcftools_mpileup]: Generating mpileup {input.bam} -> {output.mpileup}"
+    shell:
+        """
+        bcftools mpileup -Ob -f {input.db_dir}/{params.db_prefix}.fasta {input.bam} -o {output.mpileup}
+        """
+        
+# Rule: bcftools_view_filter
+rule bcftools_view_filter:
+    input:
+        bcf = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.mpileup.bcf",
+        csi = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.mpileup.bcf.csi",  # ensure indexing happens
+    output:
+        indels_only = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.indels.bcf",
+    params:
+        region = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["bcftools_view_filter"]["region"],
+        add_opt = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["bcftools_view_filter"]["additional_option"],
+    conda:
+        config["analysis_settings"]["htslib"]["yaml"],
+    log:
+        stdout = '{folder}/{sample}/GenotypeCalls/{sample}.{tool}.bcftools_filter.log'
+    message:
+        "[bcftools_view_filter]: Filtering the mpileup from {input.bcf}",
+    shell:
+        """
 
+        cmd="bcftools view -r {params.region} {params.add_opt} -Ob -o {output.indels_only} {input.bcf}"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+        """
+
+rule bcftools_call:
+    input:
+        bcf = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.mpileup.bcf",
+        csi = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.mpileup.bcf.csi"
+    output:
+        genotypecall = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.calls.bcf"
+    conda:
+        config["analysis_settings"]["htslib"]["yaml"]
+    message:
+        "[bcftools_call]: Calling genotypes from {input.bcf} -> {output.genotypecall}"
+    shell:
+        """
+        bcftools call -mv -Ob --ploidy 1 {input.bcf} -o {output.genotypecall}
+        """    
+    
 rule Variant_identifier:
     input:
-        genotype_call = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.calls.bcf",
-        indels_only = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.indels.bcf"
+        genotype_call_bcf = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.calls.bcf",
+        indels_only_bcf = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.indels.bcf",
+        genotype_call_csi = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.calls.bcf.csi",
+        indels_only_csi = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.indels.bcf.csi",
     output:
-        filtered_tsv = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.variants.tsv"
+        filtered_tsv = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.variants.tsv",
     params:
         input_folder = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["KMA_filter"]["input_folder"],
         kma_res = lambda wildcards: os.path.join(
@@ -379,8 +347,8 @@ rule Variant_identifier:
     message:
         "[Variant Identification]: Filtering KMA .res, KMA consensus .fsa, genotype calls and indels for {wildcards.sample}"
     shell:
-        """       
-        python workflow/scripts/Cdiff_wrangler_variant.py --sample_id {params.id}  --res {params.kma_res} --fsa {params.kma_fsa} --call {input.genotype_call} --indels {input.indels_only} {params.add_opt} -o {output.filtered_tsv} --deletion_region_buffer {params.region_buffer} --partial_overlap {params.overlap}
+        """
+        python workflow/scripts/Variant_identifier.py --sample_id {params.id}  --res {params.kma_res} --fsa {params.kma_fsa} --call {input.genotype_call_bcf} --indels {input.indels_only_bcf} {params.add_opt} -o {output.filtered_tsv} --deletion_region_buffer {params.region_buffer} --partial_overlap {params.overlap}
         """
 
 # Rule: spades_assembly

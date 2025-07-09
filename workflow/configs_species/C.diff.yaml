@@ -2,29 +2,23 @@
 # This config defines analyses for the specified bacterial species e.g E.Coli  
 # and associated parameters.
 
+alignment_database: 
+    db: setup_CdiffToxin
+    kma_db_prefix: Cdiff_Toxin
 
 analyses_to_run: 
 
     kmeraligner:
-        status : False
+        status : True
         Title : Kmer Aligner on two pair reads
         ID: 90
-        additional_option : -matrix 
-        database : resources/plasmidfinder_db/enterobacteriales
-        wrangler: workflow/scripts/KMA_wrangler.py
-
-    Cdiff_KMA_Toxin:
-        status : True
-        Title : Kmer Aligner for Clostridium difficile Toxin detection
-        ID: 91
-        additional_option : -ref_fsa -nf -sam 4 -vcf 2 
-        database : resources/Clostridioides_difficile_db/Toxin/
+        additional_option: -nc -ref_fsa -nf -sam 4
 
     KMA_filter:
         status : True
         Title : Kmer Aligner for Clostridium difficile Toxin detection
         ID: 92
-        input_folder: Cdiff_KMA_Toxin
+        input_folder: kmeraligner
         additional_option : --Gene_list tcdA tcdB tcdC cdtAB --organism "Clostridioides difficile" --suffix tsv
         thresholds:
             tcdA: [90, 90, 10]
@@ -81,24 +75,6 @@ analyses_to_run:
         status : False
         Title : Serotypefinder
         database: resources/serotypefinder_db/  # SerotypeFinder database
-    
-    # kleborate : 
-    #     status : False
-    #     Title : Kleborate
-    #     preset : kpsc
-
-    # CHtyper : 
-    #     status : False
-    #     Title: Chtyper
-    #     threshold : 0.90
-    #     coverage : 0.60
-    #     database: resources/chtyper_db/  # CHTyper database
-
-    # cgMLSTFinder : 
-    #     status : False
-    #     Title : cgMLST
-    #     scheme : ecoli # choose between  salmonella,campylobacter,yersinia,clostridium,ecoli
-    #     database: resources/cgmlstfinder_db/  # cgMLSTFinder database
 
     amrfinder:
         status : False
@@ -126,8 +102,6 @@ analyses_to_run:
 
     samtools_view:
         status : True
-        Title : samtools filtering
-        ID: 91
         additional_option : -b -q 20 -F 4 
         # https://broadinstitute.github.io/picard/explain-flags.html
         # 4 (unmapped) + 256 (not primary alignment) + 512 (failed quality) + 1024 (duplicate) + 2048 (supplementary) = 3844
@@ -135,27 +109,25 @@ analyses_to_run:
 
     samtools_sort:
         status : True
-        Title : samtools sort
-        ID: 91
         additional_option : -n 
     
     samtools_idx:
         status : True
-        Title : samtools index
-        ID: 91
 
     bcftools_view_filter:
         status: True
-        Title: Filter INDELs from mpileup
-        ID: 91
         additional_option: -v indels -i 'INFO/DP>10'
         region: AM180355.1_tcdC_804309_805008
 
     bcftools_index:
         status : True
-        Title : bcftools index
-        ID: 91
     
+    bcftools_mpileup:
+        status : True
+    
+    bcftools_call:
+        status : True
+
     Variant_detection:
         status : True
         Title : Detecting variants for C.diff 
