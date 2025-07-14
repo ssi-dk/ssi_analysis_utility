@@ -125,70 +125,6 @@ rule assembly_lineage_determination:
                                                             --outputdir {output} \
         """
 
-# # Rule for Kleborate typing (pathogen typing based on assembly)
-# rule kleborate:
-#     input:
-#         # Input: Assembly file for the sample
-#         assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample]
-#     params:
-#         # Parameter for preset options
-#         preset = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["kleborate"]["preset"],
-#     output:
-#         # Output is a directory to store Kleborate results
-#         directory("{out}/{sample}/kleborate/")
-#     conda:
-#         config["analysis_settings"]["kleborate"]["yaml"]
-#     message:
-#         "kleborate -a {input.assembly}  -o {output} -p {params.preset} "
-#     shell:
-#         """
-#         # Check if the output directory exists, skip execution if it does
-#         if [ -d {output} ]; 
-#             then
-#                 echo "Directory {output} exists, skipping."
-#                 exit 1  # Exit without running if the directory exists
-#             else
-#                 mkdir {output}  # Create the directory if it doesn't exist
-#         fi 
-#         kleborate -a {input.assembly}  -o {output} -p {params.preset}  # Run Kleborate on the assembly
-#         """
-
-# # Rule for CHtyper (serotype prediction based on assembly)
-# rule CHtyper:
-#     input:
-#         # Input: Assembly file for the sample
-#         assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample]
-#     params:
-#         # Parameters for CHtyper including application path, database, threshold, coverage, and BLAST options
-#         app_path = config["analysis_settings"]["CHtyper"]["script"],
-#         database = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["CHtyper"]["database"],
-#         threshold = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["CHtyper"]["threshold"],
-#         coverage = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["CHtyper"]["coverage"],
-#     output:
-#         # Output is a directory to store CHtyper results
-#         directory("{out}/{sample}/chtyper/")
-#     conda:
-#         config["analysis_settings"]["CHtyper"]["yaml"]
-#     shell:
-#         """
-#         # Check if the output directory exists, skip execution if it does
-#         if [ -d {output} ]; 
-#             then
-#                 echo "Directory {output} exists, skipping."
-#                 exit 1  # Exit without running if the directory exists
-#             else
-#                 mkdir {output}  # Create the directory if it doesn't exist
-#         fi 
-        
-#         blastn=$(which blastn)
-        
-#         # Run CHtyper Python script with the specified parameters
-#         python {params.app_path}/CHTyper-1.0.py -i {input.assembly}  -o {output} -p {params.database} -t {params.threshold} -l {params.coverage} -b $blastn
-#         """
-
-# Rule: samtools filter
-
-
 rule samtools_index:
     input:
         bam = "{folder}/{sample}/FilteredBAM/{sample}.{tool}.filtered.sorted.bam"
@@ -254,10 +190,8 @@ rule bcftools_mpileup:
     input:
         bam = rules.samtools_sort.output.sorted_bam,
         bai = rules.samtools_index.output.bai,
-        db_dir = lambda wc: getattr(
-            rules,
-            species_configs[sample_to_organism[wc.sample]]["alignment_database"]["db"]
-        ).output.database
+        db_index = lambda wc: f"Logs/Databases/{species_configs[sample_to_organism[wc.sample]]['alignment_database']['fa_idx_flag']}.fa_idx.done",
+        db_dir = lambda wc: f"{getattr(rules, species_configs[sample_to_organism[wc.sample]]['alignment_database']['db']).output.database}",
     params:
         db_prefix = lambda wc: species_configs[sample_to_organism[wc.sample]]["alignment_database"]["kma_db_prefix"]
     output:

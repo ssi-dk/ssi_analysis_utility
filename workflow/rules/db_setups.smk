@@ -26,6 +26,28 @@ rule kma_index_directory:
         touch {output.flag}
         """
 
+rule samtools_faidx_directory:
+    output:
+        flag = "Logs/Databases/{db_name_flat}.fa_idx.done"
+    input:
+        fasta_dir = lambda wc: f"resources/{db_flat_to_path(wc.db_name_flat)}"
+    conda:
+        config["analysis_settings"]["htslib"]["yaml"]
+    message:
+        "[samtools_faidx_directory]: Indexing all FASTA in {input.fasta_dir}"
+    shell:
+        r"""
+        mkdir -p {input.fasta_dir}
+
+        for fasta in $(find {input.fasta_dir} -maxdepth 1 -type f \( -name "*.fa" -o -name "*.fsa" -o -name "*.fasta" \)); do
+            prefix="${{fasta%.*}}"
+            echo "Indexing $fasta -> $prefix"
+            samtools faidx -i "$fasta"
+        done
+
+        touch {output.flag}
+        """
+
 rule setup_Ecoli_alignment_db:
     conda:
         config["analysis_settings"]["Escherichia_coli_db"]["yaml"]
@@ -90,6 +112,41 @@ rule setup_CdiffToxin:
         cmd="samtools faidx $fasta"
         echo "Executing command:\n$cmd\n" >> {log.stdout}
         eval $cmd >> {log.stdout} 2>&1
+        """
+
+
+rule setup_CdiffTRST:
+    conda:
+        config["analysis_settings"]["Clostridioides_difficile_db"]["yaml"]
+    output:
+        database = directory(f'{database_path}/{config["analysis_settings"]["Clostridioides_difficile_db"]["database"]}/TRST')
+    params:
+        TR_repeat_sequences = "TR6 TR10",
+        TR_repeat_types = "TR6 TR10 TRST"
+    log:
+        stdout = f'Logs/Databases/setup_CdiffTRST.log'
+    message:
+        "[setup_CdiffTRST]: Downloading TRST repeat sequences and types"
+    shell:
+        r"""
+        set -euo pipefail
+        mkdir -p {output.database}
+
+        # TR-type repeat sequence downloads
+        for TR in {params.TR_repeat_sequences}; do
+            cmd="curl -fSL https://raw.githubusercontent.com/ssi-dk/cdiff_fbi/refs/heads/raah_dev/db/TRST/${{TR}}_repeat_sequences.fa \
+                -o {output.database}/${{TR}}_repeat_sequences.fa"
+            echo "Executing command:\n$cmd\n" >> {log.stdout}
+            eval $cmd >> {log.stdout} 2>&1
+        done
+
+        # TR-type repeat types downloads
+        for TR in {params.TR_repeat_types}; do
+            cmd="curl -fSL https://raw.githubusercontent.com/ssi-dk/cdiff_fbi/refs/heads/raah_dev/db/TRST/${{TR}}_repeat_types.txt \
+                -o {output.database}/${{TR}}_repeat_types.txt"
+            echo "Executing command:\n$cmd\n" >> {log.stdout}
+            eval $cmd >> {log.stdout} 2>&1
+        done
         """
 
 rule setup_PlasmidFinder:
@@ -300,40 +357,6 @@ rule update_MLST:
 
         mlst-download_pub_mlst -d $MLSTDIR  > {log.stdout} 2>&1
         mlst-make_blast_db >> {log.stdout} 2>&1 && date -I > {output.datefile}
-        """
-
-rule setup_CdiffTRST:
-    conda:
-        config["analysis_settings"]["Clostridioides_difficile_db"]["yaml"]
-    output:
-        database = directory(f'{database_path}/{config["analysis_settings"]["Clostridioides_difficile_db"]["database"]}/TRST')
-    params:
-        TR_repeat_sequences = "TR6 TR10",
-        TR_repeat_types = "TR6 TR10 TRST"
-    log:
-        stdout = f'Logs/Databases/setup_CdiffTRST.log'
-    message:
-        "[setup_CdiffTRST]: Downloading TRST repeat sequences and types"
-    shell:
-        r"""
-        set -euo pipefail
-        mkdir -p {output.database}
-
-        # TR-type repeat sequence downloads
-        for TR in {params.TR_repeat_sequences}; do
-            cmd="curl -fSL https://raw.githubusercontent.com/ssi-dk/cdiff_fbi/refs/heads/raah_dev/db/TRST/${{TR}}_repeat_sequences.fa \
-                -o {output.database}/${{TR}}_repeat_sequences.fa"
-            echo "Executing command:\n$cmd\n" >> {log.stdout}
-            eval $cmd >> {log.stdout} 2>&1
-        done
-
-        # TR-type repeat types downloads
-        for TR in {params.TR_repeat_types}; do
-            cmd="curl -fSL https://raw.githubusercontent.com/ssi-dk/cdiff_fbi/refs/heads/raah_dev/db/TRST/${{TR}}_repeat_types.txt \
-                -o {output.database}/${{TR}}_repeat_types.txt"
-            echo "Executing command:\n$cmd\n" >> {log.stdout}
-            eval $cmd >> {log.stdout} 2>&1
-        done
         """
 
 rule setup_all_databases:

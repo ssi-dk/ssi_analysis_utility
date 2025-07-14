@@ -6,6 +6,7 @@ alignment_database:
     db: setup_CdiffToxin
     kma_db_prefix: Cdiff_Toxin
     kma_index_flag: Clostridioides_difficile_db_Toxin
+    fa_idx_flag: Clostridioides_difficile_db_Toxin
 
 analyses_to_run: 
 
@@ -91,10 +92,10 @@ analyses_to_run:
         status : False
         
     skesa:
-        status : False
+        status : True
 
     Repeat_identifier:
-        status : False
+        status : True
         Title : Repeat identifier
         ID: 92
         repeats: TR6 TR10
@@ -102,35 +103,35 @@ analyses_to_run:
         database: resources/Clostridioides_difficile_db/TRST
 
     samtools_view:
-        status : False
+        status : True
         additional_option : -b -q 20 -F 4 
         # https://broadinstitute.github.io/picard/explain-flags.html
         # 4 (unmapped) + 256 (not primary alignment) + 512 (failed quality) + 1024 (duplicate) + 2048 (supplementary) = 3844
         # Consider removing reads which is not in proper pair #3844
 
     samtools_sort:
-        status : False
+        status : True
         additional_option : -n 
     
     samtools_idx:
-        status : False
+        status : True
 
     bcftools_view_filter:
-        status: False
+        status: True
         additional_option: -v indels -i 'INFO/DP>10'
         region: AM180355.1_tcdC_804309_805008
 
     bcftools_index:
-        status : False
+        status : True
     
     bcftools_mpileup:
-        status : False
+        status : True
     
     bcftools_call:
-        status : False
+        status : True
 
     Variant_detection:
-        status : False
+        status : True
         Title : Detecting variants for C.diff 
         ID: 93
         additional_option : --gene_list tcdC --organism "Clostridioides difficile" --suffix tsv
