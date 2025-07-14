@@ -35,6 +35,7 @@ analysis_settings:
     Clostridioides_difficile_db:
         yaml: ../envs/DatabaseFetch.yaml
         database: Clostridioides_difficile_db
+        species_config: C.diff
 
     KMA_filter:
         yaml: ../envs/python_functions.yaml

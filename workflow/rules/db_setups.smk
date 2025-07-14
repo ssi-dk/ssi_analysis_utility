@@ -114,15 +114,28 @@ rule setup_CdiffToxin:
         eval $cmd >> {log.stdout} 2>&1
         """
 
+######### DATABASE REPEAT PATTERNS FOR CDIFF
+
+species_key = config["analysis_settings"]["Clostridioides_difficile_db"]["species_config"]
+repeat_list = species_configs[species_key]["analyses_to_run"]["Repeat_identifier"]["repeats"].split()
+combo_list = species_configs[species_key]["analyses_to_run"]["Repeat_identifier"]["combos"].split()
+TR_repeat_sequences_str = " ".join(repeat_list)
+TR_repeat_types_str = " ".join(repeat_list + combo_list)
+
+trst_output_repeat_fa = expand(
+    f'{database_path}/{config["analysis_settings"]["Clostridioides_difficile_db"]["database"]}/TRST/{{repeat}}_repeat_sequences.fa',
+    repeat=repeat_list
+)
 
 rule setup_CdiffTRST:
     conda:
         config["analysis_settings"]["Clostridioides_difficile_db"]["yaml"]
     output:
-        database = directory(f'{database_path}/{config["analysis_settings"]["Clostridioides_difficile_db"]["database"]}/TRST')
+        database = directory(f'{database_path}/{config["analysis_settings"]["Clostridioides_difficile_db"]["database"]}/TRST'),
+        repeat_fa = trst_output_repeat_fa
     params:
-        TR_repeat_sequences = "TR6 TR10",
-        TR_repeat_types = "TR6 TR10 TRST"
+        TR_repeat_sequences = TR_repeat_sequences_str,
+        TR_repeat_types = TR_repeat_types_str,
     log:
         stdout = f'Logs/Databases/setup_CdiffTRST.log'
     message:

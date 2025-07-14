@@ -342,7 +342,14 @@ rule Repeat_Identifier:
                 "spades": "contigs.fasta",
                 "skesa": f"{wildcards.sample}.contigs.fasta"
             }[wildcards.assembler]
-        )
+        ),
+        repeat_fa = lambda wildcards: [
+            os.path.join(
+                species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Repeat_identifier"]["database"],
+                f"{repeats}_repeat_sequences.fa"
+            )
+            for repeats in species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Repeat_identifier"]["repeats"].split()
+        ]
     output:
         result = "%s/{sample}/Repeat_identifier/{assembler}_{sample}_repeat.tsv" %OUT_FOLDER
     params:
