@@ -6,10 +6,8 @@ rule kmeraligner:
     input:
         R1 = lambda wc: sample_to_illumina[wc.sample][0],
         R2 = lambda wc: sample_to_illumina[wc.sample][1],
-        db_dir = lambda wc: getattr(
-            rules,
-            species_configs[sample_to_organism[wc.sample]]["alignment_database"]["db"]
-        ).output.database
+        db_index = lambda wc: f"Logs/Databases/{species_configs[sample_to_organism[wc.sample]]['alignment_database']['kma_index_flag']}.kma_index.done",
+        db_dir = lambda wc: f"{getattr(rules, species_configs[sample_to_organism[wc.sample]]['alignment_database']['db']).output.database}",
     params:
         add_opt = lambda wc: species_configs[sample_to_organism[wc.sample]]["analyses_to_run"]["kmeraligner"]["additional_option"],
         prefix = lambda wc: f"{OUT_FOLDER}/{wc.sample}/kmeraligner/{wc.sample}",

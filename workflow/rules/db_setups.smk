@@ -1,10 +1,38 @@
+import re
+
+def db_flat_to_path(name):
+    # Replace the first underscore after _db with a slash
+    return re.sub(r'(_db)_(?=[^_]+$)', r'\1/', name)
+    
+rule kma_index_directory:
+    output:
+        flag = "Logs/Databases/{db_name_flat}.kma_index.done"
+    input:
+        fasta_dir = lambda wc: f"resources/{db_flat_to_path(wc.db_name_flat)}"
+    conda:
+        config["analysis_settings"]["KMA"]["yaml"]
+    message:
+        "[kma_index_directory]: Indexing all FASTA in {input.fasta_dir}"
+    shell:
+        r"""
+        mkdir -p {input.fasta_dir}
+
+        for fasta in $(find {input.fasta_dir} -maxdepth 1 -type f \( -name "*.fa" -o -name "*.fsa" -o -name "*.fasta" \)); do
+            prefix="${{fasta%.*}}"
+            echo "Indexing $fasta -> $prefix"
+            kma index -i "$fasta" -o "$prefix"
+        done
+
+        touch {output.flag}
+        """
+
 rule setup_Ecoli_alignment_db:
     conda:
         config["analysis_settings"]["Escherichia_coli_db"]["yaml"]
     params:
         db_prefix = 'ecoligenes'
     output:
-        database = directory(f'{database_path}/{config["analysis_settings"]["Escherichia_coli_db"]["database"]}')
+        database = directory(f"{database_path}/{config['analysis_settings']['Escherichia_coli_db']['database']}")
     log:
         stdout = f'Logs/Databases/setup_Ecoli_alignment_db.log'
     message:
@@ -16,18 +44,6 @@ rule setup_Ecoli_alignment_db:
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
-
-        fasta={output.database}/ecoligenes.fsa
-
-        idx_prefix={output.database}/{params.db_prefix}
-        cmd="kma index -i $fasta -o $idx_prefix"
-
-        echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
-        eval $cmd >> {log.stdout} 2>&1
-
-        if [ -z $idx_prefix.comb.b ]; then
-            echo '[setup_Ecoli_alignment_db]: ERROR - $idx_prefix.comb.b was not created during KMA indexing. This likely means that the setup_Ecoli_alignment_db database has changed. Post this message on our Github repository!' 2>&1 >> {log.stdout}
-        fi
 
         date -I > {output.database}/creation.date
         """
@@ -67,20 +83,13 @@ rule setup_CdiffToxin:
             eval $cmd >> {log.stdout} 2>&1
         done
 
+        date -I > {output.database}/creation.date
+
         fasta={output.database}/{params.db_toxin}.fasta
 
         cmd="samtools faidx $fasta"
         echo "Executing command:\n$cmd\n" >> {log.stdout}
         eval $cmd >> {log.stdout} 2>&1
-
-        idx_prefix={output.database}/{params.db_toxin}
-        cmd="kma index -i $fasta -o $idx_prefix"
-        echo "Executing command:\n$cmd\n" >> {log.stdout}
-        eval $cmd >> {log.stdout} 2>&1
-
-        if [ ! -f "$idx_prefix.comb.b" ]; then
-            echo '[CdiffToxin]: ERROR - $idx_prefix.comb.b not created' >> {log.stdout}
-        fi
         """
 
 rule setup_PlasmidFinder:

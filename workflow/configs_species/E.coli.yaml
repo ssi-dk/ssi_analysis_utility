@@ -5,6 +5,7 @@
 alignment_database: 
     db: setup_Ecoli_alignment_db
     kma_db_prefix: ecoligenes
+    kma_index_flag: Escherichia_coli_db
 
 analyses_to_run: 
 
