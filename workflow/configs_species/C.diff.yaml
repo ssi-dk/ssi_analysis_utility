@@ -3,21 +3,47 @@
 # and associated parameters.
 
 alignment_database: 
-    db: setup_CdiffToxin
-    kma_db_prefix: Cdiff_Toxin
-    kma_index_flag: Clostridioides_difficile_db_Toxin
-    fa_idx_flag: Clostridioides_difficile_db_Toxin
+
+    kmeraligner:
+        db: setup_CdiffToxin
+        kma_db_prefix: Cdiff_Toxin
+        kma_index_flag: Clostridioides_difficile_db_Toxin
+        fa_idx_flag: Clostridioides_difficile_db_Toxin
+
+    plasmidfinder:
+        db: setup_PlasmidFinder
+        kma_index_flag: plasmidfinder_db
+
+    resfinder:
+        db: setup_ResFinder
+        kma_index_flag: resfinder_db
+
+    pointfinder:
+        db: setup_PointFinder
+        kma_index_flag: pointfinder_db
+
+    disinfinder:
+        db: setup_DisinFinder
+        kma_index_flag: disinfinder_db
+
+    virulencefinder:
+        db: setup_VirulenceFinder
+        kma_index_flag: virulencefinder_db
+
+    serotypefinder:
+        db: setup_SerotypeFinder
+        kma_index_flag: serotypefinder_db
 
 analyses_to_run: 
 
     kmeraligner:
-        status : True
+        status : False
         Title : Kmer Aligner on two pair reads
         ID: 90
         additional_option: -nc -ref_fsa -nf -sam 4
 
     KMA_filter:
-        status : True
+        status : False
         Title : Kmer Aligner for Clostridium difficile Toxin detection
         ID: 92
         input_folder: kmeraligner
@@ -50,19 +76,19 @@ analyses_to_run:
         Title: Presence of Streptococcal virulence genes from the Virulence Factor Database
 
     plasmidfinder: 
-        status : False
+        status : True
         Title : Plasmidfinder
         database: resources/plasmidfinder_db/  # Path to PlasmidFinder database
 
     resfinder: 
-        status : False 
+        status : True 
         Title : Resfinder
         resfinder_db: resources/resfinder_db/ # ResFinder database for AMR detection
         pointfinder_db: resources/pointfinder_db/  # PointFinder database for AMR point mutations
         disinfinder_db: resources/disinfinder_db/  # DisinFinder database for disinfectant resistance
 
     virulencefinder : 
-        status : False
+        status : True
         Title : Virulence finder
         database: resources/virulencefinder_db  # VirulenceFinder database
 
@@ -74,15 +100,14 @@ analyses_to_run:
         database: resources/lre-finder_db/elm  # Database for LRE-finder
 
     serotypefinder :
-        status : False
+        status : True
         Title : Serotypefinder
         database: resources/serotypefinder_db/  # SerotypeFinder database
 
     amrfinder:
-        status : False
+        status : True
         Title : NCBI resistance gene finder
-        organism: --organism Clostridioides difficile # Leave blank or insert --organism alongside one of the supported organisms, listed here: https://github.com/evolarjun/amr/wiki/Curated-organisms
-        wrangler: workflow/scripts/AMR_wrangler.py
+        organism: --organism Clostridioides_difficile # Leave blank or insert --organism alongside one of the supported organisms, listed here: https://github.com/evolarjun/amr/wiki/Curated-organisms
 
     mlst:
         status : False
@@ -95,7 +120,7 @@ analyses_to_run:
         status : True
 
     Repeat_identifier:
-        status : True
+        status : False
         Title : Repeat identifier
         ID: 92
         repeats: TR6 TR10
@@ -103,35 +128,35 @@ analyses_to_run:
         database: resources/Clostridioides_difficile_db/TRST
 
     samtools_view:
-        status : True
+        status : False
         additional_option : -b -q 20 -F 4 
         # https://broadinstitute.github.io/picard/explain-flags.html
         # 4 (unmapped) + 256 (not primary alignment) + 512 (failed quality) + 1024 (duplicate) + 2048 (supplementary) = 3844
         # Consider removing reads which is not in proper pair #3844
 
     samtools_sort:
-        status : True
+        status : False
         additional_option : -n 
     
     samtools_idx:
-        status : True
+        status : False
 
     bcftools_view_filter:
-        status: True
+        status: False
         additional_option: -v indels -i 'INFO/DP>10'
         region: AM180355.1_tcdC_804309_805008
 
     bcftools_index:
-        status : True
+        status : False
     
     bcftools_mpileup:
-        status : True
+        status : False
     
     bcftools_call:
-        status : True
+        status : False
 
     Variant_detection:
-        status : True
+        status : False
         Title : Detecting variants for C.diff 
         ID: 93
         additional_option : --gene_list tcdC --organism "Clostridioides difficile" --suffix tsv

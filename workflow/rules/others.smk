@@ -6,12 +6,12 @@ rule kmeraligner:
     input:
         R1 = lambda wc: sample_to_illumina[wc.sample][0],
         R2 = lambda wc: sample_to_illumina[wc.sample][1],
-        db_index = lambda wc: f"Logs/Databases/{species_configs[sample_to_organism[wc.sample]]['alignment_database']['kma_index_flag']}.kma_index.done",
-        db_dir = lambda wc: f"{getattr(rules, species_configs[sample_to_organism[wc.sample]]['alignment_database']['db']).output.database}",
+        db_index = lambda wc: f"Logs/Databases/{species_configs[sample_to_organism[wc.sample]]["alignment_database"]["kmeraligner"]["kma_index_flag"]}.kma_index.done",
+        db_dir = lambda wc: f"{getattr(rules, species_configs[sample_to_organism[wc.sample]]["alignment_database"]["kmeraligner"]["db"]).output.database}",
     params:
         add_opt = lambda wc: species_configs[sample_to_organism[wc.sample]]["analyses_to_run"]["kmeraligner"]["additional_option"],
         prefix = lambda wc: f"{OUT_FOLDER}/{wc.sample}/kmeraligner/{wc.sample}",
-        db_prefix = lambda wc: species_configs[sample_to_organism[wc.sample]]["alignment_database"]["kma_db_prefix"]
+        db_prefix = lambda wc: species_configs[sample_to_organism[wc.sample]]["alignment_database"]["kmeraligner"]["kma_db_prefix"]
     output:
         res = f"{OUT_FOLDER}" + "/{sample}/kmeraligner/{sample}.res",
         fsa = f"{OUT_FOLDER}" + "/{sample}/kmeraligner/{sample}.fsa",

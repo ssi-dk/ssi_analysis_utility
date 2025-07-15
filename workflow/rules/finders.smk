@@ -7,10 +7,11 @@ rule PlasmidFinder:
         # Input paired-end Illumina reads.
         R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
         R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
-        database = rules.setup_PlasmidFinder.output.database
+        db_index = lambda wc: f"Logs/Databases/{species_configs[sample_to_organism[wc.sample]]['alignment_database']['plasmidfinder']['kma_index_flag']}.kma_index.done",
+        db_dir = lambda wc: f"{getattr(rules, species_configs[sample_to_organism[wc.sample]]['alignment_database']['plasmidfinder']['db']).output.database}",
     output:
         # Output directory for plasmidfinder results.
-        directory("%s/{sample}/PlasmidFinder" %OUT_FOLDER)
+        out_dir = directory(f"{OUT_FOLDER}" + "/{sample}/PlasmidFinder")
     conda:
         config["analysis_settings"]["plasmidfinder"]["yaml"]
     log:
@@ -19,9 +20,9 @@ rule PlasmidFinder:
         "[PlasmidFinder]: Running PlasmidFinder on {wildcards.sample}"
     shell:
         """
-        mkdir -p {output}
+        mkdir -p {output.out_dir}
 
-        cmd="plasmidfinder.py -i {input.R1} {input.R2} -o {output} -p {input.database} -x"
+        cmd="plasmidfinder.py -i {input.R1} {input.R2} -o {output.out_dir} -p {input.db_dir} -x"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
@@ -33,11 +34,14 @@ rule ResFinder:
     input:
         R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
         R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
-        res_database = rules.setup_ResFinder.output.database,
-        point_database = rules.setup_PointFinder.output.database,
-        disin_database = rules.setup_DisinFinder.output.database
+        res_db_index = lambda wc: f"Logs/Databases/{species_configs[sample_to_organism[wc.sample]]['alignment_database']['resfinder']['kma_index_flag']}.kma_index.done",
+        res_db_dir = lambda wc: f"{getattr(rules, species_configs[sample_to_organism[wc.sample]]['alignment_database']['resfinder']['db']).output.database}",
+        point_db_index = lambda wc: f"Logs/Databases/{species_configs[sample_to_organism[wc.sample]]['alignment_database']['pointfinder']['kma_index_flag']}.kma_index.done",
+        point_db_dir = lambda wc: f"{getattr(rules, species_configs[sample_to_organism[wc.sample]]['alignment_database']['pointfinder']['db']).output.database}",
+        disin_db_index = lambda wc: f"Logs/Databases/{species_configs[sample_to_organism[wc.sample]]['alignment_database']['disinfinder']['kma_index_flag']}.kma_index.done",
+        disin_db_dir = lambda wc: f"{getattr(rules, species_configs[sample_to_organism[wc.sample]]['alignment_database']['disinfinder']['db']).output.database}",
     output:
-        directory("%s/{sample}/ResFinder" %OUT_FOLDER)
+        out_dir = directory(f"{OUT_FOLDER}" + "/{sample}/ResFinder")
     conda:
         config["analysis_settings"]["resfinder"]["yaml"]
     log:
@@ -46,9 +50,9 @@ rule ResFinder:
         "[ResFinder]: Running ResFinder, PointFinder, and DisinFinder on {wildcards.sample}"
     shell:
         """
-        mkdir -p {output}
+        mkdir -p {output.out_dir}
 
-        cmd="python -m resfinder -ifq {input.R1} {input.R2} -o {output} -db_res {input.res_database} -db_disinf {input.disin_database} -db_point {input.point_database} -acq"
+        cmd="python -m resfinder -ifq {input.R1} {input.R2} -o {output.out_dir} -db_res {input.res_db_dir} -db_disinf {input.disin_db_dir} -db_point {input.point_db_dir} -acq"
  
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
@@ -60,9 +64,10 @@ rule VirulenceFinder:
     input:
         R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
         R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
-        database = rules.setup_VirulenceFinder.output.database
+        vir_db_index = lambda wc: f"Logs/Databases/{species_configs[sample_to_organism[wc.sample]]['alignment_database']['virulencefinder']['kma_index_flag']}.kma_index.done",
+        vir_db_dir = lambda wc: f"{getattr(rules, species_configs[sample_to_organism[wc.sample]]['alignment_database']['virulencefinder']['db']).output.database}",
     output:
-        directory("%s/{sample}/VirulenceFinder" %OUT_FOLDER)
+        out_dir = directory(f"{OUT_FOLDER}" + "/{sample}/VirulenceFinder")
     conda:
         config["analysis_settings"]["virulencefinder"]["yaml"]
     log:
@@ -71,9 +76,72 @@ rule VirulenceFinder:
         "[VirulenceFinder]: Running VirulenceFinder on {wildcards.sample}"
     shell:
         """
-        mkdir -p {output}
+        mkdir -p {output.out_dir}
 
-        cmd="virulencefinder.py -i {input.R1} {input.R2} -o {output} -p {input.database}"
+        cmd="virulencefinder.py -i {input.R1} {input.R2} -o {output.out_dir} -p {input.vir_db_dir}"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+        """
+
+
+# Rule: SerotypeFinder
+# Identifies serotypes from Illumina paired-end reads.
+rule serotypefinder:
+    input:
+        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
+        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
+        ser_db_index = lambda wc: f"Logs/Databases/{species_configs[sample_to_organism[wc.sample]]['alignment_database']['serotypefinder']['kma_index_flag']}.kma_index.done",
+        ser_db_dir = lambda wc: f"{getattr(rules, species_configs[sample_to_organism[wc.sample]]['alignment_database']['serotypefinder']['db']).output.database}",
+        database = rules.setup_SerotypeFinder.output.database
+    output:
+        out_dir = directory(f"{OUT_FOLDER}" + "/{sample}/SerotypeFinder")
+    conda:
+        config["analysis_settings"]["serotypefinder"]["yaml"]
+    log:
+        stdout = 'Logs/{sample}/SerotypeFinder.log'
+    message:
+        "[SerotypeFinder]: Running SerotypeFinder on {wildcards.sample}"
+    shell:
+        """
+        mkdir -p {output.out_dir}
+
+        cmd="serotypefinder -i {input.R1} {input.R2} -o {output.out_dir} -p {input.ser_db_dir} -x"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+        """
+
+# Rule: AMRFinder
+# Runs AMRFinder to identify acquired resistance genes in the sample.
+rule AMRFinder:
+    input:
+        assembly = lambda wildcards: os.path.join(
+            OUT_FOLDER,
+            wildcards.sample,
+            wildcards.assembler,
+            {
+                "spades": "contigs.fasta",
+                "skesa": f"{wildcards.sample}.contigs.fasta"
+            }[wildcards.assembler]
+        ),
+        database = rules.setup_AMRFinder.output.database
+    params:
+        # Point mutation
+        organism = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["amrfinder"]["organism"]
+    output:
+        result = "%s/{sample}/AMRFinder/AMR_{assembler}_{sample}.tsv" %OUT_FOLDER
+    conda:
+        config["analysis_settings"]["amrfinder"]["yaml"]
+    log:
+        stdout = 'Logs/{sample}/AMRFinder/AMRFinder_{assembler}.log'
+    message:
+        "[AMRFinder]: Running AMRFinderFinder for {wildcards.sample} using ({wildcards.assembler}) contigs"
+    shell:
+        """
+        mkdir -p $(dirname {output.result})
+
+        cmd="amrfinder --nucleotide {input.assembly} --database {input.database} {params.organism} --output {output.result}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
@@ -109,57 +177,4 @@ rule LREFinder:
         
         # Run LRE-Finder with the specified parameters and inputs.
         python {params.app_path}/LRE-Finder.py -ipe {input.R1} {input.R2} -o {params.prefix} -t_db {params.db_path} -ID {params.min_con_ID} {params.add_opt} 
-        """
-
-# Rule: SerotypeFinder
-# Identifies serotypes from Illumina paired-end reads.
-rule serotypefinder:
-    input:
-        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
-        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
-        database = rules.setup_SerotypeFinder.output.database
-    output:
-        directory("%s/{sample}/SerotypeFinder" %OUT_FOLDER)
-    conda:
-        config["analysis_settings"]["serotypefinder"]["yaml"]
-    log:
-        stdout = 'Logs/{sample}/SerotypeFinder.log'
-    message:
-        "[SerotypeFinder]: Running SerotypeFinder on {wildcards.sample}"
-    shell:
-        """
-        mkdir -p {output}
-
-        cmd="serotypefinder -i {input.R1} {input.R2} -o {output} -p {input.database} -x"
-
-        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-        eval $cmd >> {log.stdout} 2>&1
-        """
-
-# Rule: AMRFinder
-# Runs AMRFinder to identify acquired resistance genes in the sample.
-rule AMRFinder:
-    input:
-        assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample],
-        database = rules.setup_AMRFinder.output.database
-    params:
-        # Point mutation
-        organism = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["amrfinder"]["organism"]
-    output:
-        # "{out}/{sample}/amrfinder/{sample}.tsv"
-        directory("%s/{sample}/AMRFinder" %OUT_FOLDER)
-    conda:
-        config["analysis_settings"]["amrfinder"]["yaml"]
-    log:
-        stdout = 'Logs/{sample}/AMRFinder.log'
-    message:
-        "[AMRFinder]: Running AMRFinderFinder on {wildcards.sample}"
-    shell:
-        """
-        mkdir -p {output}
-
-        cmd="amrfinder --nucleotide {input.assembly} --database {input.database} {params.organism} --output {output}/{wildcards.sample}.tsv"
-
-        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-        eval $cmd >> {log.stdout} 2>&1
         """
