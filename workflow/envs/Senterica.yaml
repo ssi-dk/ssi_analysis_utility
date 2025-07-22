@@ -1,0 +1,9 @@
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - conda=24.5.0
+  - wget
+  - gzip
+  - coreutils
+  - kma

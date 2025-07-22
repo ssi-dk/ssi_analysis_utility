@@ -10,3 +10,9 @@ SRR26769817	examples/Dataset/reads/SRR26769817_1.fastq.gz,examples/Dataset/reads
 SRR26767787	examples/Dataset/reads/SRR26767787_1.fastq.gz,examples/Dataset/reads/SRR26767787_2.fastq.gz	Na	examples/Dataset/assemblies/SRR26767787.fasta	Clostridioides difficile	Na	Na
 SRR2915768	examples/Dataset/reads/SRR2915768_1.fastq.gz,examples/Dataset/reads/SRR2915768_2.fastq.gz	Na	examples/Dataset/assemblies/SRR2915768.fasta	Clostridioides difficile	Na	Na
 SRR2915763	examples/Dataset/reads/SRR2915763_1.fastq.gz,examples/Dataset/reads/SRR2915763_2.fastq.gz	Na	examples/Dataset/assemblies/SRR2915763.fasta	Clostridioides difficile	Na	Na
+SRR26205262	examples/Dataset/reads/SRR26205262_1.fastq.gz,examples/Dataset/reads/SRR26205262_2.fastq.gz	Na	Na	Salmonella enterica	enterica	I
+SRR3747678	examples/Dataset/reads/SRR3747678_1.fastq.gz,examples/Dataset/reads/SRR3747678_2.fastq.gz	Na	Na	Salmonella enterica	salamae	II
+SRR5648757	examples/Dataset/reads/SRR5648757_1.fastq.gz,examples/Dataset/reads/SRR5648757_2.fastq.gz	Na	Na	Salmonella enterica	arizonae	IIIa
+SRR5817807	examples/Dataset/reads/SRR5817807_1.fastq.gz,examples/Dataset/reads/SRR5817807_2.fastq.gz	Na	Na	Salmonella enterica	diarizonae	IIIb
+SRR3453149	examples/Dataset/reads/SRR3453149_1.fastq.gz,examples/Dataset/reads/SRR3453149_2.fastq.gz	Na	Na	Salmonella enterica	houtenae	IV
+SRR2585491	examples/Dataset/reads/SRR2585491_1.fastq.gz,examples/Dataset/reads/SRR2585491_2.fastq.gz	Na	Na	Salmonella enterica	indica	VI

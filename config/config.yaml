@@ -18,6 +18,9 @@ species_map:
   Escherichia coli: E.coli
   E coli: E.coli
   E.coli: E.coli
+  Salmonella enterica: S.enterica
+  S enterica: S.enterica
+  S.enterica: S.enterica
 
 ###################### ANALYSIS & TOOLS SETTINGS ############################
 # This section provides paths to the yaml file for the conda environemt,
@@ -37,6 +40,10 @@ analysis_settings:
         database: Clostridioides_difficile_db
         species_config: C.diff
 
+    Salmonella_enterica_db:
+        yaml : ../envs/Senterica.yaml
+        database: Salmonella_enterica_db
+    
     KMA_filter:
         yaml: ../envs/python_functions.yaml
 

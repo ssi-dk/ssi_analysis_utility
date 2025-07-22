@@ -1,5 +1,6 @@
 import re
 
+##### INDEXING #####
 def db_flat_to_path(name):
     # Replace the first underscore after _db with a slash
     return re.sub(r'(_db)_(?=[^_]+$)', r'\1/', name)
@@ -49,6 +50,8 @@ rule samtools_faidx_directory:
             date -I >> {output.flag}
         done    
         """
+
+##### ALIGNMENT DATABASES #####
 
 rule setup_Ecoli_alignment_db:
     conda:
@@ -106,6 +109,41 @@ rule setup_CdiffToxin:
             echo -e \"\nExecuting command:\n$cmd\n\" >> {log.stdout}
             eval $cmd >> {log.stdout} 2>&1
         done
+        date -I > {output.database}/creation.date
+        """
+
+rule setup_Senterica_alignment_db:
+    conda:
+        config["analysis_settings"]["Salmonella_enterica_db"]["yaml"]
+    output:
+        database = directory(f'{database_path}/{config["analysis_settings"]["Salmonella_enterica_db"]["database"]}')
+    params:
+        MLST_scheme_contigs = ["aroC", "dnaN", "hemD", "hisD", "purE", "sucA", "thrA"],
+        MLST_reference = "MLST_Achtman_ref"
+    log:
+        stdout = f'Logs/Databases/setup_SEnterica.log'
+    message:
+        "[setup_SEnterica]: Downloading 7 genes for MLST scheme"
+    shell:
+        """
+        set -euo pipefail
+        mkdir -p {output.database}/contigs
+
+        for Contig in {params.MLST_scheme_contigs}; do
+            echo "Downloading $Contig..." >> {log.stdout}
+            cmd="wget https://enterobase.warwick.ac.uk/schemes/Salmonella.Achtman7GeneMLST/${{Contig}}.fasta.gz -O {output.database}/contigs/${{Contig}}.fasta.gz"
+            echo -e \"\nExecuting command:\n$cmd\n\" >> {log.stdout}
+            eval $cmd >> {log.stdout} 2>&1
+            
+            cmd="gunzip -d {output.database}/contigs/${{Contig}}.fasta.gz"
+            echo -e \"\nExecuting command:\n$cmd\n\" >> {log.stdout}
+            eval $cmd >> {log.stdout} 2>&1
+        done
+
+        cmd="wget https://enterobase.warwick.ac.uk/schemes/Salmonella.Achtman7GeneMLST/{params.MLST_reference}.fasta -O {output.database}/{params.MLST_reference}.fasta"
+        echo -e \"\nExecuting command:\n$cmd\n\" >> {log.stdout}
+        eval $cmd >> {log.stdout} 2>&1        
+
         date -I > {output.database}/creation.date
         """
 
@@ -299,6 +337,7 @@ rule setup_all_databases:
     input:
         rules.setup_Ecoli_alignment_db.output.database,
         rules.setup_CdiffToxin.output.database,
+        rules.setup_Senterica_alignment_db.output.database,
         rules.setup_PlasmidFinder.output.database,
         rules.setup_ResFinder.output.database,
         rules.setup_PointFinder.output.database,

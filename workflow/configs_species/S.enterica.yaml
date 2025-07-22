@@ -5,10 +5,10 @@
 alignment_database: 
 
     kmeraligner:
-        db: setup_Ecoli_alignment_db
-        kma_db_prefix: ecoligenes
-        kma_index_flag: Escherichia_coli_db
-        fa_idx_flag: Escherichia_coli_db
+        db: setup_Senterica_alignment_db
+        kma_db_prefix: MLST_Achtman_ref
+        kma_index_flag: Salmonella_enterica_db
+        fa_idx_flag: Salmonella_enterica_db
 
     plasmidfinder:
         db: setup_PlasmidFinder
@@ -44,20 +44,18 @@ analyses_to_run:
 
     KMA_filter:
         status : True
-        Title : Kmer Aligner for Escherichia coli OH and stx typing
+        Title : Kmer Aligner for Salmonella enterica
         ID: 92
         input_folder: kmeraligner
-        additional_option : --Gene_list stx wzx wzy wzt wzm fliC fli eae ehxA --organism "Escherichia coli" --suffix tsv
+        additional_option : --Gene_list aroC dnaN hemD hisD purE sucA thrA --organism "Salmonella enterica" --suffix tsv
         thresholds:
-            stx: [90, 90, 10]
-            wzx: [90, 90, 10]
-            wzy: [90, 90, 10]
-            wzt: [90, 90, 10]
-            wzm: [90, 90, 10]
-            fliC: [90, 90, 10]
-            fli: [90, 90, 10]
-            eae: [90, 90, 10]
-            ehxA: [90, 90, 10]
+            aroC: [90, 90, 10]
+            dnaN: [90, 90, 10]
+            hemD: [90, 90, 10]
+            hisD: [90, 90, 10]
+            purE: [90, 90, 10]
+            sucA: [90, 90, 10]
+            thrA: [90, 90, 10]
             other: [98, 98, 10]
 
     emm_typing: 
