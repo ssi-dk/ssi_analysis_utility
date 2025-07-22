@@ -333,6 +333,43 @@ rule update_MLST:
         mlst-make_blast_db >> {log.stdout} 2>&1 && date -I > {output.datefile}
         """
 
+# Seqsero database is contained within the github and requires github specific installation to utilize it
+rule setup_SeqSero2:
+    conda:
+        config["analysis_settings"]["seqsero2"]["yaml"]
+    output:
+        database = directory(f'{database_path}/{config["analysis_settings"]["seqsero2"]["database"]}'),
+        flag = "Logs/Databases/seqsero2_db.done"
+    log:
+        stdout = f'Logs/Databases/SeqSero2.log'
+    message:
+        "[setup_SeqSero2]: Creating SeqSero2 environment and marker directory"
+    shell:
+        r"""
+        set -euo pipefail
+
+        # Clone SeqSero2 only if not already present
+        if [ ! -d "SeqSero2" ]; then
+            cmd="git clone https://github.com/denglab/SeqSero2.git {output.database}"
+            echo -e "Executing command:\n$cmd\n"  >> {log.stdout} 2>&1
+            eval $cmd >> {log.stdout} 2>&1
+        else
+            echo "[setup_SeqSero2]: SeqSero2 already cloned, skipping"  >> {log.stdout} 2>&1
+        fi
+
+        cmd="python3 -m pip install {output.database}"
+        echo -e "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+
+        echo '[setup_SeqSero2]: Installed SeqSero2 in conda environment' >> {log.stdout} 2>&1
+
+        touch {output.flag}
+
+        echo '[setup_SeqSero2]: Created SeqSero2 completed flag {output.flag}' >> {log.stdout} 2>&1
+
+        date -I > {output.database}/creation.date
+        """
+
 rule setup_all_databases:
     input:
         rules.setup_Ecoli_alignment_db.output.database,
@@ -344,4 +381,5 @@ rule setup_all_databases:
         rules.setup_DisinFinder.output.database,
         rules.setup_VirulenceFinder.output.database,
         rules.setup_AMRFinder.output.database,
-        rules.setup_CdiffTRST.output.database
+        rules.setup_CdiffTRST.output.database,
+        rules.setup_SeqSero2.output.database

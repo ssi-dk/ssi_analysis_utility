@@ -171,3 +171,7 @@ analyses_to_run:
 
         variant_gt_thresholds:
             del330_347_18: [0.10,5,10]
+
+    seqsero2:
+        status : True
+        database : seqsero2

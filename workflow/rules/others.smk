@@ -370,3 +370,29 @@ rule Repeat_Identifier:
 
         python workflow/scripts/Repeat_Identifier.py --sample_id {params.sample_id} --fasta {input.fasta} --repeats {params.repeats} --combos {params.combo_table} --db_dir {params.database} --output {output.result} --suffix tsv > {log.stdout} 2>&1
         """
+
+rule Salmonella_seqsero:
+    input:
+        R1 = lambda wc: sample_to_illumina[wc.sample][0],
+        R2 = lambda wc: sample_to_illumina[wc.sample][1],
+        flag = "Logs/Databases/seqsero2_db.done"
+    output:
+        txt = "%s/{sample}/seqsero2/SeqSero_result.txt" %OUT_FOLDER,
+        tsv = "%s/{sample}/seqsero2/SeqSero_result.tsv" %OUT_FOLDER
+    threads:
+        min(workflow.cores, 8)
+    conda:
+        config["analysis_settings"]["seqsero2"]["yaml"]
+    params:
+        sample_id = lambda wildcards: f"{wildcards.sample}",
+        out_dir = "%s/{sample}/seqsero2" %OUT_FOLDER,
+    log:
+        stdout = "%s/{sample}/seqsero2/SeqSero_log.txt" %OUT_FOLDER
+    message:
+        "[Salmonella_seqsero]: Predict Salmonella serovar"
+    shell:
+        """
+        mkdir -p $(dirname {output.txt})
+
+        SeqSero2_package.py -m k -t 2 -i {input.R1} {input.R2} -d {params.out_dir} -n {params.sample_id} -p {threads} -b mem > {log.stdout} 2>&1
+        """

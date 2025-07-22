@@ -179,3 +179,7 @@ analyses_to_run:
             del301_336_36: [0.10,5,10]
             del341_379_39: [0.10,5,10]
             del313_366_54: [0.10,5,10]
+
+    seqsero2:
+        status : False
+        database : seqsero2

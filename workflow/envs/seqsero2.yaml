@@ -1,0 +1,14 @@
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.8
+  - biopython>=1.78
+  - blast
+  - bowtie2
+  - samtools
+  - pysam
+  - kma
+  - git
+  - pip
