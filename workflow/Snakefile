@@ -241,6 +241,26 @@ rule all:
             ],
             tool=TOOLS_WITH_SAM_OUTPUT
         ),
+        expand(
+            "%s/{sample}/seqsero2/SeqSero_result.txt" % OUT_FOLDER,
+            sample=[
+                s for s in SAMPLES 
+                if species_configs[sample_to_organism[s]]["analyses_to_run"]["seqsero2"]["status"] is True
+            ]
+        ),
+        expand(
+            "%s/{sample}/sistr/{sample}_{assembler}_sistr.tab" %OUT_FOLDER,
+            sample=[
+                s for s in SAMPLES for assembler in ASM_TO_REPEAT_IDENTIFICATION
+                if species_configs[sample_to_organism[s]]["analyses_to_run"]["sistr_cmd"]["status"] is True
+                and species_configs[sample_to_organism[s]]["analyses_to_run"][assembler]["status"] is True
+            ], # creates a list of samples needed to match with each assembly -> e.g ["SRR1", "SRR1", "SRR2", "SRR2"]
+            assembler=[
+                assembler for s in SAMPLES for assembler in ASM_TO_REPEAT_IDENTIFICATION
+                if species_configs[sample_to_organism[s]]["analyses_to_run"]["sistr_cmd"]["status"] is True
+                and species_configs[sample_to_organism[s]]["analyses_to_run"][assembler]["status"] is True
+            ] # creates a list of assembly tools needed to match with each sample -> e.g ["spades", "skesa","spades", "skesa"] to create all combinations of samples and assembly tools
+        ),
 
 include : "rules/db_setups.smk"
 include : "rules/finders.smk"

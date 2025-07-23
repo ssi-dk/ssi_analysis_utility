@@ -116,7 +116,8 @@ rule setup_Senterica_alignment_db:
     conda:
         config["analysis_settings"]["Salmonella_enterica_db"]["yaml"]
     output:
-        database = directory(f'{database_path}/{config["analysis_settings"]["Salmonella_enterica_db"]["database"]}')
+        database = directory(f'{database_path}/{config["analysis_settings"]["Salmonella_enterica_db"]["database"]}'),
+        serovar_list = f'{database_path}/{config["analysis_settings"]["Salmonella_enterica_db"]["database"]}/serovar_list.txt'
     params:
         MLST_scheme_contigs = ["aroC", "dnaN", "hemD", "hisD", "purE", "sucA", "thrA"],
         MLST_reference = "MLST_Achtman_ref"
@@ -143,6 +144,10 @@ rule setup_Senterica_alignment_db:
         cmd="wget https://enterobase.warwick.ac.uk/schemes/Salmonella.Achtman7GeneMLST/{params.MLST_reference}.fasta -O {output.database}/{params.MLST_reference}.fasta"
         echo -e \"\nExecuting command:\n$cmd\n\" >> {log.stdout}
         eval $cmd >> {log.stdout} 2>&1        
+
+        cmd="curl -fSL https://raw.githubusercontent.com/phac-nml/sistr_cmd/master/sistr/data/serovar-list.txt -o {output.serovar_list}"
+        echo -e \"\nExecuting command:\n$cmd\n\" >> {log.stdout}
+        eval $cmd >> {log.stdout} 2>&1
 
         date -I > {output.database}/creation.date
         """

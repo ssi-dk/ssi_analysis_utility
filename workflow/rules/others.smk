@@ -396,3 +396,41 @@ rule Salmonella_seqsero:
 
         SeqSero2_package.py -m k -t 2 -i {input.R1} {input.R2} -d {params.out_dir} -n {params.sample_id} -p {threads} -b mem > {log.stdout} 2>&1
         """
+
+# Rule: SISTR 
+# Salmonella In Silico Typing Resource (SISTR)
+rule Salmonella_serovar:
+    input:
+        fasta = lambda wildcards: os.path.join(
+            OUT_FOLDER,
+            wildcards.sample,
+            wildcards.assembler,
+            {
+                "spades": "contigs.fasta",
+                "skesa": f"{wildcards.sample}.contigs.fasta"
+            }[wildcards.assembler]
+        ),
+        serovar_list = lambda wc: species_configs[sample_to_organism[wc.sample]]["analyses_to_run"]["sistr_cmd"]["database"],
+    params:
+        add_opt = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["sistr_cmd"]["additional_option"],
+    output:
+        sistr_tab = "%s/{sample}/sistr/{sample}_{assembler}_sistr.tab" %OUT_FOLDER,
+        gmlst_profile = "%s/{sample}/sistr/{sample}_{assembler}_cgmlst_profiles.csv" %OUT_FOLDER,
+        allele_results = "%s/{sample}/sistr/{sample}_{assembler}_allele-results.json" %OUT_FOLDER
+    threads:
+        min(workflow.cores, 8)
+    conda:
+        config["analysis_settings"]["sistr"]["yaml"]
+    log:
+        stdout = 'Logs/{sample}/{sample}_{assembler}_SISTR_serovar.log'
+    message:
+        "[Salmonella_serovar]: Predict Salmonella serovar with SISTR"
+    shell:
+        """
+        mkdir -p $(dirname {output.sistr_tab})
+
+        cmd="sistr -f tab --qc -t {threads} --cgmlst-profiles {output.gmlst_profile} --alleles-output {output.allele_results} -l {input.serovar_list} -o {output.sistr_tab} {input.fasta}"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+        """

@@ -7,3 +7,4 @@ dependencies:
   - gzip
   - coreutils
   - kma
+  - curl
