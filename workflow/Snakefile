@@ -57,63 +57,63 @@ rule all:
             "%s/{sample}/kmeraligner/" %OUT_FOLDER, 
             sample=[
                 s for s in SAMPLES 
-                if species_configs[sample_to_organism[s]]["analyses_to_run"]["kmeraligner"]["status"] is True
+                if "kmeraligner" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ]
         ),
         expand(
             "%s/{sample}/emm_typing/" %OUT_FOLDER, 
             sample=[
                 s for s in SAMPLES 
-                if species_configs[sample_to_organism[s]]["analyses_to_run"]["emm_typing"]["status"] is True
+                if "emm_typing" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ]
         ),       
         expand(
             "%s/{sample}/assembly_lineage/" %OUT_FOLDER, 
             sample=[
                 s for s in SAMPLES 
-                if species_configs[sample_to_organism[s]]["analyses_to_run"]["assembly_lineage_determination"]["status"] is True
+                if "assembly_lineage_determination" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ]
         ),
         expand(
             "%s/{sample}/PlasmidFinder/" %OUT_FOLDER, 
             sample=[
                 s for s in SAMPLES 
-                if species_configs[sample_to_organism[s]]["analyses_to_run"]["plasmidfinder"]["status"] is True
+                if "plasmidfinder" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ]
         ),
         expand(
             "%s/{sample}/ResFinder/" %OUT_FOLDER, 
             sample=[
                 s for s in SAMPLES 
-                if species_configs[sample_to_organism[s]]["analyses_to_run"]["resfinder"]["status"] is True
+                if "resfinder" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ]
         ),
         expand(
             "%s/{sample}/VirulenceFinder/" %OUT_FOLDER, 
             sample=[
                 s for s in SAMPLES 
-                if species_configs[sample_to_organism[s]]["analyses_to_run"]["virulencefinder"]["status"] is True
+                if "virulencefinder" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ]
         ),
         expand(
             "%s/{sample}/lre-finder/" %OUT_FOLDER, 
             sample=[
                 s for s in SAMPLES 
-                if species_configs[sample_to_organism[s]]["analyses_to_run"]["LRE-finder"]["status"] is True
+                if "LRE-finder" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ]
         ),
         expand(
             "%s/{sample}/SerotypeFinder/" %OUT_FOLDER, 
             sample=[
                 s for s in SAMPLES 
-                if species_configs[sample_to_organism[s]]["analyses_to_run"]["serotypefinder"]["status"] is True
+                if "serotypefinder" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ]
         ),
         expand(
             "{out}/{sample}/AMRFinder", 
             sample=[
                 s for s in SAMPLES 
-                if species_configs[sample_to_organism[s]]["analyses_to_run"]["amrfinder"]["status"] is True
+                if "amrfinder" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ],
             out=OUT_FOLDER
         ),
@@ -121,7 +121,7 @@ rule all:
             "{out}/{sample}/MLST", 
             sample=[
                 s for s in SAMPLES 
-                if species_configs[sample_to_organism[s]]["analyses_to_run"]["mlst"]["status"] is True
+                if "mlst" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ],
             out=OUT_FOLDER
         ),
