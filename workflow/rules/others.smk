@@ -433,8 +433,9 @@ rule SRST2_Bowtie2:
     input:
         R1 = lambda wc: sample_to_illumina[wc.sample][0],
         R2 = lambda wc: sample_to_illumina[wc.sample][1],
-        mlst_db = lambda wc: f"{database_path}/MLST/{wc.species}/{wc.species}_{wc.scheme}.fasta",
-        fasta_flag = f"Logs/Databases/MLST_Salmonella.bowtie2_index.done"
+        index_done = lambda wc: (
+            f"Logs/Databases/{species_configs[sample_to_organism[wc.sample]]['alignment_database']['SRST2']['bowtie2_index_flag']}.bowtie2_index.done"
+        )
     output:
         result = f"{OUT_FOLDER}/{{sample}}/srst2/{{sample}}__combined.{{species}}_{{scheme}}.sam"
     threads:
@@ -444,12 +445,12 @@ rule SRST2_Bowtie2:
     log:
         stdout = f"Logs/srst2/{{sample}}__{{species}}__{{scheme}}_bowtie2.log"
     message:
-        "[Bowtie2]: Running Bowtie2 to prepare {wildcards.sample} for SRST2 command"
+        "[SRST2_Bowtie2]: Running Bowtie2 for {wildcards.sample} on {wildcards.species} scheme {wildcards.scheme}"
     shell:
         """
         mkdir -p $(dirname {output.result})
-                
-        bowtie2 -1 {input.R1} -2 {input.R2} -S {output.result} -q --very-sensitive-local --no-unal -a -x {input.mlst_db} --threads {threads}
+
+        bowtie2 -1 {input.R1} -2 {input.R2} -S {output.result} -q --very-sensitive-local --no-unal -a -x {database_path}/MLST/{wildcards.species}/{wildcards.species}_{wildcards.scheme} --threads {threads}
         """
 
 rule SRST2:

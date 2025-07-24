@@ -35,7 +35,7 @@ alignment_database:
         kma_index_flag: serotypefinder_db
 
     SRST2:
-        bowtie2_index_flag: MLST/Escherichia/
+        bowtie2_index_flag: MLST_Escherichia
 
 analyses_to_run: 
 
@@ -188,7 +188,7 @@ analyses_to_run:
         database : resources/Salmonella_enterica_db/serovar_list.txt
     
     srst2:
-        status: False
+        status: True
         species: Escherichia
         species_key: E.coli
         scheme: Achtman7GeneMLST

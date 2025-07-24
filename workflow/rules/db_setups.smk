@@ -3,8 +3,6 @@ import re
 ##### INDEXING #####
 def db_flat_to_path(name):
     if name.startswith("MLST_"):
-        print(name)
-        print(name.replace("MLST_", "MLST/"))
         return name.replace("MLST_", "MLST/")
     return re.sub(r'(_db)_(?=[^_]+$)', r'\1/', name)
 
@@ -43,24 +41,30 @@ rule kma_index_directory:
         """
 
 rule bowtie2_index_directory:
-    input:
-        # Get FASTA file from flattened database name
-        fasta_file = lambda wc: (
-            lambda species, scheme:
-            f"{database_path}/MLST/{species}/{species}_{scheme}.fasta"
-        )(*get_species_scheme_from_flat(wc.db_name_flat))
     output:
         flag = "Logs/Databases/{db_name_flat}.bowtie2_index.done"
+    input:
+        fasta_dir = lambda wc: f"resources/{db_flat_to_path(wc.db_name_flat)}"
     conda:
         config["analysis_settings"]["bowtie2"]["yaml"]
     message:
-        "[bowtie2_index_directory]: Indexing {input.fasta_file}"
+        "[bowtie2_index_directory]: Indexing all FASTA files in {input.fasta_dir}"
     shell:
         r"""
-        mkdir -p $(dirname {input.fasta_file})
+        mkdir -p {input.fasta_dir}
+        files_found=false
 
-        # Bowtie2 builds .bt2 index files from the FASTA
-        bowtie2-build {input.fasta_file} {input.fasta_file}
+        for fasta in $(find {input.fasta_dir} -maxdepth 1 -type f \( -name "*.fa" -o -name "*.fsa" -o -name "*.fasta" -o -name "*.fna" \)); do
+            files_found=true
+            prefix="${{fasta%.*}}"
+            echo "[bowtie2_index_directory]: Indexing $fasta -> $prefix"
+            bowtie2-build "$fasta" "$prefix"
+        done
+
+        if ! $files_found; then
+            echo "[ERROR]: No FASTA files found in {input.fasta_dir}" >&2
+            exit 1
+        fi
 
         touch {output.flag}
         """
@@ -463,4 +467,3 @@ rule setup_all_databases:
         rules.setup_CdiffTRST.output.database,
         rules.setup_SeqSero2.output.database,
         rules.setup_Achtman7GeneMLST.output.database
-
