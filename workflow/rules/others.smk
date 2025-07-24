@@ -26,10 +26,7 @@ rule kmeraligner:
         """
         mkdir -p $(dirname {output.res})
 
-        cmd="kma -ipe {input.R1} {input.R2} -o {params.prefix} {params.add_opt} -t_db {input.db_dir}/{params.db_prefix} > {output.sam}"
-
-        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-        eval $cmd >> {log.stdout} 2>&1
+        kma -ipe {input.R1} {input.R2} -o {params.prefix} {params.add_opt} -t_db {input.db_dir}/{params.db_prefix} > {output.sam}
         """
 
 rule KMA_filter:
@@ -429,8 +426,55 @@ rule Salmonella_serovar:
         """
         mkdir -p $(dirname {output.sistr_tab})
 
-        cmd="sistr -f tab --qc -t {threads} --cgmlst-profiles {output.gmlst_profile} --alleles-output {output.allele_results} -l {input.serovar_list} -o {output.sistr_tab} {input.fasta}"
+        sistr -f tab --qc -t {threads} --cgmlst-profiles {output.gmlst_profile} --alleles-output {output.allele_results} -l {input.serovar_list} -o {output.sistr_tab} {input.fasta}
+        """
 
-        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-        eval $cmd >> {log.stdout} 2>&1
+rule SRST2_Bowtie2:
+    input:
+        R1 = lambda wc: sample_to_illumina[wc.sample][0],
+        R2 = lambda wc: sample_to_illumina[wc.sample][1],
+        mlst_db = lambda wc: f"{database_path}/MLST/{wc.species}/{wc.species}_{wc.scheme}.fasta",
+        fasta_flag = f"Logs/Databases/MLST_Salmonella.bowtie2_index.done"
+    output:
+        result = f"{OUT_FOLDER}/{{sample}}/srst2/{{sample}}__combined.{{species}}_{{scheme}}.sam"
+    threads:
+        min(workflow.cores, 16)
+    conda:
+        config["analysis_settings"]["srst2"]["yaml"]
+    log:
+        stdout = f"Logs/srst2/{{sample}}__{{species}}__{{scheme}}_bowtie2.log"
+    message:
+        "[Bowtie2]: Running Bowtie2 to prepare {wildcards.sample} for SRST2 command"
+    shell:
+        """
+        mkdir -p $(dirname {output.result})
+                
+        bowtie2 -1 {input.R1} -2 {input.R2} -S {output.result} -q --very-sensitive-local --no-unal -a -x {input.mlst_db} --threads {threads}
+        """
+
+rule SRST2:
+    input:
+        R1 = lambda wc: sample_to_illumina[wc.sample][0],
+        R2 = lambda wc: sample_to_illumina[wc.sample][1],
+        mlst_db = lambda wc: f"{database_path}/MLST/{wc.species}/{wc.species}_{wc.scheme}.fasta",
+        profiles_db = lambda wc: f"{database_path}/MLST/{wc.species}/{wc.species}_{wc.scheme}.txt",
+        bowtie2_sam = lambda wc: f"{OUT_FOLDER}/{wc.sample}/srst2/{wc.sample}__combined.{wc.species}_{wc.scheme}.sam",
+    output:
+        result = f"{OUT_FOLDER}/{{sample}}/srst2/{{sample}}__mlst__{{species}}_{{scheme}}__results.txt"
+    threads:
+        min(workflow.cores, 8)
+    params:
+        sample_id = lambda wc: f"{wc.sample}",
+        outdir = lambda wc: f"{OUT_FOLDER}/{wc.sample}/srst2",
+    conda:
+        config["analysis_settings"]["srst2"]["yaml"]
+    log:
+        stdout = f"Logs/srst2/{{sample}}__{{species}}__{{scheme}}.log"
+    message:
+        "[SRST2]: Running SRST2 for {wildcards.sample} on {wildcards.species} scheme {wildcards.scheme}"
+    shell:
+        """
+        mkdir -p $(dirname {output.result})
+        
+        srst2 --input_pe {input.R1} {input.R2} --merge_paired --use_existing_bowtie2_sam --keep_interim_alignment --mlst_db {input.mlst_db} --mlst_definitions {input.profiles_db} --mlst_delimiter '_' --threads {threads} --output {params.outdir}/{params.sample_id}
         """

@@ -1,0 +1,9 @@
+name: achtman7genemlst
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - curl
+  - gzip
+  - coreutils 

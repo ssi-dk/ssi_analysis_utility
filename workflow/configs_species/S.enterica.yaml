@@ -34,6 +34,9 @@ alignment_database:
         db: setup_SerotypeFinder
         kma_index_flag: serotypefinder_db
 
+    SRST2:
+        bowtie2_index_flag: MLST_Salmonella #remember my flatten function in db_setups replace _ with / such that i can specify the directory of where the reference need to go
+
 analyses_to_run: 
 
     kmeraligner:
@@ -181,3 +184,10 @@ analyses_to_run:
         Title : Salmonella In Silico Typing Resource (SISTR)
         additional_option: -f tab --qc
         database : resources/Salmonella_enterica_db/serovar_list.txt
+    
+    srst2:
+        status: True
+        species: Salmonella
+        species_key: S.enterica
+        scheme: Achtman7GeneMLST
+        genes: ["aroC", "dnaN", "hemD", "hisD", "purE", "sucA", "thrA"]

@@ -2,8 +2,23 @@ import re
 
 ##### INDEXING #####
 def db_flat_to_path(name):
-    # Replace the first underscore after _db with a slash
+    if name.startswith("MLST_"):
+        print(name)
+        print(name.replace("MLST_", "MLST/"))
+        return name.replace("MLST_", "MLST/")
     return re.sub(r'(_db)_(?=[^_]+$)', r'\1/', name)
+
+def get_species_scheme_from_flat(db_name_flat):
+    if not db_name_flat.startswith("MLST_"):
+        raise ValueError(f"Unsupported db_name_flat format: {db_name_flat}")
+    species_key = db_name_flat.replace("MLST_", "")  # e.g., "Salmonella"
+    species_config = species_configs[srst2_species_to_config[species_key]]
+    scheme = species_config["analyses_to_run"]["srst2"]["scheme"]
+
+    print(f"key {species_key}")
+    print(f"config {species_config}")
+    print(f"scheme {scheme}")
+    return species_key, scheme
     
 rule kma_index_directory:
     output:
@@ -18,11 +33,34 @@ rule kma_index_directory:
         r"""
         mkdir -p {input.fasta_dir}
 
-        for fasta in $(find {input.fasta_dir} -maxdepth 1 -type f \( -name "*.fa" -o -name "*.fsa" -o -name "*.fasta" \)); do
+        for fasta in $(find {input.fasta_dir} -maxdepth 1 -type f \( -name "*.fa" -o -name "*.fsa" -o -name "*.fasta" -o -name "*.fna" \)); do
             prefix="${{fasta%.*}}"
             echo "Indexing $fasta -> $prefix"
             kma index -i "$fasta" -o "$prefix"
         done
+
+        touch {output.flag}
+        """
+
+rule bowtie2_index_directory:
+    input:
+        # Get FASTA file from flattened database name
+        fasta_file = lambda wc: (
+            lambda species, scheme:
+            f"{database_path}/MLST/{species}/{species}_{scheme}.fasta"
+        )(*get_species_scheme_from_flat(wc.db_name_flat))
+    output:
+        flag = "Logs/Databases/{db_name_flat}.bowtie2_index.done"
+    conda:
+        config["analysis_settings"]["bowtie2"]["yaml"]
+    message:
+        "[bowtie2_index_directory]: Indexing {input.fasta_file}"
+    shell:
+        r"""
+        mkdir -p $(dirname {input.fasta_file})
+
+        # Bowtie2 builds .bt2 index files from the FASTA
+        bowtie2-build {input.fasta_file} {input.fasta_file}
 
         touch {output.flag}
         """
@@ -41,7 +79,7 @@ rule samtools_faidx_directory:
         mkdir -p {input.fasta_dir}
         touch {output.flag}
     
-        for fasta in $(find {input.fasta_dir} -maxdepth 1 -type f \( -name "*.fa" -o -name "*.fsa" -o -name "*.fasta" \)); do
+        for fasta in $(find {input.fasta_dir} -maxdepth 1 -type f \( -name "*.fa" -o -name "*.fsa" -o -name "*.fasta" -o -name "*.fna" \)); do
             prefix="${{fasta%.*}}"
             echo "Indexing $fasta -> $prefix"
             cmd="samtools faidx $fasta"
@@ -119,27 +157,15 @@ rule setup_Senterica_alignment_db:
         database = directory(f'{database_path}/{config["analysis_settings"]["Salmonella_enterica_db"]["database"]}'),
         serovar_list = f'{database_path}/{config["analysis_settings"]["Salmonella_enterica_db"]["database"]}/serovar_list.txt'
     params:
-        MLST_scheme_contigs = ["aroC", "dnaN", "hemD", "hisD", "purE", "sucA", "thrA"],
         MLST_reference = "MLST_Achtman_ref"
     log:
         stdout = f'Logs/Databases/setup_SEnterica.log'
     message:
-        "[setup_SEnterica]: Downloading 7 genes for MLST scheme"
+        "[setup_SEnterica]: Downloading 7 genes for S.enterica referecence MLST scheme"
     shell:
         """
         set -euo pipefail
-        mkdir -p {output.database}/contigs
-
-        for Contig in {params.MLST_scheme_contigs}; do
-            echo "Downloading $Contig..." >> {log.stdout}
-            cmd="wget https://enterobase.warwick.ac.uk/schemes/Salmonella.Achtman7GeneMLST/${{Contig}}.fasta.gz -O {output.database}/contigs/${{Contig}}.fasta.gz"
-            echo -e \"\nExecuting command:\n$cmd\n\" >> {log.stdout}
-            eval $cmd >> {log.stdout} 2>&1
-            
-            cmd="gunzip -d {output.database}/contigs/${{Contig}}.fasta.gz"
-            echo -e \"\nExecuting command:\n$cmd\n\" >> {log.stdout}
-            eval $cmd >> {log.stdout} 2>&1
-        done
+        mkdir -p {output.database}
 
         cmd="wget https://enterobase.warwick.ac.uk/schemes/Salmonella.Achtman7GeneMLST/{params.MLST_reference}.fasta -O {output.database}/{params.MLST_reference}.fasta"
         echo -e \"\nExecuting command:\n$cmd\n\" >> {log.stdout}
@@ -338,6 +364,54 @@ rule update_MLST:
         mlst-make_blast_db >> {log.stdout} 2>&1 && date -I > {output.datefile}
         """
 
+rule setup_Achtman7GeneMLST:
+    conda:
+        config["analysis_settings"]["achtman7genemlst"]["yaml"]
+    output:
+        fasta = f"{database_path}/MLST/{{species}}/{{species}}_{{scheme}}.fasta",
+        profile = f"{database_path}/MLST/{{species}}/{{species}}_{{scheme}}.txt",
+        database = directory(f"{database_path}/{config['analysis_settings']['achtman7genemlst']['database']}/{{species}}/{{scheme}}")
+    log:
+        stdout = "Logs/Databases/setup_MLST_{species}_{scheme}.log"
+    params:
+        species = lambda wc: wc.species,
+        scheme = lambda wc: wc.scheme,
+        gene_list = lambda wc: " ".join(
+            species_configs[srst2_species_to_config[wc.species]]
+            ["analyses_to_run"]["srst2"]["genes"]
+        )
+    message:
+        "[setup_Achtman7GeneMLST]: Downloading and assembling MLST genes for {params.species}"
+    shell:
+        r"""
+        set -euo pipefail
+        mkdir -p {output.database}
+        > {output.fasta}
+
+        echo "[setup_Achtman7GeneMLST]: Using EnteroBase URL: https://enterobase.warwick.ac.uk/schemes/{params.species}.{params.scheme}" >> {log.stdout}
+
+        for gene in {params.gene_list}; do
+            url="https://enterobase.warwick.ac.uk/schemes/{params.species}.{params.scheme}/${{gene}}.fasta.gz"
+            tmp_fa="{output.database}/${{gene}}.fasta"
+            echo "Downloading $url" >> {log.stdout}
+            if curl -sSL "$url" | gunzip -c > "$tmp_fa"; then
+                if [ -s "$tmp_fa" ]; then
+                    cat "$tmp_fa" >> {output.fasta}
+                else
+                    echo "Downloaded file $tmp_fa is empty!" >> {log.stdout}
+                    exit 1
+                fi
+            else
+                echo "Failed to download $url" >> {log.stdout}
+                exit 1
+            fi
+        done
+
+        curl -sSL https://enterobase.warwick.ac.uk/schemes/{params.species}.{params.scheme}/profiles.list.gz | gunzip -c > {output.profile}
+
+        date -I > $(dirname {output.fasta})/creation.date
+        """
+
 # Seqsero database is contained within the github and requires github specific installation to utilize it
 rule setup_SeqSero2:
     conda:
@@ -387,4 +461,6 @@ rule setup_all_databases:
         rules.setup_VirulenceFinder.output.database,
         rules.setup_AMRFinder.output.database,
         rules.setup_CdiffTRST.output.database,
-        rules.setup_SeqSero2.output.database
+        rules.setup_SeqSero2.output.database,
+        rules.setup_Achtman7GeneMLST.output.database
+

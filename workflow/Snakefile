@@ -60,6 +60,29 @@ for species in set(sample_to_organism.values()):
         species_configs[species] = {}  # Empty config to ensure skipping analyses
 
 
+# Build species to config lookup from srst2 block
+srst2_species_to_config = {
+    species_config["analyses_to_run"]["srst2"]["species"]: species_name
+    for species_name, species_config in species_configs.items()
+    if "srst2" in species_config["analyses_to_run"]
+    and species_config["analyses_to_run"]["srst2"].get("status", False)
+}
+
+srst2_sample_lookup = {
+    s: {
+        "species": species_configs[sample_to_organism[s]]["analyses_to_run"]["srst2"]["species"],
+        "scheme": species_configs[sample_to_organism[s]]["analyses_to_run"]["srst2"]["scheme"],
+        "genes": species_configs[sample_to_organism[s]]["analyses_to_run"]["srst2"]["genes"],
+    }
+    for s in SAMPLES
+    if "srst2" in species_configs[sample_to_organism[s]]["analyses_to_run"]
+    and species_configs[sample_to_organism[s]]["analyses_to_run"]["srst2"]["status"]
+}
+
+print("srst2_species_to_config keys:")
+print(srst2_species_to_config.keys())
+
+
 database_path = config['input_manager']['database_path']
 
 ### Define rules where samtools is necessary
@@ -261,6 +284,13 @@ rule all:
                 and species_configs[sample_to_organism[s]]["analyses_to_run"][assembler]["status"] is True
             ] # creates a list of assembly tools needed to match with each sample -> e.g ["spades", "skesa","spades", "skesa"] to create all combinations of samples and assembly tools
         ),
+        expand(
+            f"{OUT_FOLDER}/{{sample}}/srst2/{{sample}}__mlst__{{species}}_{{scheme}}__results.txt",
+            zip,
+            sample=srst2_sample_lookup.keys(),
+            species=[srst2_sample_lookup[s]["species"] for s in srst2_sample_lookup],
+            scheme=[srst2_sample_lookup[s]["scheme"] for s in srst2_sample_lookup]
+        )
 
 include : "rules/db_setups.smk"
 include : "rules/finders.smk"

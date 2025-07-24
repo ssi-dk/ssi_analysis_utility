@@ -10,15 +10,19 @@ input_manager:
 
 species_map:
   Clostridium difficile: C.diff
+  Clostridium: C.diff
   Clostridioides difficile: C.diff
+  Clostridioides: C.diff
   C. difficile: C.diff
   C difficile: C.diff
   C. diff: C.diff
   C.diff: C.diff
   Escherichia coli: E.coli
+  Escherichia: E.coli
   E coli: E.coli
   E.coli: E.coli
   Salmonella enterica: S.enterica
+  Salmonella: S.enterica
   S enterica: S.enterica
   S.enterica: S.enterica
 
@@ -31,6 +35,9 @@ analysis_settings:
     KMA:
         yaml : ../envs/kmeraligner.yaml
     
+    bowtie2:
+        yaml : ../envs/bowtie2.yaml
+
     Escherichia_coli_db:
         yaml : ../envs/kmeraligner.yaml
         database: Escherichia_coli_db
@@ -110,6 +117,14 @@ analysis_settings:
 
     sistr:
         yaml : ../envs/sistr.yaml
+
+    srst2:
+        yaml : ../envs/srst2.yaml
+    
+    achtman7genemlst:
+        yaml : ../envs/achtman7genemlst.yaml
+        database: AchtmanMLST 
+
 
     # Illumina lineage determination (commented out for now):
     # reference_fasta_file: /home/simonescrima/Desktop/ssi_analysis_utility/resources/lineage_determination/MGAS5005.fasta  # Fasta file for reference genome

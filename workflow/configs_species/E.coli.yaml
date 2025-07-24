@@ -34,6 +34,9 @@ alignment_database:
         db: setup_SerotypeFinder
         kma_index_flag: serotypefinder_db
 
+    SRST2:
+        bowtie2_index_flag: MLST/Escherichia/
+
 analyses_to_run: 
 
     kmeraligner:
@@ -183,3 +186,10 @@ analyses_to_run:
         Title : Salmonella In Silico Typing Resource (SISTR)
         additional_option: -f tab --qc
         database : resources/Salmonella_enterica_db/serovar_list.txt
+    
+    srst2:
+        status: False
+        species: Escherichia
+        species_key: E.coli
+        scheme: Achtman7GeneMLST
+        genes: ["adk","fumC","gyrB","icd","mdh","purA","recA"]
