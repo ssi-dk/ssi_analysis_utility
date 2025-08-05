@@ -8,7 +8,7 @@ rule kma_index_directory:
     output:
         flag = "Logs/Databases/{db_name_flat}.kma_index.done"
     input:
-        fasta_dir = lambda wc: f"resources/{db_flat_to_path(wc.db_name_flat)}"
+        fasta_dir = lambda wc: "resources/%s" % db_flat_to_path(wc.db_name_flat)
     conda:
         config["analysis_settings"]["KMA"]["yaml"]
     message:
@@ -30,7 +30,7 @@ rule samtools_faidx_directory:
     output:
         flag = "Logs/Databases/{db_name_flat}.fa_idx.done"
     input:
-        fasta_dir = lambda wc: f"resources/{db_flat_to_path(wc.db_name_flat)}"
+        fasta_dir = lambda wc: "resources/%s" % db_flat_to_path(wc.db_name_flat)
     conda:
         config["analysis_settings"]["htslib"]["yaml"]
     message:
@@ -56,9 +56,9 @@ rule setup_Ecoli_alignment_db:
     params:
         db_prefix = 'ecoligenes'
     output:
-        database = directory(f"{database_path}/{config['analysis_settings']['Escherichia_coli_db']['database']}")
+        database = directory("%s/%s" % (database_path, config["analysis_settings"]["Escherichia_coli_db"]["database"]))
     log:
-        stdout = f'Logs/Databases/setup_Ecoli_alignment_db.log'
+        stdout = 'Logs/Databases/setup_Ecoli_alignment_db.log'
     message:
         "[setup_Ecoli_alignment_db]: Setting up Ecoli alignment database"
     shell:
@@ -76,12 +76,12 @@ rule setup_CdiffToxin:
     conda:
         config["analysis_settings"]["Clostridioides_difficile_db"]["yaml"]
     output:
-        database = directory(f'{database_path}/{config["analysis_settings"]["Clostridioides_difficile_db"]["database"]}/Toxin')
+        database = directory("%s/%s/Toxin" % (database_path, config["analysis_settings"]["Clostridioides_difficile_db"]["database"]))
     params:
         accession_loci = "AM180355.1:tcdA,tcdB,tcdC AF271719.1:cdtA,cdtB",
         db_toxin = "Cdiff_Toxin"
     log:
-        stdout = f'Logs/Databases/setup_CdiffToxin.log'
+        stdout = 'Logs/Databases/setup_CdiffToxin.log'
     message:
         "[setup_CdiffToxin]: Setting up C. difficile toxin database"
     shell:
@@ -118,7 +118,7 @@ TR_repeat_sequences_str = " ".join(repeat_list)
 TR_repeat_types_str = " ".join(repeat_list + combo_list)
 
 trst_output_repeat_fa = expand(
-    f'{database_path}/{config["analysis_settings"]["Clostridioides_difficile_db"]["database"]}/TRST/{{repeat}}_repeat_sequences.fa',
+    "%s/%s/TRST/{repeat}_repeat_sequences.fa" % (database_path, config["analysis_settings"]["Clostridioides_difficile_db"]["database"]),
     repeat=repeat_list
 )
 
@@ -126,13 +126,13 @@ rule setup_CdiffTRST:
     conda:
         config["analysis_settings"]["Clostridioides_difficile_db"]["yaml"]
     output:
-        database = directory(f'{database_path}/{config["analysis_settings"]["Clostridioides_difficile_db"]["database"]}/TRST'),
+        database = directory("%s/%s/TRST" % (database_path, config["analysis_settings"]["Clostridioides_difficile_db"]["database"])),
         repeat_fa = trst_output_repeat_fa
     params:
         TR_repeat_sequences = TR_repeat_sequences_str,
         TR_repeat_types = TR_repeat_types_str,
     log:
-        stdout = f'Logs/Databases/setup_CdiffTRST.log'
+        stdout = 'Logs/Databases/setup_CdiffTRST.log'
     message:
         "[setup_CdiffTRST]: Downloading TRST repeat sequences and types"
     shell:
@@ -161,9 +161,9 @@ rule setup_PlasmidFinder:
     conda:
         config["analysis_settings"]["plasmidfinder"]["yaml"]
     output: 
-        database = directory(f'{database_path}/{config["analysis_settings"]["plasmidfinder"]["database"]}')
+        database = directory("%s/%s" % (database_path, config["analysis_settings"]["plasmidfinder"]["database"]))
     log:
-        stdout = f'Logs/Databases/setup_PlasmidFinder.log'
+        stdout = 'Logs/Databases/setup_PlasmidFinder.log'
     message:
         "[setup_PlasmidFinder]: Setting up PlasmidFinder database"
     shell:
@@ -178,9 +178,9 @@ rule setup_ResFinder:
     conda:
         config["analysis_settings"]["resfinder"]["yaml"]
     output:
-        database = directory(f'{database_path}/{config["analysis_settings"]["resfinder"]["database"]}')
+        database = directory("%s/%s" % (database_path, config["analysis_settings"]["resfinder"]["database"]))
     log:
-        stdout = f'Logs/Databases/setup_ResFinder.log'
+        stdout = 'Logs/Databases/setup_ResFinder.log'
     message:
         "[setup_ResFinder]: Setting up ResFinder database"
     shell:
@@ -195,9 +195,9 @@ rule setup_PointFinder:
     conda:
         config["analysis_settings"]["resfinder"]["yaml"]
     output:
-        database = directory(f'{database_path}/{config["analysis_settings"]["pointfinder"]["database"]}')
+        database = directory("%s/%s" % (database_path, config["analysis_settings"]["pointfinder"]["database"]))
     log:
-        stdout = f'Logs/Databases/setup_PointFinder.log'
+        stdout = 'Logs/Databases/setup_PointFinder.log'
     message:
         "[setup_PointFinder]: Setting up PointFinder database"
     shell:
@@ -211,9 +211,9 @@ rule setup_DisinFinder:
     conda:
         config["analysis_settings"]["resfinder"]["yaml"]
     output:
-        database = directory(f'{database_path}/{config["analysis_settings"]["disinfinder"]["database"]}')
+        database = directory("%s/%s" % (database_path, config["analysis_settings"]["disinfinder"]["database"]))
     log:
-        stdout = f'Logs/Databases/setup_DisinFinder.log'
+        stdout = 'Logs/Databases/setup_DisinFinder.log'
     message:
         "[setup_DisinFinder]: Setting up DisinFinder database"
     shell:
@@ -228,9 +228,9 @@ rule setup_VirulenceFinder:
     conda:
         config["analysis_settings"]["virulencefinder"]["yaml"]
     output:
-        database = directory(f'{database_path}/{config["analysis_settings"]["virulencefinder"]["database"]}')
+        database = directory("%s/%s" % (database_path, config["analysis_settings"]["virulencefinder"]["database"]))
     log:
-        stdout = f'Logs/Databases/setup_VirulenceFinder.log'
+        stdout = 'Logs/Databases/setup_VirulenceFinder.log'
     message:
         "[setup_VirulenceFinder]: Setting up VirulenceFinder database"
     shell:
@@ -245,9 +245,9 @@ rule setup_SerotypeFinder:
     conda:
         config["analysis_settings"]["serotypefinder"]["yaml"]
     output:
-        database = directory(f'{database_path}/{config["analysis_settings"]["serotypefinder"]["database"]}')
+        database = directory("%s/%s" % (database_path, config["analysis_settings"]["serotypefinder"]["database"]))
     log:
-        stdout = f'Logs/Databases/setup_SerotypeFinder.log'
+        stdout = 'Logs/Databases/setup_SerotypeFinder.log'
     message:
         "[setup_SerotypeFinder]: Setting up SerotypeFinder database"
     shell:
@@ -262,9 +262,9 @@ rule setup_AMRFinder:
     conda:
         config["analysis_settings"]["amrfinder"]["yaml"]
     output:
-        database = directory(f'{database_path}/{config["analysis_settings"]["amrfinder"]["database"]}')
+        database = directory("%s/%s" % (database_path, config["analysis_settings"]["amrfinder"]["database"]))
     log:
-        stdout = f'Logs/Databases/setup_AMRFinder.log'
+        stdout = 'Logs/Databases/setup_AMRFinder.log'
     message:
         "[setup_AMRFinder]: Setting up AMRFinderPlus database"
     shell:
@@ -281,9 +281,9 @@ rule update_MLST:
     conda:
         config["analysis_settings"]["mlst"]["yaml"]
     output:
-        datefile = f'{database_path}/mlst/creation.date'
+        datefile = "%s/mlst/creation.date" % database_path
     log:
-        stdout = f'Logs/Databases/update_MLST.log'
+        stdout = 'Logs/Databases/update_MLST.log'
     message:
         "[update_MLST]: Updating MLST databases."
     shell:

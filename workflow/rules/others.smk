@@ -6,16 +6,16 @@ rule kmeraligner:
     input:
         R1 = lambda wc: sample_to_illumina[wc.sample][0],
         R2 = lambda wc: sample_to_illumina[wc.sample][1],
-        db_index = lambda wc: f"Logs/Databases/{species_configs[sample_to_organism[wc.sample]]["alignment_database"]["kmeraligner"]["kma_index_flag"]}.kma_index.done",
-        db_dir = lambda wc: f"{getattr(rules, species_configs[sample_to_organism[wc.sample]]["alignment_database"]["kmeraligner"]["db"]).output.database}",
+        db_index = lambda wc: "Logs/Databases/%s.kma_index.done" % species_configs[sample_to_organism[wc.sample]]['alignment_database']['kmeraligner']['kma_index_flag'],
+        db_dir = lambda wc: "%s" % getattr(rules, species_configs[sample_to_organism[wc.sample]]['alignment_database']['kmeraligner']['db']).output.database
     params:
         add_opt = lambda wc: species_configs[sample_to_organism[wc.sample]]["analyses_to_run"]["kmeraligner"]["additional_option"],
-        prefix = lambda wc: f"{OUT_FOLDER}/{wc.sample}/kmeraligner/{wc.sample}",
+        prefix = lambda wc: "%s/%s/kmeraligner/%s" % (OUT_FOLDER, wc.sample, wc.sample),
         db_prefix = lambda wc: species_configs[sample_to_organism[wc.sample]]["alignment_database"]["kmeraligner"]["kma_db_prefix"]
     output:
-        res = f"{OUT_FOLDER}" + "/{sample}/kmeraligner/{sample}.res",
-        fsa = f"{OUT_FOLDER}" + "/{sample}/kmeraligner/{sample}.fsa",
-        sam = f"{OUT_FOLDER}" + "/{sample}/kmeraligner/{sample}.sam",
+        res = "%s/{sample}/kmeraligner/{sample}.res" % OUT_FOLDER,
+        fsa = "%s/{sample}/kmeraligner/{sample}.fsa" % OUT_FOLDER,
+        sam = "%s/{sample}/kmeraligner/{sample}.sam" % OUT_FOLDER,
     conda:
         config["analysis_settings"]["KMA"]["yaml"]
     log:
@@ -38,14 +38,14 @@ rule KMA_filter:
             OUT_FOLDER,
             wildcards.sample,
             species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["KMA_filter"]["input_folder"],
-            f"{wildcards.sample}.res"
+            "%s.res" % wildcards.sample
         )
     output:
-        filtered_tsv = f"{OUT_FOLDER}" + "/{sample}/KMA_results/{sample}_KMA.tsv"
+        filtered_tsv = "%s/{sample}/KMA_results/{sample}_KMA.tsv" % OUT_FOLDER,
     params:
         add_opt = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["KMA_filter"]["additional_option"],
-        log_dir = lambda wildcards: f"{OUT_FOLDER}/{wildcards.sample}/KMA_results/",
-        id = lambda wildcards: f"{wildcards.sample}",
+        log_dir = lambda wildcards: "%s/%s/KMA_results/" % (OUT_FOLDER, wildcards.sample),
+        id = lambda wildcards: "%s" % wildcards.sample
     conda:
         config["analysis_settings"]["KMA_filter"]["yaml"]
     log:
@@ -190,8 +190,8 @@ rule bcftools_mpileup:
     input:
         bam = rules.samtools_sort.output.sorted_bam,
         bai = rules.samtools_index.output.bai,
-        db_index = lambda wc: f"Logs/Databases/{species_configs[sample_to_organism[wc.sample]]['alignment_database']['kmeraligner']['fa_idx_flag']}.fa_idx.done",
-        db_dir = lambda wc: f"{getattr(rules, species_configs[sample_to_organism[wc.sample]]['alignment_database']['kmeraligner']['db']).output.database}",
+        db_index = lambda wc: "Logs/Databases/%s.fa_idx.done" % species_configs[sample_to_organism[wc.sample]]['alignment_database']['kmeraligner']['fa_idx_flag'],
+        db_dir = lambda wc: "%s" % getattr(rules, species_configs[sample_to_organism[wc.sample]]['alignment_database']['kmeraligner']['db']).output.database
     params:
         db_prefix = lambda wc: species_configs[sample_to_organism[wc.sample]]["alignment_database"]['kmeraligner']["kma_db_prefix"]
     output:
@@ -259,16 +259,16 @@ rule Variant_identifier:
             OUT_FOLDER,
             wildcards.sample,
             species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["KMA_filter"]["input_folder"],
-            f"{wildcards.sample}.res"
+            "%s.res" % wildcards.sample
         ),
         kma_fsa = lambda wildcards: os.path.join(
             OUT_FOLDER,
             wildcards.sample,
             species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["KMA_filter"]["input_folder"],
-            f"{wildcards.sample}.fsa"
+            "%s.fsa" % wildcards.sample
         ),
         add_opt = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Variant_detection"]["additional_option"],
-        log_dir = lambda wildcards: f"{OUT_FOLDER}/{wildcards.sample}/GenotypeCalls/",
+        log_dir = lambda wildcards: "%s/%s/GenotypeCalls/" % (OUT_FOLDER, wildcards.sample),
         id = lambda wildcards: wildcards.sample,
         region_buffer = 5,
         overlap = 0.3,
@@ -340,13 +340,13 @@ rule Repeat_Identifier:
             wildcards.assembler,
             {
                 "spades": "contigs.fasta",
-                "skesa": f"{wildcards.sample}.contigs.fasta"
+                "skesa": "%s.contigs.fasta" % wildcards.sample
             }[wildcards.assembler]
         ),
         repeat_fa = lambda wildcards: [
             os.path.join(
                 species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Repeat_identifier"]["database"],
-                f"{repeats}_repeat_sequences.fa"
+                "%s_repeat_sequences.fa" % repeats
             )
             for repeats in species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Repeat_identifier"]["repeats"].split()
         ]
@@ -357,7 +357,7 @@ rule Repeat_Identifier:
         database = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Repeat_identifier"]["database"],
         combo_table = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Repeat_identifier"]["combos"], 
         out_dir = "%s/{sample}/Repeat_identifier" %OUT_FOLDER,
-        sample_id = lambda wildcards: f"{wildcards.sample}",
+        sample_id = lambda wildcards: "%s" % wildcards.sample
     conda:
         config["analysis_settings"]["Repeat_identifier"]["yaml"]
     log:
