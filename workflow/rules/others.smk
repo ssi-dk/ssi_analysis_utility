@@ -190,10 +190,10 @@ rule bcftools_mpileup:
     input:
         bam = rules.samtools_sort.output.sorted_bam,
         bai = rules.samtools_index.output.bai,
-        db_index = lambda wc: f"Logs/Databases/{species_configs[sample_to_organism[wc.sample]]['alignment_database']['fa_idx_flag']}.fa_idx.done",
-        db_dir = lambda wc: f"{getattr(rules, species_configs[sample_to_organism[wc.sample]]['alignment_database']['db']).output.database}",
+        db_index = lambda wc: f"Logs/Databases/{species_configs[sample_to_organism[wc.sample]]['alignment_database']['kmeraligner']['fa_idx_flag']}.fa_idx.done",
+        db_dir = lambda wc: f"{getattr(rules, species_configs[sample_to_organism[wc.sample]]['alignment_database']['kmeraligner']['db']).output.database}",
     params:
-        db_prefix = lambda wc: species_configs[sample_to_organism[wc.sample]]["alignment_database"]["kma_db_prefix"]
+        db_prefix = lambda wc: species_configs[sample_to_organism[wc.sample]]["alignment_database"]['kmeraligner']["kma_db_prefix"]
     output:
         mpileup = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.mpileup.bcf"
     conda:
