@@ -163,7 +163,7 @@ rule LREFinder:
     conda:
         config["analysis_settings"]["LRE-finder"]["yaml"]
     output:
-        directory("OUT_FOLDER/{sample}/lre-finder/")
+        directory(f"{OUT_FOLDER}/{{sample}}/lre-finder/")
     shell:
         """
         # Check if the output directory exists, and skip if it does.

@@ -37,13 +37,11 @@ alignment_database:
 analyses_to_run: 
 
     kmeraligner:
-        status : True
         Title : Kmer Aligner on two pair reads
         ID: 90
         additional_option :  -nc -ref_fsa -nf -sam 4
 
     KMA_filter:
-        status : True
         Title : Kmer Aligner for Escherichia coli OH and stx typing
         ID: 92
         input_folder: kmeraligner
@@ -60,116 +58,58 @@ analyses_to_run:
             ehxA: [90, 90, 10]
             other: [98, 98, 10]
 
-    emm_typing: 
-        status : False
-        Title: Typing of M protein gene using blast against CDC curated alleles
-        cov_threshold: 90
-        emm_allele_file: resources/emm_typing/emm_alleles.fasta  # Fasta file with emm alleles
-        emm_cluster_file: resources/emm_typing/emm_enn_mrp_subgroups.txt  # File with emm allele clusters
-        
-    assembly_lineage_determination: 
-        status : False
-        Title: Lineage determination based on presence of specified SNPs when mapping genome assembly against reference genome
-        percent_snp_threshold: 50
-        nucmerargs : "\"\""
-        deltafilterargs : "\"-q -r -o 100\""
-        reference_fasta_file: resources/lineage_determination/MGAS5005.fasta
-        lineage_variant_file: resources/lineage_determination/Spyogenes_LOCs.tsv
-        
     virulence_gene_detection: 
-        status : False
         Title: Presence of Streptococcal virulence genes from the Virulence Factor Database
 
     plasmidfinder: 
-        status : False
         Title : Plasmidfinder
         database: resources/plasmidfinder_db/  # Path to PlasmidFinder database
 
     resfinder: 
-        status : False 
         Title : Resfinder
         resfinder_db: resources/resfinder_db/ # ResFinder database for AMR detection
         pointfinder_db: resources/pointfinder_db/  # PointFinder database for AMR point mutations
         disinfinder_db: resources/disinfinder_db/  # DisinFinder database for disinfectant resistance
 
     virulencefinder : 
-        status : False
         Title : Virulence finder
         database: resources/virulencefinder_db  # VirulenceFinder database
 
-    LRE-finder: 
-        status : False
-        Title : LRE-Finder
-        min_consensus_ID : 80
-        additional_option : -1t1 -cge -matrix
-        database: resources/lre-finder_db/elm  # Database for LRE-finder
-
     serotypefinder :
-        status : False
         Title : Serotypefinder
         database: resources/serotypefinder_db/  # SerotypeFinder database
     
     amrfinder:
-        status : False
         Title : NCBI resistance gene finder
         organism: --organism Escherichia # Leave blank or insert --organism alongside one of the supported organisms, listed here: https://github.com/evolarjun/amr/wiki/Curated-organisms
         wrangler: workflow/scripts/AMR_wrangler.py
 
-    mlst:
-        status : False
-        Title : MLST by Torsten Seeman
-
     spades:
-        status : False
-    
+        Title : spades assembly
+
     skesa:
-        status : False
+        Title : skesa assembly
 
-    Repeat_identifier:
-        status : False
-        Title : Repeat identifier
-        ID: 92
-        repeats: TR6 TR10
-        combos: TRST 
-        database: resources/Clostridioides_difficile_db/TRST
 
-    samtools_view:
-        status : False
-        additional_option : -b -q 20 -F 4 
-    
-    samtools_sort:
-        status : False
-        additional_option : -n 
-    
-    samtools_idx:
-        status : False
-
-    bcftools_view_filter:
-        status: False
-        additional_option: -v indels -i 'INFO/DP>10'
-        region: " "
-
-    bcftools_index:
-        status : False
-    
-    bcftools_mpileup:
-        status : False
-    
-    bcftools_call:
-        status : False
-    
-    Variant_detection:
-        status : False
-        Title : Detecting variants for C.diff 
-        ID: 93
-        additional_option : --gene_list tcdC --organism "Clostridioides difficile" --suffix tsv
-        genomic_coord : resources/Clostridioides_difficile_db/Toxin/Cdiff_Toxin.bed6
-        snp_info: #https://pubmed.ncbi.nlm.nih.gov/24374512/
-            snp_117: [117,"A","T","tcdC","-"] # [genomic position within the loci, reference, alternative]
-        deletion_regions:
-            del330_347_18: [330, 347] # [coordinate start within the region, coordinate end within the region , percent N in consensus region]
-        deletion_consensus_thresholds:
-            del330_347_18: [70]
-
-        variant_gt_thresholds:
-            del330_347_18: [0.10,5,10]
+#    emm_typing: 
+#       Title: Typing of M protein gene using blast against CDC curated alleles
+#        cov_threshold: 90
+#        emm_allele_file: resources/emm_typing/emm_alleles.fasta  # Fasta file with emm alleles
+#        emm_cluster_file: resources/emm_typing/emm_enn_mrp_subgroups.txt  # File with emm allele clusters
+#        
+#    assembly_lineage_determination: 
+#        Title: Lineage determination based on presence of specified SNPs when mapping genome assembly against reference genome
+#        percent_snp_threshold: 50
+#        nucmerargs : "\"\""
+#        deltafilterargs : "\"-q -r -o 100\""
+#        reference_fasta_file: resources/lineage_determination/MGAS5005.fasta
+#        lineage_variant_file: resources/lineage_determination/Spyogenes_LOCs.tsv
+#        
+#    mlst:
+#        Title : MLST by Torsten Seeman
+#
+#    LRE-finder: 
+#        Title : LRE-Finder
+#        min_consensus_ID : 80
+#        additional_option : -1t1 -cge -matrix
+#        database: resources/lre-finder_db/elm  # Database for LRE-finder
