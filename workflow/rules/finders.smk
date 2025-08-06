@@ -11,7 +11,7 @@ rule PlasmidFinder:
         db_dir = lambda wc: f"{getattr(rules, species_configs[sample_to_organism[wc.sample]]['alignment_database']['plasmidfinder']['db']).output.database}",
     output:
         # Output directory for plasmidfinder results.
-        out_dir = directory(f"{OUT_FOLDER}" + "/{sample}/PlasmidFinder")
+        out_dir = directory(f"{output_folder}" + "/{sample}/PlasmidFinder")
     conda:
         config["analysis_settings"]["plasmidfinder"]["yaml"]
     log:
@@ -41,7 +41,7 @@ rule ResFinder:
         disin_db_index = lambda wc: f"Logs/Databases/{species_configs[sample_to_organism[wc.sample]]['alignment_database']['disinfinder']['kma_index_flag']}.kma_index.done",
         disin_db_dir = lambda wc: f"{getattr(rules, species_configs[sample_to_organism[wc.sample]]['alignment_database']['disinfinder']['db']).output.database}",
     output:
-        out_dir = directory(f"{OUT_FOLDER}" + "/{sample}/ResFinder")
+        out_dir = directory(f"{output_folder}" + "/{sample}/ResFinder")
     conda:
         config["analysis_settings"]["resfinder"]["yaml"]
     log:
@@ -67,7 +67,7 @@ rule VirulenceFinder:
         vir_db_index = lambda wc: f"Logs/Databases/{species_configs[sample_to_organism[wc.sample]]['alignment_database']['virulencefinder']['kma_index_flag']}.kma_index.done",
         vir_db_dir = lambda wc: f"{getattr(rules, species_configs[sample_to_organism[wc.sample]]['alignment_database']['virulencefinder']['db']).output.database}",
     output:
-        out_dir = directory(f"{OUT_FOLDER}" + "/{sample}/VirulenceFinder")
+        out_dir = directory(f"{output_folder}" + "/{sample}/VirulenceFinder")
     conda:
         config["analysis_settings"]["virulencefinder"]["yaml"]
     log:
@@ -95,7 +95,7 @@ rule serotypefinder:
         ser_db_dir = lambda wc: f"{getattr(rules, species_configs[sample_to_organism[wc.sample]]['alignment_database']['serotypefinder']['db']).output.database}",
         database = rules.setup_SerotypeFinder.output.database
     output:
-        out_dir = directory(f"{OUT_FOLDER}" + "/{sample}/SerotypeFinder")
+        out_dir = directory(f"{output_folder}" + "/{sample}/SerotypeFinder")
     conda:
         config["analysis_settings"]["serotypefinder"]["yaml"]
     log:
@@ -117,7 +117,7 @@ rule serotypefinder:
 rule AMRFinder:
     input:
         assembly = lambda wildcards: os.path.join(
-            OUT_FOLDER,
+            output_folder,
             wildcards.sample,
             wildcards.assembler,
             {
@@ -130,7 +130,7 @@ rule AMRFinder:
         # Point mutation
         organism = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["amrfinder"]["organism"]
     output:
-        result = "%s/{sample}/AMRFinder/AMR_{assembler}_{sample}.tsv" %OUT_FOLDER
+        result = "%s/{sample}/AMRFinder/AMR_{assembler}_{sample}.tsv" %output_folder
     conda:
         config["analysis_settings"]["amrfinder"]["yaml"]
     log:
@@ -159,11 +159,11 @@ rule LREFinder:
         app_path = config["analysis_settings"]["LRE-finder"]["script"],
         min_con_ID = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["LRE-finder"]["min_consensus_ID"],
         add_opt = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["LRE-finder"]["additional_option"],
-        prefix = "OUT_FOLDER/{sample}/lre-finder/{sample}"
+        prefix = "output_folder/{sample}/lre-finder/{sample}"
     conda:
         config["analysis_settings"]["LRE-finder"]["yaml"]
     output:
-        directory(f"{OUT_FOLDER}/{{sample}}/lre-finder/")
+        directory(f"{output_folder}/{{sample}}/lre-finder/")
     shell:
         """
         # Check if the output directory exists, and skip if it does.

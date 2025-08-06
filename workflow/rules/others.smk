@@ -10,12 +10,12 @@ rule kmeraligner:
         db_dir = lambda wc: "%s" % getattr(rules, species_configs[sample_to_organism[wc.sample]]['alignment_database']['kmeraligner']['db']).output.database
     params:
         add_opt = lambda wc: species_configs[sample_to_organism[wc.sample]]["analyses_to_run"]["kmeraligner"]["additional_option"],
-        prefix = lambda wc: "%s/%s/kmeraligner/%s" % (OUT_FOLDER, wc.sample, wc.sample),
+        prefix = lambda wc: "%s/%s/kmeraligner/%s" % (output_folder, wc.sample, wc.sample),
         db_prefix = lambda wc: species_configs[sample_to_organism[wc.sample]]["alignment_database"]["kmeraligner"]["kma_db_prefix"]
     output:
-        res = "%s/{sample}/kmeraligner/{sample}.res" % OUT_FOLDER,
-        fsa = "%s/{sample}/kmeraligner/{sample}.fsa" % OUT_FOLDER,
-        sam = "%s/{sample}/kmeraligner/{sample}.sam" % OUT_FOLDER,
+        res = "%s/{sample}/kmeraligner/{sample}.res" % output_folder,
+        fsa = "%s/{sample}/kmeraligner/{sample}.fsa" % output_folder,
+        sam = "%s/{sample}/kmeraligner/{sample}.sam" % output_folder,
     conda:
         config["analysis_settings"]["KMA"]["yaml"]
     log:
@@ -35,16 +35,16 @@ rule kmeraligner:
 rule KMA_filter:
     input:
         kma_res = lambda wildcards: os.path.join(
-            OUT_FOLDER,
+            output_folder,
             wildcards.sample,
             species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["KMA_filter"]["input_folder"],
             "%s.res" % wildcards.sample
         )
     output:
-        filtered_tsv = "%s/{sample}/KMA_results/{sample}_KMA.tsv" % OUT_FOLDER,
+        filtered_tsv = "%s/{sample}/KMA_results/{sample}_KMA.tsv" % output_folder,
     params:
         add_opt = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["KMA_filter"]["additional_option"],
-        log_dir = lambda wildcards: "%s/%s/KMA_results/" % (OUT_FOLDER, wildcards.sample),
+        log_dir = lambda wildcards: "%s/%s/KMA_results/" % (output_folder, wildcards.sample),
         id = lambda wildcards: "%s" % wildcards.sample
     conda:
         config["analysis_settings"]["KMA_filter"]["yaml"]
@@ -244,44 +244,6 @@ rule bcftools_call:
         """
         bcftools call -mv -Ob --ploidy 1 {input.bcf} -o {output.genotypecall}
         """    
-    
-rule Variant_identifier:
-    input:
-        genotype_call_bcf = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.calls.bcf",
-        indels_only_bcf = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.indels.bcf",
-        genotype_call_csi = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.calls.bcf.csi",
-        indels_only_csi = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.indels.bcf.csi",
-    output:
-        filtered_tsv = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.variants.tsv",
-    params:
-        input_folder = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["KMA_filter"]["input_folder"],
-        kma_res = lambda wildcards: os.path.join(
-            OUT_FOLDER,
-            wildcards.sample,
-            species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["KMA_filter"]["input_folder"],
-            "%s.res" % wildcards.sample
-        ),
-        kma_fsa = lambda wildcards: os.path.join(
-            OUT_FOLDER,
-            wildcards.sample,
-            species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["KMA_filter"]["input_folder"],
-            "%s.fsa" % wildcards.sample
-        ),
-        add_opt = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Variant_detection"]["additional_option"],
-        log_dir = lambda wildcards: "%s/%s/GenotypeCalls/" % (OUT_FOLDER, wildcards.sample),
-        id = lambda wildcards: wildcards.sample,
-        region_buffer = 5,
-        overlap = 0.3,
-    log:
-        stdout = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.Variant_identifier.log"
-    conda:
-        config["analysis_settings"]["Variant_identifier"]["yaml"]
-    message:
-        "[Variant Identification]: Filtering KMA .res, KMA consensus .fsa, genotype calls and indels for {wildcards.sample}"
-    shell:
-        """
-        python workflow/scripts/Variant_identifier.py --sample_id {params.id}  --res {params.kma_res} --fsa {params.kma_fsa} --call {input.genotype_call_bcf} --indels {input.indels_only_bcf} {params.add_opt} -o {output.filtered_tsv} --deletion_region_buffer {params.region_buffer} --partial_overlap {params.overlap}
-        """
 
 # Rule: spades_assembly
 rule spades_assembly:
@@ -289,7 +251,7 @@ rule spades_assembly:
         R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
         R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
     output:
-        contigs = "%s/{sample}/spades/contigs.fasta" %OUT_FOLDER
+        contigs = "%s/{sample}/spades/contigs.fasta" %output_folder
     conda:
         config["analysis_settings"]["spades"]["yaml"]
     log:
@@ -313,7 +275,7 @@ rule skesa_assembly:
         R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
         R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
     output:
-        assembly = "%s/{sample}/skesa/{sample}.contigs.fasta" %OUT_FOLDER
+        assembly = "%s/{sample}/skesa/{sample}.contigs.fasta" %output_folder
     conda:
         config["analysis_settings"]["skesa"]["yaml"]
     log:
@@ -331,42 +293,3 @@ rule skesa_assembly:
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
         """      
-
-rule Repeat_Identifier:
-    input:
-        fasta = lambda wildcards: os.path.join(
-            OUT_FOLDER,
-            wildcards.sample,
-            wildcards.assembler,
-            {
-                "spades": "contigs.fasta",
-                "skesa": "%s.contigs.fasta" % wildcards.sample
-            }[wildcards.assembler]
-        ),
-        repeat_fa = lambda wildcards: [
-            os.path.join(
-                species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Repeat_identifier"]["database"],
-                "%s_repeat_sequences.fa" % repeats
-            )
-            for repeats in species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Repeat_identifier"]["repeats"].split()
-        ]
-    output:
-        result = "%s/{sample}/Repeat_identifier/{assembler}_{sample}_repeat.tsv" %OUT_FOLDER
-    params:
-        repeats = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Repeat_identifier"]["repeats"],
-        database = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Repeat_identifier"]["database"],
-        combo_table = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Repeat_identifier"]["combos"], 
-        out_dir = "%s/{sample}/Repeat_identifier" %OUT_FOLDER,
-        sample_id = lambda wildcards: "%s" % wildcards.sample
-    conda:
-        config["analysis_settings"]["Repeat_identifier"]["yaml"]
-    log:
-        stdout = "%s/{sample}/Repeat_identifier/{assembler}_{sample}_repeat.log" %OUT_FOLDER
-    message:
-        "[Repeat_identifier]: Running repeat analysis for {wildcards.sample} using ({wildcards.assembler}) contigs"
-    shell:
-        """
-        mkdir -p {params.out_dir}
-
-        python workflow/scripts/Repeat_Identifier.py --sample_id {params.sample_id} --fasta {input.fasta} --repeats {params.repeats} --combos {params.combo_table} --db_dir {params.database} --output {output.result} --suffix tsv > {log.stdout} 2>&1
-        """

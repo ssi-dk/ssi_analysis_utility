@@ -5,8 +5,8 @@ rule MLST:
         assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample],
         datefile = rules.update_MLST.output.datefile
     output:
-        # mlst_file = "%s/{sample}/MLST/{sample}.tsv" %OUT_FOLDER
-        directory("%s/{sample}/MLST" %OUT_FOLDER)
+        # mlst_file = "%s/{sample}/MLST/{sample}.tsv" %output_folder
+        directory("%s/{sample}/MLST" %output_folder)
     conda:
         config["analysis_settings"]["mlst"]["yaml"]
     log:
