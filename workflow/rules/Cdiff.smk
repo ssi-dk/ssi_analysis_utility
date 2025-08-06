@@ -35,7 +35,19 @@ rule Variant_identifier:
         "[Variant Identification]: Filtering KMA .res, KMA consensus .fsa, genotype calls and indels for {wildcards.sample}"
     shell:
         """
-        python workflow/scripts/Variant_identifier.py --sample_id {params.id}  --res {params.kma_res} --fsa {params.kma_fsa} --call {input.genotype_call_bcf} --indels {input.indels_only_bcf} {params.add_opt} -o {output.filtered_tsv} --deletion_region_buffer {params.region_buffer} --partial_overlap {params.overlap}
+        cmd="python workflow/scripts/Variant_identifier.py \
+            --sample_id {params.id} \
+            --res {params.kma_res} \
+            --fsa {params.kma_fsa} \
+            --call {input.genotype_call_bcf} \
+            --indels {input.indels_only_bcf} \
+            {params.add_opt} \
+            -o {output.filtered_tsv} \
+            --deletion_region_buffer {params.region_buffer} \
+            --partial_overlap {params.overlap}"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout}
+        eval $cmd >> {log.stdout} 2>&1
         """
 
 rule Repeat_Identifier:
@@ -74,5 +86,15 @@ rule Repeat_Identifier:
         """
         mkdir -p {params.out_dir}
 
-        python workflow/scripts/Repeat_Identifier.py --sample_id {params.sample_id} --fasta {input.fasta} --repeats {params.repeats} --combos {params.combo_table} --db_dir {params.database} --output {output.result} --suffix tsv > {log.stdout} 2>&1
+        cmd="python workflow/scripts/Repeat_Identifier.py \
+            --sample_id {params.sample_id} \
+            --fasta {input.fasta} \
+            --repeats {params.repeats} \
+            --combos {params.combo_table} \
+            --db_dir {params.database} \
+            --output {output.result} \
+            --suffix tsv"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout}
+        eval $cmd >> {log.stdout} 2>&1
         """

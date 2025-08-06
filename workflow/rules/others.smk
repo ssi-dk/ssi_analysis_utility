@@ -56,7 +56,10 @@ rule KMA_filter:
         """
         mkdir -p $(dirname {output.filtered_tsv})
 
-        python workflow/scripts/KMAfilter.py --KMA_res {input.kma_res} --sample_id {params.id} --output {output.filtered_tsv} {params.add_opt} --log_dir {params.log_dir} > {log.stdout} 2>&1
+        cmd="python workflow/scripts/KMAfilter.py --KMA_res {input.kma_res} --sample_id {params.id} --output {output.filtered_tsv} {params.add_opt} --log_dir {params.log_dir}"      
+        
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
         """
 
 # Rule for emm typing using BLAST
@@ -73,6 +76,10 @@ rule emm_typing:
         directory("{out}/{sample}/emm_typing/")
     conda:
         config["analysis_settings"]["emm_typing"]["yaml"]
+    log:
+        stdout = "Logs/{sample}/emm_typing/{sample}_emm_typing.log"
+    message:
+        "[emm_typing]: emm_typing result for {wildcards.sample}"
     shell:
         """
         # Check if the output directory exists, skip execution if it does
@@ -85,11 +92,10 @@ rule emm_typing:
         fi
 
         # Run BLAST for emm typing with specified input and output options
-        blastn -query {input.emm_allele_files} \
-               -subject {input.assembly} \
-               -qcov_hsp_perc {params.cov_per} \
-               -out {output}/blast_output.tsv \
-               -outfmt '6 qseqid sseqid pident length qlen qstart qend sstart send sseq evalue bitscore'
+        cmd="blastn -query {input.emm_allele_files} -subject {input.assembly} -qcov_hsp_perc {params.cov_per} -out {output}/blast_output.tsv -outfmt '6 qseqid sseqid pident length qlen qstart qend sstart send sseq evalue bitscore'"
+
+        echo "Executing command:\n$cmd\n" >> {log.stdout}
+        eval $cmd >> {log.stdout} 2>&1
         """
 
 # Rule for determining assembly lineage using nucmer and delta files
@@ -111,18 +117,20 @@ rule assembly_lineage_determination:
         deltafilterargs= lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["assembly_lineage_determination"]["deltafilterargs"]
     conda: 
         config["analysis_settings"]["assembly_lineage_determination"]["yaml"]
+    log:
+        stdout = "Logs/{sample}/assembly_lineage/{sample}_assembly_lineage.log"
+    message:
+        "[assembly_lineage_determination]: determine the assembly lineage for {wildcards.sample}"
     shell:
-        """ 
+        """
+
         nucmer_path=$(which nucmer)
         deltafilder_path=$(which delta-filter)
-        python {params.app_path}/convert_external_genome.py --nucmerpath $nucmer_path \
-                                                            --nucmerargs {params.nucmerargs} \
-                                                            --deltafilterpath $deltafilder_path \
-                                                            --deltafilterargs {params.deltafilterargs} \
-                                                            --reference {input.reference} \
-                                                            --external {input.assembly} \
-                                                            --name {params.name} \
-                                                            --outputdir {output} \
+
+        cmd="python {params.app_path}/convert_external_genome.py --nucmerpath $nucmer_path --nucmerargs {params.nucmerargs} --deltafilterpath $deltafilder_path --deltafilterargs {params.deltafilterargs} --reference {input.reference} --external {input.assembly} --name {params.name} --outputdir {output}"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout}
+        eval $cmd >> {log.stdout} 2>&1
         """
 
 rule samtools_index:
@@ -134,10 +142,14 @@ rule samtools_index:
         config["analysis_settings"]["htslib"]["yaml"]
     message:
         "[samtools_index]: Indexing {input.bam} -> {output.bai}"
+    log:
+        stdout = "Logs/{sample}/FilteredBAM/{sample}.{tool}.samtools_index.log"
     shell:
         """
-        echo "Indexing {input.bam} -> {output.bai}"
-        samtools index {input.bam}
+        cmd="samtools index {input.bam}"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout}
+        eval $cmd >> {log.stdout} 2>&1
         """
 
 rule samtools_view:
@@ -151,10 +163,14 @@ rule samtools_view:
         config["analysis_settings"]["htslib"]["yaml"]
     message:
         "[samtools_view]: Filtering {input.sam} to {output.filtered_bam}"
+    log:
+        stdout = "Logs/{sample}/FilteredBAM/{sample}.{tool}.samtools_view.log"
     shell:
         """
-        echo "Filtering {input.sam} -> {output.filtered_bam}"
-        samtools view {params.add_opt} {input.sam} -o {output.filtered_bam}
+        cmd="samtools view {params.add_opt} {input.sam} -o {output.filtered_bam}"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout}
+        eval $cmd >> {log.stdout} 2>&1
         """
 
 rule samtools_sort:
@@ -166,10 +182,14 @@ rule samtools_sort:
         config["analysis_settings"]["htslib"]["yaml"]
     message:
         "[samtools_sort]: Sorting {input.bam} -> {output.sorted_bam}"
+    log:
+        stdout = "Logs/{sample}/FilteredBAM/{sample}.{tool}.samtools_sort.log"
     shell:
         """
-        echo "Sorting {input.bam} -> {output.sorted_bam}"
-        samtools sort -o {output.sorted_bam} {input.bam}
+        cmd="samtools sort -o {output.sorted_bam} {input.bam}"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout}
+        eval $cmd >> {log.stdout} 2>&1
         """
 
 rule bcftools_index:
@@ -181,11 +201,16 @@ rule bcftools_index:
         config["analysis_settings"]["htslib"]["yaml"]
     message:
         "[bcftools_index]: Indexing {input.bcf} -> {output.csi}"
+    log:
+        stdout = "Logs/{sample}/GenotypeCalls/{sample}.{tool}.{tag}.bcftools_index.log"
     shell:
         """
-        echo "Indexing {input.bcf} -> {output.csi}"
-        bcftools index -f {input.bcf}
+        cmd="bcftools index -f {input.bcf}"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout}
+        eval $cmd >> {log.stdout} 2>&1
         """
+
 rule bcftools_mpileup:
     input:
         bam = rules.samtools_sort.output.sorted_bam,
@@ -200,11 +225,16 @@ rule bcftools_mpileup:
         config["analysis_settings"]["htslib"]["yaml"]
     message:
         "[bcftools_mpileup]: Generating mpileup {input.bam} -> {output.mpileup}"
+    log:
+        stdout = "Logs/{sample}/GenotypeCalls/{sample}.{tool}.bcftools_mpileup.log"
     shell:
         """
-        bcftools mpileup -Ob -f {input.db_dir}/{params.db_prefix}.fasta {input.bam} -o {output.mpileup}
+        cmd="bcftools mpileup -Ob -f {input.db_dir}/{params.db_prefix}.fasta {input.bam} -o {output.mpileup}"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout}
+        eval $cmd >> {log.stdout} 2>&1
         """
-        
+
 # Rule: bcftools_view_filter
 rule bcftools_view_filter:
     input:
@@ -223,7 +253,6 @@ rule bcftools_view_filter:
         "[bcftools_view_filter]: Filtering the mpileup from {input.bcf}",
     shell:
         """
-
         cmd="bcftools view -r {params.region} {params.add_opt} -Ob -o {output.indels_only} {input.bcf}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
@@ -240,9 +269,14 @@ rule bcftools_call:
         config["analysis_settings"]["htslib"]["yaml"]
     message:
         "[bcftools_call]: Calling genotypes from {input.bcf} -> {output.genotypecall}"
+    log:
+        stdout = "Logs/{sample}/GenotypeCalls/{sample}.{tool}.bcftools_call.log"
     shell:
         """
-        bcftools call -mv -Ob --ploidy 1 {input.bcf} -o {output.genotypecall}
+        cmd="bcftools call -mv -Ob --ploidy 1 {input.bcf} -o {output.genotypecall}"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout}
+        eval $cmd >> {log.stdout} 2>&1
         """    
 
 # Rule: spades_assembly

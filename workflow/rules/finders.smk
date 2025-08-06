@@ -176,5 +176,8 @@ rule LREFinder:
         fi 
         
         # Run LRE-Finder with the specified parameters and inputs.
-        python {params.app_path}/LRE-Finder.py -ipe {input.R1} {input.R2} -o {params.prefix} -t_db {params.db_path} -ID {params.min_con_ID} {params.add_opt} 
+        cmd="python {params.app_path}/LRE-Finder.py -ipe {input.R1} {input.R2} -o {params.prefix} -t_db {params.db_path} -ID {params.min_con_ID} {params.add_opt}"
+
+        echo "Executing command:\n$cmd\n" >> {log.stdout}
+        eval $cmd >> {log.stdout} 2>&1
         """

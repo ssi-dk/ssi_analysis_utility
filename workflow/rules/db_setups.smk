@@ -16,14 +16,16 @@ rule kma_index_directory:
     shell:
         r"""
         mkdir -p {input.fasta_dir}
+        touch {output.flag}
 
-        for fasta in $(find {input.fasta_dir} -maxdepth 1 -type f \( -name "*.fa" -o -name "*.fsa" -o -name "*.fasta" \)); do
+        for fasta in $(find {input.fasta_dir} -maxdepth 1 -type f \( -name "*.fa" -o -name "*.fsa" -o -name "*.fasta" -o -name "*.fna" \)); do
             prefix="${{fasta%.*}}"
             echo "Indexing $fasta -> $prefix"
-            kma index -i "$fasta" -o "$prefix"
+            cmd="kma index -i $fasta -o $prefix"
+            echo "Executing command:\n$cmd\n" >> {output.flag} 
+            eval $cmd >> {output.flag} 2>&1
+            date -I >> {output.flag}
         done
-
-        touch {output.flag}
         """
 
 rule samtools_faidx_directory:
@@ -40,7 +42,7 @@ rule samtools_faidx_directory:
         mkdir -p {input.fasta_dir}
         touch {output.flag}
     
-        for fasta in $(find {input.fasta_dir} -maxdepth 1 -type f \( -name "*.fa" -o -name "*.fsa" -o -name "*.fasta" \)); do
+        for fasta in $(find {input.fasta_dir} -maxdepth 1 -type f \( -name "*.fa" -o -name "*.fsa" -o -name "*.fasta" -o -name "*.fna" \)); do
             prefix="${{fasta%.*}}"
             echo "Indexing $fasta -> $prefix"
             cmd="samtools faidx $fasta"
@@ -155,6 +157,8 @@ rule setup_CdiffTRST:
             echo "Executing command:\n$cmd\n" >> {log.stdout}
             eval $cmd >> {log.stdout} 2>&1
         done
+
+        date -I > {output.database}/creation.date
         """
 
 rule setup_PlasmidFinder:
@@ -168,11 +172,13 @@ rule setup_PlasmidFinder:
         "[setup_PlasmidFinder]: Setting up PlasmidFinder database"
     shell:
         """
-        git clone https://bitbucket.org/genomicepidemiology/plasmidfinder_db.git {output.database} > {log.stdout} 2>&1
+        cmd="git clone https://bitbucket.org/genomicepidemiology/plasmidfinder_db.git {output.database}"
         
+        echo "Executing command:\n$cmd\n" > {log.stdout}
+        eval $cmd >> {log.stdout} 2>&1
+
         date -I > {output.database}/creation.date
         """
-
 
 rule setup_ResFinder:
     conda:
@@ -185,11 +191,13 @@ rule setup_ResFinder:
         "[setup_ResFinder]: Setting up ResFinder database"
     shell:
         """
-        git clone https://bitbucket.org/genomicepidemiology/resfinder_db.git {output.database} > {log.stdout} 2>&1
+        cmd="git clone https://bitbucket.org/genomicepidemiology/resfinder_db.git {output.database}"
         
+        echo "Executing command:\n$cmd\n" > {log.stdout}
+        eval $cmd >> {log.stdout} 2>&1
+
         date -I > {output.database}/creation.date
         """
-
 
 rule setup_PointFinder:
     conda:
@@ -202,8 +210,11 @@ rule setup_PointFinder:
         "[setup_PointFinder]: Setting up PointFinder database"
     shell:
         """
-        git clone https://bitbucket.org/genomicepidemiology/pointfinder_db.git {output.database} > {log.stdout} 2>&1
-
+        cmd="git clone https://bitbucket.org/genomicepidemiology/pointfinder_db.git {output.database}"
+        
+        echo "Executing command:\n$cmd\n" > {log.stdout}
+        eval $cmd >> {log.stdout} 2>&1
+        
         date -I > {output.database}/creation.date
         """
 
@@ -218,11 +229,13 @@ rule setup_DisinFinder:
         "[setup_DisinFinder]: Setting up DisinFinder database"
     shell:
         """
-        git clone https://bitbucket.org/genomicepidemiology/disinfinder_db.git {output.database} > {log.stdout} 2>&1
-
+        cmd="git clone https://bitbucket.org/genomicepidemiology/disinfinder_db.git {output.database}"
+        
+        echo "Executing command:\n$cmd\n" > {log.stdout}
+        eval $cmd >> {log.stdout} 2>&1
+        
         date -I > {output.database}/creation.date
         """
-
 
 rule setup_VirulenceFinder:
     conda:
@@ -235,11 +248,13 @@ rule setup_VirulenceFinder:
         "[setup_VirulenceFinder]: Setting up VirulenceFinder database"
     shell:
         """
-        git clone https://bitbucket.org/genomicepidemiology/virulencefinder_db.git {output.database} > {log.stdout} 2>&1
-       
+        cmd="git clone https://bitbucket.org/genomicepidemiology/virulencefinder_db.git {output.database}"
+        
+        echo "Executing command:\n$cmd\n" > {log.stdout}
+        eval $cmd >> {log.stdout} 2>&1
+        
         date -I > {output.database}/creation.date
         """
-
 
 rule setup_SerotypeFinder:
     conda:
@@ -252,11 +267,13 @@ rule setup_SerotypeFinder:
         "[setup_SerotypeFinder]: Setting up SerotypeFinder database"
     shell:
         """
-        git clone https://bitbucket.org/genomicepidemiology/serotypefinder_db.git {output.database} > {log.stdout} 2>&1
-
+        cmd="git clone https://bitbucket.org/genomicepidemiology/serotypefinder_db.git {output.database}"
+        
+        echo "Executing command:\n$cmd\n" > {log.stdout}
+        eval $cmd >> {log.stdout} 2>&1
+        
         date -I > {output.database}/creation.date
         """
-
 
 rule setup_AMRFinder:
     conda:
@@ -291,8 +308,16 @@ rule update_MLST:
         DIR=$(which mlst)
         MLSTDIR="$DIR/../../db/pubmlst"
 
-        mlst-download_pub_mlst -d $MLSTDIR  > {log.stdout} 2>&1
-        mlst-make_blast_db >> {log.stdout} 2>&1 && date -I > {output.datefile}
+        cmd1="mlst-download_pub_mlst -d $MLSTDIR"
+        cmd2="mlst-make_blast_db"
+
+        echo "Executing command:\n$cmd1\n" > {log.stdout}
+        eval $cmd1 >> {log.stdout} 2>&1
+
+        echo "Executing command:\n$cmd2\n" >> {log.stdout}
+        eval $cmd2 >> {log.stdout} 2>&1
+
+        date -I > {output.datefile}
         """
 
 rule setup_all_databases:
