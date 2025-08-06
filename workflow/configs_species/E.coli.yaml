@@ -6,58 +6,58 @@
 analyses_to_run: 
 
     kmeraligner:
-        status : True
+        
         Title : Kmer Aligner on two pair reads
         ID: 90
         additional_option : -matrix 
         database : resources/plasmidfinder_db/enterobacteriales
 
-    emm_typing: 
-        status : False
-        Title: Typing of M protein gene using blast against CDC curated alleles
-        cov_threshold: 90
-        emm_allele_file: resources/emm_typing/emm_alleles.fasta  # Fasta file with emm alleles
-        emm_cluster_file: resources/emm_typing/emm_enn_mrp_subgroups.txt  # File with emm allele clusters
+    # emm_typing: 
+    #     status : False
+    #     Title: Typing of M protein gene using blast against CDC curated alleles
+    #     cov_threshold: 90
+    #     emm_allele_file: resources/emm_typing/emm_alleles.fasta  # Fasta file with emm alleles
+    #     emm_cluster_file: resources/emm_typing/emm_enn_mrp_subgroups.txt  # File with emm allele clusters
         
-    assembly_lineage_determination: 
-        status : False
-        Title: Lineage determination based on presence of specified SNPs when mapping genome assembly against reference genome
-        percent_snp_threshold: 50
-        nucmerargs : "\"\""
-        deltafilterargs : "\"-q -r -o 100\""
-        reference_fasta_file: resources/lineage_determination/MGAS5005.fasta
-        lineage_variant_file: resources/lineage_determination/Spyogenes_LOCs.tsv
+    # assembly_lineage_determination: 
+    #     status : False
+    #     Title: Lineage determination based on presence of specified SNPs when mapping genome assembly against reference genome
+    #     percent_snp_threshold: 50
+    #     nucmerargs : "\"\""
+    #     deltafilterargs : "\"-q -r -o 100\""
+    #     reference_fasta_file: resources/lineage_determination/MGAS5005.fasta
+    #     lineage_variant_file: resources/lineage_determination/Spyogenes_LOCs.tsv
         
     # virulence_gene_detection: 
     #     status : False
     #     Title: Presence of Streptococcal virulence genes from the Virulence Factor Database
 
     plasmidfinder: 
-        status : True
+        
         Title : Plasmidfinder
         database: resources/plasmidfinder_db/  # Path to PlasmidFinder database
 
     resfinder: 
-        status : True 
+         
         Title : Resfinder
         resfinder_db: resources/resfinder_db/ # ResFinder database for AMR detection
         pointfinder_db: resources/pointfinder_db/  # PointFinder database for AMR point mutations
         disinfinder_db: resources/disinfinder_db/  # DisinFinder database for disinfectant resistance
 
     virulencefinder : 
-        status : True
+        
         Title : Virulence finder
         database: resources/virulencefinder_db  # VirulenceFinder database
 
-    LRE-finder: 
-        status : False
-        Title : LRE-Finder
-        min_consensus_ID : 80
-        additional_option : -1t1 -cge -matrix
-        database: resources/lre-finder_db/elm  # Database for LRE-finder
+    # LRE-finder: 
+    #     status : False
+    #     Title : LRE-Finder
+    #     min_consensus_ID : 80
+    #     additional_option : -1t1 -cge -matrix
+    #     database: resources/lre-finder_db/elm  # Database for LRE-finder
 
     serotypefinder :
-        status : True
+        
         Title : Serotypefinder
         database: resources/serotypefinder_db/  # SerotypeFinder database
     
@@ -80,10 +80,10 @@ analyses_to_run:
     #     database: resources/cgmlstfinder_db/  # cgMLSTFinder database
 
     amrfinder:
-        status : True
+        
         Title : NCBI resistance gene finder
         organism: --organism Escherichia # Leave blank or insert --organism alongside one of the supported organisms, listed here: https://github.com/evolarjun/amr/wiki/Curated-organisms
 
     mlst:
-        status : True
+        
         Title : MLST by Torsten Seeman
