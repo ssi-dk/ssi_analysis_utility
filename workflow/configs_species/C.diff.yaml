@@ -40,6 +40,7 @@ analyses_to_run:
         Title : Kmer Aligner on two pair reads
         ID: 90
         additional_option: -nc -ref_fsa -nf -sam 4
+        status: True
 
     KMA_filter:
         Title : Kmer Aligner for Clostridium difficile Toxin detection
@@ -52,37 +53,46 @@ analyses_to_run:
             tcdC: [90, 90, 10]
             cdtAB: [90, 90, 10]
             other: [98, 98, 10]
+        status: True
 
     virulence_gene_detection: 
         Title: Presence of Streptococcal virulence genes from the Virulence Factor Database
+        status: False
 
     plasmidfinder: 
         Title : Plasmidfinder
         database: resources/plasmidfinder_db/  # Path to PlasmidFinder database
+        status: False
 
     resfinder: 
         Title : Resfinder
         resfinder_db: resources/resfinder_db/ # ResFinder database for AMR detection
         pointfinder_db: resources/pointfinder_db/  # PointFinder database for AMR point mutations
         disinfinder_db: resources/disinfinder_db/  # DisinFinder database for disinfectant resistance
+        status: False
 
     virulencefinder : 
         Title : Virulence finder
         database: resources/virulencefinder_db  # VirulenceFinder database
+        status: False
 
     serotypefinder :
         Title : Serotypefinder
         database: resources/serotypefinder_db/  # SerotypeFinder database
+        status: False
 
     amrfinder:
         Title : NCBI resistance gene finder
         organism: --organism Clostridioides_difficile # Leave blank or insert --organism alongside one of the supported organisms, listed here: https://github.com/evolarjun/amr/wiki/Curated-organisms
-    
+        status: False
+
     spades:
         Title : spades assembly
+        status: False
 
     skesa:
         Title : skesa assembly
+        status: True
 
     Repeat_identifier:
         Title : Repeat identifier
@@ -90,31 +100,36 @@ analyses_to_run:
         repeats: TR6 TR10
         combos: TRST 
         database: resources/Clostridioides_difficile_db/TRST
+        status: True
 
     samtools_view:
         additional_option : -b -q 20 -F 4 
-        # https://broadinstitute.github.io/picard/explain-flags.html
-        # 4 (unmapped) + 256 (not primary alignment) + 512 (failed quality) + 1024 (duplicate) + 2048 (supplementary) = 3844
-        # Consider removing reads which is not in proper pair #3844
+        status: True
 
     samtools_sort:
         additional_option : -n 
-    
+        status: True
+
     samtools_idx:
         Title : samtools index
+        status: True
 
     bcftools_view_filter:
         additional_option: -v indels -i 'INFO/DP>10'
         region: AM180355.1_tcdC_804309_805008
+        status: True
 
     bcftools_index:
         Title : bcftools index
-    
+        status: True
+
     bcftools_mpileup:
         Title : bcftools mpileup
+        status: True
 
     bcftools_call:
         Title : spades assembly
+        status: True
 
     Variant_detection:
         Title : Detecting variants for C.diff 
@@ -139,26 +154,4 @@ analyses_to_run:
             del301_336_36: [0.10,5,10]
             del341_379_39: [0.10,5,10]
             del313_366_54: [0.10,5,10]
-
-
-#    emm_typing: 
-#        Title: Typing of M protein gene using blast against CDC curated alleles
-#        cov_threshold: 90
-#        emm_allele_file: resources/emm_typing/emm_alleles.fasta  # Fasta file with emm alleles
-#        emm_cluster_file: resources/emm_typing/emm_enn_mrp_subgroups.txt  # File with emm allele clusters
-#        
-#    assembly_lineage_determination: 
-#        Title: Lineage determination based on presence of specified SNPs when mapping genome assembly against reference genome
-#        percent_snp_threshold: 50
-#        nucmerargs : "\"\""
-#        deltafilterargs : "\"-q -r -o 100\""
-#        reference_fasta_file: resources/lineage_determination/MGAS5005.fasta
-#        lineage_variant_file: resources/lineage_determination/Spyogenes_LOCs.tsv
-#        
-#    mlst:
-#        Title : MLST by Torsten Seeman
-#    LRE-finder: 
-#        Title : LRE-Finder
-#        min_consensus_ID : 80
-#        additional_option : -1t1 -cge -matrix
-#        database: resources/lre-finder_db/elm  # Database for LRE-finder
+        status: True
