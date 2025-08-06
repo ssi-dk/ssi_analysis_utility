@@ -1,0 +1,6 @@
+name: AMRFinder
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - ncbi-amrfinderplus
