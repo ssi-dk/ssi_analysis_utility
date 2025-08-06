@@ -5,10 +5,10 @@
 alignment_database: 
 
     kmeraligner:
-        db: setup_Ecoli_alignment_db
-        kma_db_prefix: ecoligenes
-        kma_index_flag: Escherichia_coli_db
-        fa_idx_flag: Escherichia_coli_db
+        db: setup_CdiffToxin
+        kma_db_prefix: Cdiff_Toxin
+        kma_index_flag: Clostridioides_difficile_db_Toxin
+        fa_idx_flag: Clostridioides_difficile_db_Toxin
 
     plasmidfinder:
         db: setup_PlasmidFinder
@@ -39,23 +39,18 @@ analyses_to_run:
     kmeraligner:
         Title : Kmer Aligner on two pair reads
         ID: 90
-        additional_option :  -nc -ref_fsa -nf -sam 4
+        additional_option: -nc -ref_fsa -nf -sam 4
 
     KMA_filter:
-        Title : Kmer Aligner for Escherichia coli OH and stx typing
+        Title : Kmer Aligner for Clostridium difficile Toxin detection
         ID: 92
         input_folder: kmeraligner
-        additional_option : --Gene_list stx wzx wzy wzt wzm fliC fli eae ehxA --organism "Escherichia coli" --suffix tsv
+        additional_option : --Gene_list tcdA tcdB tcdC cdtAB --organism "Clostridioides difficile" --suffix tsv
         thresholds:
-            stx: [90, 90, 10]
-            wzx: [90, 90, 10]
-            wzy: [90, 90, 10]
-            wzt: [90, 90, 10]
-            wzm: [90, 90, 10]
-            fliC: [90, 90, 10]
-            fli: [90, 90, 10]
-            eae: [90, 90, 10]
-            ehxA: [90, 90, 10]
+            tcdA: [90, 90, 10]
+            tcdB: [90, 90, 10]
+            tcdC: [90, 90, 10]
+            cdtAB: [90, 90, 10]
             other: [98, 98, 10]
 
     virulence_gene_detection: 
@@ -78,21 +73,76 @@ analyses_to_run:
     serotypefinder :
         Title : Serotypefinder
         database: resources/serotypefinder_db/  # SerotypeFinder database
-    
+
     amrfinder:
         Title : NCBI resistance gene finder
-        organism: --organism Escherichia # Leave blank or insert --organism alongside one of the supported organisms, listed here: https://github.com/evolarjun/amr/wiki/Curated-organisms
-        wrangler: workflow/scripts/AMR_wrangler.py
-
+        organism: --organism Clostridioides_difficile # Leave blank or insert --organism alongside one of the supported organisms, listed here: https://github.com/evolarjun/amr/wiki/Curated-organisms
+    
     spades:
         Title : spades assembly
 
     skesa:
         Title : skesa assembly
 
+    Repeat_identifier:
+        Title : Repeat identifier
+        ID: 92
+        repeats: TR6 TR10
+        combos: TRST 
+        database: resources/Clostridioides_difficile_db/TRST
+
+    samtools_view:
+        additional_option : -b -q 20 -F 4 
+        # https://broadinstitute.github.io/picard/explain-flags.html
+        # 4 (unmapped) + 256 (not primary alignment) + 512 (failed quality) + 1024 (duplicate) + 2048 (supplementary) = 3844
+        # Consider removing reads which is not in proper pair #3844
+
+    samtools_sort:
+        additional_option : -n 
+    
+    samtools_idx:
+        Title : samtools index
+
+    bcftools_view_filter:
+        additional_option: -v indels -i 'INFO/DP>10'
+        region: AM180355.1_tcdC_804309_805008
+
+    bcftools_index:
+        Title : bcftools index
+    
+    bcftools_mpileup:
+        Title : bcftools mpileup
+
+    bcftools_call:
+        Title : spades assembly
+
+    Variant_detection:
+        Title : Detecting variants for C.diff 
+        ID: 93
+        additional_option : --gene_list tcdC --organism "Clostridioides difficile" --suffix tsv
+        genomic_coord : resources/Clostridioides_difficile_db/Toxin/Cdiff_Toxin.bed6
+        snp_info: #https://pubmed.ncbi.nlm.nih.gov/24374512/
+            snp_117: [117,"A","T","tcdC","-"] # [genomic position within the loci, reference, alternative]
+            snp_184: [184,"C","T","tcdC","-"]
+        deletion_regions:
+            del330_347_18: [330, 347] # [coordinate start within the region, coordinate end within the region , percent N in consensus region]
+            del301_336_36: [301, 336]
+            del341_379_39: [341, 379]
+            del313_366_54: [313, 366]
+        deletion_consensus_thresholds:
+            del330_347_18: [70]
+            del301_336_36: [70]
+            del341_379_39: [70]
+            del313_366_54: [70]
+        variant_gt_thresholds:
+            del330_347_18: [0.10,5,10]
+            del301_336_36: [0.10,5,10]
+            del341_379_39: [0.10,5,10]
+            del313_366_54: [0.10,5,10]
+
 
 #    emm_typing: 
-#       Title: Typing of M protein gene using blast against CDC curated alleles
+#        Title: Typing of M protein gene using blast against CDC curated alleles
 #        cov_threshold: 90
 #        emm_allele_file: resources/emm_typing/emm_alleles.fasta  # Fasta file with emm alleles
 #        emm_cluster_file: resources/emm_typing/emm_enn_mrp_subgroups.txt  # File with emm allele clusters
@@ -107,7 +157,6 @@ analyses_to_run:
 #        
 #    mlst:
 #        Title : MLST by Torsten Seeman
-#
 #    LRE-finder: 
 #        Title : LRE-Finder
 #        min_consensus_ID : 80

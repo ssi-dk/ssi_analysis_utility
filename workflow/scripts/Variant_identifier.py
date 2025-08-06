@@ -1,0 +1,1033 @@
+#!/usr/bin/env python3
+import pandas as pd
+import argparse
+import os
+import sys
+from typing import List, Dict
+import pysam
+import logging
+from logging_utils import setup_logging
+import yaml
+sys.path.insert(0, os.path.abspath("../scripts"))
+
+# ========================= Helper functions =========================
+
+def species_mapping(config_path: str, organism: str) -> str:
+    """
+    Given a config file and an organism name, return the normalized species key.
+
+    Args:
+        config_path (str): Path to the pipeline config.yaml file
+        organism (str): Organism name input (e.g. "C. difficile")
+
+    Returns:
+        str: Normalized species name (e.g. "C.diff") for use in species-specific YAML lookup.
+
+    Raises:
+        ValueError: If the organism is not found in the mapping
+    """
+    with open(config_path, "r") as f:
+        config = yaml.safe_load(f)
+
+    species_map = config.get("species_map", {})
+    cleaned = organism.strip()
+
+    if cleaned not in species_map:
+        raise ValueError(f"Organism '{organism}' not found in species_map section of {config_path}")
+
+    return species_map[cleaned]
+
+def reverse_complement(seq: str) -> str:
+    complement = {"A": "T", "T": "A", "G": "C", "C": "G", "N": "N"}
+    return ''.join(complement.get(base.upper(), base) for base in reversed(seq))
+
+def is_in_any_region(pos: int, regions: List[tuple[int, int]]) -> bool:
+    return any(start <= pos <= end for start, end in regions)
+
+def get_deletion_threshold(deletion_key: str, thresholds: Dict[str, List[float]]) -> List[float]:
+    """
+    Returns the [IMF, IDV, DP] threshold list for a given deletion ID.
+    
+    Args:
+        deletion_key (str): Deletion ID, e.g. 'del330_347_18'
+
+    Returns:
+        List[float]: List containing [IMF, IDV, DP] thresholds
+
+    Raises:
+        ValueError if the key is not found
+    """
+    for key in thresholds:
+        if key in deletion_key:
+            return thresholds[key]
+    raise ValueError(f"No deletion thresholds found for: {deletion_key}")
+
+def load_variant_detection_config(organism: str, config_dir="workflow/configs_species", pipeline_config="config/config.yaml") -> dict:
+    """
+    Load species-specific variant detection config based on mapping from master pipeline config.
+    """
+    species_key = species_mapping(pipeline_config, organism)
+    config_path = os.path.join(config_dir, f"{species_key}.yaml")
+
+    if not os.path.exists(config_path):
+        raise FileNotFoundError(f"Species config not found: {config_path}")
+    
+    with open(config_path, "r") as f:
+        config = yaml.safe_load(f)
+
+    try:
+        variant_block = config["analyses_to_run"]["Variant_detection"]
+        bed_path = variant_block["genomic_coord"]
+        snp_info = variant_block.get("snp_info", {})
+        raw_deletions = variant_block.get("deletion_regions", {})
+        raw_thresholds = variant_block.get("variant_gt_thresholds", {})
+        consensus = variant_block.get("deletion_consensus_thresholds",{})
+    except KeyError as e:
+        raise ValueError(f"Missing required Variant_detection fields in config: {e}")
+
+    deletion_regions = {}
+    for key, val in raw_deletions.items():
+        # del_330_347_18: [330, 347, 70, "tcdC"] → 18: (330, 347)
+        length = int(key.split("_")[-1])
+        start, end = val[0], val[1]
+        deletion_regions[length] = (start, end)
+
+    return {
+        "genomic_coord": bed_path,
+        "snp_info": snp_info,
+        "deletion_regions": deletion_regions,
+        "variant_gt_thresholds": raw_thresholds,
+        "deletion_consensus_thresholds": consensus
+    }
+
+# ========================= KMA FILE HANDLING =========================
+def process_res_file(res_file_path: str) -> pd.DataFrame:
+    try:
+        res_df = pd.read_csv(res_file_path, sep="\t")
+    except FileNotFoundError:
+        raise FileNotFoundError(f"File not found: {res_file_path}")
+    except pd.errors.EmptyDataError:
+        raise ValueError(f"File is empty or not properly formatted: {res_file_path}")
+
+    # query_identity can be penalized more if the consensus
+    required_columns = {"#Template", "Template_length","Template_Coverage", "Template_Identity", "Depth"}
+    if not required_columns.issubset(res_df.columns):
+        raise ValueError(f"Missing expected columns in {res_file_path}. Found: {', '.join(res_df.columns)}")
+
+    return res_df  # no filtering
+
+# ========================= TOXIN VARIATION FILE HANDLING BCF =========================
+
+def load_toxin_coordinates(bed6_path: str) -> Dict[str, Dict[str, str | int]]:
+    """
+    Load coordinates of toxin genes from a BED6 file into a dictionary.
+
+    Args:
+        bed6_path (str): Path to the BED6 file.
+
+    Returns:
+        Dict[str, Dict[str, str | int]]: Dictionary mapping gene -> {contig, start, end, length, strand}
+    """
+    coords = {}
+    try:
+        bed_df = pd.read_csv(bed6_path, sep="\t", header=None,
+                             names=["contig", "start", "end", "gene", "score", "strand"])
+
+        for _, row in bed_df.iterrows():
+            gene = row["gene"]
+            coords[gene] = {
+                "contig": row["contig"],
+                "start": int(row["start"]),
+                "end": int(row["end"]),
+                "length": int(row["end"]) - int(row["start"]),
+                "strand": row["strand"]
+            }
+
+    except Exception as e:
+        logging.error(f"Failed to load BED6 file: {e}")
+        raise
+
+    #{'tcdB': {'contig': 'AM180355.1', 'start': 787392, 'end': 794493, 'length': 7101, 'strand': '+'}, 
+    # 'tcdA': {'contig': 'AM180355.1', 'start': 795842, 'end': 803975, 'length': 8133, 'strand': '+'}, 
+    # 'tcdC': {'contig': 'AM180355.1', 'start': 804309, 'end': 805008, 'length': 699, 'strand': '-'}, 
+    # 'cdtA': {'contig': 'AF271719.1', 'start': 0, 'end': 1392, 'length': 1392, 'strand': '+'}, 
+    # 'cdtB': {'contig': 'AF271719.1', 'start': 1444, 'end': 4075, 'length': 2631, 'strand': '+'}}
+
+    return coords
+
+def convert_reverse_strand_regions(regions: dict[int, tuple[int, int]], gene_length: int) -> dict[int, tuple[int, int]]:
+    """
+    Convert reverse strand gene-relative coordinates to forward strand contig-relative coordinates.
+
+    Args:
+        regions (dict): Dictionary of deletion IDs to (start, end) coordinates (gene-relative, reverse strand).
+        gene_length (int): Length of the gene.
+
+    Returns:
+        dict: Converted dictionary with forward strand contig-relative coordinates.
+    """
+    converted = {}
+    for key, (start, end) in regions.items():
+        # Reverse strand conversion
+        converted_start = gene_length - (end - 1)
+        converted_end = gene_length - (start - 1)
+        converted[key] = (min(converted_start, converted_end), max(converted_start, converted_end))
+        logging.info(f"Entry {key} with converted regions - original start:{start}-{end} \t converted:{converted_start}-{converted_end}")
+    return converted
+
+def gene_pos_to_genomic(gene_name: str, pos_in_gene: int, coord_dict: Dict[str, Dict[str, str | int]]) -> tuple[str, int]:
+    """
+    Convert a position within a gene to a genomic coordinate, using strand-aware logic.
+
+    Args:
+        gene_name (str): Gene symbol (e.g. 'tcdC').
+        pos_in_gene (int): 1-based position within the gene.
+        coord_dict (dict): Output from load_toxin_coordinates().
+
+    Returns:
+        Tuple[str, int]: (contig, genomic_position)
+    """
+    if gene_name not in coord_dict:
+        raise ValueError(f"Gene {gene_name} not found in coordinate dictionary.")
+
+    info = coord_dict[gene_name]
+    contig = info["contig"]
+    strand = info["strand"]
+    start = info["start"]
+    end = info["end"]
+    length = end - start
+    
+    if strand == "+":
+        genomic_pos = 1 + (pos_in_gene - 1)
+    elif strand == "-":
+        genomic_pos = length - (pos_in_gene - 1)
+    else:
+        raise ValueError(f"Invalid strand '{strand}' for gene {gene_name}.")
+
+    return contig, genomic_pos
+
+def check_snp_variant(
+        bcf_path: str, 
+        contig: str, 
+        pos: int, 
+        range: int,
+        expected_ref: str, 
+        expected_alt: str,
+        strand: str) -> tuple[str, str]:
+    """
+    Check for a specific variant at a position in the BCF, considering strand orientation.
+    
+    Args:
+        bcf_path (str): Path to the BCF file.
+        contig (str): Contig name.
+        pos (int): 1-based genomic position.
+        expected_ref (str): Expected REF base (e.g., 'T')
+        expected_alt (str): Expected ALT base (e.g., 'A')
+    
+    Returns:
+        str: '1' if variant found (T>A on minus strand), '0' otherwise.
+    """
+
+    try:
+        logging.info(f"Checking variant for contig {contig} at position {pos}")
+        bcf = pysam.VariantFile(bcf_path)
+        for rec in bcf.fetch(contig, pos-range, pos+range):
+
+            ref = rec.ref
+            alt = rec.alts[0] if rec.alts else None
+            
+            ref_to_use = ref
+            alt_to_use = alt
+
+            if strand == "-":
+                ref_to_use = reverse_complement(ref)
+                alt_to_use = reverse_complement(alt)
+
+            if rec.pos == pos:
+                # Case 1: variation fitting the A>T
+                if ref == expected_ref and alt == expected_alt:
+                    logging.info(f"\tCase 1: {ref}>{expected_ref} and {alt}>{expected_alt} SNP present at 117")
+                    return f"snp", ""
+            
+                # Case 2: different variation
+                else:
+                    logging.info("\tCase 2: Different SNP present at 117")
+                    return "other", f"{rec.pos}_{ref_to_use}_{alt_to_use}"
+            
+            # Case 3: Deletion spanning the position
+            elif rec.pos < pos:
+                deletion_end = rec.pos + len(ref) - 1
+                if deletion_end >= pos and any(len(a) < len(ref) for a in rec.alts if a is not None):
+                    logging.info(f"\tCase 3: A deletion spans the position at {pos} from {rec.pos} to {deletion_end}")
+                    return f"del", ""
+
+        logging.info("No variant found at or around position.")
+        return "wt", ""
+
+    except Exception as e:
+        logging.error(f"Error reading BCF at {contig}:{pos}: {e}")
+        return "-", ""
+
+def filter_deletion_details(detail_str: str) -> str:
+    """
+    Filters a deletion detail string by removing entries with 0-length deletions.
+
+    Args:
+        detail_str (str): A string of the format "pos1_REF_ALT_len+pos2_REF_ALT_len+..."
+
+    Returns:
+        str: Filtered string with only actual deletions (len > 0), or '-' if none remain.
+    """
+    if not detail_str:
+        return "-"
+
+    parts = detail_str.split("+")
+    valid_parts = []
+
+    for part in parts:
+        fields = part.split("_")
+        if len(fields) == 4:
+            try:
+                if int(fields[3]) > 0:
+                    valid_parts.append(part)
+            except ValueError:
+                continue  # skip malformed entries
+        else:
+            continue  # skip incomplete entries
+
+    return "+".join(valid_parts) if valid_parts else "-"
+
+def merge_overlapping_deletions_sliced(deletions: List[tuple[int, int, str]]) -> tuple[int, str, int]:
+    """
+    Merge overlapping deletions by slicing sequences based on genomic overlap.
+
+    Args:
+        deletions (List[Tuple[int, int, str]]): Each entry is (start, end, ref_sequence).
+
+    Returns:
+        Tuple[int, str, int]: Merged start position, merged sequence, merged length.
+    """
+    if not deletions:
+        return -1, "", 0
+
+    deletions.sort(key=lambda x: x[0])
+    merged_start, merged_end, merged_seq = deletions[0]
+    for start, end, seq in deletions[1:]:
+        overlap = merged_end - start + 1
+        if overlap > 0:
+            merged_seq += seq[overlap:]
+        else:
+            merged_seq += seq
+        merged_end = max(merged_end, end)
+
+    merged_len = merged_end - merged_start + 1
+    return merged_start, merged_seq, merged_len
+
+def check_deletions_in_region(
+    bcf_path: str,
+    contig: str,
+    gene_name: str,
+    orig_regions: dict[int, tuple[int, int]],
+    target_regions: dict[int, tuple[int, int]],
+    deletion_gt_thresholds: dict[str, list[float,int, int]],
+    region_buffer: int = 5,
+    length_tolerance: int = 1,
+    min_overlap_fraction: float = 0.3,
+    use_indels_thresholds: bool = False,
+) -> tuple[str, str, int]:
+    """
+    Scan for deletions in a BCF, merge overlapping ones, and match merged spans to expected regions.
+    """
+    logging.info(f"\n[INFO] Scanning deletions in {bcf_path} for {gene_name}\n")
+    try:
+        bcf = pysam.VariantFile(bcf_path)
+        raw_deletions = []
+        filtered_records = []
+
+
+        # Step 0: Compute buffered scan regions
+        logging.info("[STEP 0] Computed desired regions to examine")
+        padded_regions = {
+            expected_len: (
+                max(1, region_start - region_buffer),
+                region_end + region_buffer
+            )
+            for expected_len, (region_start, region_end) in target_regions.items()
+        }
+        region_spans = list(padded_regions.values())
+        logging.info(f"{padded_regions}")
+        logging.info(f"[INFO] Will scan BCF only within {len(region_spans)} buffered target regions")
+
+        # Step 1: Filter on variant entries.
+        logging.info("\n[STEP 1] Filtering deletions based on thresholds for QUAL == 0, thresholds and the spanning region")
+        for rec in bcf.fetch(contig):
+            if not is_in_any_region(rec.pos, region_spans):
+                continue  # irrelevant variants
+
+            ref = rec.ref
+            alt = rec.alts[0] if rec.alts else None
+            pos = rec.pos
+            qual = rec.qual
+
+            IMF = rec.info.get("IMF", 0)
+            IDV = rec.info.get("IDV", 0)
+            DP = rec.info.get("DP", 0)
+                       
+            if float(qual) > 0:
+                # if use_indels_threshold flag is false, we dont filter but keep "high" quality variants based on qual
+                if not use_indels_thresholds:
+                    filtered_records.append((pos, ref, alt))
+                    logging.info(f"variant at pos:{pos} ref:{ref} alt:{alt} passed quality thresholds:{qual}")
+                continue
+            else:
+                # Apply IMF/IDV/DP thresholds, but only if use_indels_thresholds=True
+                logging.info(f"variant: \t pos:{pos} : ref:{ref} \t alt:{alt} \t qual:{qual} \t IMF:{IMF} \t IDV:{IDV} \t DP:{DP}")
+                
+                # Skip non-deletions
+                if not alt or len(ref) <= len(alt):
+                    continue
+                
+                # Now apply deletion-specific filtering
+                del_len = len(ref) - len(alt)
+
+                for expected_len, (region_start, region_end) in target_regions.items():
+                    if del_len != expected_len:
+                        continue
+
+                    orig_del_reg = orig_regions[del_len]
+                    deletion_key = f"del{orig_del_reg[0]}_{orig_del_reg[1]}_{del_len}"
+
+                    if use_indels_thresholds:
+                        try:
+                            thresholds = get_deletion_threshold(deletion_key, deletion_gt_thresholds)
+                            logging.info(f"  → Loaded thresholds for {deletion_key}: IMF ≥ {thresholds[0]}, IDV ≥ {thresholds[1]}, DP ≥ {thresholds[2]}")
+                        except ValueError:
+                            continue  # no thresholds for this deletion
+
+                        if IMF >= thresholds[0] and IDV >= thresholds[1] and DP >= thresholds[2]:
+                            filtered_records.append((pos, ref, alt))
+                            logging.info(f"  [PASS] variant {pos}:{ref}-{alt} passed {deletion_key} threshold check")
+                        else:
+                            logging.info(f"  [FAIL] variant {pos}:{ref}-{alt} failed {deletion_key} failed threshold check")                
+
+                    else:
+                        filtered_records.append((pos, ref, alt))
+                        logging.info(f"  [NO FILTER] accepted variant {pos}:{ref}-{alt} without thresholds")
+
+        if not filtered_records:
+            logging.info("[INFO] No deletions passed filters.")
+            return "-", "-", 0
+        
+        # Step 2: Extract all deletions.
+        logging.info("[STEP 2] Extracting deletions")
+        raw_deletions = []
+        for pos, ref, alt in filtered_records:
+            del_len = len(ref) - len(alt)
+            del_start = pos
+            del_end = pos + del_len - 1
+            detail_str = f"{pos}_{ref}_{alt}_{del_len}"
+            raw_deletions.append((del_start, del_end, del_len, detail_str))
+            if del_len >0:
+                logging.info(f"  → Deletion: {del_len}bp at {del_start}-{del_end}")
+
+        if not raw_deletions:
+            logging.info("[INFO] No deletions found.")
+            return "-", "-",0
+
+        raw_deletions.sort()
+
+        # Step 3: Merge overlapping deletions.
+        logging.info("[STEP 3] Merging overlapping deletions")
+        merged_deletions = []
+        current = list(raw_deletions[0])
+        for d in raw_deletions[1:]:
+            if d[0] <= current[1] + 1:
+                current[1] = max(current[1], d[1])
+                current[2] += d[2]
+                current[3] += f"+{d[3]}"
+            else:
+                merged_deletions.append(tuple(current))
+                current = list(d)
+        merged_deletions.append(tuple(current))
+
+        # STEP 3–6: Match logic (exact, partial, rescued, ambiguous)
+
+        matched_labels = []
+        matched_details = []
+
+        for del_start, del_end, _, detail_str in merged_deletions:
+            actual_len = del_end - del_start + 1
+            matched = False
+
+            logging.info(f"  → Merged deletion: {actual_len}bp at {del_start}-{del_end}")
+
+            if not matched:
+                logging.info("[STEP 4] Checking for exact matches")
+                for expected_len, (region_start, region_end) in padded_regions.items():
+                    logging.info(f"    Comparing to expected {expected_len}bp region (± {region_buffer} nt): {region_start}-{region_end}")
+                    if actual_len == expected_len and region_start <= del_start and del_end <= region_end:
+                        logging.info(f"[MATCH] Exact match: {expected_len}bp deletion")
+                        matched_labels.append(str(expected_len))
+                        matched_details.append(detail_str)
+                        matched = True
+                        break  # move to next deletion
+    
+            if not matched:
+                # Step 5: Fallback partial match.
+                logging.info(f"[STEP 5] Checking partial overlaps with overlap percentage {min_overlap_fraction*100}%")
+                for expected_len, (region_start, region_end) in padded_regions.items():
+                    if abs(actual_len - expected_len) > length_tolerance:
+                        if actual_len > 0:
+                            logging.info(f"    Skipped {actual_len}bp vs {expected_len}bp: outside length tolerance")
+                        continue
+
+                    overlap_start = max(del_start, region_start)
+                    overlap_end = min(del_end, region_end)
+                    overlap = max(0, overlap_end - overlap_start + 1)
+                    target_len = region_end - region_start + 1
+                    overlap_fraction = overlap / target_len
+                    logging.info(f"    → Fallback for {expected_len}bp: overlap = {overlap}/{target_len} = {overlap_fraction:.2f}")
+                    
+                    if overlap_fraction >= min_overlap_fraction:
+                        logging.info(f"[MATCH] Fallback partial match for {expected_len}bp (≥ {min_overlap_fraction})")
+                        matched_labels.append(f"partial_{expected_len}")
+                        matched_details.append(detail_str)
+                        matched = True
+                        break
+
+            if not matched:
+                # Step 6: Recovered early match (start-proximal rescue).
+                logging.info("[STEP 6] Checking for rescued match based on early alignment")
+                for expected_len, (region_start, region_end) in padded_regions.items():
+                    for del_start, del_end, _, detail_str in merged_deletions:
+                        dist = abs(del_start - region_start)
+
+                        if actual_len > 0:
+                            logging.info(f"  → Checking {actual_len}bp deletion at {del_start}-{del_end} vs region {region_start}-{region_end} with distance between start coordinate {dist} nt")
+
+                        if actual_len == expected_len and dist <= 5:
+                            logging.info(f"[MATCH] Rescued early match for {expected_len}bp deletion at {del_start}-{del_end}")
+                            matched_labels.append(f"rescued_{expected_len}")
+                            matched_details.append(detail_str)
+                            matched = True
+                            break
+
+            if not matched:
+                # Step 7: Ambiguous overlap (last resort).
+                logging.info("[STEP 7] Checking for ambiguous overlaps")
+                for expected_len, (region_start, region_end) in padded_regions.items():
+                    if del_end >= region_start and del_start <= region_end:
+                        logging.info(f"  → [AMBIGUOUS] Deletion at {min(del_start,del_end)}-{max(del_start,del_end)} overlaps expected {expected_len}bp region")
+                        # Extract actual ref seqs from detail_str like: "321_REF1_ALT1_LEN+330_REF2_ALT2_LEN"
+                        
+                        deletion_details = detail_str.split("+")
+                        parsed = []
+                        for d in deletion_details:
+                            parts = d.split("_")
+                            if len(parts) >= 4:
+                                s, ref, alt, del_len = parts
+                                parsed.append((int(s), int(s) + len(ref) - 1, ref))
+                        merged_start, merged_seq, merged_len = merge_overlapping_deletions_sliced(parsed)
+                        merged_info = f"{merged_start}_{merged_seq}_{merged_seq[0]}_{merged_len-1}"
+                        matched_labels.append(f"ambiguous_{expected_len}")
+                        matched_details.append(merged_info)
+                        matched = True
+                        break
+
+        # Step 9: Nothing matched.
+        logging.info("[STEP 9] No deletions matched any target region.")
+        if matched_labels:
+            max_len = max([int(lbl.split("_")[-1]) if "_" in lbl else int(lbl) for lbl in matched_labels])
+            return ";".join(matched_labels), ";".join(matched_details), max_len
+        else:
+            all_details = ";".join([d[3] for d in merged_deletions])
+            return "-", all_details, int(merged_deletions[0][2])
+
+    except Exception as e:
+        logging.error(f"[ERROR] While scanning deletions: {e}")
+        return "-", "-", 0
+
+def verify_bcf(bcf_path: str, 
+               indels_bcf_path: str, 
+               contig: str,
+               gene_name: str, 
+               orig_regions: dict[int, tuple[int, int]], 
+               target_regions: dict[int, tuple[int, int]],
+               deletion_thresholds: dict[str, list[float,int, int]],
+               region_buffer: int = 5, 
+               length_tolerance: int = 1,
+               min_overlap_fraction: float = 0.3) -> tuple[str, str,int]:
+    """
+    Verify deletions in two BCF files: the main BCF and the indels BCF.
+    
+    Args:
+        bcf_path (str): Path to the main BCF file.
+        indels_bcf_path (str): Path to the indels BCF file.
+        contig (str): Contig name.
+        target_regions (dict): Target deletion regions (already converted to forward strand).
+        region_buffer (int): Buffer size (in nt) applied symmetrically to region boundaries.
+        length_tolerance (int): Allowed deviation for matching deletion lengths.
+
+    Returns:
+        tuple[str, str]: Deletion status and details (e.g., "18;36" for matched deletions and "pos_REF_ALT_len" for deletion details).
+    """
+
+    del_status, del_details, expected_del_len = check_deletions_in_region(
+        bcf_path=bcf_path,
+        contig=contig,
+        gene_name=gene_name,
+        orig_regions=orig_regions,
+        target_regions=target_regions,
+        deletion_gt_thresholds=deletion_thresholds,
+        region_buffer=region_buffer,
+        length_tolerance=length_tolerance,
+        min_overlap_fraction=min_overlap_fraction,
+        use_indels_thresholds=True
+    )
+
+    # If result is ambiguous or no confident match, try the indels file
+    if del_status.startswith("ambiguous") or del_status in ("-", "", None):
+        logging.info(f"[INFO] No confident deletion in main BCF {bcf_path}. Now checking indels BCF: {indels_bcf_path}")
+        del_status_indels, del_details_indels, expected_del_len = check_deletions_in_region(
+            bcf_path=indels_bcf_path,
+            contig=contig,
+            gene_name="tcdC",
+            orig_regions=orig_regions,
+            target_regions=target_regions,
+            deletion_gt_thresholds=deletion_thresholds,
+            region_buffer=region_buffer,
+            length_tolerance=length_tolerance,
+            min_overlap_fraction=min_overlap_fraction,
+            use_indels_thresholds=True
+        )
+
+        if del_status_indels not in ("-", "", None):
+            if del_status_indels.startswith("ambiguous"):
+                logging.info(f"[INFO] Found ambiguous deletion in indels BCF: {del_status_indels}")
+            else:
+                logging.info(f"[INFO] Found confident deletion in indels BCF with length {del_status_indels} and expected length {expected_del_len}")
+            return del_status_indels, del_details_indels, expected_del_len
+        else:
+            logging.info("[INFO] Still no confident match even in indels BCF.")
+
+    return del_status, del_details, expected_del_len
+
+def find_matching_contig(filtered_df: pd.DataFrame, gene_name: str) -> str:
+    """
+    Searches the filtered .res file dataframe for a contig name containing the given gene.
+    
+    Args:
+        filtered_df (pd.DataFrame): Filtered .res file.
+        gene_name (str): Gene of interest (e.g. 'tcdC').
+
+    Returns:
+        str: Matching contig name (e.g. 'AM180355.1_tcdC_804309_805008')
+    """
+    matches = filtered_df[filtered_df["#Template"].str.contains(gene_name, case=False)]
+    if not matches.empty:
+        return matches.iloc[0]["#Template"]
+    raise ValueError(f"No contig found for gene: {gene_name}")
+
+# ========================= CONSENSUS SEQUENCE HANDLING - KMA alignment =========================
+def extract_consensus_indel_seq(
+    fasta_path: str,
+    contig: str,
+    del_expected_len: int,
+    converted_regions: dict[int, tuple[int, int]],
+    thresholds: dict[str, List[float]]
+) -> str:
+    """
+    Extracts the gene region from FASTA using deletion length key, and annotates with %N.
+
+    Args:
+        fasta_path (str): Path to the FASTA file.
+        contig (str): Contig name containing the gene (e.g., AM180355.1_tcdC_...).
+        del_expected_len (int): Expected deletion length key (e.g., 54).
+        converted_regions (dict): Dictionary mapping deletion length → (start, end).
+
+    Returns:
+        str: Annotated sequence string like ATGCNNNN_33.33 or "-" on failure.
+    """
+    try:
+        if del_expected_len not in converted_regions:
+            raise ValueError(f"Deletion length {del_expected_len} not found in regions")
+
+        logging.info("[STEP 10] Checking the consensus sequence for deleted regions")
+
+        start, end = converted_regions[del_expected_len]
+        fasta = pysam.FastaFile(fasta_path)
+        seq = fasta.fetch(contig, start, end)
+
+        logging.info(f"  → Consensus sequence region: {start}-{end}")
+
+        n_count = seq.upper().count("N")
+        n_percent = (n_count / len(seq)) * 100 if len(seq) > 0 else 0
+        
+        # Get threshold
+        key_matches = [k for k in thresholds if k.endswith(f"_{del_expected_len}")]
+        if not key_matches:
+            raise ValueError(f"No consensus N threshold defined for deletion length {del_expected_len}")
+        required_n = thresholds[key_matches[0]][0]
+
+        if n_percent >= required_n:
+            return f"{start}-{end}_{seq}_{n_percent:.2f}"
+        else:
+            logging.info(f"[INFO] Sequence at {start}-{end} has {n_percent:.2f}% N < {required_n}% threshold — skipping output.")
+            return "-"
+    except Exception as e:
+        logging.warning(f"Failed to extract/annotate from {contig}:{del_expected_len} in {fasta_path}: {e}")
+        return "-"
+
+def evaluate_ambiguous_consensus(deletion_label: str, consensus_str: str, thresholds: dict) -> str:
+    """
+    Upgrade 'ambiguous_XX' to 'likely_XX' if %N ≥ threshold in deletion_consensus_thresholds.
+
+    Args:
+        deletion_label (str): e.g. 'ambiguous_39'
+        consensus_str (str): e.g. 'ATGCNNNN_88.88'
+        thresholds (dict): mapping of deletion keys to [N% threshold]
+
+    Returns:
+        str: updated deletion label ('likely_XX' or original ambiguous)
+    """
+    if not deletion_label.startswith("ambiguous") or "_" not in consensus_str:
+        return deletion_label
+
+    try:
+        n_percent = float(consensus_str.strip().split("_")[-1])
+    except Exception:
+        return deletion_label
+
+    try:
+        logging.info("[STEP 9] Checking support for deletions within consensus sequence using thresholds")
+
+        del_len = deletion_label.split("_")[1]
+        for key, value in thresholds.items():
+            if key.endswith(f"_{del_len}"):
+                required_n = value[0]
+                logging.info(f"  → Checking consensus sequence with current label {deletion_label}")
+                if n_percent >= required_n:  # upgraded if enough Ns
+                    deletion_label = deletion_label.replace("ambiguous", "likely")
+                    logging.info(f"  → Consensus sequence with {n_percent}% N's passed thresholds of {required_n}% N's - supporting deletion, changing label: {deletion_label}")
+                    return deletion_label
+                else:
+                    logging.info(f"  → Consensus sequence with {n_percent}% N's failed thresholds of {required_n}% N's - keeping label: {deletion_label}")
+                break
+    except Exception:
+        pass
+
+    return deletion_label
+
+def extract_most_ambiguous_consensus(
+    fasta_path: str,
+    contig: str,
+    converted_regions: dict[int, tuple[int, int]],
+    thresholds: dict[str, List[float]]
+) -> str:
+    """
+    Evaluate all expected deletion regions and return the most ambiguous region
+    where %N exceeds the threshold. If none pass, return the best fallback (%N only).
+
+    Returns:
+        - "start-end_SEQUENCE_%N" if above threshold
+        - "start-end_N=%N%" if no region passes threshold
+        - "-" on failure
+    """
+    best_seq = "-"
+    best_region = "-"
+    best_percent = -1.0
+    best_score = -1.0
+    best_len = None
+
+    fallback_percent = -1.0
+    fallback_region = "-"
+    fallback_seq = "-"
+    fallback_len = None
+
+    try:
+        fasta = pysam.FastaFile(fasta_path)
+    except Exception as e:
+        logging.warning(f"Could not open FASTA file {fasta_path}: {e}")
+        return "-"
+
+    for del_len, (start, end) in converted_regions.items():
+        try:
+            seq = fasta.fetch(contig, start, end)
+            region_len = end - start + 1
+            n_count = seq.upper().count("N")
+            percent_n = (n_count / region_len) * 100 if region_len > 0 else 0
+            threshold_key = [k for k in thresholds if k.endswith(f"_{del_len}")]
+            required_n = thresholds[threshold_key[0]][0] if threshold_key else 100.0
+
+            logging.info(f"Checked region {start}-{end} ({region_len}bp): {percent_n:.2f}% Ns")
+
+            # Save fallback candidate
+            if percent_n > fallback_percent:
+                fallback_percent = percent_n
+                fallback_region = f"{start}-{end}"
+                fallback_seq = seq
+                fallback_len = del_len
+
+            # Only score regions that pass the threshold
+            if percent_n >= required_n:
+                score = percent_n * region_len
+                if score > best_score:
+                    best_score = score
+                    best_percent = percent_n
+                    best_region = f"{start}-{end}"
+                    best_seq = seq
+                    best_len = del_len
+
+        except Exception as e:
+            logging.warning(f"Consensus extraction failed for region {start}-{end}: {e}")
+            continue
+
+    # Return best high-confidence region with sequence
+    if best_len is not None:
+        return f"{best_region}_{best_seq}_{best_percent:.2f}"
+
+    return "-"
+
+#################### MAIN #######################
+def main(args: argparse.Namespace) -> None:
+    setup_logging(args.log_dir, args.sample_id, "variant_handling")
+
+    sample = args.sample_id
+    organism = args.organism
+    logging.info(f"\n================= Processing sample: {sample} =================")
+
+    row_dict = {
+        "sample_id": sample,
+        "organism": organism,
+    }
+
+    # Load variant detection config
+    variant_config = load_variant_detection_config(organism)
+    bed_path = variant_config["genomic_coord"]
+    coord_dict = load_toxin_coordinates(bed_path)
+    snp_info_dict = variant_config["snp_info"]
+    tcdC_deletion_regions = variant_config["deletion_regions"]
+    deletion_gt_thresholds2 = variant_config["variant_gt_thresholds"]
+    deletion_consensus_thresholds = variant_config["deletion_consensus_thresholds"]
+
+    # Prepare output columns
+    first_cols = ["sample_id", "organism"]
+    #snp_columns = [f"{entry[3]}_{snp_id}" for snp_id, entry in snp_info_dict.items()]
+    
+    gene_snp_map = {}
+    for snp_id, entry in snp_info_dict.items():
+        gene = entry[3]
+        gene_snp_map.setdefault(gene, []).append((snp_id, entry))
+    snp_columns = [f"{gene}_snp" for gene in gene_snp_map]
+
+    variation_columns = []
+    for gene in args.gene_list:
+        variation_columns.extend([
+            f"{gene}del",
+            f"{gene}_deletion_details",
+            f"{gene}_deletion_consensus"
+        ])
+    desired_columns = first_cols + snp_columns + variation_columns
+
+    # Input files
+    try:
+        #res_path = f"examples/Results/{sample}/Cdiff_KMA_Toxin/{sample}.res"
+        #res_df = process_res_file(res_path)
+        #bcf_path = f"examples/Results/{sample}/GenotypeCalls/{sample}.Cdiff_KMA_Toxin.calls.bcf"
+        #bcf_indel_path = f"examples/Results/{sample}/GenotypeCalls/{sample}.Cdiff_KMA_Toxin.indels.bcf"
+        #fasta_path = f"examples/Results/{sample}/Cdiff_KMA_Toxin/{sample}.fsa"
+
+        res_path = args.res
+        res_df = process_res_file(res_path)
+        bcf_path = args.call
+        bcf_indel_path = args.indels
+        fasta_path = args.fsa
+
+    except Exception as e:
+        logging.warning(f"[ERROR] Sample {sample} failed loading inputs: {e}")
+        for gene in args.gene_list:
+            for suffix in ["del", "deletion_details", "deletion_consensus"]:
+                row_dict[f"{gene}_{suffix}"] = "-"
+        for snp_id, entry in snp_info_dict.items():
+            row_dict[f"{entry[3]}_{snp_id}"] = "-"
+        pd.DataFrame([row_dict])[desired_columns].to_csv(
+            args.outputfile,
+            sep="\t" if args.suffix == "tsv" else ",",
+            index=False
+        )
+        return
+
+    # --- SNP CHECK LOOP ---
+    logging.info(f"\n[SNP CHECK LOOP]\n")
+
+    for gene, snps in gene_snp_map.items():
+        snp_outputs = []
+        try:
+            contig = find_matching_contig(res_df, gene)
+            for snp_id, (gene_pos, ref, alt, gene_name, strand) in snps:
+                logging.info(f"[INFO] Checking potential snp at {snp_id}:{gene_name}:{gene_pos}:{ref}:{alt}")
+    
+                _, genomic_pos = gene_pos_to_genomic(gene_name, gene_pos, coord_dict)
+
+                # Convert ref/alt if strand is minus
+                ref_to_use = ref # A 
+                alt_to_use = alt # T
+                if strand == "-":
+                    ref_to_use = reverse_complement(ref) # T
+                    alt_to_use = reverse_complement(alt) # A
+                    logging.info(f"  → Strand is '-', using reverse complements: {ref}→{ref_to_use}, {alt}→{alt_to_use}")
+
+                logging.info(f"→ SNP check: gene={gene}, pos={genomic_pos}, ref={ref_to_use}, alt={alt_to_use}, strand={strand}")
+
+                variant_status, extra = check_snp_variant(
+                    bcf_path, contig, genomic_pos, range=20,
+                    expected_ref=ref_to_use, expected_alt=alt_to_use,strand=strand
+                )
+                
+                if variant_status == "snp":
+                    snp_outputs.append(f"{gene_pos}_{ref}>{alt}")
+                elif variant_status == "wt":
+                    snp_outputs.append(f"{gene_pos}_wt")
+                elif variant_status == "del":
+                    snp_outputs.append(f"{gene_pos}_del")  # 1bp deletion, treat as SNP
+                elif variant_status == "other":
+                    snp_outputs.append(f"{gene_pos}_other:{extra}")
+
+            row_dict[f"{gene}_snp"] = ";".join(snp_outputs) if snp_outputs else "-"
+        except Exception as e:
+            logging.warning(f"[WARN] SNP check failed for gene {gene}: {e}")
+            row_dict[f"{gene}_snp"] = "-"
+
+    logging.info(f"\n[DELETION CHECK LOOP]\n")
+    # --- DELETION CHECK LOOP ---
+    for gene in args.gene_list:
+        logging.info(f"\n[INFO] Processing gene: {gene}")
+        deletion_details_list = []
+        try:
+            contig = find_matching_contig(res_df, gene)
+
+            orig_regions = {k: v for k, v in tcdC_deletion_regions.items() if k > 1}
+
+            gene_length = coord_dict[gene]["length"]
+            converted_regions = convert_reverse_strand_regions(orig_regions, gene_length)
+
+            del_status, del_details, del_len = verify_bcf(
+                bcf_path=bcf_path,
+                indels_bcf_path=bcf_indel_path,
+                contig=contig,
+                gene_name=gene,
+                orig_regions=orig_regions,
+                target_regions=converted_regions,
+                deletion_thresholds=deletion_gt_thresholds2,
+                region_buffer=args.deletion_region_buffer,
+                length_tolerance=args.partial_match_length_tolerance,
+                min_overlap_fraction=args.partial_overlap,
+            )
+            #near_length_tolerance=args.nearby_match_length_tolerance,
+            #near_start_offset=args.potential_start_offset
+            
+            row_dict[f"{gene}del"] = del_status
+            filtered_detail = filter_deletion_details(del_details)
+            if filtered_detail != "-":
+                deletion_details_list.append(filtered_detail)
+
+            # Append to existing details from SNPs
+            detail_key = f"{gene}_deletion_details"
+            existing_details = row_dict.get(detail_key, "-")
+            existing_parts = [] if existing_details == "-" else [existing_details.strip(";")]
+            combined = ";".join(existing_parts + deletion_details_list)
+            row_dict[detail_key] = combined if combined else "-"
+
+            # Step B: Extract consensus based on best region (confident or most ambiguous)
+            if del_len in orig_regions:
+                # Confident deletion match → extract directly
+                consensus = extract_consensus_indel_seq(fasta_path, 
+                                                        contig, 
+                                                        del_len, 
+                                                        converted_regions,
+                                                        deletion_consensus_thresholds)
+                row_dict[f"{gene}_deletion_consensus"] = consensus
+
+                if del_status.startswith("ambiguous") and consensus != "-":
+                    row_dict[f"{gene}del"] = evaluate_ambiguous_consensus(
+                        del_status,
+                        consensus,
+                        deletion_consensus_thresholds
+                    )
+
+            else:
+                # No confident deletion → scan all regions and report highest-%N one
+                consensus = extract_most_ambiguous_consensus(
+                    fasta_path=fasta_path,
+                    contig=contig,
+                    converted_regions=converted_regions,
+                    thresholds=deletion_consensus_thresholds
+                )
+                row_dict[f"{gene}_deletion_consensus"] = consensus
+                
+                if del_status in ("-", "", None) and consensus not in ("-", "", None):
+                    try:
+                        region_part = consensus.split("_")[0]
+                        start, end = map(int, region_part.split("-"))
+                        region_len = end - start + 1
+                        row_dict[f"{gene}_deletion_details"] = f"likely_{region_len}"
+                    except Exception as e:
+                        logging.warning(f"[WARN] Failed to calculate likely_ region length from consensus: {consensus} — {e}")
+
+        except Exception as e:
+            logging.warning(f"[WARN] Processing failed for gene {gene}: {e}")
+            for suffix in ["del", "deletion_details", "deletion_consensus"]:
+                row_dict[f"{gene}_{suffix}"] = "-"
+
+    # Fill in missing columns with "-"
+    for col in desired_columns:
+        row_dict.setdefault(col, "-")
+
+    # Write output
+    pd.DataFrame([row_dict])[desired_columns].to_csv(
+        args.outputfile,
+        sep="\t" if args.suffix == "tsv" else ",",
+        index=False
+    )
+    logging.info(f"Wrote summary to: {args.outputfile}")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Append C. difficile KMA .res summary info to a samplesheet.")
+    parser.add_argument("--sample_id", required=True, help="Sample name to process")
+    parser.add_argument("--organism", required=True, help="Organism name (used to load species-specific resources)")
+    parser.add_argument("-o", "--outputfile", default=None, help="Output filename. Default: per-sample output only")
+    parser.add_argument("--suffix", choices=["tsv", "csv"], default="tsv", help="Output format. Default: tsv")
+    parser.add_argument("--log_dir", default="examples/Log")
+    parser.add_argument("--call", required=True, help="Called genotypes")
+    parser.add_argument("--indels", required=True, help="Pileup files")
+    parser.add_argument("--res", required=True, help="KMA alignment results")
+    parser.add_argument("--fsa", required=True, help="Consensus sequence")
+    parser.add_argument(
+        "--gene_list",
+        nargs="+",
+        required=True,
+        help="List of genes to process (e.g., --gene_list tcdC tcdA cdtA)"
+    )
+    # --- Deletion detection flexibility ---
+    parser.add_argument(
+        "--partial_overlap",
+        type=float,
+        default=0.3,
+        help="Allowed ± difference in deletion length for *partial* overlap matches. Default: 1"
+    )
+    parser.add_argument(
+        "--partial_match_length_tolerance",
+        type=int,
+        default=1,
+        help="Allowed ± difference in deletion length for *partial* overlap matches. Default: 1"
+    )
+    parser.add_argument(
+        "--deletion_region_buffer",
+        type=int,
+        default=5,
+        help="Number of bp to extend each deletion region when scanning for variants. Used in region padding. Default: 5"
+    )
+    args = parser.parse_args()
+    main(args)
+    #python workflow/scripts/Cdiff_wrangler_variant.py --sample_id SRR2915766 --organism "Clostridioides difficile" -o test.tsv --suffix tsv

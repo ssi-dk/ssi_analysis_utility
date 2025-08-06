@@ -7,8 +7,17 @@ input_manager:
     database_path: resources
     config_species : workflow/configs_species/
     out_folder: examples/Results  # Folder where the analysis results will be saved
-    
 
+species_map:
+  Clostridium difficile: C.diff
+  Clostridioides difficile: C.diff
+  C. difficile: C.diff
+  C difficile: C.diff
+  C. diff: C.diff
+  C.diff: C.diff
+  Escherichia coli: E.coli
+  E coli: E.coli
+  E.coli: E.coli
 
 ###################### ANALYSIS & TOOLS SETTINGS ############################
 # This section provides paths to the yaml file for the conda environemt,
@@ -16,9 +25,23 @@ input_manager:
 
 analysis_settings:
 
-    kmeraligner:
+    KMA:
         yaml : ../envs/kmeraligner.yaml
-        database: kmeraligner
+    
+    Escherichia_coli_db:
+        yaml : ../envs/kmeraligner.yaml
+        database: Escherichia_coli_db
+
+    Clostridioides_difficile_db:
+        yaml: ../envs/DatabaseFetch.yaml
+        database: Clostridioides_difficile_db
+        species_config: C.diff
+
+    KMA_filter:
+        yaml: ../envs/python_functions.yaml
+
+    htslib:
+        yaml : ../envs/htslib.yaml
 
     emm_typing:
         yaml : ../envs/emm_typing.yaml
@@ -61,15 +84,18 @@ analysis_settings:
 
     mlst:
         yaml : ../envs/mlst.yaml
-            
+    
+    spades:
+        yaml : ../envs/spades.yaml
+    
+    skesa:
+        yaml : ../envs/skesa.yaml
+        
+    Repeat_identifier:
+        yaml: ../envs/python_functions.yaml
+
+    Variant_identifier:
+        yaml: ../envs/python_functions.yaml
     # Illumina lineage determination (commented out for now):
     # reference_fasta_file: /home/simonescrima/Desktop/ssi_analysis_utility/resources/lineage_determination/MGAS5005.fasta  # Fasta file for reference genome
     # lineage_variant_file: /home/simonescrima/Desktop/ssi_analysis_utility/resources/lineage_determination/Spyogenes_LOCs.tsv  # File with lineage variants
-
-
-
-         
-
-
-
-
