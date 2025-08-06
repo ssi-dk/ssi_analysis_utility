@@ -79,37 +79,6 @@ rule VirulenceFinder:
         eval $cmd >> {log.stdout} 2>&1
         """
 
-# Rule: LREFinder
-# Runs LRE-Finder to analyze long-read sequencing data.
-rule LREFinder:
-    input:
-        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
-        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1]
-    params:
-        # Path to the LRE database, application, and additional options.
-        db_path = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["LRE-finder"]["database"],
-        app_path = config["analysis_settings"]["LRE-finder"]["script"],
-        min_con_ID = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["LRE-finder"]["min_consensus_ID"],
-        add_opt = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["LRE-finder"]["additional_option"],
-        prefix = "OUT_FOLDER/{sample}/lre-finder/{sample}"
-    conda:
-        config["analysis_settings"]["LRE-finder"]["yaml"]
-    output:
-        directory("OUT_FOLDER/{sample}/lre-finder/")
-    shell:
-        """
-        # Check if the output directory exists, and skip if it does.
-        if [ -d {output} ]; 
-            then
-                echo "Directory {output} exists, skipping."
-                exit 1
-            else
-                mkdir {output}
-        fi 
-        
-        # Run LRE-Finder with the specified parameters and inputs.
-        python {params.app_path}/LRE-Finder.py -ipe {input.R1} {input.R2} -o {params.prefix} -t_db {params.db_path} -ID {params.min_con_ID} {params.add_opt} 
-        """
 
 # Rule: SerotypeFinder
 # Identifies serotypes from Illumina paired-end reads.
