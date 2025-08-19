@@ -33,19 +33,19 @@ analyses_to_run:
     #     Title: Presence of Streptococcal virulence genes from the Virulence Factor Database
 
     plasmidfinder: 
-        status : True
+        status : False
         Title : Plasmidfinder
         database: resources/plasmidfinder_db/  # Path to PlasmidFinder database
 
     resfinder: 
-        status : True 
+        status : False 
         Title : Resfinder
         resfinder_db: resources/resfinder_db/ # ResFinder database for AMR detection
         pointfinder_db: resources/pointfinder_db/  # PointFinder database for AMR point mutations
         disinfinder_db: resources/disinfinder_db/  # DisinFinder database for disinfectant resistance
 
     virulencefinder : 
-        status : True
+        status : False
         Title : Virulence finder
         database: resources/virulencefinder_db  # VirulenceFinder database
 
@@ -57,7 +57,7 @@ analyses_to_run:
         database: resources/lre-finder_db/elm  # Database for LRE-finder
 
     serotypefinder :
-        status : True
+        status : False
         Title : Serotypefinder
         database: resources/serotypefinder_db/  # SerotypeFinder database
     
@@ -87,3 +87,12 @@ analyses_to_run:
     mlst:
         status : True
         Title : MLST by Torsten Seeman
+    
+    meningotype:
+        status: False
+        Title : Sero- and genotyping of N. meningitidis
+
+    spades: 
+        status: False
+        Title: Assembly of paired end sequencing data 
+
