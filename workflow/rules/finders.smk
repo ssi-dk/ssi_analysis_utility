@@ -52,7 +52,7 @@ rule ResFinder:
         """
         mkdir -p {output.out_dir}
 
-        cmd="python -m resfinder -ifq {input.R1} {input.R2} -o {output.out_dir} -db_res {input.res_db_dir} -db_disinf {input.disin_db_dir} -db_point {input.point_db_dir} -acq"
+        cmd="run_resfinder.py -ifq {input.R1} {input.R2} -o {output} -db_res {input.res_database} -db_res_kma {input.res_database} -db_disinf {input.disin_database} -db_point {input.point_database} -acq"
  
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
