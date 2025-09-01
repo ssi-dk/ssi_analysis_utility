@@ -25,24 +25,46 @@ SAMPLES = CSV_DATA['sample_name'].tolist()
 sample_to_illumina = {row['sample_name']: row['Illumina_read_files'].split(',') for idx, row in CSV_DATA.iterrows()}
 sample_to_nanopore = {row['sample_name']: row['Nanopore_read_file'] for idx, row in CSV_DATA.iterrows()}
 sample_to_assembly_file = {row['sample_name']: row['assembly_file'] for idx, row in CSV_DATA.iterrows()}
-sample_to_organism = {row['sample_name']: row['organism'] for idx, row in CSV_DATA.iterrows()}
 
-# Load species-specific configurations dynamically
+# ------------------ Species Mapping (from config) ------------------
+
+# Load species_name_map from config file
+species_name_map = config.get("species_map", {})
+
+# Map each sample species (from sample sheet information) to the normalized species name used for the Species specific config
+sample_to_organism = {
+    row['sample_name']: species_name_map.get(row['organism'], row['organism'])
+    for idx, row in CSV_DATA.iterrows()
+}
+
+# Debug check if species have not properly been mapped
+unmapped_species = {
+    row['organism'] for idx, row in CSV_DATA.iterrows()
+    if row['organism'] not in species_name_map
+}
+if unmapped_species:
+    warnings.warn("The following species are not mapped in config['species_map']: %s" % unmapped_species, UserWarning)
+
+# ------------------ Load Species-Specific Configs ------------------
+
 species_configs = {}
 for species in set(sample_to_organism.values()):
-    species_config_path = SPECIES_PATH + f"{species}.yaml"
+    species_config_path = "%s%s.yaml" % (SPECIES_PATH, species)
     if os.path.exists(species_config_path):
         with open(species_config_path, "r") as species_config_file:
             species_configs[species] = yaml.load(species_config_file, 
                                                  Loader=yaml.Loader)
     else: # means the config is not found / available
-        warnings.warn(f"Warning: Configuration file {species_config_path} not found. \
-                        Skipping analyses for {species}.", UserWarning)
+        warnings.warn("Warning: Configuration file %s not found. Skipping analyses for %s." % (species_config_path, species), UserWarning)
         species_configs[species] = {}  # Empty config to ensure skipping analyses
 
 
 database_path = config['input_manager']['database_path']
 
+### Define rules where samtools is necessary
+
+TOOLS_WITH_SAM_OUTPUT = ["kmeraligner"]
+ASM_TO_REPEAT_IDENTIFICATION = ["spades","skesa"]
 
 ##############################################################################
 #
@@ -54,76 +76,144 @@ database_path = config['input_manager']['database_path']
 rule all:
     input:
         expand(
-            "%s/{sample}/kmeraligner/" %OUT_FOLDER, 
+            "%s/{sample}/kmeraligner/{sample}.res" % OUT_FOLDER,
             sample=[
-                s for s in SAMPLES 
-                if species_configs[sample_to_organism[s]]["analyses_to_run"]["kmeraligner"]["status"] is True
+                s for s in SAMPLES
+                if "kmeraligner" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ]
         ),
         expand(
-            "%s/{sample}/emm_typing/" %OUT_FOLDER, 
+            "%s/{sample}/KMA_results/{sample}_KMA.tsv" % OUT_FOLDER,
             sample=[
-                s for s in SAMPLES 
-                if species_configs[sample_to_organism[s]]["analyses_to_run"]["emm_typing"]["status"] is True
-            ]
-        ),       
-        expand(
-            "%s/{sample}/assembly_lineage/" %OUT_FOLDER, 
-            sample=[
-                s for s in SAMPLES 
-                if species_configs[sample_to_organism[s]]["analyses_to_run"]["assembly_lineage_determination"]["status"] is True
+                s for s in SAMPLES
+                if "KMA_filter" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ]
         ),
         expand(
-            "%s/{sample}/PlasmidFinder/" %OUT_FOLDER, 
+            "%s/{sample}/spades/contigs.fasta" % OUT_FOLDER,
             sample=[
                 s for s in SAMPLES 
-                if species_configs[sample_to_organism[s]]["analyses_to_run"]["plasmidfinder"]["status"] is True
+                if "spades" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ]
         ),
         expand(
-            "%s/{sample}/ResFinder/" %OUT_FOLDER, 
+            "%s/{sample}/skesa/{sample}.contigs.fasta" % OUT_FOLDER,
             sample=[
                 s for s in SAMPLES 
-                if species_configs[sample_to_organism[s]]["analyses_to_run"]["resfinder"]["status"] is True
+                if "skesa" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ]
         ),
         expand(
-            "%s/{sample}/VirulenceFinder/" %OUT_FOLDER, 
+            "%s/{sample}/PlasmidFinder/" % OUT_FOLDER,
             sample=[
-                s for s in SAMPLES 
-                if species_configs[sample_to_organism[s]]["analyses_to_run"]["virulencefinder"]["status"] is True
+                s for s in SAMPLES
+                if "plasmidfinder" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ]
         ),
         expand(
-            "%s/{sample}/lre-finder/" %OUT_FOLDER, 
+            "%s/{sample}/ResFinder/" % OUT_FOLDER,
             sample=[
-                s for s in SAMPLES 
-                if species_configs[sample_to_organism[s]]["analyses_to_run"]["LRE-finder"]["status"] is True
+                s for s in SAMPLES
+                if "resfinder" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ]
         ),
         expand(
-            "%s/{sample}/SerotypeFinder/" %OUT_FOLDER, 
+            "%s/{sample}/VirulenceFinder/" % OUT_FOLDER,
             sample=[
-                s for s in SAMPLES 
-                if species_configs[sample_to_organism[s]]["analyses_to_run"]["serotypefinder"]["status"] is True
+                s for s in SAMPLES
+                if "virulencefinder" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ]
         ),
         expand(
-            "{out}/{sample}/AMRFinder", 
+            "%s/{sample}/lre-finder/" % OUT_FOLDER,
             sample=[
-                s for s in SAMPLES 
-                if species_configs[sample_to_organism[s]]["analyses_to_run"]["amrfinder"]["status"] is True
+                s for s in SAMPLES
+                if "LRE-finder" in species_configs[sample_to_organism[s]]["analyses_to_run"]
+            ]
+        ),
+        expand(
+            "%s/{sample}/SerotypeFinder/" % OUT_FOLDER,
+            sample=[
+                s for s in SAMPLES
+                if "serotypefinder" in species_configs[sample_to_organism[s]]["analyses_to_run"]
+            ]
+        ),
+        expand(
+            "%s/{sample}/AMRFinder/AMR_{assembler}_{sample}.tsv" % OUT_FOLDER,
+            sample=[
+                s for s in SAMPLES for assembler in ASM_TO_REPEAT_IDENTIFICATION
+                if "amrfinder" in species_configs[sample_to_organism[s]]["analyses_to_run"]
+                and assembler in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ],
-            out=OUT_FOLDER
+            assembler=[
+                assembler for s in SAMPLES for assembler in ASM_TO_REPEAT_IDENTIFICATION
+                if "amrfinder" in species_configs[sample_to_organism[s]]["analyses_to_run"]
+                and assembler in species_configs[sample_to_organism[s]]["analyses_to_run"]
+            ]
         ),
         expand(
-            "{out}/{sample}/MLST", 
+            "%s/{sample}/Repeat_identifier/{assembler}_{sample}_repeat.tsv" % OUT_FOLDER,
             sample=[
-                s for s in SAMPLES 
-                if species_configs[sample_to_organism[s]]["analyses_to_run"]["mlst"]["status"] is True
+                s for s in SAMPLES for assembler in ASM_TO_REPEAT_IDENTIFICATION
+                if "Repeat_identifier" in species_configs[sample_to_organism[s]]["analyses_to_run"]
+                and assembler in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ],
-            out=OUT_FOLDER
+            assembler=[
+                assembler for s in SAMPLES for assembler in ASM_TO_REPEAT_IDENTIFICATION
+                if "Repeat_identifier" in species_configs[sample_to_organism[s]]["analyses_to_run"]
+                and assembler in species_configs[sample_to_organism[s]]["analyses_to_run"]
+            ]
+        ),
+        expand(
+            "%s/{sample}/FilteredBAM/{sample}.{tool}.filtered.sorted.bam.bai" % OUT_FOLDER,
+            sample=[
+                s for s in SAMPLES
+                for tool in TOOLS_WITH_SAM_OUTPUT
+                if tool in species_configs[sample_to_organism[s]]["analyses_to_run"]
+                and "samtools_idx" in species_configs[sample_to_organism[s]]["analyses_to_run"]
+            ],
+            tool=TOOLS_WITH_SAM_OUTPUT
+        ),
+        expand(
+            "%s/{sample}/GenotypeCalls/{sample}.{tool}.{tag}.bcf.csi" % OUT_FOLDER,
+            sample=[
+                s for s in SAMPLES
+                for tool in TOOLS_WITH_SAM_OUTPUT
+                if tool in species_configs[sample_to_organism[s]]["analyses_to_run"]
+                and "bcftools_index" in species_configs[sample_to_organism[s]]["analyses_to_run"]
+            ],
+            tool=TOOLS_WITH_SAM_OUTPUT,
+            tag=["calls", "indels"]
+        ),
+        expand(
+            "%s/{sample}/GenotypeCalls/{sample}.{tool}.calls.bcf" % OUT_FOLDER,
+            sample=[
+                s for s in SAMPLES
+                for tool in TOOLS_WITH_SAM_OUTPUT
+                if tool in species_configs[sample_to_organism[s]]["analyses_to_run"]
+                and "bcftools_call" in species_configs[sample_to_organism[s]]["analyses_to_run"]
+            ],
+            tool=TOOLS_WITH_SAM_OUTPUT
+        ),
+        expand(
+            "%s/{sample}/GenotypeCalls/{sample}.{tool}.indels.bcf" % OUT_FOLDER,
+            sample=[
+                s for s in SAMPLES
+                for tool in TOOLS_WITH_SAM_OUTPUT
+                if tool in species_configs[sample_to_organism[s]]["analyses_to_run"]
+                and "bcftools_view_filter" in species_configs[sample_to_organism[s]]["analyses_to_run"]
+            ],
+            tool=TOOLS_WITH_SAM_OUTPUT
+        ),
+        expand(
+            "%s/{sample}/GenotypeCalls/{sample}.{tool}.variants.tsv" % OUT_FOLDER,
+            sample=[
+                s for s in SAMPLES
+                for tool in TOOLS_WITH_SAM_OUTPUT
+                if tool in species_configs[sample_to_organism[s]]["analyses_to_run"]
+                and "Variant_detection" in species_configs[sample_to_organism[s]]["analyses_to_run"]
+            ],
+            tool=TOOLS_WITH_SAM_OUTPUT
         ),
 
 include : "rules/db_setups.smk"
@@ -131,4 +221,24 @@ include : "rules/finders.smk"
 include : "rules/characterizers.smk"
 include : "rules/others.smk"
 
-
+#        expand(
+#           "%s/{sample}/emm_typing/" % OUT_FOLDER,
+#            sample=[
+#                s for s in SAMPLES
+#                if "emm_typing" in species_configs[sample_to_organism[s]]["analyses_to_run"]
+#            ]
+#        ),
+#        expand(
+#            "%s/{sample}/assembly_lineage/" % OUT_FOLDER,
+#            sample=[
+#                s for s in SAMPLES
+#                if "assembly_lineage_determination" in species_configs[sample_to_organism[s]]["analyses_to_run"]
+#            ]
+#        ),
+#        expand(
+#            "%s/{sample}/MLST" % OUT_FOLDER,
+#            sample=[
+#                s for s in SAMPLES
+#                if "mlst" in species_configs[sample_to_organism[s]]["analyses_to_run"]
+#            ]
+#       ),

@@ -1,3 +1,12 @@
 sample_name	Illumina_read_files	Nanopore_read_file	assembly_file	organism	variant	notes
 ERR3528110	examples/Dataset/reads/ERR3528110_1.fastq.gz,examples/Dataset/reads/ERR3528110_2.fastq.gz	Na	examples/Dataset/assemblies/ERR3528110.fasta	E.coli	Na	Na
 ERR14229029	examples/Dataset/reads/ERR14229029_1.fastq.gz,examples/Dataset/reads/ERR14229029_2.fastq.gz	Na	examples/Dataset/assemblies/ERR14229029.fasta	E.coli	Na	Na
+ERR142064	examples/Dataset/reads/ERR142064_1.fastq.gz,examples/Dataset/reads/ERR142064_2.fastq.gz	Na	examples/Dataset/assemblies/ERR142064.fasta	Clostridioides difficile	Na	Na
+SRR5410473	examples/Dataset/reads/SRR5410473_1.fastq.gz,examples/Dataset/reads/SRR5410473_2.fastq.gz	Na	examples/Dataset/assemblies/SRR5410473.fasta	Clostridioides difficile	Na	Na
+SRR2915766	examples/Dataset/reads/SRR2915766_1.fastq.gz,examples/Dataset/reads/SRR2915766_2.fastq.gz	Na	examples/Dataset/assemblies/SRR2915766.fasta	Clostridioides difficile	Na	Na
+SRR10518319	examples/Dataset/reads/SRR10518319_1.fastq.gz,examples/Dataset/reads/SRR10518319_2.fastq.gz	Na	examples/Dataset/assemblies/SRR10518319.fasta	Clostridioides difficile	Na	Na
+SRR26769802	examples/Dataset/reads/SRR26769802_1.fastq.gz,examples/Dataset/reads/SRR26769802_2.fastq.gz	Na	examples/Dataset/assemblies/SRR26769802.fasta	Clostridioides difficile	Na	Na
+SRR26769817	examples/Dataset/reads/SRR26769817_1.fastq.gz,examples/Dataset/reads/SRR26769817_2.fastq.gz	Na	examples/Dataset/assemblies/SRR26769817.fasta	Clostridioides difficile	Na	Na
+SRR26767787	examples/Dataset/reads/SRR26767787_1.fastq.gz,examples/Dataset/reads/SRR26767787_2.fastq.gz	Na	examples/Dataset/assemblies/SRR26767787.fasta	Clostridioides difficile	Na	Na
+SRR2915768	examples/Dataset/reads/SRR2915768_1.fastq.gz,examples/Dataset/reads/SRR2915768_2.fastq.gz	Na	examples/Dataset/assemblies/SRR2915768.fasta	Clostridioides difficile	Na	Na
+SRR2915763	examples/Dataset/reads/SRR2915763_1.fastq.gz,examples/Dataset/reads/SRR2915763_2.fastq.gz	Na	examples/Dataset/assemblies/SRR2915763.fasta	Clostridioides difficile	Na	Na
