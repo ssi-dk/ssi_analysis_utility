@@ -49,14 +49,14 @@ rule KMA_filter:
     conda:
         config["analysis_settings"]["KMA_filter"]["yaml"]
     log:
-        stdout = "Logs/{sample}/KMA_results/{sample}_KMA_filter.log"
+        stdout = "Logs/{sample}/KMA_filter.log"
     message:
         "[KMA_filter]: Filtering KMA .res result for {wildcards.sample}"
     shell:
         """
         mkdir -p $(dirname {output.filtered_tsv})
 
-        python workflow/scripts/KMAfilter.py --KMA_res {input.kma_res} --sample_id {params.id} --output {output.filtered_tsv} {params.add_opt} --log_dir {params.log_dir} > {log.stdout} 2>&1
+        python workflow/scripts/KMAfilter.py --KMA_res {input.kma_res} --sample_id {params.id} --output {output.filtered_tsv} {params.add_opt} --log_file {log.stdout} > {log.stdout} 2>&1
         """
 
 # Rule for emm typing using BLAST
@@ -247,12 +247,12 @@ rule bcftools_call:
     
 rule Variant_identifier:
     input:
-        genotype_call_bcf = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.calls.bcf",
-        indels_only_bcf = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.indels.bcf",
-        genotype_call_csi = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.calls.bcf.csi",
-        indels_only_csi = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.indels.bcf.csi",
+        genotype_call_bcf = "%s/{sample}/GenotypeCalls/{sample}.{tool}.calls.bcf" %OUT_FOLDER,
+        indels_only_bcf = "%s/{sample}/GenotypeCalls/{sample}.{tool}.indels.bcf" %OUT_FOLDER,
+        genotype_call_csi = "%s/{sample}/GenotypeCalls/{sample}.{tool}.calls.bcf.csi" %OUT_FOLDER,
+        indels_only_csi = "%s/{sample}/GenotypeCalls/{sample}.{tool}.indels.bcf.csi" %OUT_FOLDER,
     output:
-        filtered_tsv = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.variants.tsv",
+        filtered_tsv = "%s/{sample}/GenotypeCalls/{sample}.{tool}.variants.tsv" %OUT_FOLDER,
     params:
         input_folder = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["KMA_filter"]["input_folder"],
         kma_res = lambda wildcards: os.path.join(
@@ -273,14 +273,14 @@ rule Variant_identifier:
         region_buffer = 5,
         overlap = 0.3,
     log:
-        stdout = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.Variant_identifier.log"
+        stdout = "Logs/{sample}/Variant_identifier_{tool}.log"
     conda:
         config["analysis_settings"]["Variant_identifier"]["yaml"]
     message:
         "[Variant Identification]: Filtering KMA .res, KMA consensus .fsa, genotype calls and indels for {wildcards.sample}"
     shell:
         """
-        python workflow/scripts/Variant_identifier.py --sample_id {params.id}  --res {params.kma_res} --fsa {params.kma_fsa} --call {input.genotype_call_bcf} --indels {input.indels_only_bcf} {params.add_opt} -o {output.filtered_tsv} --deletion_region_buffer {params.region_buffer} --partial_overlap {params.overlap}
+        python workflow/scripts/Variant_identifier.py --sample_id {params.id}  --res {params.kma_res} --fsa {params.kma_fsa} --call {input.genotype_call_bcf} --indels {input.indels_only_bcf} {params.add_opt} -o {output.filtered_tsv} --deletion_region_buffer {params.region_buffer} --partial_overlap {params.overlap} --log_file {log.stdout} > {log.stdout} 2>&1
         """
 
 # Rule: spades_assembly
@@ -361,12 +361,12 @@ rule Repeat_Identifier:
     conda:
         config["analysis_settings"]["Repeat_identifier"]["yaml"]
     log:
-        stdout = "%s/{sample}/Repeat_identifier/{assembler}_{sample}_repeat.log" %OUT_FOLDER
+        stdout = "Logs/{sample}/Repeat_Identifier_{assembler}.log"
     message:
         "[Repeat_identifier]: Running repeat analysis for {wildcards.sample} using ({wildcards.assembler}) contigs"
     shell:
         """
         mkdir -p {params.out_dir}
 
-        python workflow/scripts/Repeat_Identifier.py --sample_id {params.sample_id} --fasta {input.fasta} --repeats {params.repeats} --combos {params.combo_table} --db_dir {params.database} --output {output.result} --suffix tsv > {log.stdout} 2>&1
+        python workflow/scripts/Repeat_Identifier.py --sample_id {params.sample_id} --fasta {input.fasta} --repeats {params.repeats} --combos {params.combo_table} --db_dir {params.database} --output {output.result} --suffix tsv --log_file {log.stdout} > {log.stdout} 2>&1
         """

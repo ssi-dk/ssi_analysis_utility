@@ -226,7 +226,7 @@ def run_repeat_typing(fasta_path: str, repeat_names: List[str], combo_names: Lis
 # ---------------------------- Main CLI ---------------------------- #
 
 def main(args):
-    setup_logging(args.log_dir, args.sample_id, "repeat_typing")
+    setup_logging(log_file = args.log_file)
 
     try:
         results = run_repeat_typing(
@@ -248,14 +248,14 @@ def main(args):
     logging.info(f"Repeat typing results written to {args.output}")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Generalized repeat typing from assemblies using pattern matching.")
-    parser.add_argument("--sample_id", required=True, help="Sample identifier")
-    parser.add_argument("--fasta", required=True, help="Path to assembly FASTA file")
-    parser.add_argument("--repeats", nargs="+", required=True, help="List of repeat identifiers (must match filename prefixes)")
-    parser.add_argument("--combos", nargs="+", required=True, help="List of combination identifiers")
-    parser.add_argument("--db_dir", default="resources/Clostridioides_difficile_db/TRST", help="Directory containing repeat sequence and type files")
-    parser.add_argument("--output", required=True, help="Output file path")
-    parser.add_argument("--suffix", choices=["tsv", "csv"], default="tsv", help="Output file format")
-    parser.add_argument("--log_dir", default="examples/Log", help="Logging directory")
+    parser = argparse.ArgumentParser(description = "Generalized repeat typing from assemblies using pattern matching.")
+    parser.add_argument("--sample_id", required = True, help = "Sample identifier")
+    parser.add_argument("--fasta", required = True, help = "Path to assembly FASTA file")
+    parser.add_argument("--repeats", nargs = "+", required = True, help = "List of repeat identifiers (must match filename prefixes)")
+    parser.add_argument("--combos", nargs="+", required = True, help = "List of combination identifiers")
+    parser.add_argument("--db_dir", default = "resources/Clostridioides_difficile_db/TRST", help = "Directory containing repeat sequence and type files")
+    parser.add_argument("--output", required = True, help = "Output file path")
+    parser.add_argument("--suffix", choices = ["tsv", "csv"], default = "tsv", help = "Output file format")
+    parser.add_argument("--log_file", required = True, help = "File for logging")
     args = parser.parse_args()
     main(args)
