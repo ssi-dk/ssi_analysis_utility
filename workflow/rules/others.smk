@@ -283,6 +283,7 @@ rule Variant_identifier:
         python workflow/scripts/Variant_identifier.py --sample_id {params.id}  --res {params.kma_res} --fsa {params.kma_fsa} --call {input.genotype_call_bcf} --indels {input.indels_only_bcf} {params.add_opt} -o {output.filtered_tsv} --deletion_region_buffer {params.region_buffer} --partial_overlap {params.overlap} --log_file {log.stdout} > {log.stdout} 2>&1
         """
 
+
 # Rule: spades_assembly
 rule spades_assembly:
     input:
@@ -295,16 +296,17 @@ rule spades_assembly:
     log:
         stdout = "Logs/{sample}/spades.log"
     message:
-        "[spades_assembly]: Perform assembly using spades on {wildcards.sample}, this will take some time!"
+        "[spades_assembly]: Perform assembly using spades on {wildcards.sample}, this will take time! For real time updates, check out the log: Logs/{wildcards.sample}/spades.log"
     threads:
-        min(workflow.cores, 8)
+        min(workflow.cores / 2, 8)
     shell:
         """
-        cmd="spades.py -1 {input.R1} -2 {input.R2} --threads {threads} --isolate --only-assembler -o $(dirname {output.contigs})"
+        cmd="spades.py -1 {input.R1} -2 {input.R2} --threads {threads} --isolate -o $(dirname {output.contigs})"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
         """
+
 
 # Rule: Skesa_assembly
 #  DeBruijn graph-based de-novo assembler for microbial genomes
@@ -319,9 +321,9 @@ rule skesa_assembly:
     log:
         stdout = "Logs/{sample}/skesa.log"
     message:
-        "[skesa_assembly]: Perform assembly using skesa on {wildcards.sample}, this will take some time!"
+        "[skesa_assembly]: Perform assembly using skesa on {wildcards.sample}, this will take time! For real time updates, check out the log: Logs/{wildcards.sample}/skesa.log"
     threads:
-        min(workflow.cores, 8)
+        min(workflow.cores / 2, 8)
     shell:
         """
         mkdir -p $(dirname {output.assembly})
