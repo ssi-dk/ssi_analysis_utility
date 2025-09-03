@@ -3,52 +3,55 @@ import re
 def db_flat_to_path(name):
     # Replace the first underscore after _db with a slash
     return re.sub(r'(_db)_(?=[^_]+$)', r'\1/', name)
-    
+
+
 rule kma_index_directory:
-    output:
-        flag = "Logs/Databases/{db_name_flat}.kma_index.done"
     input:
-        fasta_dir = lambda wc: "resources/%s" % db_flat_to_path(wc.db_name_flat)
+        fasta_dir = lambda wc: "%s/%s" %(database_path, db_flat_to_path(wc.db_name_flat))
+    output:
+        flag = "%s/{db_name_flat}.kma_index.done" %database_path
     conda:
         config["analysis_settings"]["KMA"]["yaml"]
     message:
         "[kma_index_directory]: Indexing all FASTA in {input.fasta_dir}"
     shell:
-        r"""
+        """
         mkdir -p {input.fasta_dir}
 
-        for fasta in $(find {input.fasta_dir} -maxdepth 1 -type f \( -name "*.fa" -o -name "*.fsa" -o -name "*.fasta" \)); do
+        for fasta in $(find {input.fasta_dir} -maxdepth 1 -type f  -name "*.f*a*"); do
+            echo $fasta
             prefix="${{fasta%.*}}"
             echo "Indexing $fasta -> $prefix"
             kma index -i "$fasta" -o "$prefix"
         done
 
-        touch {output.flag}
+        date -I >> {output.flag}
         """
 
 rule samtools_faidx_directory:
-    output:
-        flag = "Logs/Databases/{db_name_flat}.fa_idx.done"
     input:
-        fasta_dir = lambda wc: "resources/%s" % db_flat_to_path(wc.db_name_flat)
+        fasta_dir = lambda wc: "%s/%s" %(database_path, db_flat_to_path(wc.db_name_flat))
+    output:
+        flag = "%s/{db_name_flat}.fa_idx.done" %database_path
     conda:
         config["analysis_settings"]["htslib"]["yaml"]
     message:
         "[samtools_faidx_directory]: Indexing all FASTA in {input.fasta_dir}"
     shell:
-        r"""
+        """
         mkdir -p {input.fasta_dir}
-        touch {output.flag}
     
-        for fasta in $(find {input.fasta_dir} -maxdepth 1 -type f \( -name "*.fa" -o -name "*.fsa" -o -name "*.fasta" \)); do
+        for fasta in $(find {input.fasta_dir} -maxdepth 1 -type f  -name "*.f*a*"); do
             prefix="${{fasta%.*}}"
             echo "Indexing $fasta -> $prefix"
             cmd="samtools faidx $fasta"
             echo "Executing command:\n$cmd\n" >> {output.flag} 
             eval $cmd >> {output.flag} 2>&1
-            date -I >> {output.flag}
-        done    
+        done
+
+        date -I >> {output.flag}
         """
+
 
 rule setup_Ecoli_alignment_db:
     conda:
@@ -72,6 +75,7 @@ rule setup_Ecoli_alignment_db:
         date -I > {output.database}/creation.date
         """
 
+
 rule setup_CdiffToxin:
     conda:
         config["analysis_settings"]["Clostridioides_difficile_db"]["yaml"]
@@ -85,7 +89,7 @@ rule setup_CdiffToxin:
     message:
         "[setup_CdiffToxin]: Setting up C. difficile toxin database"
     shell:
-        r"""
+        """
         set -euo pipefail
         mkdir -p {output.database}
         > {output.database}/{params.db_toxin}.txt
@@ -136,7 +140,7 @@ rule setup_CdiffTRST:
     message:
         "[setup_CdiffTRST]: Downloading TRST repeat sequences and types"
     shell:
-        r"""
+        """
         set -euo pipefail
         mkdir -p {output.database}
 
@@ -161,7 +165,7 @@ rule setup_PlasmidFinder:
     conda:
         config["analysis_settings"]["plasmidfinder"]["yaml"]
     output: 
-        database = directory("%s/%s" % (database_path, config["analysis_settings"]["plasmidfinder"]["database"]))
+        database = directory("%s/%s" %(database_path, config["analysis_settings"]["plasmidfinder"]["database"]))
     log:
         stdout = 'Logs/Databases/setup_PlasmidFinder.log'
     message:
@@ -169,6 +173,18 @@ rule setup_PlasmidFinder:
     shell:
         """
         git clone https://bitbucket.org/genomicepidemiology/plasmidfinder_db.git {output.database} > {log.stdout} 2>&1
+
+        for fasta in $(find {output.database} -iname '*.fsa'); do
+            idx_prefix={output.database}/$(basename $fasta .fsa)
+            cmd="kma index -i $fasta -o $idx_prefix"
+            
+            echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
+            eval $cmd >> {log.stdout} 2>&1
+            
+            if [ -z $idx_prefix.comb.b ]; then
+                echo '[plasmidfinder_db]: ERROR - $idx_prefix.comb.b was not created during KMA indexing. This likely means that the plasmidfinder_db has changed. Post this message on our Github repository!' 2>&1 >> {log.stdout}
+            fi
+        done
         
         date -I > {output.database}/creation.date
         """
@@ -187,6 +203,18 @@ rule setup_ResFinder:
         """
         git clone https://bitbucket.org/genomicepidemiology/resfinder_db.git {output.database} > {log.stdout} 2>&1
         
+        for fasta in $(find {output.database} -iname '*.fsa'); do
+            idx_prefix={output.database}/$(basename $fasta .fsa)
+            cmd="kma index -i $fasta -o $idx_prefix"
+
+            echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
+            eval $cmd >> {log.stdout} 2>&1
+            
+            if [ -z $idx_prefix.comb.b ]; then
+                echo '[resfinder_db]: ERROR - $idx_prefix.comb.b was not created during KMA indexing. This likely means that the resfinder_db has changed. Post this message on our Github repository!' 2>&1 >> {log.stdout}
+            fi
+        done
+        
         date -I > {output.database}/creation.date
         """
 
@@ -204,6 +232,19 @@ rule setup_PointFinder:
         """
         git clone https://bitbucket.org/genomicepidemiology/pointfinder_db.git {output.database} > {log.stdout} 2>&1
 
+        for fasta in $(find {output.database} -iname '*.fsa'); do
+            idx_prefix={output.database}/$(basename $fasta .fsa)
+            cmd="kma index -i $fasta -o $idx_prefix"
+            
+            echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
+            eval $cmd >> {log.stdout} 2>&1
+
+            
+            if [ -z $idx_prefix.comb.b ]; then
+                echo '[pointfinder_db]: ERROR - $idx_prefix.comb.b was not created during KMA indexing. This likely means that the pointfinder_db has changed. Post this message on our Github repository!' 2>&1 >> {log.stdout}
+            fi
+        done
+        
         date -I > {output.database}/creation.date
         """
 
@@ -220,6 +261,18 @@ rule setup_DisinFinder:
         """
         git clone https://bitbucket.org/genomicepidemiology/disinfinder_db.git {output.database} > {log.stdout} 2>&1
 
+        for fasta in $(find {output.database} -iname '*.fsa'); do
+            idx_prefix={output.database}/$(basename $fasta .fsa)
+            cmd="kma index -i $fasta -o $idx_prefix"
+            
+            echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
+            eval $cmd >> {log.stdout} 2>&1
+            
+            if [ -z $idx_prefix.comb.b ]; then
+                echo '[disinfinder_db]: ERROR - $idx_prefix.comb.b was not created during KMA indexing. This likely means that the disinfinder_db has changed. Post this message on our Github repository!' 2>&1 >> {log.stdout}
+            fi
+        done
+        
         date -I > {output.database}/creation.date
         """
 
@@ -237,6 +290,18 @@ rule setup_VirulenceFinder:
         """
         git clone https://bitbucket.org/genomicepidemiology/virulencefinder_db.git {output.database} > {log.stdout} 2>&1
        
+        for fasta in $(find {output.database} -iname '*.fsa'); do
+            idx_prefix={output.database}/$(basename $fasta .fsa)
+            cmd="kma index -i $fasta -o $idx_prefix"
+            
+            echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
+            eval $cmd >> {log.stdout} 2>&1
+            
+            if [ -z $idx_prefix.comb.b ]; then
+                echo '[virulencefinder_db]: ERROR - $idx_prefix.comb.b was not created during KMA indexing. This likely means that the virulencefinder_db has changed. Post this message on our Github repository!' 2>&1 >> {log.stdout}
+            fi
+        done
+        
         date -I > {output.database}/creation.date
         """
 
@@ -253,6 +318,18 @@ rule setup_SerotypeFinder:
     shell:
         """
         git clone https://bitbucket.org/genomicepidemiology/serotypefinder_db.git {output.database} > {log.stdout} 2>&1
+
+        for fasta in $(find {output.database} -iname '*.fsa'); do
+            idx_prefix={output.database}/$(basename $fasta .fsa)
+            cmd="kma index -i $fasta -o $idx_prefix"
+            
+            echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
+            eval $cmd >> {log.stdout} 2>&1
+            
+            if [ -z $idx_prefix.comb.b ]; then
+                echo '[serotypefinder_db]: ERROR - $idx_prefix.comb.b was not created during KMA indexing. This likely means that the serotypefinder_db has changed. Post this message on our Github repository!' 2>&1 >> {log.stdout}
+            fi
+        done
 
         date -I > {output.database}/creation.date
         """

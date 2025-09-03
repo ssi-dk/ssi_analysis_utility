@@ -2,11 +2,11 @@
 # Runs Multi Locus Sequence Type to determine the ST profile of isolate
 rule MLST:
     input:
-        assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample],
+        assembly = rules.spades_assembly.output.contigs,
         datefile = rules.update_MLST.output.datefile
     output:
         # mlst_file = "%s/{sample}/MLST/{sample}.tsv" %OUT_FOLDER
-        directory("%s/{sample}/MLST" %OUT_FOLDER)
+        directory("%s/{sample}/MLST/{sample}.tsv" %OUT_FOLDER)
     conda:
         config["analysis_settings"]["mlst"]["yaml"]
     log:

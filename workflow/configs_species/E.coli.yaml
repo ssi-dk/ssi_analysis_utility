@@ -84,6 +84,9 @@ analyses_to_run:
         organism: --organism Escherichia # Leave blank or insert --organism alongside one of the supported organisms, listed here: https://github.com/evolarjun/amr/wiki/Curated-organisms
         wrangler: workflow/scripts/AMR_wrangler.py
 
+    mlst:
+       Title : MLST by Torsten Seeman
+
     spades:
         Title : spades assembly
 
@@ -105,8 +108,6 @@ analyses_to_run:
 #        reference_fasta_file: resources/lineage_determination/MGAS5005.fasta
 #        lineage_variant_file: resources/lineage_determination/Spyogenes_LOCs.tsv
 #        
-#    mlst:
-#        Title : MLST by Torsten Seeman
 #
 #    LRE-finder: 
 #        Title : LRE-Finder
