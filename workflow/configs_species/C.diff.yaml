@@ -94,21 +94,22 @@ analyses_to_run:
         combos: TRST 
         database: resources/Clostridioides_difficile_db/TRST
 
-    samtools_view:
-        additional_option : -b -q 20 -F 4 
+    samtools:
+        view: 
+            options: -b -q 20 -F 4 
         # https://broadinstitute.github.io/picard/explain-flags.html
         # 4 (unmapped) + 256 (not primary alignment) + 512 (failed quality) + 1024 (duplicate) + 2048 (supplementary) = 3844
         # Consider removing reads which is not in proper pair #3844
 
-    samtools_sort:
-        additional_option : -n 
+        sort: 
+            options: -n 
     
-    samtools_idx:
-        Title : samtools index
-
-    bcftools_view_filter:
-        additional_option: -v indels -i 'INFO/DP>10'
-        region: AM180355.1_tcdC_804309_805008
+    bcftools:
+        view:
+            region: AM180355.1_tcdC_804309_805008
+            options: -v indels -i 'INFO/DP>10'
+        additional_option: 
+        region: 
 
     bcftools_index:
         Title : bcftools index
@@ -119,10 +120,10 @@ analyses_to_run:
     bcftools_call:
         Title : spades assembly
 
-    Variant_detection:
+    Variant_identifier:
         Title : Detecting variants for C.diff 
         ID: 93
-        additional_option : --gene_list tcdC --organism "Clostridioides difficile" --suffix tsv
+        options : --gene_list tcdC --organism "Clostridioides difficile" --suffix tsv --deletion_region_buffer 5 --partial_overlap 0.3
         genomic_coord : resources/Clostridioides_difficile_db/Toxin/Cdiff_Toxin.bed6
         snp_info: #https://pubmed.ncbi.nlm.nih.gov/24374512/
             snp_117: [117,"A","T","tcdC","-"] # [genomic position within the loci, reference, alternative]

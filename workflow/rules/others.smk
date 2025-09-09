@@ -1,36 +1,39 @@
 #------------------------------ Modules --------------------------------#
 
+
+
+
 # Rule: kmeraligner
 # Identifies microbial species or strain using k-mer-based alignment.
-rule kmeraligner:
-    input:
-        R1 = lambda wc: sample_to_illumina[wc.sample][0],
-        R2 = lambda wc: sample_to_illumina[wc.sample][1],
-        db_index = lambda wc: "%s/%s.kma_index.done" %(database_path, species_configs[sample_to_organism[wc.sample]]['alignment_database']['kmeraligner']['kma_index_flag']),
-        db_dir = lambda wc: "%s" %getattr(rules, species_configs[sample_to_organism[wc.sample]]['alignment_database']['kmeraligner']['db']).output.database
-    params:
-        add_opt = lambda wc: species_configs[sample_to_organism[wc.sample]]["analyses_to_run"]["kmeraligner"]["additional_option"],
-        prefix = lambda wc: "%s/%s/kmeraligner/%s" % (OUT_FOLDER, wc.sample, wc.sample),
-        db_prefix = lambda wc: species_configs[sample_to_organism[wc.sample]]["alignment_database"]["kmeraligner"]["kma_db_prefix"]
-    output:
-        res = "%s/{sample}/kmeraligner/{sample}.res" % OUT_FOLDER,
-        fsa = "%s/{sample}/kmeraligner/{sample}.fsa" % OUT_FOLDER,
-        sam = "%s/{sample}/kmeraligner/{sample}.sam" % OUT_FOLDER,
-    conda:
-        config["analysis_settings"]["KMA"]["yaml"]
-    log:
-        stdout = 'Logs/{sample}/kmeraligner.log'
-    message:
-        "[kmeraligner]: Running KMA on {wildcards.sample}"
-    shell:
-        """
-        mkdir -p $(dirname {output.res})
+# rule kmeraligner:
+#     input:
+#         R1 = lambda wc: sample_to_illumina[wc.sample][0],
+#         R2 = lambda wc: sample_to_illumina[wc.sample][1],
+#         db_index = lambda wc: "%s/%s.kma_index.done" %(database_path, species_configs[sample_to_organism[wc.sample]]['alignment_database']['kmeraligner']['kma_index_flag']),
+#         db_dir = lambda wc: "%s" %getattr(rules, species_configs[sample_to_organism[wc.sample]]['alignment_database']['kmeraligner']['db']).output.database
+#     params:
+#         add_opt = lambda wc: species_configs[sample_to_organism[wc.sample]]["analyses_to_run"]["kmeraligner"]["additional_option"],
+#         prefix = lambda wc: "%s/%s/kmeraligner/%s" % (OUT_FOLDER, wc.sample, wc.sample),
+#         db_prefix = lambda wc: species_configs[sample_to_organism[wc.sample]]["alignment_database"]["kmeraligner"]["kma_db_prefix"]
+#     output:
+#         res = "%s/{sample}/kmeraligner/{sample}.res" % OUT_FOLDER,
+#         fsa = "%s/{sample}/kmeraligner/{sample}.fsa" % OUT_FOLDER,
+#         sam = "%s/{sample}/kmeraligner/{sample}.sam" % OUT_FOLDER,
+#     conda:
+#         config["analysis_settings"]["KMA"]["yaml"]
+#     log:
+#         stdout = 'Logs/{sample}/kmeraligner.log'
+#     message:
+#         "[kmeraligner]: Running KMA on {wildcards.sample}"
+#     shell:
+#         """
+#         mkdir -p $(dirname {output.res})
 
-        cmd="kma -ipe {input.R1} {input.R2} -o {params.prefix} {params.add_opt} -t_db {input.db_dir}/{params.db_prefix} > {output.sam}"
+#         cmd="kma -ipe {input.R1} {input.R2} -o {params.prefix} {params.add_opt} -t_db {input.db_dir}/{params.db_prefix} > {output.sam}"
 
-        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-        eval $cmd >> {log.stdout} 2>&1
-        """
+#         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+#         eval $cmd >> {log.stdout} 2>&1
+#         """
 
 
 rule KMA_filter:
@@ -61,22 +64,6 @@ rule KMA_filter:
         """
 
 
-rule samtools_index:
-    input:
-        bam = "{folder}/{sample}/FilteredBAM/{sample}.{tool}.filtered.sorted.bam"
-    output:
-        bai = temp("{folder}/{sample}/FilteredBAM/{sample}.{tool}.filtered.sorted.bam.bai")
-    conda:
-        config["analysis_settings"]["htslib"]["yaml"]
-    message:
-        "[samtools_index]: Indexing {input.bam} -> {output.bai}"
-    shell:
-        """
-        echo "Indexing {input.bam} -> {output.bai}"
-        samtools index {input.bam}
-        """
-
-
 rule samtools_view:
     input:
         sam = "{folder}/{sample}/{tool}/{sample}.sam"
@@ -95,7 +82,7 @@ rule samtools_view:
         """
 
 
-rule samtools_sort:
+rule samtools_sorts:
     input:
         bam = "{folder}/{sample}/FilteredBAM/{sample}.{tool}.filtered.bam",
     output:
@@ -111,7 +98,23 @@ rule samtools_sort:
         """
 
 
-rule bcftools_index:
+rule samtools_indexs:
+    input:
+        bam = "{folder}/{sample}/FilteredBAM/{sample}.{tool}.filtered.sorted.bam"
+    output:
+        bai = temp("{folder}/{sample}/FilteredBAM/{sample}.{tool}.filtered.sorted.bam.bai")
+    conda:
+        config["analysis_settings"]["htslib"]["yaml"]
+    message:
+        "[samtools_index]: Indexing {input.bam} -> {output.bai}"
+    shell:
+        """
+        echo "Indexing {input.bam} -> {output.bai}"
+        samtools index {input.bam}
+        """
+
+
+rule bcftools_indexs:
     input:
         bcf = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.{tag}.bcf"
     output:
@@ -129,8 +132,8 @@ rule bcftools_index:
 
 rule bcftools_mpileup:
     input:
-        bam = rules.samtools_sort.output.sorted_bam,
-        bai = rules.samtools_index.output.bai,
+        bam = rules.samtools_sorts.output.sorted_bam,
+        bai = rules.samtools_indexs.output.bai,
         db_index = lambda wc: "%s/%s.fa_idx.done" %(database_path, species_configs[sample_to_organism[wc.sample]]['alignment_database']['kmeraligner']['fa_idx_flag']),
         db_dir = lambda wc: "%s" % getattr(rules, species_configs[sample_to_organism[wc.sample]]['alignment_database']['kmeraligner']['db']).output.database
     params:
@@ -189,7 +192,7 @@ rule bcftools_call:
         """    
 
     
-rule Variant_identifier:
+rule Variant_identifiers:
     input:
         genotype_call_bcf = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.calls.bcf",
         indels_only_bcf = "{folder}/{sample}/GenotypeCalls/{sample}.{tool}.indels.bcf",
@@ -211,7 +214,7 @@ rule Variant_identifier:
             species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["KMA_filter"]["input_folder"],
             "%s.fsa" % wildcards.sample
         ),
-        add_opt = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Variant_detection"]["additional_option"],
+        add_opt = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Variant_identifyer"]["additional_option"],
         log_dir = lambda wildcards: "%s/%s/GenotypeCalls/" % (OUT_FOLDER, wildcards.sample),
         id = lambda wildcards: wildcards.sample,
         region_buffer = 5,

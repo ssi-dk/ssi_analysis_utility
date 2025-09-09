@@ -192,7 +192,9 @@ rule all:
             tool=TOOLS_WITH_SAM_OUTPUT
         ),
 
-include : "rules/db_setups.smk"
+include : "rules/setup_dbs.smk"
+include : "rules/setup_custom_dbs.smk"
+include : "rules/mappers.smk"
 include : "rules/finders.smk"
 include : "rules/others.smk"
 include : "rules/characterizers.smk"
