@@ -3,16 +3,19 @@ import sys
 from Bio import Entrez, SeqIO
 from datetime import datetime
 import os
+import logging
+from logging_utils import setup_logging
+
 
 def fetch_and_store_genbank_features(email: str, accession: str, locus_filter=None, output_file=None, bed_file=None, fasta_file=None, merge_distance=None, append=False):
     Entrez.email = email
-    print(f"Fetching GenBank record for {accession} from NCBI...")
+    logging.info(f"Fetching GenBank record for {accession} from NCBI...")
 
     try:
         with Entrez.efetch(db="nucleotide", id=accession, rettype="gb", retmode="text") as handle:
             record = SeqIO.read(handle, "genbank")
     except Exception as e:
-        print(f"Failed to fetch or parse {accession}: {e}")
+        logging.error(f"Failed to fetch or parse {accession}: {e}")
         return
 
     output = []
@@ -30,80 +33,83 @@ def fetch_and_store_genbank_features(email: str, accession: str, locus_filter=No
     output.append("\nCoding sequence (CDS) coordinates:")
     matched_loci = set()
 
+    logging.debug("Handling genbank records.")
+    if locus_filter:
+        logging.debug(f"Filtering records for: {locus_filter}")
     for feature in record.features:
-        if feature.type != "CDS":
-            continue
-
         gene_name = feature.qualifiers.get("gene", [""])[0].strip()
-        product = feature.qualifiers.get("product", [""])[0]
-        locus_tag = feature.qualifiers.get("locus_tag", [""])[0]
-        old_locus_tag = feature.qualifiers.get("old_locus_tag", [""])[0]
-        gene_synonyms = feature.qualifiers.get("gene_synonym", [""])[0]
-        note = feature.qualifiers.get("note", [""])[0]
+        if feature.type == "CDS":            
 
-        matched = False
-        comments = []
-        match_sources = {}
+            product = feature.qualifiers.get("product", [""])[0]
+            locus_tag = feature.qualifiers.get("locus_tag", [""])[0]
+            old_locus_tag = feature.qualifiers.get("old_locus_tag", [""])[0]
+            gene_synonyms = feature.qualifiers.get("gene_synonym", [""])[0]
+            note = feature.qualifiers.get("note", [""])[0]
 
-        if locus_filter:
-            for target in locus_filter:
-                matched_fields = []
+            matched = False
+            comments = []
+            match_sources = {}
 
-                if gene_name == target:
-                    matched_fields.append(f"Matched by gene ({target})")
-                    match_sources[target] = match_sources.get(target, []) + ["gene"]
-                    matched_loci.add(target)
+            if locus_filter:
+                for lucus in locus_filter:
+                    matched_fields = []
 
-                if target.lower() in product.lower():
-                    matched_fields.append(f"Matched by product (partial) ({target})")
-                    match_sources[target] = match_sources.get(target, []) + ["product"]
-                    matched_loci.add(target)
+                    if gene_name.lower() == lucus.lower():
+                        matched_fields.append(f"Matched by gene ({lucus})")
+                        match_sources[lucus] = match_sources.get(lucus, []) + ["gene"]
+                        matched_loci.add(gene_name)
 
-                if locus_tag == target:
-                    matched_fields.append(f"Matched by locus_tag ({target})")
-                    match_sources[target] = match_sources.get(target, []) + ["locus_tag"]
-                    matched_loci.add(target)
+                    if lucus.lower() in product.lower():
+                        matched_fields.append(f"Matched by product (partial) ({lucus})")
+                        match_sources[lucus] = match_sources.get(lucus, []) + ["product"]
+                        matched_loci.add(gene_name)
 
-                if old_locus_tag == target:
-                    matched_fields.append(f"Matched by old_locus_tag ({target})")
-                    match_sources[target] = match_sources.get(target, []) + ["old_locus_tag"]
-                    matched_loci.add(target)
+                    if locus_tag.lower() == lucus.lower():
+                        matched_fields.append(f"Matched by locus_tag ({lucus})")
+                        match_sources[lucus] = match_sources.get(lucus, []) + ["locus_tag"]
+                        matched_loci.add(gene_name)
 
-                if matched_fields:
-                    matched = True
-                    comments.extend(matched_fields)
+                    if old_locus_tag.lower() == lucus.lower():
+                        matched_fields.append(f"Matched by old_locus_tag ({lucus})")
+                        match_sources[lucus] = match_sources.get(lucus, []) + ["old_locus_tag"]
+                        matched_loci.add(gene_name)
 
-            for target, fields in match_sources.items():
-                if len(fields) > 1:
-                    output.append(f"Warning: Multiple matches for CDS '{gene_name}' on locus '{target}': {', '.join(fields)}")
-        else:
-            matched = True
+                    if matched_fields:
+                        matched = True
+                        logging.debug(f"MATCH: {matched_fields}")
 
-        if not matched:
-            continue
+                        comments.extend(matched_fields)
+                    else:
+                        logging.debug(f"CDS found, but no match!")
 
-        start = int(feature.location.start)
-        end = int(feature.location.end)
-        strand = "+" if feature.location.strand == 1 else "-"
-        gene_label = gene_name or old_locus_tag or "unknown"
+                for lucus, fields in match_sources.items():
+                    if len(fields) > 1:
+                        output.append(f"Warning: Multiple matches for CDS '{gene_name}' on locus '{lucus}': {', '.join(fields)}")
 
-        output.append(f" - {gene_label}:")
-        output.append(f"     coordinates: {start + 1}..{end}")
-        output.append(f"     length: {end - start}")
-        output.append(f"     strand: ({strand})")
-        output.append(f"     Locus tag: {locus_tag}")
-        output.append(f"     Old locus tag: {old_locus_tag}")
-        output.append(f"     Gene synonym(s): {gene_synonyms}")
-        output.append(f"     Product: {product}")
-        output.append(f"     Note: {note}")
-        if comments:
-            output.append(f"     Comments: {', '.join(comments)}")
+            if not locus_filter or matched:
+                
+                start = int(feature.location.start)
+                end = int(feature.location.end)
+                strand = "+" if feature.location.strand == 1 else "-"
+                gene_label = gene_name or old_locus_tag or "unknown"
 
-        if bed_file:
-            bed_lines.append(f"{record.id}\t{start}\t{end}\t{gene_label}\t0\t{strand}")
+                output.append(f" - {gene_label}:")
+                output.append(f"     coordinates: {start + 1}..{end}")
+                output.append(f"     length: {end - start}")
+                output.append(f"     strand: ({strand})")
+                output.append(f"     Locus tag: {locus_tag}")
+                output.append(f"     Old locus tag: {old_locus_tag}")
+                output.append(f"     Gene synonym(s): {gene_synonyms}")
+                output.append(f"     Product: {product}")
+                output.append(f"     Note: {note}")
+                if comments:
+                    output.append(f"     Comments: {', '.join(comments)}")
 
-        if fasta_file:
-            fasta_regions.append((start, end, strand, gene_label))
+                if bed_file:
+                    bed_lines.append(f"{record.id}\t{start}\t{end}\t{gene_label}\t0\t{strand}")
+
+                if fasta_file:
+                    fasta_regions.append([start, end, strand, gene_label])
 
     if locus_filter:
         unmatched = set(locus_filter) - matched_loci
@@ -171,8 +177,10 @@ def main():
                         help="Merge CDS sequences if they are within this number of nucleotides (FASTA only)")
     parser.add_argument("--append", action="store_true",
                     help="Append to output/bed/fasta files instead of overwriting them.")
-
+    parser.add_argument("--log_dir", default="Logs/Databases/GenBank_Fetcher.log")
     args = parser.parse_args()
+
+    setup_logging(args.log_dir, "-".join(args.accession), "genbank_fetcher")
 
     for acc in args.accession:
         fetch_and_store_genbank_features(
@@ -185,6 +193,7 @@ def main():
             merge_distance=args.merge,
             append=args.append
         )
+
 
 if __name__ == "__main__":
     main()

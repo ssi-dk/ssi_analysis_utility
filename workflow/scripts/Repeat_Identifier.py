@@ -151,7 +151,7 @@ def run_repeat_typing(fasta_path: str, repeat_names: List[str], combo_names: Lis
 
     # Step 1: Detect patterns for each repeat name
     for name in repeat_names:
-        fasta_file = os.path.join(db_dir, f"{name}_repeat_sequences.fa")
+        fasta_file = os.path.join(db_dir, f"{name}.fasta")
         """
         ==> TR10_repeat_sequences.fa <==
         >N001

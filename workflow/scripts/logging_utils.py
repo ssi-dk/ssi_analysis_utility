@@ -34,7 +34,7 @@ def setup_logging(log_dir: str, sample_name: str, notes: str) -> None:
         filename=log_file,
         filemode="a",  # Append mode
         format="%(asctime)s - %(levelname)s - %(message)s",
-        level=logging.INFO
+        level=logging.DEBUG
     )
 
     # Add console logging

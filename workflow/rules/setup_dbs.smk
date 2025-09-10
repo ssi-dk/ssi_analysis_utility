@@ -85,6 +85,7 @@ rule setup_PointFinder:
         date -I > {output.database}/creation.date
         """
 
+
 rule setup_DisinFinder:
     conda:
         config["analysis_settings"]["resfinder"]["yaml"]
@@ -269,3 +270,4 @@ rule setup_custom_samtool_index:
 
     date -I > $outdir/creation.date
     """
+

@@ -63,8 +63,6 @@ database_path = config['input_manager']['database_path']
 
 ### Define rules where samtools is necessary
 
-TOOLS_WITH_SAM_OUTPUT = ["kmeraligner"]
-ASM_TO_REPEAT_IDENTIFICATION = ["spades","skesa"]
 
 ##############################################################################
 #
@@ -75,34 +73,6 @@ ASM_TO_REPEAT_IDENTIFICATION = ["spades","skesa"]
 # Define the dynamic input for rule all
 rule all:
     input:
-        expand(
-            "%s/{sample}/kmeraligner/{sample}.res" % OUT_FOLDER,
-            sample=[
-                s for s in SAMPLES
-                if "kmeraligner" in species_configs[sample_to_organism[s]]["analyses_to_run"]
-            ]
-        ),
-        expand(
-            "%s/{sample}/KMA_results/{sample}_KMA.tsv" % OUT_FOLDER,
-            sample=[
-                s for s in SAMPLES
-                if "KMA_filter" in species_configs[sample_to_organism[s]]["analyses_to_run"]
-            ]
-        ),
-        expand(
-            "%s/{sample}/spades/contigs.fasta" % OUT_FOLDER,
-            sample=[
-                s for s in SAMPLES 
-                if "spades" in species_configs[sample_to_organism[s]]["analyses_to_run"]
-            ]
-        ),
-        expand(
-            "%s/{sample}/skesa/{sample}.contigs.fasta" % OUT_FOLDER,
-            sample=[
-                s for s in SAMPLES 
-                if "skesa" in species_configs[sample_to_organism[s]]["analyses_to_run"]
-            ]
-        ),
         expand(
             "%s/{sample}/PlasmidFinder/" % OUT_FOLDER,
             sample=[
@@ -125,13 +95,6 @@ rule all:
             ]
         ),
         expand(
-            "%s/{sample}/lre-finder/" % OUT_FOLDER,
-            sample=[
-                s for s in SAMPLES
-                if "LRE-finder" in species_configs[sample_to_organism[s]]["analyses_to_run"]
-            ]
-        ),
-        expand(
             "%s/{sample}/SerotypeFinder/" % OUT_FOLDER,
             sample=[
                 s for s in SAMPLES
@@ -139,17 +102,12 @@ rule all:
             ]
         ),
         expand(
-            "%s/{sample}/AMRFinder/{assembler}.tsv" % OUT_FOLDER,
+            "%s/{sample}/AMRFinder/{assembly}.tsv" % OUT_FOLDER,
             sample=[
-                s for s in SAMPLES for assembler in ASM_TO_REPEAT_IDENTIFICATION
+                s for s in SAMPLES
                 if "amrfinder" in species_configs[sample_to_organism[s]]["analyses_to_run"]
-                and assembler in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ],
-            assembler=[
-                assembler for s in SAMPLES for assembler in ASM_TO_REPEAT_IDENTIFICATION
-                if "amrfinder" in species_configs[sample_to_organism[s]]["analyses_to_run"]
-                and assembler in species_configs[sample_to_organism[s]]["analyses_to_run"]
-            ]
+            assembly = "spades"
         ),
         expand(
            "%s/{sample}/MLST/{sample}.tsv" % OUT_FOLDER,
@@ -158,58 +116,28 @@ rule all:
                if "mlst" in species_configs[sample_to_organism[s]]["analyses_to_run"]
            ]
       ),
-        expand(
-            "%s/{sample}/Repeat_identifier/{assembler}_{sample}_repeat.tsv" % OUT_FOLDER,
-            sample=[
-                s for s in SAMPLES for assembler in ASM_TO_REPEAT_IDENTIFICATION
-                if "Repeat_identifier" in species_configs[sample_to_organism[s]]["analyses_to_run"]
-                and assembler in species_configs[sample_to_organism[s]]["analyses_to_run"]
-            ],
-            assembler=[
-                assembler for s in SAMPLES for assembler in ASM_TO_REPEAT_IDENTIFICATION
-                if "Repeat_identifier" in species_configs[sample_to_organism[s]]["analyses_to_run"]
-                and assembler in species_configs[sample_to_organism[s]]["analyses_to_run"]
-            ]
-        ),
-        expand(
-            "%s/{sample}/GenotypeCalls/{sample}.{tool}.indels.bcf" % OUT_FOLDER,
-            sample=[
-                s for s in SAMPLES
-                for tool in TOOLS_WITH_SAM_OUTPUT
-                if tool in species_configs[sample_to_organism[s]]["analyses_to_run"]
-                and "bcftools_view_filter" in species_configs[sample_to_organism[s]]["analyses_to_run"]
-            ],
-            tool=TOOLS_WITH_SAM_OUTPUT
-        ),
-        expand(
-            "%s/{sample}/GenotypeCalls/{sample}.{tool}.variants.tsv" % OUT_FOLDER,
-            sample=[
-                s for s in SAMPLES
-                for tool in TOOLS_WITH_SAM_OUTPUT
-                if tool in species_configs[sample_to_organism[s]]["analyses_to_run"]
-                and "Variant_detection" in species_configs[sample_to_organism[s]]["analyses_to_run"]
-            ],
-            tool=TOOLS_WITH_SAM_OUTPUT
-        ),
+        # expand(
+        #     "%s/{sample}/CDiff_Repeat_identifier/{assembly}_repeats.tsv" % OUT_FOLDER,
+        #     sample=[
+        #         s for s in SAMPLES
+        #         if "Repeat_identifier" in species_configs[sample_to_organism[s]]["analyses_to_run"]
+        #     ],
+        #     assembly = "spades"
+        # ),
+        # expand(
+        #     "%s/{sample}/Variant_identifier/variants_{database}.tsv" % OUT_FOLDER,
+        #     sample=[
+        #         s for s in SAMPLES
+        #         if "Variant_identifier" in species_configs[sample_to_organism[s]]["analyses_to_run"]
+        #     ],
+        #     database = "AM180355.1-tcdA_tcdB_tcdC"
 
+        # )
+
+include : "rules/assemblers.smk"
+include : "rules/fetch_custom_dbs.smk"
 include : "rules/setup_dbs.smk"
-include : "rules/setup_custom_dbs.smk"
 include : "rules/mappers.smk"
 include : "rules/finders.smk"
-include : "rules/others.smk"
 include : "rules/characterizers.smk"
-
-#        expand(
-#           "%s/{sample}/emm_typing/" % OUT_FOLDER,
-#            sample=[
-#                s for s in SAMPLES
-#                if "emm_typing" in species_configs[sample_to_organism[s]]["analyses_to_run"]
-#            ]
-#        ),
-#        expand(
-#            "%s/{sample}/assembly_lineage/" % OUT_FOLDER,
-#            sample=[
-#                s for s in SAMPLES
-#                if "assembly_lineage_determination" in species_configs[sample_to_organism[s]]["analyses_to_run"]
-#            ]
-#        ),
+include : "rules/custom_wranglers.smk"

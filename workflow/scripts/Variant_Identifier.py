@@ -76,14 +76,13 @@ def load_variant_detection_config(organism: str, config_dir="workflow/configs_sp
         config = yaml.safe_load(f)
 
     try:
-        variant_block = config["analyses_to_run"]["Variant_detection"]
-        bed_path = variant_block["genomic_coord"]
+        variant_block = config["analyses_to_run"]["Variant_identifier"]
         snp_info = variant_block.get("snp_info", {})
         raw_deletions = variant_block.get("deletion_regions", {})
         raw_thresholds = variant_block.get("variant_gt_thresholds", {})
         consensus = variant_block.get("deletion_consensus_thresholds",{})
     except KeyError as e:
-        raise ValueError(f"Missing required Variant_detection fields in config: {e}")
+        raise ValueError(f"Missing required Variant_identifier fields in config: {e}")
 
     deletion_regions = {}
     for key, val in raw_deletions.items():
@@ -93,7 +92,6 @@ def load_variant_detection_config(organism: str, config_dir="workflow/configs_sp
         deletion_regions[length] = (start, end)
 
     return {
-        "genomic_coord": bed_path,
         "snp_info": snp_info,
         "deletion_regions": deletion_regions,
         "variant_gt_thresholds": raw_thresholds,
@@ -130,8 +128,11 @@ def load_toxin_coordinates(bed6_path: str) -> Dict[str, Dict[str, str | int]]:
     """
     coords = {}
     try:
-        bed_df = pd.read_csv(bed6_path, sep="\t", header=None,
-                             names=["contig", "start", "end", "gene", "score", "strand"])
+        bed_df = pd.read_csv(
+            bed6_path, sep="\t", header=0, index_col=False,
+            names = ["contig", "start", "end", "gene", "strand"],
+            dtype={'contig': 'string', 'start': 'int', 'end': 'int', 'gene': 'string', 'strand': 'string'}
+        )
 
         for _, row in bed_df.iterrows():
             gene = row["gene"]
@@ -794,6 +795,7 @@ def main(args: argparse.Namespace) -> None:
 
     sample = args.sample_id
     organism = args.organism
+    bed_path = args.bed
     logging.info(f"\n================= Processing sample: {sample} =================")
 
     row_dict = {
@@ -803,7 +805,6 @@ def main(args: argparse.Namespace) -> None:
 
     # Load variant detection config
     variant_config = load_variant_detection_config(organism)
-    bed_path = variant_config["genomic_coord"]
     coord_dict = load_toxin_coordinates(bed_path)
     snp_info_dict = variant_config["snp_info"]
     tcdC_deletion_regions = variant_config["deletion_regions"]
@@ -1003,6 +1004,7 @@ if __name__ == "__main__":
     parser.add_argument("--indels", required=True, help="Pileup files")
     parser.add_argument("--res", required=True, help="KMA alignment results")
     parser.add_argument("--fsa", required=True, help="Consensus sequence")
+    parser.add_argument("--bed", required=True, help="Bed6 file from the reference sequences (Accessions and Loci)")
     parser.add_argument(
         "--gene_list",
         nargs="+",

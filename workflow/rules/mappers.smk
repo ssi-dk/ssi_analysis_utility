@@ -7,8 +7,8 @@ rule custom_kmeralignment:
     prefix = "%s/{sample}/kmeraligner/{database}" %OUT_FOLDER
   output:
     results = "%s/{sample}/kmeraligner/{database}.res" %OUT_FOLDER,
-    sam = "%s/{sample}/kmeraligner/{database}.sam" %OUT_FOLDER,
-    seq = "%s/{sample}/kmeraligner/{database}.fsa" %OUT_FOLDER,
+    sam = temp("%s/{sample}/kmeraligner/{database}.sam" %OUT_FOLDER),
+    seq = temp("%s/{sample}/kmeraligner/{database}.fsa" %OUT_FOLDER)
   conda:
     config["analysis_settings"]["KMA"]["yaml"]
   log:
@@ -21,7 +21,7 @@ rule custom_kmeralignment:
 
     db_path=$(dirname {input.database})/$(basename {input.database} .name)
 
-    cmd="kma -ipe {input.R1} {input.R2} -o {params.prefix} -t_db $db_path -sam 4 > {output.sam}"
+    cmd="kma -ipe {input.R1} {input.R2} -o {params.prefix} -t_db $db_path -nc -nf -ref_fsa -sam 4 > {output.sam}"
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
     """
@@ -174,27 +174,4 @@ rule bcftools_variant_call:
 
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
-    """
-
-
-rule Variant_identifier:
-  input:
-    kma_results = rules.custom_kmeralignment.output.results,
-    kma_seq = rules.custom_kmeralignment.output.seq,
-    indels = rules.bcftools_filter_indels.output.indels,
-    indels_index = "%s/{sample}/bcftools/{database}_indels.bcf.csi" %OUT_FOLDER,
-    variants = rules.bcftools_variant_call.output.variants,
-    variants_index = "%s/{sample}/bcftools/{database}_variants.bcf.csi" %OUT_FOLDER
-  params:
-    options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Variant_identifier"]["options"],
-    id = "{sample}"
-  output:
-    variant_results = "%s/{sample}/Variant_identifier/{database}.tsv" %OUT_FOLDER
-  conda:
-    config["analysis_settings"]["Variant_identifier"]["yaml"]
-  message:
-    "[Variant_identifier]: Identifying variants of {wildcards.database} on {wildcards.sample}"
-  shell:
-    """
-    python workflow/scripts/Variant_identifier.py --sample_id {params.id}  --res {input.kma_results} --fsa {input.kma_seq} --call {input.variants} --indels {input.indels} -o {output.variant_results} {params.options}
     """

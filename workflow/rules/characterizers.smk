@@ -2,7 +2,7 @@
 # Runs Multi Locus Sequence Type to determine the ST profile of isolate
 rule MLST:
     input:
-        assembly = rules.spades_assembly.output.contigs,
+        assembly = rules.shovill.output.assembly,
         datefile = rules.update_MLST.output.datefile
     output:
         # mlst_file = "%s/{sample}/MLST/{sample}.tsv" %OUT_FOLDER
