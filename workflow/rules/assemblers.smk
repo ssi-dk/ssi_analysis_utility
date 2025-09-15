@@ -15,8 +15,9 @@ rule shovill:
   shell:
     """
     outdir=$(dirname {output.assembly})
+    assembler={wildcards.assembler}
 
-    cmd="shovill --R1 {input.R1} --R2 {input.R2} --outdir $outdir --force --cpus {threads} --assembler {wildcards.assembler} --trim && mv $outdir/contigs.fa {output.assembly}"
+    cmd="shovill --R1 {input.R1} --R2 {input.R2} --outdir $outdir/$assembler --force --cpus {threads} --assembler $assembler --trim && mv $outdir/$assembler/contigs.fa {output.assembly}"
 
     echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1

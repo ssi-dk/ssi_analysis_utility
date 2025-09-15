@@ -134,8 +134,7 @@ rule variant_identifier:
     variants_index = "%s/{sample}/bcftools/{database}_variants.bcf.csi" %OUT_FOLDER,
     ref_bed = "%s/custom/{database}.bed6" %database_path
   params:
-    options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Variant_identifier"]["options"],
-    id = "{sample}"
+    options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Variant_identifier"]["options"]
   output:
     indentifyed_variants = "%s/{sample}/Variant_identifier/variants_{database}.tsv" %OUT_FOLDER
   conda:
@@ -146,7 +145,7 @@ rule variant_identifier:
     "[Variant Identifier]: Identifying variants of {wildcards.database} on {wildcards.sample}"
   shell:
     """
-    cmd="python workflow/scripts/Variant_Identifier.py --sample_id {params.id}  --res {input.kma_results} --fsa {input.kma_seq} --call {input.variants} --indels {input.indels} --bed {input.ref_bed} -o {output.indentifyed_variants} {params.options}"
+    cmd="python workflow/scripts/Variant_Identifier.py --sample_id {wildcards.sample}  --res {input.kma_results} --fsa {input.kma_seq} --call {input.variants} --indels {input.indels} --bed {input.ref_bed} -o {output.indentifyed_variants} {params.options}"
 
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
@@ -161,7 +160,6 @@ rule CDiff_Repeat_identifier:
   output:
     repeat_types = "%s/{sample}/CDiff_Repeat_identifier/{assembler}_repeat_types.tsv" %OUT_FOLDER
   params:
-    sample = "{sample}",
     repeats = ["TR6", "TR10"],
     combos = ["TRST"]
   conda:
@@ -176,7 +174,7 @@ rule CDiff_Repeat_identifier:
 
     db_dir=$(dirname {input.seqs} | uniq)
 
-    cmd="python workflow/scripts/Repeat_Identifier.py --fasta {input.assembly} --output {output.repeat_types} --sample_id {params.sample} --repeats {params.repeats} --combos {params.combos} --db_dir $db_dir --suffix tsv --log_dir $(dirname {log.stdout})"
+    cmd="python workflow/scripts/Repeat_Identifier.py --fasta {input.assembly} --ref_seq {input.seqs} --ref_meta {input.metas} --output {output.repeat_types} --sample_id {wildcards.sample} --repeats {params.repeats} --combos {params.combos} --suffix tsv --log_dir $(dirname {log.stdout})"
 
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1 

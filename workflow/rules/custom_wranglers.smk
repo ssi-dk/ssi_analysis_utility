@@ -5,7 +5,7 @@ rule kma_filter:
         filtered_tsv = "%s/{sample}/KMA_Filter/KMA_results.tsv" % OUT_FOLDER,
     params:
         options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["KMA_filter"]["options"],
-        log_dir = lambda wildcards: "%s/%s/KMA_results/" % (OUT_FOLDER, wildcards.sample),
+        log_dir = "%s/{sample}/KMA_results/" %OUT_FOLDER,
         sample = "{sample}"
     conda:
         config["analysis_settings"]["KMA_filter"]["yaml"]

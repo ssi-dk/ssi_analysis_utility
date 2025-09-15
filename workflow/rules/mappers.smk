@@ -7,7 +7,7 @@ rule custom_kmeralignment:
     prefix = "%s/{sample}/kmeraligner/{database}" %OUT_FOLDER
   output:
     results = "%s/{sample}/kmeraligner/{database}.res" %OUT_FOLDER,
-    sam = temp("%s/{sample}/kmeraligner/{database}.sam" %OUT_FOLDER),
+    sam = temp("%s/{sample}/samtools/{database}.sam" %OUT_FOLDER),
     seq = temp("%s/{sample}/kmeraligner/{database}.fsa" %OUT_FOLDER)
   conda:
     config["analysis_settings"]["KMA"]["yaml"]
@@ -18,6 +18,8 @@ rule custom_kmeralignment:
   shell:
     """
     mkdir -p $(dirname {output.results})
+    mkdir -p $(dirname {output.sam})
+    
 
     db_path=$(dirname {input.database})/$(basename {input.database} .name)
 
@@ -27,13 +29,13 @@ rule custom_kmeralignment:
     """
 
 
-rule custom_kmeralignment_samtools_filtration:
+rule samtools_sam_filtration:
   input:
-    sam = rules.custom_kmeralignment.output.sam
+    sam = "%s/{sample}/samtools/{database}.sam" %OUT_FOLDER
   params:
     options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["samtools"]["view"]["options"]
   output:
-    bam = temp("%s/{sample}/samtools/{database}.bam" %OUT_FOLDER)
+    bam = temp("%s/{sample}/samtools/{database}_filtered.bam" %OUT_FOLDER)
   conda:
     config["analysis_settings"]["htslib"]["yaml"]
   log:
@@ -42,7 +44,29 @@ rule custom_kmeralignment_samtools_filtration:
     "[custom_kmeralignment_samtools_filtration]: Filtering kmeralignment output for {wildcards.database} on {wildcards.sample}"
   shell:
     """
-    cmd="samtools view {params.options} {input.sam} -o {output.bam}"
+    cmd="samtools view {input.sam} {params.options} -F 4 -bo {output.bam}"
+
+    echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+    eval $cmd >> {log.stdout} 2>&1
+    """
+
+
+rule samtools_bam_filtration:
+  input:
+    sam = "%s/{sample}/samtools/{database}.bam" %OUT_FOLDER
+  params:
+    options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["samtools"]["view"]["options"]
+  output:
+    bam = temp("%s/{sample}/samtools/{database}_filtered.bam" %OUT_FOLDER)
+  conda:
+    config["analysis_settings"]["htslib"]["yaml"]
+  log:
+    stdout = "Logs/{sample}/custom_kmeralignment_samtools_filtration_{database}.log"
+  message:
+    "[custom_kmeralignment_samtools_filtration]: Filtering kmeralignment output for {wildcards.database} on {wildcards.sample}"
+  shell:
+    """
+    cmd="samtools view {input.sam} {params.options} -F 4 -bo {output.bam}"
 
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
@@ -51,7 +75,7 @@ rule custom_kmeralignment_samtools_filtration:
 
 rule samtools_sort:
   input:
-    bam = "%s/{sample}/samtools/{database}.bam" %OUT_FOLDER
+    bam = "%s/{sample}/samtools/{database}_filtered.bam" %OUT_FOLDER
   params:
     options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["samtools"]["sort"]["options"]
   output:

@@ -58,7 +58,7 @@ analyses_to_run:
 
     samtools:
         view: 
-            options: -b -q 20 -F 4 
+            options: -q 20 
         # https://broadinstitute.github.io/picard/explain-flags.html
         # 4 (unmapped) + 256 (not primary alignment) + 512 (failed quality) + 1024 (duplicate) + 2048 (supplementary) = 3844
         # Consider removing reads which is not in proper pair #3844
@@ -93,3 +93,4 @@ analyses_to_run:
             del301_336_36: [0.10,5,10]
             del341_379_39: [0.10,5,10]
             del313_366_54: [0.10,5,10]
+
