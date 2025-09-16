@@ -130,8 +130,8 @@ def load_toxin_coordinates(bed6_path: str) -> Dict[str, Dict[str, str | int]]:
     try:
         bed_df = pd.read_csv(
             bed6_path, sep="\t", header=0, index_col=False,
-            names = ["contig", "start", "end", "gene", "strand"],
-            dtype={'contig': 'string', 'start': 'int', 'end': 'int', 'gene': 'string', 'strand': 'string'}
+            names = ["contig", "start", "end", "gene", "score", "strand"],
+            dtype={'contig': 'string', 'start': 'int', 'end': 'int', 'gene': 'string', 'score': 'float','strand': 'string'}
         )
 
         for _, row in bed_df.iterrows():
@@ -815,6 +815,8 @@ def main(args: argparse.Namespace) -> None:
     first_cols = ["sample_id", "organism"]
     #snp_columns = [f"{entry[3]}_{snp_id}" for snp_id, entry in snp_info_dict.items()]
     
+    if len(snp_info_dict) < 1:
+        logging.warning("No snp info detected!")
     gene_snp_map = {}
     for snp_id, entry in snp_info_dict.items():
         gene = entry[3]

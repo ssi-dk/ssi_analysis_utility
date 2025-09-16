@@ -49,7 +49,7 @@ analyses_to_run:
     mlst:
        Title : MLST by Torsten Seeman
 
-    Repeat_identifier:
+    CDiff_Repeat_identifier:
         Title : Repeat identifier
         ID: 92
         repeats: TR6 TR10

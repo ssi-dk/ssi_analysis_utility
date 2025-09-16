@@ -90,5 +90,5 @@ rule fetch_cdifftoxins:
 
     header=$(grep "#" -h {input.beds} | uniq)
     genes=$(grep "#" -vh {input.beds} | uniq)
-    echo "$header$genes" > {output.bed}
+    echo "$header\n$genes" > {output.bed}
     """
