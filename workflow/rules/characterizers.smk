@@ -23,8 +23,6 @@ rule MLST:
         eval $cmd >> {log.stdout} 2>&1
     	"""
 
-
-
 # Rule Kleborate:
 # Runs Kleborate characterising virulence and resistance in pathogen assemblies
 rule kleborate:
@@ -50,3 +48,27 @@ rule kleborate:
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
     	"""
+
+# Rule meningotype
+# Runs meningotype on SPAdes assembled contigs to perform serotyping of N. Meningmeningitidis contigs
+rule meningotype:
+    input:
+        assembly = rules.shovill.output.assembly
+    output:
+        meningotype = "%s/{sample}/meningotype/{assembler}_meningotype.tsv" %OUT_FOLDER
+    conda:
+        config["analysis_settings"]["meningotype"]["yaml"]
+    log:
+        stdout = "Logs/{sample}/{assembler}_meningotype.log"
+    message:
+    	"[Meningotype]: Running Meningotype on {wildcards.assembler} assembly for {wildcards.sample}"
+    shell:
+        """
+        mkdir -p $(dirname {output.meningotype})
+
+        cmd="meningotype --all {input.assembly} > {output.meningotype} 2> {log.stdout}"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+    	"""
+

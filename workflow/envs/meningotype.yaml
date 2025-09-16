@@ -1,0 +1,6 @@
+name: meningotype
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - meningotype

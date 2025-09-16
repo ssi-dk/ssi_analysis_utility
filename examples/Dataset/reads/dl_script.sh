@@ -22,3 +22,6 @@ wget -nc ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR291/003/SRR2915763/SRR2915763_1.f
 wget -nc ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR291/003/SRR2915763/SRR2915763_2.fastq.gz #ST41
 wget -nc ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR404/006/SRR4046826/SRR4046826_2.fastq.gz # Kp703
 wget -nc ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR404/006/SRR4046826/SRR4046826_1.fastq.gz # Kp703
+wget -nc ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR254/086/SRR25448586/SRR25448586_1.fastq.gz
+wget -nc ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR254/086/SRR25448586/SRR25448586_2.fastq.gz
+
