@@ -18,15 +18,16 @@ rule spades:
         "[SPAdes]: Running SPAdes on {wildcards.sample}"
 
     threads:
-        workflow.cores/4
+        workflow.cores * 0.667
     shell:
         """
-        cmd="spades.py -1 {input.R1} -2 {input.R2} --isolate --threads {threads} -o {output.assembly}"
+        outdir=$(dirname {output.assembly}) 
+        cmd="spades.py -1 {input.R1} -2 {input.R2} --isolate --threads {threads} -o $outdir"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1 
 
-        cmd="mv $(dirname {output.assembly})/contigs.fasta $(dirname {output.assembly})/{wildcards.sample}.fasta"
+        cmd="mv $outdir/contigs.fasta $outdir/{wildcards.sample}.fasta"
         echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1         
         """

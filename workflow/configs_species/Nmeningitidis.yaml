@@ -85,7 +85,7 @@ analyses_to_run:
         organism: --organism Neisseria meningitidis # Leave blank or insert --organism alongside one of the supported organisms, listed here: https://github.com/evolarjun/amr/wiki/Curated-organisms
 
     mlst:
-        status : False
+        status : True
         Title : MLST by Torsten Seeman
 
     meningotype:

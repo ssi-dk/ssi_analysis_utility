@@ -2,7 +2,7 @@
 # Runs Multi Locus Sequence Type to determine the ST profile of isolate
 rule MLST:
     input:
-        assembly = lambda wildcards: sample_to_assembly_file[wildcards.sample],
+        assembly = rules.spades.output.assembly,
         datefile = rules.update_MLST.output.datefile
     output:
         # mlst_file = "%s/{sample}/MLST/{sample}.tsv" %OUT_FOLDER
@@ -29,7 +29,7 @@ rule meningotype:
     input:
         assembly = rules.spades.output.assembly
     output:
-        directory("%s/{sample}/meningotype" %OUT_FOLDER)
+        meningotype = "%s/{sample}/meningotype/meningotype.tsv" %OUT_FOLDER
     conda:
         config["analysis_settings"]["meningotype"]["yaml"]
     log:
@@ -38,9 +38,9 @@ rule meningotype:
     	"[Meningotype]: Running Meningotype on {wildcards.sample}"
     shell:
         """
-        mkdir -p {output}
+        mkdir -p $(dirname {output.meningotype})
 
-        cmd="meningotype --all {input.assembly} > {output}/meningotype.tsv 2> {log.stdout}"
+        cmd="meningotype --all {input.assembly} > {output.meningotype} 2> {log.stdout}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1

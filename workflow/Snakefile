@@ -126,7 +126,7 @@ rule all:
             out=OUT_FOLDER
         ),
         expand(
-            "{out}/{sample}/meningotype", 
+            "{out}/{sample}/meningotype/meningotype.tsv", 
             sample=[
                 s for s in SAMPLES 
                 if species_configs[sample_to_organism[s]]["analyses_to_run"]["meningotype"]["status"] is True
