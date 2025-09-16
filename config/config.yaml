@@ -18,6 +18,12 @@ species_map:
   Escherichia coli: E.coli
   E coli: E.coli
   E.coli: E.coli
+  K.Pneumoniae: K.pneumoniae
+  K Pneumoniae: K.pneumoniae
+  K. Pneumoniae: K.pneumoniae
+  Klebsiella pneumoniae: K.pneumoniae
+  Klebsiella Pneumoniae: K.pneumoniae 
+  KlebsiellaPneumoniae: K.pneumoniae 
 
 ###################### ANALYSIS & TOOLS SETTINGS ############################
 # This section provides paths to the yaml file for the conda environemt,
@@ -96,6 +102,9 @@ analysis_settings:
 
     Variant_identifier:
         yaml: ../envs/python_functions.yaml
+
+    kleborate:
+        yaml: ../envs/kleborate.yaml
     # Illumina lineage determination (commented out for now):
     # reference_fasta_file: /home/simonescrima/Desktop/ssi_analysis_utility/resources/lineage_determination/MGAS5005.fasta  # Fasta file for reference genome
     # lineage_variant_file: /home/simonescrima/Desktop/ssi_analysis_utility/resources/lineage_determination/Spyogenes_LOCs.tsv  # File with lineage variants
