@@ -75,35 +75,35 @@ rule all:
     input:
         expand(
             "%s/{sample}/PlasmidFinder/" % OUT_FOLDER,
-            sample=[
+            sample = [
                 s for s in SAMPLES
                 if "plasmidfinder" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ]
         ),
         expand(
             "%s/{sample}/ResFinder/" % OUT_FOLDER,
-            sample=[
+            sample = [
                 s for s in SAMPLES
                 if "resfinder" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ]
         ),
         expand(
             "%s/{sample}/VirulenceFinder/" % OUT_FOLDER,
-            sample=[
+            sample = [
                 s for s in SAMPLES
                 if "virulencefinder" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ]
         ),
         expand(
             "%s/{sample}/SerotypeFinder/" % OUT_FOLDER,
-            sample=[
+            sample = [
                 s for s in SAMPLES
                 if "serotypefinder" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ]
         ),
         expand(
             "%s/{sample}/AMRFinder/{assembly}.tsv" % OUT_FOLDER,
-            sample=[
+            sample = [
                 s for s in SAMPLES
                 if "amrfinder" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ],
@@ -111,7 +111,7 @@ rule all:
         ),
         expand(
            "%s/{sample}/MLST/{assembler}_mlst.tsv" % OUT_FOLDER,
-           sample=[
+           sample = [
                s for s in SAMPLES 
                if "mlst" in species_configs[sample_to_organism[s]]["analyses_to_run"]
            ],
@@ -119,7 +119,7 @@ rule all:
         ),
         expand(
             "%s/{sample}/Variant_identifier/variants_{database}.tsv" %OUT_FOLDER,
-            sample=[
+            sample = [
                 s for s in SAMPLES
                 if "Variant_identifier" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ],
@@ -127,7 +127,7 @@ rule all:
         ),
         expand(
             "%s/{sample}/CDiff_Repeat_identifier/{assembler}_repeat_types.tsv" %OUT_FOLDER,
-            sample=[
+            sample = [
                 s for s in SAMPLES
                 if "CDiff_Repeat_identifier" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ],
@@ -135,34 +135,27 @@ rule all:
         ),
         expand(
             "%s/{sample}/kmeraligner/{database}.res" % OUT_FOLDER,
-            sample=[
+            sample = [
                 s for s in SAMPLES
                 if "kmeraligner" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ],
             database = "ecoligenes"
         ),
-        # expand(
-        #     "%s/{sample}/CDiff_Repeat_identifier/{assembly}_repeats.tsv" % OUT_FOLDER,
-        #     sample=[
-        #         s for s in SAMPLES
-        #         if "Repeat_identifier" in species_configs[sample_to_organism[s]]["analyses_to_run"]
-        #     ],
-        #     assembly = "spades"
-        # ),
-        # expand(
-        #     "%s/{sample}/Variant_identifier/variants_{database}.tsv" % OUT_FOLDER,
-        #     sample=[
-        #         s for s in SAMPLES
-        #         if "Variant_identifier" in species_configs[sample_to_organism[s]]["analyses_to_run"]
-        #     ],
-        #     database = "AM180355.1-tcdA_tcdB_tcdC"
+        expand(
+            "%s/{sample}/meningotype/{assembler}_meningotype.tsv" %OUT_FOLDER, 
+            sample = [
+                s for s in SAMPLES 
+                if "meningotype" in species_configs[sample_to_organism[s]]["analyses_to_run"]
+            ],
+            assembler = "spades"
+        ),
 
-        # )
 
 include : "rules/assemblers.smk"
 include : "rules/fetch_custom_dbs.smk"
 include : "rules/setup_dbs.smk"
 include : "rules/mappers.smk"
 include : "rules/finders.smk"
+include : "rules/assemblers.smk"
 include : "rules/characterizers.smk"
 include : "rules/custom_wranglers.smk"
