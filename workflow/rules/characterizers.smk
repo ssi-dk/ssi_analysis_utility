@@ -31,7 +31,7 @@ rule kleborate:
     output:
        kleborate_outdir = directory("%s/{sample}/Kleborate/{assembler}" %OUT_FOLDER)
     params:
-        preset = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["kleborate"]["preset"]
+        preset = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["kleborate"]["options"]
     conda:
         config["analysis_settings"]["kleborate"]["yaml"]
     log:

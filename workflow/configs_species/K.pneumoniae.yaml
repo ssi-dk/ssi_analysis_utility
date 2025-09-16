@@ -85,8 +85,8 @@ analyses_to_run:
         wrangler: workflow/scripts/AMR_wrangler.py
 
     kleborate:
-        Title : Tool for characterising virulence and resistance in pathogen assemblies
-        preset: kpsc # Different presets depending on the species, list here: https://kleborate.readthedocs.io/en/latest/General_modules.html
+        Title: Tool for characterising virulence and resistance in pathogen assemblies
+        options: kpsc # Different presets depending on the species, list here: https://kleborate.readthedocs.io/en/latest/General_modules.html
 
     mlst:
        Title : MLST by Torsten Seeman
