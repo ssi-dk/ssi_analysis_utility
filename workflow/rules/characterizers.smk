@@ -22,3 +22,31 @@ rule MLST:
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
     	"""
+
+
+
+# Rule Kleborate:
+# Runs Kleborate characterising virulence and resistance in pathogen assemblies
+rule kleborate:
+    input:
+        assembly = rules.shovill.output.assembly
+    output:
+       kleborate_outdir = directory("%s/{sample}/Kleborate/{assembler}" %OUT_FOLDER)
+    params:
+        preset = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["kleborate"]["preset"]
+    conda:
+        config["analysis_settings"]["kleborate"]["yaml"]
+    log:
+    	stdout = "Logs/{sample}/Kleborate_{assembler}.log"
+    message:
+    	"Kleborate: Running Kleborate on {wildcards.assembler} assembly from {wildcards.sample}"
+    shell:
+        """
+        echo {config}
+        mkdir -p $(dirname {output.kleborate_outdir})
+
+        cmd="kleborate -a {input.assembly} --preset {params.preset} --outdir {output.kleborate_outdir}"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+    	"""
