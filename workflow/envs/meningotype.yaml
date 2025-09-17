@@ -1,7 +1,6 @@
-name: AMRFinder
+name: meningotype
 channels:
   - conda-forge
   - bioconda
 dependencies:
-  - ncbi-amrfinderplus
-  - curl
+  - meningotype

@@ -1,17 +1,12 @@
-#------------------------------ Modules --------------------------------#
-
-# Rule: PlasmidFinder
-# Runs plasmidfinder analysis for a given sample using paired-end Illumina reads.
 rule PlasmidFinder:
     input:
         # Input paired-end Illumina reads.
         R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
         R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
-        db_index = lambda wc: f"Logs/Databases/{species_configs[sample_to_organism[wc.sample]]['alignment_database']['plasmidfinder']['kma_index_flag']}.kma_index.done",
-        db_dir = lambda wc: f"{getattr(rules, species_configs[sample_to_organism[wc.sample]]['alignment_database']['plasmidfinder']['db']).output.database}",
+        database = rules.setup_PlasmidFinder.output.database
     output:
         # Output directory for plasmidfinder results.
-        out_dir = directory(f"{OUT_FOLDER}" + "/{sample}/PlasmidFinder")
+        out_dir = directory("%s/{sample}/PlasmidFinder" %OUT_FOLDER)
     conda:
         config["analysis_settings"]["plasmidfinder"]["yaml"]
     log:
@@ -22,26 +17,22 @@ rule PlasmidFinder:
         """
         mkdir -p {output.out_dir}
 
-        cmd="plasmidfinder.py -i {input.R1} {input.R2} -o {output.out_dir} -p {input.db_dir} -x"
+        cmd="plasmidfinder.py -i {input.R1} {input.R2} -o {output.out_dir} -p {input.database} -x"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
         """
 
-# Rule: ResFinder
-# Runs ResFinder to identify acquired resistance genes in the sample.
+
 rule ResFinder:
     input:
         R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
         R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
-        res_db_index = lambda wc: f"Logs/Databases/{species_configs[sample_to_organism[wc.sample]]['alignment_database']['resfinder']['kma_index_flag']}.kma_index.done",
-        res_db_dir = lambda wc: f"{getattr(rules, species_configs[sample_to_organism[wc.sample]]['alignment_database']['resfinder']['db']).output.database}",
-        point_db_index = lambda wc: f"Logs/Databases/{species_configs[sample_to_organism[wc.sample]]['alignment_database']['pointfinder']['kma_index_flag']}.kma_index.done",
-        point_db_dir = lambda wc: f"{getattr(rules, species_configs[sample_to_organism[wc.sample]]['alignment_database']['pointfinder']['db']).output.database}",
-        disin_db_index = lambda wc: f"Logs/Databases/{species_configs[sample_to_organism[wc.sample]]['alignment_database']['disinfinder']['kma_index_flag']}.kma_index.done",
-        disin_db_dir = lambda wc: f"{getattr(rules, species_configs[sample_to_organism[wc.sample]]['alignment_database']['disinfinder']['db']).output.database}",
+        res_database = rules.setup_ResFinder.output.database,
+        #point_database = rules.setup_PointFinder.output.database, #Pointfinder requires `species` definition
+        disin_database = rules.setup_DisinFinder.output.database
     output:
-        out_dir = directory(f"{OUT_FOLDER}" + "/{sample}/ResFinder")
+        out_dir = directory("%s/{sample}/ResFinder" %OUT_FOLDER)
     conda:
         config["analysis_settings"]["resfinder"]["yaml"]
     log:
@@ -52,22 +43,20 @@ rule ResFinder:
         """
         mkdir -p {output.out_dir}
 
-        cmd="run_resfinder.py -ifq {input.R1} {input.R2} -o {output} -db_res {input.res_database} -db_res_kma {input.res_database} -db_disinf {input.disin_database} -db_point {input.point_database} -acq"
+        cmd="run_resfinder.py -ifq {input.R1} {input.R2} -o {output} --acquired -db_res {input.res_database} --disinfectant -db_disinf {input.disin_database}"
  
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
         """
 
-# Rule: VirulenceFinder
-# Runs VirulenceFinder to identify virulence genes in the sample.
+
 rule VirulenceFinder:
     input:
         R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
         R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
-        vir_db_index = lambda wc: f"Logs/Databases/{species_configs[sample_to_organism[wc.sample]]['alignment_database']['virulencefinder']['kma_index_flag']}.kma_index.done",
-        vir_db_dir = lambda wc: f"{getattr(rules, species_configs[sample_to_organism[wc.sample]]['alignment_database']['virulencefinder']['db']).output.database}",
+        database = rules.setup_VirulenceFinder.output.database
     output:
-        out_dir = directory(f"{OUT_FOLDER}" + "/{sample}/VirulenceFinder")
+        out_dir = directory("%s/{sample}/VirulenceFinder" %OUT_FOLDER)
     conda:
         config["analysis_settings"]["virulencefinder"]["yaml"]
     log:
@@ -78,24 +67,20 @@ rule VirulenceFinder:
         """
         mkdir -p {output.out_dir}
 
-        cmd="virulencefinder.py -i {input.R1} {input.R2} -o {output.out_dir} -p {input.vir_db_dir}"
+        cmd="virulencefinder.py -i {input.R1} {input.R2} -o {output.out_dir} -p {input.database}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
         """
 
 
-# Rule: SerotypeFinder
-# Identifies serotypes from Illumina paired-end reads.
 rule serotypefinder:
     input:
         R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
         R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
-        ser_db_index = lambda wc: f"Logs/Databases/{species_configs[sample_to_organism[wc.sample]]['alignment_database']['serotypefinder']['kma_index_flag']}.kma_index.done",
-        ser_db_dir = lambda wc: f"{getattr(rules, species_configs[sample_to_organism[wc.sample]]['alignment_database']['serotypefinder']['db']).output.database}",
         database = rules.setup_SerotypeFinder.output.database
     output:
-        out_dir = directory(f"{OUT_FOLDER}" + "/{sample}/SerotypeFinder")
+        out_dir = directory("%s/{sample}/SerotypeFinder" %OUT_FOLDER)
     conda:
         config["analysis_settings"]["serotypefinder"]["yaml"]
     log:
@@ -106,35 +91,26 @@ rule serotypefinder:
         """
         mkdir -p {output.out_dir}
 
-        cmd="serotypefinder -i {input.R1} {input.R2} -o {output.out_dir} -p {input.ser_db_dir} -x"
+        cmd="serotypefinder -i {input.R1} {input.R2} -o {output.out_dir} -p {input.database} -x"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
         """
 
-# Rule: AMRFinder
-# Runs AMRFinder to identify acquired resistance genes in the sample.
+
 rule AMRFinder:
     input:
-        assembly = lambda wildcards: os.path.join(
-            OUT_FOLDER,
-            wildcards.sample,
-            wildcards.assembler,
-            {
-                "spades": "contigs.fasta",
-                "skesa": f"{wildcards.sample}.contigs.fasta"
-            }[wildcards.assembler]
-        ),
+        assembly = rules.shovill.output.assembly,
         database = rules.setup_AMRFinder.output.database
     params:
         # Point mutation
         organism = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["amrfinder"]["organism"]
     output:
-        result = "%s/{sample}/AMRFinder/AMR_{assembler}_{sample}.tsv" %OUT_FOLDER
+        result = "%s/{sample}/AMRFinder/{assembler}.tsv" %OUT_FOLDER
     conda:
         config["analysis_settings"]["amrfinder"]["yaml"]
     log:
-        stdout = 'Logs/{sample}/AMRFinder/AMRFinder_{assembler}.log'
+        stdout = 'Logs/{sample}/AMRFinder_{assembler}.log'
     message:
         "[AMRFinder]: Running AMRFinderFinder for {wildcards.sample} using ({wildcards.assembler}) contigs"
     shell:
@@ -147,34 +123,59 @@ rule AMRFinder:
         eval $cmd >> {log.stdout} 2>&1
         """
 
-# Rule: LREFinder
-# Runs LRE-Finder to analyze long-read sequencing data.
-rule LREFinder:
-    input:
-        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
-        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1]
-    params:
-        # Path to the LRE database, application, and additional options.
-        db_path = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["LRE-finder"]["database"],
-        app_path = config["analysis_settings"]["LRE-finder"]["script"],
-        min_con_ID = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["LRE-finder"]["min_consensus_ID"],
-        add_opt = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["LRE-finder"]["additional_option"],
-        prefix = "OUT_FOLDER/{sample}/lre-finder/{sample}"
-    conda:
-        config["analysis_settings"]["LRE-finder"]["yaml"]
-    output:
-        directory(f"{OUT_FOLDER}/{{sample}}/lre-finder/")
-    shell:
-        """
-        # Check if the output directory exists, and skip if it does.
-        if [ -d {output} ]; 
-            then
-                echo "Directory {output} exists, skipping."
-                exit 1
-            else
-                mkdir {output}
-        fi 
-        
-        # Run LRE-Finder with the specified parameters and inputs.
-        python {params.app_path}/LRE-Finder.py -ipe {input.R1} {input.R2} -o {params.prefix} -t_db {params.db_path} -ID {params.min_con_ID} {params.add_opt} 
-        """
+
+rule variant_identifier:
+  input:
+    kma_results = rules.custom_kmeralignment.output.results,
+    kma_seq = rules.custom_kmeralignment.output.seq,
+    indels = rules.bcftools_filter_indels.output.indels,
+    indels_index = "%s/{sample}/bcftools/{database}_indels.bcf.csi" %OUT_FOLDER,
+    variants = rules.bcftools_variant_call.output.variants,
+    variants_index = "%s/{sample}/bcftools/{database}_variants.bcf.csi" %OUT_FOLDER,
+    ref_bed = "%s/custom/{database}.bed6" %database_path
+  params:
+    options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Variant_identifier"]["options"]
+  output:
+    indentifyed_variants = "%s/{sample}/Variant_identifier/variants_{database}.tsv" %OUT_FOLDER
+  conda:
+    config["analysis_settings"]["Variant_identifier"]["yaml"]
+  log:
+    stdout = "Logs/{sample}/Variant_identifier_{database}.log"
+  message:
+    "[Variant Identifier]: Identifying variants of {wildcards.database} on {wildcards.sample}"
+  shell:
+    """
+    cmd="python workflow/scripts/Variant_Identifier.py --sample_id {wildcards.sample}  --res {input.kma_results} --fsa {input.kma_seq} --call {input.variants} --indels {input.indels} --bed {input.ref_bed} -o {output.indentifyed_variants} {params.options}  --log_file {log.stdout} > {log.stdout} 2>&1"
+
+    echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+    eval $cmd >> {log.stdout} 2>&1
+    """
+
+
+rule CDiff_Repeat_identifier:
+  input:
+    seqs  = expand(rules.fetch_type_repeat_sequence.output.seq, TR = ["TR6", "TR10"]),
+    metas = expand(rules.fetch_type_repeat_metadata.output.meta, TR = ["TR6", "TR10", "TRST"]),
+    assembly = rules.shovill.output.assembly
+  output:
+    repeat_types = "%s/{sample}/CDiff_Repeat_identifier/{assembler}_repeat_types.tsv" %OUT_FOLDER
+  params:
+    repeats = ["TR6", "TR10"],
+    combos = ["TRST"]
+  conda:
+    config["analysis_settings"]["Repeat_identifier"]["yaml"]
+  log:
+    stdout = "Logs/{sample}/CDiff_Repeat_identifier/{assembler}_repeat_types.log"
+  message:
+    "[CDiff Repeat identifier]: Running repeat analysis on {wildcards.assembler} assembly for {wildcards.sample}"
+  shell:
+    """
+    mkdir -p $(dirname {output.repeat_types})
+
+    db_dir=$(dirname {input.seqs} | uniq)
+
+    cmd="python workflow/scripts/Repeat_Identifier.py --fasta {input.assembly} --ref_seq {input.seqs} --ref_meta {input.metas} --output {output.repeat_types} --sample_id {wildcards.sample} --repeats {params.repeats} --combos {params.combos} --suffix tsv --log_file {log.stdout} > {log.stdout} 2>&1"
+
+    echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+    eval $cmd >> {log.stdout} 2>&1 
+    """

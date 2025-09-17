@@ -31,10 +31,10 @@ def setup_logging(log_file: str) -> None:
 
     # Set up logging with a new file for each run
     logging.basicConfig(
-        filename = log_file,
-        filemode = "a",  # Append mode
-        format = "%(asctime)s - %(levelname)s - %(message)s",
-        level = logging.INFO
+        filename=log_file,
+        filemode="w",
+        format="%(asctime)s - %(levelname)s - %(message)s",
+        level=logging.DEBUG
     )
 
     # Add console logging

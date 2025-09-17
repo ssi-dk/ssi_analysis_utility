@@ -84,32 +84,11 @@ analyses_to_run:
         organism: --organism Escherichia # Leave blank or insert --organism alongside one of the supported organisms, listed here: https://github.com/evolarjun/amr/wiki/Curated-organisms
         wrangler: workflow/scripts/AMR_wrangler.py
 
-    spades:
-        Title : spades assembly
+    mlst:
+       Title : MLST by Torsten Seeman
+    
+    meningotype:
+        Title : Sero- and genotyping of N. meningitidis
 
-    skesa:
-        Title : skesa assembly
-
-
-#    emm_typing: 
-#       Title: Typing of M protein gene using blast against CDC curated alleles
-#        cov_threshold: 90
-#        emm_allele_file: resources/emm_typing/emm_alleles.fasta  # Fasta file with emm alleles
-#        emm_cluster_file: resources/emm_typing/emm_enn_mrp_subgroups.txt  # File with emm allele clusters
-#        
-#    assembly_lineage_determination: 
-#        Title: Lineage determination based on presence of specified SNPs when mapping genome assembly against reference genome
-#        percent_snp_threshold: 50
-#        nucmerargs : "\"\""
-#        deltafilterargs : "\"-q -r -o 100\""
-#        reference_fasta_file: resources/lineage_determination/MGAS5005.fasta
-#        lineage_variant_file: resources/lineage_determination/Spyogenes_LOCs.tsv
-#        
-#    mlst:
-#        Title : MLST by Torsten Seeman
-#
-#    LRE-finder: 
-#        Title : LRE-Finder
-#        min_consensus_ID : 80
-#        additional_option : -1t1 -cge -matrix
-#        database: resources/lre-finder_db/elm  # Database for LRE-finder
+    spades: 
+        Title: Assembly of paired end sequencing data 
