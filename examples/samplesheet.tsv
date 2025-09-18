@@ -10,4 +10,5 @@ SRR26769817	examples/Dataset/reads/SRR26769817_1.fastq.gz,examples/Dataset/reads
 SRR26767787	examples/Dataset/reads/SRR26767787_1.fastq.gz,examples/Dataset/reads/SRR26767787_2.fastq.gz	Na	examples/Dataset/assemblies/SRR26767787.fasta	Clostridioides difficile	Na	Na
 SRR2915768	examples/Dataset/reads/SRR2915768_1.fastq.gz,examples/Dataset/reads/SRR2915768_2.fastq.gz	Na	examples/Dataset/assemblies/SRR2915768.fasta	Clostridioides difficile	Na	Na
 SRR2915763	examples/Dataset/reads/SRR2915763_1.fastq.gz,examples/Dataset/reads/SRR2915763_2.fastq.gz	Na	examples/Dataset/assemblies/SRR2915763.fasta	Clostridioides difficile	Na	Na
+SRR4046826	examples/Dataset/reads/SRR4046826_1.fastq.gz,examples/Dataset/reads/SRR4046826_2.fastq.gz	Na	examples/Dataset/assemblies/SRR4046826.fasta	Klebsiella Pneumoniae	Na	Na
 SRR25448586	examples/Dataset/reads/SRR25448586_1.fastq.gz,examples/Dataset/reads/SRR25448586_2.fastq.gz	Na	Na	Nmeningitidis	Na	Na

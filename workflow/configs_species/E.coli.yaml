@@ -84,6 +84,10 @@ analyses_to_run:
         organism: --organism Escherichia # Leave blank or insert --organism alongside one of the supported organisms, listed here: https://github.com/evolarjun/amr/wiki/Curated-organisms
         wrangler: workflow/scripts/AMR_wrangler.py
 
+    kleborate:
+        Title : Tool for characterising virulence and resistance in pathogen assemblies
+        preset: escherichia # Different presets depending on the species, list here: https://kleborate.readthedocs.io/en/latest/General_modules.html
+
     mlst:
        Title : MLST by Torsten Seeman
     
