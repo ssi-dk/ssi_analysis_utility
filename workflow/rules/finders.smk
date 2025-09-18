@@ -104,7 +104,7 @@ rule AMRFinder:
         database = rules.setup_AMRFinder.output.database
     params:
         # Point mutation
-        organism = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["amrfinder"]["organism"]
+        options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["amrfinder"]["options"]
     output:
         result = "%s/{sample}/AMRFinder/{assembler}.tsv" %OUT_FOLDER
     conda:
@@ -117,7 +117,7 @@ rule AMRFinder:
         """
         mkdir -p $(dirname {output.result})
 
-        cmd="amrfinder --nucleotide {input.assembly} --database {input.database} {params.organism} --output {output.result}"
+        cmd="amrfinder --nucleotide {input.assembly} --database {input.database} {params.options} --output {output.result}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
