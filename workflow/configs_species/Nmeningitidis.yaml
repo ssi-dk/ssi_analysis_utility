@@ -51,7 +51,7 @@ analyses_to_run:
 
     amrfinder:
         Title : NCBI resistance gene finder
-        organism: --organism Neisseria meningitidis # Leave blank or insert --organism alongside one of the supported organisms, listed here: https://github.com/evolarjun/amr/wiki/Curated-organisms
+        organism: --organism 'Neisseria meningitidis' # Leave blank or insert --organism alongside one of the supported organisms, listed here: https://github.com/evolarjun/amr/wiki/Curated-organisms
 
     mlst:
         Title : MLST by Torsten Seeman

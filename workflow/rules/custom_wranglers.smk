@@ -8,7 +8,7 @@ rule kma_filter:
         log_dir = "%s/{sample}/KMA_results/" %OUT_FOLDER,
         sample = "{sample}"
     conda:
-        config["analysis_settings"]["KMA_filter"]["yaml"]
+        "../envs/python_functions.yaml"
     log:
         stdout = "Logs/{sample}/KMA_results/{sample}_KMA_filter.log"
     message:

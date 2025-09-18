@@ -10,7 +10,7 @@ rule custom_kmeralignment:
     sam = temp("%s/{sample}/samtools/{database}.sam" %OUT_FOLDER),
     seq = temp("%s/{sample}/kmeraligner/{database}.fsa" %OUT_FOLDER)
   conda:
-    config["analysis_settings"]["KMA"]["yaml"]
+    "../envs/kmeraligner.yaml"
   log:
     stdout = "Logs/{sample}/custom_kmeralignment_{database}.log"
   message:
@@ -37,7 +37,7 @@ rule samtools_sam_filtration:
   output:
     bam = temp("%s/{sample}/samtools/{database}_filtered.bam" %OUT_FOLDER)
   conda:
-    config["analysis_settings"]["htslib"]["yaml"]
+    "../envs/htslib.yaml"
   log:
     stdout = "Logs/{sample}/custom_kmeralignment_samtools_filtration_{database}.log"
   message:
@@ -59,7 +59,7 @@ rule samtools_bam_filtration:
   output:
     bam = temp("%s/{sample}/samtools/{database}_filtered.bam" %OUT_FOLDER)
   conda:
-    config["analysis_settings"]["htslib"]["yaml"]
+    "../envs/htslib.yaml"
   log:
     stdout = "Logs/{sample}/custom_kmeralignment_samtools_filtration_{database}.log"
   message:
@@ -81,7 +81,7 @@ rule samtools_sort:
   output:
     bam_sort = temp("%s/{sample}/samtools/{database}_sorted.bam" %OUT_FOLDER)
   conda:
-    config["analysis_settings"]["htslib"]["yaml"]
+    "../envs/htslib.yaml"
   log:
     stdout = "Logs/{sample}/samtools_sort_{database}.log"
   message:
@@ -101,7 +101,7 @@ rule samtools_index:
   output:
     bam_index = temp("%s/{sample}/samtools/{database}_sorted.bam.bai" %OUT_FOLDER)
   conda:
-    config["analysis_settings"]["htslib"]["yaml"]
+    "../envs/htslib.yaml"
   log:
     stdout = "Logs/{sample}/samtools_index_{database}.log"
   message:
@@ -123,7 +123,7 @@ rule bcftools_pileup:
   output:
     pileup = temp("%s/{sample}/bcftools/{database}.bcf" %OUT_FOLDER)
   conda:
-    config["analysis_settings"]["htslib"]["yaml"]
+    "../envs/htslib.yaml"
   log:
     stdout = "Logs/{sample}/bcftools_pileup_{database}.log"
   message:
@@ -142,7 +142,7 @@ rule bcftools_index:
   output:
     index = temp("%s/{sample}/bcftools/{database}.bcf.csi" %OUT_FOLDER)
   conda:
-    config["analysis_settings"]["htslib"]["yaml"]
+    "../envs/htslib.yaml"
   log:
     stdout = "Logs/{sample}/bcftools_index_{database}.log"
   message:
@@ -166,7 +166,7 @@ rule bcftools_filter_indels:
   output:
     indels = temp("%s/{sample}/bcftools/{database}_indels.bcf" %OUT_FOLDER)
   conda:
-    config["analysis_settings"]["htslib"]["yaml"]
+    "../envs/htslib.yaml"
   log:
     stdout = "Logs/{sample}/bcftools_filter_indels_{database}.log"
   message:
@@ -187,7 +187,7 @@ rule bcftools_variant_call:
   output: 
     variants = temp("%s/{sample}/bcftools/{database}_variants.bcf" %OUT_FOLDER)
   conda:
-    config["analysis_settings"]["htslib"]["yaml"]
+    "../envs/htslib.yaml"
   log:
     stdout = "Logs/{sample}/bcftools_variant_call_{database}.log"
   message:

@@ -8,7 +8,7 @@ rule MLST:
         # "%s/{sample}/MLST/{sample}.tsv" %OUT_FOLDER
         mlst_file = "%s/{sample}/MLST/{assembler}_mlst.tsv" %OUT_FOLDER
     conda:
-        config["analysis_settings"]["mlst"]["yaml"]
+        "../envs/mlst.yaml"
     log:
     	stdout = "Logs/{sample}/{assembler}_mlst.log"
     message:
@@ -31,7 +31,7 @@ rule meningotype:
     output:
         meningotype = "%s/{sample}/meningotype/{assembler}_meningotype.tsv" %OUT_FOLDER
     conda:
-        config["analysis_settings"]["meningotype"]["yaml"]
+        "../envs/meningotype.yaml"
     log:
         stdout = "Logs/{sample}/{assembler}_meningotype.log"
     message:

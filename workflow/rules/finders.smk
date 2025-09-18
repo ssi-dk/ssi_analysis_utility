@@ -8,7 +8,7 @@ rule PlasmidFinder:
         # Output directory for plasmidfinder results.
         out_dir = directory("%s/{sample}/PlasmidFinder" %OUT_FOLDER)
     conda:
-        config["analysis_settings"]["plasmidfinder"]["yaml"]
+        "../envs/plasmidfinder.yaml"
     log:
         stdout = 'Logs/{sample}/PlasmidFinder.log'
     message:
@@ -34,7 +34,7 @@ rule ResFinder:
     output:
         out_dir = directory("%s/{sample}/ResFinder" %OUT_FOLDER)
     conda:
-        config["analysis_settings"]["resfinder"]["yaml"]
+        "../envs/resfinder.yaml"
     log:
         stdout = 'Logs/{sample}/ResFinder.log'
     message:
@@ -58,7 +58,7 @@ rule VirulenceFinder:
     output:
         out_dir = directory("%s/{sample}/VirulenceFinder" %OUT_FOLDER)
     conda:
-        config["analysis_settings"]["virulencefinder"]["yaml"]
+        "../envs/virulencefinder.yaml"
     log:
         stdout = 'Logs/{sample}/VirulenceFinder.log'
     message:
@@ -82,7 +82,7 @@ rule serotypefinder:
     output:
         out_dir = directory("%s/{sample}/SerotypeFinder" %OUT_FOLDER)
     conda:
-        config["analysis_settings"]["serotypefinder"]["yaml"]
+        "../envs/serotypefinder.yaml"
     log:
         stdout = 'Logs/{sample}/SerotypeFinder.log'
     message:
@@ -108,7 +108,7 @@ rule AMRFinder:
     output:
         result = "%s/{sample}/AMRFinder/{assembler}.tsv" %OUT_FOLDER
     conda:
-        config["analysis_settings"]["amrfinder"]["yaml"]
+        "../envs/amrfinder.yaml"
     log:
         stdout = 'Logs/{sample}/AMRFinder_{assembler}.log'
     message:
@@ -138,7 +138,7 @@ rule variant_identifier:
   output:
     indentifyed_variants = "%s/{sample}/Variant_identifier/variants_{database}.tsv" %OUT_FOLDER
   conda:
-    config["analysis_settings"]["Variant_identifier"]["yaml"]
+    "../envs/python_functions.yaml"
   log:
     stdout = "Logs/{sample}/Variant_identifier_{database}.log"
   message:
@@ -163,7 +163,7 @@ rule CDiff_Repeat_identifier:
     repeats = ["TR6", "TR10"],
     combos = ["TRST"]
   conda:
-    config["analysis_settings"]["Repeat_identifier"]["yaml"]
+    "../envs/python_functions.yaml"
   log:
     stdout = "Logs/{sample}/CDiff_Repeat_identifier/{assembler}_repeat_types.log"
   message:
