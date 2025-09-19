@@ -39,7 +39,12 @@ analyses_to_run:
     kmeraligner:
         Title : Kmer Aligner on two pair reads
         ID: 90
-        additional_option :  -nc -ref_fsa -nf -sam 4
+        additional_option : -nc -nf -sam 4
+
+    kmerconsensus:
+        Title : Kmer consensus with 'N' from two pair reads
+        ID: 90
+        additional_option: -ref_fsa
 
     KMA_filter:
         Title : Kmer Aligner for Escherichia coli OH and stx typing
