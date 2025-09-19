@@ -61,8 +61,22 @@ for species in set(sample_to_organism.values()):
 
 database_path = config['input_manager']['database_path']
 
-### Define rules where samtools is necessary
+# ------------- define specific assemblies as the might be rule specific -------------
+ASSEMBLIES = ["shovill_spades", "shovill_skesa", "spades", "skesa"]
+ASSEMBLIES_SHOVILL = ["shovill_spades", "shovill_skesa"]
+ASSEMBLIES_STANDALONE = ["spades", "skesa"]
 
+def assembly_path(wc):
+    """Return the expected contig path for the chosen assembler flavor."""
+    if wc.assembler.startswith("shovill_"):
+        # matches shovill_spades / shovill_skesa produced by rule `shovill`
+        return f"{OUT_FOLDER}/shovill/{wc.sample}/{wc.assembler}.fasta"
+    elif wc.assembler == "spades":
+        return f"{OUT_FOLDER}/spades/{wc.sample}/{wc.assembler}.fasta"
+    elif wc.assembler == "skesa":
+        return f"{OUT_FOLDER}/skesa/{wc.sample}/{wc.assembler}.fasta"
+    raise ValueError(f"Unknown assembler flavor: {wc.assembler}")
+# eventually the output structure should be changed to {wc.sample}/spades etc..
 
 ##############################################################################
 #
@@ -102,12 +116,12 @@ rule all:
             ]
         ),
         expand(
-            "%s/{sample}/AMRFinder/{assembly}.tsv" % OUT_FOLDER,
+            "%s/{sample}/AMRFinder/{assembler}.tsv" % OUT_FOLDER,
             sample = [
                 s for s in SAMPLES
                 if "amrfinder" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ],
-            assembly = ["spades", "skesa"]
+            assembler = ASSEMBLIES_SHOVILL
         ),
         expand(
            "%s/{sample}/MLST/{assembler}_mlst.tsv" % OUT_FOLDER,
@@ -115,7 +129,7 @@ rule all:
                s for s in SAMPLES 
                if "mlst" in species_configs[sample_to_organism[s]]["analyses_to_run"]
            ],
-           assembler = ["spades", "skesa"]
+           assembler = ASSEMBLIES_SHOVILL
         ),
         expand(
             "%s/{sample}/Variant_identifier/variants_{database}.tsv" %OUT_FOLDER,
@@ -131,7 +145,7 @@ rule all:
                 s for s in SAMPLES
                 if "CDiff_Repeat_identifier" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ],
-            assembler = ["spades", "skesa"]
+            assembler = ASSEMBLIES
         ),
         expand(
             "%s/{sample}/kmeraligner/{database}.res" % OUT_FOLDER,
@@ -147,7 +161,7 @@ rule all:
                 s for s in SAMPLES 
                 if "meningotype" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ],
-            assembler = "spades"
+            assembler = ["spades"]
         ),
 
 

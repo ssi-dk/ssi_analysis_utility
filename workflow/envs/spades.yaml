@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 channels:
   - bioconda
   - conda-forge
@@ -6,11 +5,3 @@ channels:
 dependencies:
   - python
   - spades
-=======
-name: spades
-channels:
-    - conda-forge
-    - bioconda
-dependencies:
-    - spades
->>>>>>> N_Meningitidis_version_2_dev
