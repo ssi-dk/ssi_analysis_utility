@@ -1,0 +1,92 @@
+###################### BACTERIAL SPECIES ###################################
+# This config defines analyses for the specified bacterial species e.g E.Coli  
+# and associated parameters.
+
+alignment_database: 
+
+    # kmeraligner:
+    #     db: setup_Ecoli_alignment_db
+    #     kma_db_prefix: ecoligenes
+    #     kma_index_flag: Escherichia_coli_db
+    #     fa_idx_flag: Escherichia_coli_db
+
+    plasmidfinder:
+        db: setup_PlasmidFinder
+        kma_index_flag: plasmidfinder_db
+
+    resfinder:
+        db: setup_ResFinder
+        kma_index_flag: resfinder_db
+
+    pointfinder:
+        db: setup_PointFinder
+        kma_index_flag: pointfinder_db
+
+    disinfinder:
+        db: setup_DisinFinder
+        kma_index_flag: disinfinder_db
+
+    virulencefinder:
+        db: setup_VirulenceFinder
+        kma_index_flag: virulencefinder_db
+
+    serotypefinder:
+        db: setup_SerotypeFinder
+        kma_index_flag: serotypefinder_db
+
+analyses_to_run: 
+
+    # kmeraligner:
+    #     Title : Kmer Aligner on two pair reads
+    #     ID: 90
+    #     additional_option :  -nc -ref_fsa -nf -sam 4
+
+    # KMA_filter:
+    #     Title : Kmer Aligner for Escherichia coli OH and stx typing
+    #     ID: 92
+    #     input_folder: kmeraligner
+    #     additional_option : --Gene_list stx wzx wzy wzt wzm fliC fli eae ehxA --organism "Escherichia coli" --suffix tsv
+    #     thresholds:
+    #         stx: [90, 90, 10]
+    #         wzx: [90, 90, 10]
+    #         wzy: [90, 90, 10]
+    #         wzt: [90, 90, 10]
+    #         wzm: [90, 90, 10]
+    #         fliC: [90, 90, 10]
+    #         fli: [90, 90, 10]
+    #         eae: [90, 90, 10]
+    #         ehxA: [90, 90, 10]
+    #         other: [98, 98, 10]
+
+    virulence_gene_detection: 
+        Title: Presence of Streptococcal virulence genes from the Virulence Factor Database
+
+    plasmidfinder: 
+        Title : Plasmidfinder
+        database: resources/plasmidfinder_db/  # Path to PlasmidFinder database
+
+    resfinder: 
+        Title : Resfinder
+        resfinder_db: resources/resfinder_db/ # ResFinder database for AMR detection
+        pointfinder_db: resources/pointfinder_db/  # PointFinder database for AMR point mutations
+        disinfinder_db: resources/disinfinder_db/  # DisinFinder database for disinfectant resistance
+
+    virulencefinder : 
+        Title : Virulence finder
+        database: resources/virulencefinder_db  # VirulenceFinder database
+
+    serotypefinder :
+        Title : Serotypefinder
+        database: resources/serotypefinder_db/  # SerotypeFinder database
+    
+    amrfinder:
+        Title : NCBI resistance gene finder
+        organism: --organism Escherichia # Leave blank or insert --organism alongside one of the supported organisms, listed here: https://github.com/evolarjun/amr/wiki/Curated-organisms
+        wrangler: workflow/scripts/AMR_wrangler.py
+
+    kleborate:
+        Title: Tool for characterising virulence and resistance in pathogen assemblies
+        options: --preset kpsc
+
+    mlst:
+       Title : MLST by Torsten Seeman

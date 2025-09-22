@@ -28,4 +28,7 @@ analyses_to_run:
         options: --organism 'Escherichia'
         wrangler: workflow/scripts/AMR_wrangler.py
 
+    kleborate:
+        options: --preset escherichia
+
     mlst:
