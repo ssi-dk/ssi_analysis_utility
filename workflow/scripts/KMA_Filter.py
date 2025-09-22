@@ -195,7 +195,7 @@ def summarize_ecoli_hits(sample_id: str, organism: str, filtered_df: pd.DataFram
 # ------------------------- Main CLI Entry ------------------------- #
 
 def main(args):
-    setup_logging(args.log_dir, args.sample_id, "kma_filtering")
+    setup_logging(log_file = args.log_file)
 
     try:
         pipeline_config="config/config.yaml"
@@ -236,7 +236,7 @@ if __name__ == "__main__":
     parser.add_argument("--suffix", choices=["txt", "csv", "tsv"], default="tsv")
     parser.add_argument("--output", required=True)
     parser.add_argument("--verbose", type=int, choices=[0, 1], default=1)
-    parser.add_argument("--log_dir", default="examples/Log")
+    parser.add_argument("--log_file", required = True, help = "File for logging")
 
     args = parser.parse_args()
     main(args)
