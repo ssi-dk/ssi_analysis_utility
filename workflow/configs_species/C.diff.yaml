@@ -7,7 +7,13 @@ analyses_to_run:
     kmeraligner:
         Title : Kmer Aligner on two pair reads
         ID: 90
+        database: Cdiff_Toxins
         additional_option: -nc -nf -sam 4
+
+    bowtie2aligner:
+        Title : Bowtie2 Aligner on two pair reads
+        options: --very-sensitive-local --no-unal -a 
+        database: Cdiff_Toxins
 
     kmerconsensus:
         Title : Kmer consensus with 'N' from two pair reads
