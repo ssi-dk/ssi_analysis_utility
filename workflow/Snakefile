@@ -143,22 +143,6 @@ rule all:
             database = "ecoligenes"
         ),
         expand(
-            "%s/{sample}/kmerconsensus/{database}.fsa" % OUT_FOLDER,
-            sample = [
-                s for s in SAMPLES
-                if "kmerconsensus" in species_configs[sample_to_organism[s]]["analyses_to_run"]
-            ],
-            database = "ecoligenes"
-        ),
-        expand(
-            "%s/{sample}/bowtie2aligner/{database}.sam" % OUT_FOLDER,
-            sample = [
-                s for s in SAMPLES
-                if "bowtie2aligner" in species_configs[sample_to_organism[s]]["analyses_to_run"]
-            ],
-            database = "ecoligenes"
-        ),
-        expand(
             "%s/{sample}/Kleborate/{assembler}" % OUT_FOLDER,
             sample=[
                 s for s in SAMPLES

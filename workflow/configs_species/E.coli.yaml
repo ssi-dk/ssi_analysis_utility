@@ -4,22 +4,8 @@
 
 analyses_to_run: 
 
-    kmeraligner:
-        Title : Kmer Aligner on two pair reads
-        ID: 90
-        database: ecoligenes
-        additional_option : -nc -nf -sam 4
-
-    bowtie2aligner:
-        Title : Bowtie2 Aligner on two pair reads
+    bowtie2:
         options: --very-sensitive-local --no-unal -a 
-        database: ecoligenes
-
-    kmerconsensus:
-        Title : Kmer consensus with 'N' from two pair reads
-        ID: 90
-        database: ecoligenes
-        additional_option: -ref_fsa
 
     KMA_filter:
         Title : Kmer Aligner for Escherichia coli OH and stx typing

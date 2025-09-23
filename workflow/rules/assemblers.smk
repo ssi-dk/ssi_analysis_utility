@@ -9,9 +9,9 @@ rule shovill:
   log:
     stdout = "Logs/Assemblies/{sample}_{assembler}.log"
   threads:
-    workflow.cores * 0.66667
+    max(1, workflow.cores * 0.66667)
   message:
-    "[Shovill]: Assemblying {wildcards.sample} using {wildcards.assembler} with {threads} cores. This may take some time!\nInspect {log.stdout} for more details!"
+    "[Shovill]: Assemblying {wildcards.sample} using {wildcards.assembler} with {threads} CPU(s). This may take some time!\nInspect {log.stdout} for more details!"
   shell:
     """
     outdir=$(dirname {output.assembly})

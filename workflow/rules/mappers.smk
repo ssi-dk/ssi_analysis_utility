@@ -35,7 +35,8 @@ rule custom_kmerconsensus:
     prefix = "%s/{sample}/kmerconsensus/{database}" %OUT_FOLDER
   output:
     results = temp("%s/{sample}/kmerconsensus/{database}.res" %OUT_FOLDER),
-    seq = "%s/{sample}/kmerconsensus/{database}.fsa" %OUT_FOLDER
+    seq = temp("%s/{sample}/kmerconsensus/{database}.fsa" %OUT_FOLDER),
+    aln = temp("%s/{sample}/kmerconsensus/{database}.aln" %OUT_FOLDER)
   conda:
     "../envs/kmeraligner.yaml"
   log:
@@ -57,19 +58,19 @@ rule custom_bowtie2alignment:
   input:
     R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
     R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
-    database = rules.setup_custom_bowtie2aligner_index.output.bt2_1 # just locate one of the bt2 files to activate the db_setup
+    database = rules.setup_custom_bowtie2_index.output.bt2_1 # just locate one of the bt2 files to activate the db_setup
   params:
-    options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["bowtie2aligner"]["options"],
+    options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["bowtie2"]["options"],
   output:
-    sam = "%s/{sample}/bowtie2aligner/{database}.sam" %OUT_FOLDER,
+    sam = temp("%s/{sample}/bowtie2/{database}.sam" %OUT_FOLDER)
   threads:
-    min(workflow.cores, 16)
+    max(1, workflow.cores * 0.3333333)
   conda:
-    "../envs/bowtie2aligner.yaml"
+    "../envs/bowtie2.yaml"
   log:
     stdout = "Logs/{sample}/custom_bowtie2_{database}.log"
   message:
-    "[bowtie2aligner]: Running Bowtie2 for {wildcards.database} on {wildcards.sample}"
+    "[bowtie2aligner]: Running Bowtie2 for {wildcards.database} on {wildcards.sample} using {threads} thread(s)"
   shell:
     """
     mkdir -p $(dirname {output.sam})
