@@ -4,10 +4,11 @@
 
 analyses_to_run: 
 
-    kmeraligner:
-        Title : Kmer Aligner on two pair reads
+    bowtie2:
+        options: --very-sensitive-local --no-unal -a 
+
+    kmerconsensus:
         ID: 90
-        additional_option: -nc -ref_fsa -nf -sam 4
 
     KMA_filter:
         Title : Kmer Aligner for Clostridium difficile Toxin detection

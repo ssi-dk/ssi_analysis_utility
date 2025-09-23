@@ -2,44 +2,10 @@
 # This config defines analyses for the specified bacterial species e.g E.Coli  
 # and associated parameters.
 
-alignment_database: 
-
-    kmeraligner:
-        db: setup_Ecoli_alignment_db
-        kma_db_prefix: ecoligenes
-        kma_index_flag: Escherichia_coli_db
-        fa_idx_flag: Escherichia_coli_db
-
-    plasmidfinder:
-        db: setup_PlasmidFinder
-        kma_index_flag: plasmidfinder_db
-
-    resfinder:
-        db: setup_ResFinder
-        kma_index_flag: resfinder_db
-
-    pointfinder:
-        db: setup_PointFinder
-        kma_index_flag: pointfinder_db
-
-    disinfinder:
-        db: setup_DisinFinder
-        kma_index_flag: disinfinder_db
-
-    virulencefinder:
-        db: setup_VirulenceFinder
-        kma_index_flag: virulencefinder_db
-
-    serotypefinder:
-        db: setup_SerotypeFinder
-        kma_index_flag: serotypefinder_db
-
 analyses_to_run: 
 
-    kmeraligner:
-        Title : Kmer Aligner on two pair reads
-        ID: 90
-        additional_option :  -nc -ref_fsa -nf -sam 4
+    bowtie2:
+        options: --very-sensitive-local --no-unal -a 
 
     KMA_filter:
         Title : Kmer Aligner for Escherichia coli OH and stx typing

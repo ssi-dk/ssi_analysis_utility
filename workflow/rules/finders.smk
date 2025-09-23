@@ -127,7 +127,7 @@ rule AMRFinder:
 rule variant_identifier:
   input:
     kma_results = rules.custom_kmeralignment.output.results,
-    kma_seq = rules.custom_kmeralignment.output.seq,
+    kma_seq = rules.custom_kmerconsensus.output.seq,
     indels = rules.bcftools_filter_indels.output.indels,
     indels_index = "%s/{sample}/bcftools/{database}_indels.bcf.csi" %OUT_FOLDER,
     variants = rules.bcftools_variant_call.output.variants,

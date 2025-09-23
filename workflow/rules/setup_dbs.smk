@@ -240,6 +240,34 @@ rule setup_custom_kmeraligner_index:
     date -I > {params.prefix}_creation.date
     """
 
+rule setup_custom_bowtie2_index:
+  input:
+    source = "%s/custom/{database}.fasta" %database_path
+  params:
+    prefix = "%s/bowtie2/{database}" %database_path
+  output:
+    bt2_1 = "%s/bowtie2/{database}.1.bt2" %database_path,
+    bt2_2 = "%s/bowtie2/{database}.2.bt2" %database_path,
+    bt2_3 = "%s/bowtie2/{database}.3.bt2" %database_path,
+    bt2_4 = "%s/bowtie2/{database}.4.bt2" %database_path,
+    bt2_1_rev = "%s/bowtie2/{database}.rev.1.bt2" %database_path,
+    bt2_2_rev = "%s/bowtie2/{database}.rev.2.bt2" %database_path
+  conda:
+    "../envs/bowtie2.yaml"
+  log:
+    stdout = "Logs/Databases/setup_custom_bowtie2index_{database}.log"
+  message:
+    "[setup_custom_bowtie2_index]: Setting up {wildcards.database} database with bowtie2"
+  shell:
+    """
+    mkdir -p $(dirname {params.prefix})
+    cmd="bowtie2-build {input.source} {params.prefix}"
+
+    echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+    eval $cmd >> {log.stdout} 2>&1
+
+    date -I > {params.prefix}_creation.date
+    """
 
 rule setup_custom_samtool_index:
   input:
