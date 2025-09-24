@@ -1,8 +1,9 @@
 rule kma_filter:
     input:
-        results = rules.custom_kmeralignment.output.results
+        results = rules.custom_kmeralignment.output.results,
+        database = rules.setup_custom_kmeraligner_index.output.names
     output:
-        filtered_tsv = "%s/{sample}/KMA_Filter/KMA_results.tsv" % OUT_FOLDER,
+        filtered_tsv = "%s/{sample}/KMA_Filter/{database}.tsv" % OUT_FOLDER,
     params:
         options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["KMA_filter"]["options"],
         log_dir = "%s/{sample}/KMA_results/" %OUT_FOLDER,
@@ -10,7 +11,7 @@ rule kma_filter:
     conda:
         config["analysis_settings"]["KMA_filter"]["yaml"]
     log:
-        stdout = "Logs/{sample}/KMA_results/{sample}_KMA_filter.log"
+        stdout = "Logs/{sample}/KMA_results/{sample}_{database}.log"
     message:
         "[KMA Filter]: Filtering KMA .res result for {wildcards.sample}"
     shell:
