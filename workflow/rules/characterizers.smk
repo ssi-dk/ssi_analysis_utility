@@ -49,6 +49,27 @@ rule kleborate:
         eval $cmd >> {log.stdout} 2>&1
     	"""
 
+rule CHtyper:
+    input:
+        results = rules.custom_kmeralignment.output.results
+    output:
+        filtered_tsv = "%s/{sample}/CHtyper/{database}_chtyper.tsv" % OUT_FOLDER,
+    conda:
+        config["analysis_settings"]["KMA"]["yaml"]
+    log:
+        stdout = "Logs/{sample}/{database}_chtyper.log"
+    message:
+    	"[CHTyper]: Running Chtyper on {wildcards.database} assembly for {wildcards.sample}"
+    shell:
+        """
+        mkdir -p $(dirname {output.filtered_tsv})
+
+        echo "Running awk filter on {input.results}" > {log.stdout} 2>&1
+
+        awk -F'\t' 'NR==1{{for(i=1;i<=NF;i++){{if($i=="Template_Identity")id=i;if($i=="Template_Coverage")cov=i}}print;next}} ($id+0>90 && $cov+0>60)' {input.results} > {output.filtered_tsv} 2>> {log.stdout}
+        """
+
+
 # Rule meningotype
 # Runs meningotype on SPAdes assembled contigs to perform serotyping of N. Meningmeningitidis contigs
 rule meningotype:

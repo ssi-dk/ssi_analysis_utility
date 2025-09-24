@@ -7,6 +7,11 @@ analyses_to_run:
     bowtie2:
         options: --very-sensitive-local --no-unal -a 
 
+    CHtyper: 
+        Title : CHtyper
+        ID: 90
+        coverage: 60
+
     KMA_filter:
         Title : Kmer Aligner for Escherichia coli OH and stx typing
         ID: 92

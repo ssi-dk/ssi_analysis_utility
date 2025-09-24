@@ -158,6 +158,14 @@ rule all:
             ],
             assembler = "spades"
         ),
+        expand(
+            "%s/{sample}/CHtyper/{database}_chtyper.tsv" %OUT_FOLDER, 
+            sample = [
+                s for s in SAMPLES 
+                if "CHtyper" in species_configs[sample_to_organism[s]]["analyses_to_run"]
+            ],
+            database = "fumCH_db"
+        ),
 
 
 include : "rules/assemblers.smk"
