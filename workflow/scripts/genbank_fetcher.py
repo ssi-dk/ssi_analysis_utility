@@ -6,6 +6,7 @@ from datetime import datetime
 import os
 from Bio.SeqRecord import SeqRecord
 from Bio.SeqFeature import SeqFeature
+from Bio.Seq import Seq 
 
 # ---------- OUTPUT FILES ----------
 # note these files are not necessary as output - as such no raise error ro similar is needed if the paths are None
@@ -45,9 +46,10 @@ def create_locus_bed(path: Optional[str], chrom: str,
         bed6file.write("\n".join(bed_lines) + "\n")
 
 def create_locus_fasta(path: Optional[str], record,  # Biopython SeqRecord
-                   regions: List[Tuple[int, int, str, str]],
-                   merge_distance: Optional[int],
-                   append: bool) -> None:
+                       regions: List[Tuple[int, int, str, str]],
+                       merge_distance: Optional[int],
+                       append: bool,
+                       strand_correct: bool) -> None:
     """
     Build and write FASTA entries for one GenBank record from a list of genomic regions.
 
@@ -102,11 +104,27 @@ def create_locus_fasta(path: Optional[str], record,  # Biopython SeqRecord
     for group in merged_groups:
         group_start = group[0][0]
         group_end = group[-1][1]
+        group_strand = group[0][2]  # all items in a group share strand
         group_name = "+".join(g[3] for g in group)
-        print(f"name: {group_name} \t start {group_start} \t end {group_end}")
-        seq = record.seq[group_start:group_end]
-        fasta_entries.append(f">{record.id}_{group_name}_{group_start}_{group_end}\n{str(seq)}")
 
+        print(f"name: {group_name} \t start {group_start} \t end {group_end}")
+
+        seq = record.seq[group_start:group_end]
+
+        #reverse-complement or not?
+        rc_applied = False
+        if strand_correct and group_strand == "-":
+            print(f"corrects strand orientation for record {group_name} belonging to strand {group_strand}")
+            # convert to gene/CDS 5'->3' orientation
+            seq = seq.reverse_complement()
+            rc_applied = True
+
+        header = f">{record.id}_{group_name}_{group_start}_{group_end}_strand_{group_strand}"
+        if rc_applied:
+            header += "_rc"
+        
+        fasta_entries.append(f"{header}\n{str(seq)}")
+        
     # write fasta file either as append or overwrite
     mode = 'a' if append else 'w'
     with open(path, mode) as fasta_out:
@@ -218,8 +236,9 @@ def fetch_and_store_genbank_features(
     append: bool,
     mode: str,                              # 'locus' | 'cds_region' | 'acc_region'
     locus_list: Optional[List[str]] = None,
-    cds_regions: Optional[Dict[str, Tuple[int, int]]] = None,
-    acc_regions: Optional[Dict[str, Tuple[int, int]]] = None,
+    cds_regions: Optional[List[Tuple[str, Tuple[int,int]]]] = None,
+    acc_regions: Optional[List[Tuple[str, Tuple[int,int]]]] = None,
+    strand_correct: bool = True,
 ) -> None:
     Entrez.email = email
     print(f"Fetching GenBank record for {accession} from NCBI...")
@@ -336,7 +355,7 @@ def fetch_and_store_genbank_features(
     # 3) finalize outputs
     genbank_records_report(record_file, record_info, append)
     create_locus_bed(bed_file, record.id, regions, append)
-    create_locus_fasta(fasta_file, record, regions, merge_distance, append)
+    create_locus_fasta(fasta_file, record, regions, merge_distance, append,strand_correct)
 
 
 # ---------- CLI ----------
@@ -371,6 +390,13 @@ def main():
     parser.add_argument("--append", action="store_true",
                         help="Append to outputs instead of overwriting.")
 
+    # Strand-correction toggle: default ON; disable with -ns / --no_strand_correct
+    parser.add_argument(
+        "-ns", "--no_strand_correct",
+        action="store_true",
+        help="Do NOT reverse-complement '-' strand slices; keep genomic/reference orientation."
+    )
+
     args = parser.parse_args()
 
     chosen = sum([bool(args.locus), bool(args.cds_region), bool(args.acc_region)])
@@ -393,6 +419,9 @@ def main():
         cds_regions = None
         acc_regions = parse_name_ranges_list(args.acc_region)
 
+    # default behavior = strand correction ON
+    strand_correct = not args.no_strand_correct
+
     for acc in args.accession:
         fetch_and_store_genbank_features(
             email=args.email,
@@ -405,7 +434,8 @@ def main():
             mode=mode,
             locus_list=locus_list,
             cds_regions=cds_regions,
-            acc_regions=acc_regions
+            acc_regions=acc_regions,
+            strand_correct=strand_correct
         )
 
 
