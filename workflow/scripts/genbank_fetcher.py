@@ -1,12 +1,14 @@
 import argparse
 import sys
-from typing import List, Tuple, Dict, Optional
-from Bio import Entrez, SeqIO
+from typing import List, Tuple, Dict, Optional, Any
 from datetime import datetime
 import os
+import pandas as pd
+from Bio import Entrez, SeqIO
 from Bio.SeqRecord import SeqRecord
 from Bio.SeqFeature import SeqFeature
 from Bio.Seq import Seq 
+from collections import defaultdict  # add this
 
 # ---------- OUTPUT FILES ----------
 # note these files are not necessary as output - as such no raise error ro similar is needed if the paths are None
@@ -130,6 +132,148 @@ def create_locus_fasta(path: Optional[str], record,  # Biopython SeqRecord
     with open(path, mode) as fasta_out:
         fasta_out.write("\n".join(fasta_entries) + "\n")
 
+def process_metafile(
+    meta_path: str,
+    email: str,
+    record_file: Optional[str],
+    bed_file: Optional[str],
+    fasta_file: Optional[str],
+    merge_distance: Optional[int],
+    append: bool,
+    strand_correct: bool,
+) -> None:
+    rows = read_metafile_rows(meta_path)
+    if not rows:
+        print(f"Metafile '{meta_path}' is empty or unreadable.")
+        return
+
+    # group so we fetch each accession once
+    by_acc: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+    for r in rows:
+        acc = r.get("accession") or ""
+        if not acc:
+            print("Warning: row without accession; skipping.")
+            continue
+        by_acc[acc].append(r)
+
+    Entrez.email = email
+
+    for accession, group in by_acc.items():
+        print(f"Fetching GenBank record for {accession} from NCBI (metafile)...")
+        try:
+            with Entrez.efetch(db="nucleotide", id=accession, rettype="gb", retmode="text") as handle:
+                record = SeqIO.read(handle, "genbank")
+        except Exception as e:
+            print(f"Failed to fetch or parse {accession}: {e}")
+            continue
+
+        ts = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+        info_lines: List[str] = [
+            f"Timestamp: {ts}\n",
+            f"Running command: {' '.join(sys.argv)}\n",
+            f"Record ID: {record.id}",
+            f"Description: {record.description}",
+            f"Sequence Length: {len(record.seq)} bp",
+            "Mode: --metafile",
+            ""
+        ]
+
+        # index CDS once
+        cds_list, key_map = collect_cds_index(record)
+
+        # organism text (species + lineage) for tolerant matching
+        organism_text = (
+            (record.annotations.get("organism", "") + " " +
+             " ".join(record.annotations.get("taxonomy", [])))
+            .lower()
+        )
+
+        regions: List[Tuple[int, int, str, str]] = []
+
+        for r in group:
+            gene = (r.get("gene") or "").strip()
+            org  = (r.get("organism") or "").strip()
+            s: Optional[int] = r.get("start")
+            e: Optional[int] = r.get("end")
+
+            # 1) organism check if provided
+            if org:
+                if organism_text and (org.lower() not in organism_text):
+                    info_lines.append(f" - Organism mismatch for row ({gene or 'NA'}): '{org}' not found in record organism/lineage; skipping.")
+                    continue
+
+            # 2) gene must exist
+            if not gene:
+                info_lines.append(" - Missing 'gene' in metafile row; skipping.")
+                continue
+
+            feature = match_feature_by_name(gene, key_map, cds_list)
+            if not feature:
+                info_lines.append(f" - '{gene}' not matched to any CDS; skipping.")
+                continue
+
+            start = int(feature.location.start)
+            end   = int(feature.location.end)
+            strand = strand_char(feature)
+            cds_len = end - start
+            base = CDS_labels(feature)
+
+            # 3) decide which mode to emulate
+            if s is None or e is None:
+                # full CDS (locus)
+                info_lines.append(f" - {base} (metafile locus): {start+1}..{end} ({strand}) length={cds_len}")
+                regions.append((start, end, strand, base))
+                continue
+
+            # both s and e present:
+            if max(s, e) <= cds_len:
+                # treat as cds_region (CDS-relative 1-based)
+                cds_start = max(1, min(int(s), int(cds_len)))
+                cds_end   = max(1, min(int(e), int(cds_len)))
+                if (cds_start, cds_end) != (s, e):
+                    info_lines.append(f"\tWarning: {gene} CDS subrange {s}-{e} clamped to {cds_start}-{cds_end} (CDS length {cds_len}).")
+
+                if strand == "+":
+                    genomic_start = start + (cds_start - 1)
+                    g_end         = start + cds_end
+                elif strand == "-":
+                    genomic_start = end - cds_end
+                    g_end         = end - (cds_start - 1)
+                else:
+                    genomic_start = start + (cds_start - 1)
+                    g_end         = start + cds_end
+
+                label = f"{base}_{cds_start}-{cds_end}"
+                info_lines.append(f" - {base} (metafile cds_region): CDS {cds_start}-{cds_end} -> genomic {genomic_start+1}..{g_end} ({strand})")
+                regions.append((genomic_start, g_end, strand, label))
+
+            else:
+                # treat as acc_region (genomic 1-based inclusive)
+                record_len = len(record.seq)
+                acc_start_sub = max(0, min((s - 1), record_len))
+                acc_end_sub   = max(0, min(e, record_len))
+
+                # clamp to CDS bounds (like your acc_region)
+                genomic_start = max(start, min(acc_start_sub, end))
+                g_end = max(start, min(acc_end_sub, end))
+
+                if g_end <= genomic_start:
+                    info_lines.append(f"   Warning: empty slice for {gene}; skipping.")
+                    print(f"warning empty regions for {gene}")
+                    continue
+
+                label = f"{base}_{genomic_start+1}-{g_end}"
+                info_lines.append(f" - {base} (metafile acc_region): genomic {genomic_start+1}..{g_end} ({strand})")
+                regions.append((genomic_start, g_end, strand, label))
+
+        # finalize this accession
+        unknown_count = sum(1 for r in regions if r[2] == ".")
+        if unknown_count:
+            info_lines.append(f"Warning: {unknown_count} region(s) have unknown strand '.'; they will be merged together (same '.') and never reverse-complemented.")
+        genbank_records_report(record_file, info_lines, append)
+        create_locus_bed(bed_file, record.id, regions, append)
+        create_locus_fasta(fasta_file, record, regions, merge_distance, append, strand_correct)
+
 # ---------- HELPERS ----------
 
 def parse_range(text: str) -> Tuple[int, int]:
@@ -224,6 +368,41 @@ def CDS_labels(feature) -> str:
 
     return gene or old_tag or locus_tag or "unknown"
 
+def normalize_header(name: str) -> str:
+    return name.strip().lower().replace(" ", "_")
+
+def read_metafile_rows(path: str) -> List[Dict[str, Any]]:
+    """
+    Read a TSV meta file with headers:
+      accession  gene  start  end  organism
+    Returns a list of dicts with normalized keys; start/end as Optional[int].
+    """
+    # strict TSV; if you want auto-detect, use sep=None, engine="python"
+    df = pd.read_csv(path, sep="\t", dtype=str, keep_default_na=False)
+
+    # normalize headers
+    df.columns = [normalize_header(c) for c in df.columns]
+
+    required = {"accession", "gene", "start", "end", "organism"}
+    missing = required - set(df.columns)
+    if missing:
+        raise ValueError(f"Metafile missing required columns: {', '.join(sorted(missing))}")
+
+    # trim whitespace in text columns
+    for c in ["accession", "gene", "organism", "start", "end"]:
+        df[c] = df[c].astype(str).str.strip()
+
+    # convert start/end to Optional[int]
+    def to_opt_int(s: str):
+        s = (s or "").replace(",", "").strip()
+        return int(s) if s.isdigit() else None
+
+    df["start"] = df["start"].map(to_opt_int)
+    df["end"]   = df["end"].map(to_opt_int)
+
+    # return list of dicts (start/end are Python ints or None)
+    return df.to_dict(orient="records")
+
 # ---------- Core fetch genbank features ----------
 
 def fetch_and_store_genbank_features(
@@ -317,13 +496,19 @@ def fetch_and_store_genbank_features(
 
     elif mode == "acc_region":
         record_info.append("Mode: --acc_region (genomic/Accession sub-slices within CDS)")
+        record_len = len(record.seq)
+
         for req_name, (acc_start, acc_end) in (acc_regions or []):
-            f = match_feature_by_name(req_name, key_map, cds_list)
-            if not f:
+            feature = match_feature_by_name(req_name, key_map, cds_list)
+            if not feature:
                 record_info.append(f" - '{req_name}' not matched to any CDS.")
                 continue
-            start = int(f.location.start)  # CDS genomic bounds (0-based)
-            end = int(f.location.end)
+
+            if acc_start < 1 or acc_end > record_len:
+                record_info.append(f"Warning: {req_name} accession range {acc_start}-{acc_end} lies outside record bounds 1-{record_len}; it will be clamped.")
+
+            start = int(feature.location.start)  # CDS genomic bounds (0-based)
+            end = int(feature.location.end)
 
             # Convert provided 1-based inclusive -> 0-based half-open
             acc_start_sub = int(acc_start) - 1
@@ -341,8 +526,8 @@ def fetch_and_store_genbank_features(
                 record_info.append(f"   Warning: empty slice for {req_name} after clamping; skipping.")
                 continue
 
-            base = CDS_labels(f)
-            strand = strand_char(f)
+            base = CDS_labels(feature)
+            strand = strand_char(feature)
             label = f"{base}_{genomic_start+1}-{g_end}"
             record_info.append(f" - {base} (matched '{req_name}'): genomic {genomic_start+1}..{g_end} ({strand})")
             regions.append((genomic_start, g_end, strand, label))
@@ -351,6 +536,11 @@ def fetch_and_store_genbank_features(
         record_info.append("Error: no valid mode selected.")
         genbank_records_report(record_file, record_info, append)
         return
+
+    # Warn if any unknown-strand regions present (merged together; never reverse-complemented)
+    unknown_count = sum(1 for r in regions if r[2] == ".")
+    if unknown_count:
+        record_info.append(f"Warning: {unknown_count} region(s) have unknown strand '.'; they will be merged together (same '.') and never reverse-complemented.")
 
     # 3) finalize outputs
     genbank_records_report(record_file, record_info, append)
@@ -365,7 +555,7 @@ def main():
 
     parser.add_argument("-e", "--email", default="Your.Name.Here@example.org",
                         help="Your email address (required by NCBI).")
-    parser.add_argument("-a", "--accession", required=True, nargs="+",
+    parser.add_argument("-a", "--accession", nargs="+",
                         help="One or more GenBank accession numbers.")
 
     # Exactly one of these three must be used
@@ -376,6 +566,8 @@ def main():
     parser.add_argument("--acc_region", nargs="*", metavar="NAME:START-END",
                         help="Accession/genomic slices (1-based, inclusive) within each CDS, "
                              "e.g., tcdA:795843-797843.")
+
+    parser.add_argument("--metafile", help="TSV with columns: accession, gene, start, end, organism.")
 
     # outputs
     parser.add_argument("-r", "--records", default="genbank_record.txt",
@@ -399,9 +591,41 @@ def main():
 
     args = parser.parse_args()
 
+    # metafile exclusivity
+    if args.metafile:
+        if args.accession or args.locus or args.cds_region or args.acc_region:
+            parser.error("--metafile cannot be combined with --accession/--locus/--cds_region/--acc_region.")
+
+        # default behavior = strand correction ON
+        strand_correct = not args.no_strand_correct
+
+        # Run metafile path and exit
+        process_metafile(
+            meta_path=args.metafile,
+            email=args.email,
+            record_file=args.records,
+            bed_file=args.bed,
+            fasta_file=args.fasta,
+            merge_distance=args.merge,
+            append=args.append,
+            strand_correct=strand_correct,
+        )
+        return
+
+    # -------- normal (non-metafile) path below ----------
+
+    # Validate required inputs for the 3 classic modes
+    if not args.accession:
+        parser.error("--accession is required unless you use --metafile.")
+
+    # Warn if multiple accessions without append
+    if args.accession and len(args.accession) > 1 and not args.append:
+        print("Warning: multiple accessions provided without --append; outputs will be overwritten for each accession.", file=sys.stderr)
+
+    # Exactly one of the three modes must be selected
     chosen = sum([bool(args.locus), bool(args.cds_region), bool(args.acc_region)])
     if chosen != 1:
-        parser.error("You must specify exactly ONE of: --locus, --cds_region, or --acc_region.")
+        parser.error("You must specify exactly ONE of: --locus, --cds_region, or --acc_region (unless using --metafile).")
 
     if args.locus:
         mode = "locus"
@@ -438,6 +662,14 @@ def main():
             strand_correct=strand_correct
         )
 
-
 if __name__ == "__main__":
     main()
+
+#python scripts/genbank_fetcher.py --accession AM180355.1 --cds_region tcdA:100-200 tcdB:300-400 tcdC:20-175 --bed genbank_coord_cds.bed6 --records genbank_records_cds.txt --fasta genbank_seq_cds.fasta --merge 200
+#python scripts/genbank_fetcher.py --meta meta_cds.tsv --bed genbank_coord_cds_meta.bed6 --records genbank_records_cds_meta.txt --fasta genbank_seq_cds_meta.fasta --merge 200
+
+#python scripts/genbank_fetcher.py --accession AM180355.1 --acc_region tcdA:795942-803175 tcdB:787492-794393 tcdC:804409-804908 --bed genbank_coord_acc.bed6 --records genbank_records_acc.txt --fasta genbank_seq_acc.fasta --merge 200
+#python scripts/genbank_fetcher.py --meta meta_acc.tsv --bed genbank_coord_acc_meta.bed6 --records genbank_records_acc_meta.txt --fasta genbank_seq_acc_meta.fasta --merge 200
+
+#python scripts/genbank_fetcher.py --accession AM180355.1 --locus tcdA tcdB tcdC --bed genbank_coord_locus.bed6 --records genbank_records_locus.txt --fasta genbank_seq_locus.fasta --merge 200
+#python scripts/genbank_fetcher.py --meta meta_locus.tsv --bed genbank_coord_locus_meta.bed6 --records genbank_records_locus_meta.txt --fasta genbank_seq_locus_meta.fasta --merge 200
