@@ -4,9 +4,11 @@ from typing import List, Tuple, Dict, Optional
 from Bio import Entrez, SeqIO
 from datetime import datetime
 import os
+from Bio.SeqRecord import SeqRecord
+from Bio.SeqFeature import SeqFeature
 
-
-# ---------- FINALIZERS ----------
+# ---------- OUTPUT FILES ----------
+# note these files are not necessary as output - as such no raise error ro similar is needed if the paths are None
 
 def genbank_records_report(path: Optional[str], info_lines: List[str], append: bool) -> None:
     """Write the genbank information report."""
@@ -26,121 +28,167 @@ def create_locus_bed(path: Optional[str], chrom: str,
     if not path or not regions:
         return
 
-    bed_lines = [f"{chrom}\t{s}\t{e}\t{name}\t0\t{strand}"
-                 for (s, e, strand, name) in regions]
-
+    # create bed header
     header = "# chrom\tchromStart\tchromEnd\tname\tscore\tstrand\n"
     mode = 'a' if append else 'w'
-    need_header = True
+    need_header = True # i need a boolean value here - for appended regions each region will have their own header so only write it first time
     if append and os.path.exists(path) and os.path.getsize(path) > 0:
         need_header = False
+    
+    # extract inferred bed file information and store values
+    bed_lines = [f"{chrom}\t{chromStart}\t{chromEnd}\t{name}\t0\t{strand}"
+                 for (chromStart, chromEnd, strand, name) in regions]
 
-    with open(path, mode) as bedf:
+    with open(path, mode) as bed6file:
         if need_header:
-            bedf.write(header)
-        bedf.write("\n".join(bed_lines) + "\n")
-
+            bed6file.write(header)
+        bed6file.write("\n".join(bed_lines) + "\n")
 
 def create_locus_fasta(path: Optional[str], record,  # Biopython SeqRecord
                    regions: List[Tuple[int, int, str, str]],
                    merge_distance: Optional[int],
                    append: bool) -> None:
     """
-    Extract the DNA sequence for the desired locus based on the identified regions, and merges adjacent regions belonging to same CDS and strand within a merge_distance.
-    The DNA sequence within the .fasta file is within the strand orientation, such that sequences originating from the negative strand is not reverse-complemented.
+    Build and write FASTA entries for one GenBank record from a list of genomic regions.
+
+    path : str | None
+        Output FASTA filepath. If None or empty, this function returns immediately.
+    record : Bio.SeqRecord.SeqRecord
+        Biopython SeqRecord parsed from GenBank (contains .id and .seq).
+    regions : list[tuple[int, int, str, str]]
+        A list of regions to export. Each item is:
+            (start, end, strand, name)
+        where:
+            - start, end are genomic, 0-based, half-open coordinates [start, end).
+            - strand is '+', '-' or '.' (unknown).
+            - name is the gene name for the corresponding region (e.g. gene name).
+    merge_distance : int | None
+        If set, adjacent regions on the SAME strand are merged when the gap between
+        them is <= merge_distance. If None/0, only directly touching regions merge.
+    append : bool
+        If True, append to the FASTA file; otherwise overwrite.
     """
+    # do nothing for no paths or regions
     if not path or not regions:
         return
 
-    regs = sorted(regions, key=lambda x: (x[2], x[0]))  # (strand, start)
+    # Sort by regions by strand, start
+    locus_regions = sorted(regions, key=lambda x: (x[2], x[0]))
+    print(f"locus_regions : {locus_regions}")
 
-    merged_groups: List[List[Tuple[int, int, str, str]]] = []
-    current = [regs[0]]
-    for r in regs[1:]:
+    # Merge adjacent regions per strand when gap <= merge_distance
+    merged_groups: List[List[Tuple[int, int, str, str]]] = [] # e.g. (795842, 797843, '+', 'tcdA_795843-797843')
+    current = [locus_regions[0]]
+
+    for reg_info in locus_regions[1:]:
+        print(f"reg_info: {reg_info} for current {current} ")
         prev = current[-1]
-        same_strand = (r[2] == prev[2])
-        close_enough = ((r[0] - prev[1]) <= (merge_distance or 0))
-        if same_strand and close_enough:
-            current.append(r)
+        same_strand = (reg_info[2] == prev[2])
+
+        # gap between previous end and current start
+        vicinity = ((reg_info[0] - prev[1]) <= (merge_distance or 0))
+
+        if same_strand and vicinity:
+            current.append(reg_info)
         else:
             merged_groups.append(current)
-            current = [r]
+            current = [reg_info]
+
     merged_groups.append(current)
+    print(f"merged_groups: {merged_groups}")
 
-    entries = []
+    # Build FASTA entries (genomic orientation; NOT strand-corrected)
+    fasta_entries = []
     for group in merged_groups:
-        gs = group[0][0]
-        ge = group[-1][1]
-        gname = "+".join(g[3] for g in group)
-        seq = record.seq[gs:ge]
-        entries.append(f">{record.id}_{gname}_{gs}_{ge}\n{str(seq)}")
+        group_start = group[0][0]
+        group_end = group[-1][1]
+        group_name = "+".join(g[3] for g in group)
+        print(f"name: {group_name} \t start {group_start} \t end {group_end}")
+        seq = record.seq[group_start:group_end]
+        fasta_entries.append(f">{record.id}_{group_name}_{group_start}_{group_end}\n{str(seq)}")
 
+    # write fasta file either as append or overwrite
     mode = 'a' if append else 'w'
     with open(path, mode) as fasta_out:
-        fasta_out.write("\n".join(entries) + "\n")
-
+        fasta_out.write("\n".join(fasta_entries) + "\n")
 
 # ---------- HELPERS ----------
 
 def parse_range(text: str) -> Tuple[int, int]:
-    """Parse 'START-END' (1-based inclusive) into (start, end)."""
+    """
+    Parse a 1-based inclusive range 'START-END' into a (start, end) tuple of ints.
+    
+    return (start, end) : tuple[int, int]
+    """
     try:
-        s, e = text.replace(',', '').split('-')
-        s, e = int(s), int(e)
-        if s <= 0 or e <= 0 or e < s:
+        start, end = text.replace(',', '').split('-')
+        start, end = int(start), int(end)
+        if start <= 0 or end <= 0 or end < start:
             raise ValueError
-        return s, e
+        return start, end
     except Exception:
+        # ensure the argument input is an valid range 
         raise argparse.ArgumentTypeError(f"Invalid range '{text}'. Use START-END with positive integers.")
 
-
-def parse_name_ranges(items: Optional[List[str]]) -> Dict[str, Tuple[int, int]]:
+def parse_name_ranges_list(items: Optional[List[str]]) -> List[Tuple[str, Tuple[int, int]]]:
     """
-    Parse ['name:1-200', 'other:300-400'] -> {'name': (1,200), 'other': (300,400)} (lowercased keys).
+    parse a list of strings (chrom:start-end) to accomodate multiple regions specificed in the arguments 
+    ['tcdA:1-200', 'tcdA:400-600', 'tcdB:10-50'] converted to [('tcda', (1,200)), ('tcda', (400,600)), ('tcdb', (10,50))]
     """
-    out: Dict[str, Tuple[int, int]] = {}
+    converted_coord: List[Tuple[str, Tuple[int, int]]] = []
     for item in items or []:
         try:
-            name, r = item.split(':', 1)
-            out[name.strip().lower()] = parse_range(r)
+            name, region = item.split(':', 1)
+            converted_coord.append((name.strip().lower(), parse_range(region)))
         except Exception:
             raise argparse.ArgumentTypeError(f"Invalid item '{item}'. Use NAME:START-END")
-    return out
+    return converted_coord
 
+def collect_cds_index(record: SeqRecord) -> Tuple[List[SeqFeature], Dict[str, SeqFeature]]:
+    """
+    Build an index of CDS features for a GenBank record 
+    """
+    identifier_to_feature: Dict[str, SeqFeature] = {}
+    cds_features: List[SeqFeature] = []
 
-def collect_cds_index(record) -> Tuple[List[object], Dict[str, object]]:
-    """
-    Build an index of CDS features keyed by lowercased gene/locus identifiers.
-    Returns: (cds_list, key_map)
-      key_map: dict key -> feature (gene, locus_tag, old_locus_tag)
-    """
-    key_map: Dict[str, object] = {}
-    cds_list: List[object] = []
-    for f in record.features:
-        if f.type != "CDS":
+    for feature in record.features:
+        if feature.type != "CDS":
             continue
-        cds_list.append(f)
-        for qname in ("gene", "locus_tag", "old_locus_tag"):
-            for k in f.qualifiers.get(qname, []):
-                k = k.strip().lower()
-                if k and k not in key_map:
-                    key_map[k] = f
-    return cds_list, key_map
 
+        cds_features.append(feature)
 
-def match_feature_by_name(name: str, key_map: Dict[str, object], cds_list: List[object]) -> Optional[object]:
+        # The feature identifiers for genes to search for.
+        for qualifier_name in ("gene", "locus_tag", "old_locus_tag"):
+            for identifier in feature.qualifiers.get(qualifier_name, []):
+                key = identifier.strip().lower()
+                if key and key not in identifier_to_feature:
+                    identifier_to_feature[key] = feature
+
+    return cds_features, identifier_to_feature
+
+def match_feature_by_name(
+    query_name: str,
+    identifier_to_feature: Dict[str, SeqFeature],
+    cds_features: List[SeqFeature],
+) -> Optional[SeqFeature]:
     """
-    Try exact match on gene/locus/old_locus tag; else fallback to product substring match.
+    Match gene/locus/old_locus label to CDS features
     """
-    nm = name.lower()
-    if nm in key_map:
-        return key_map[nm]
-    for f in cds_list:
-        product = " ".join(f.qualifiers.get("product", []))
-        if product and nm in product.lower():
-            return f
+    
+    # query name (e.g., "tcdA", "CD0660")
+    key = query_name.lower()
+
+    # identify match by gene / locus_tag / old_locus_tag
+    if key in identifier_to_feature:
+        return identifier_to_feature[key]
+
+    # Fallback: product substring match (convenience; may be ambiguous)
+    for feature in cds_features:
+        product_text = " ".join(feature.qualifiers.get("product", []))
+        if product_text and key in product_text.lower():
+            return feature
+
     return None
-
 
 def strand_char(feature) -> str:
     if feature.location.strand == 1:
@@ -149,15 +197,16 @@ def strand_char(feature) -> str:
         return "-"
     return "."
 
+def CDS_labels(feature) -> str:
+    """ extract the different GenBank record labels for the CDS """
 
-def safe_label(feature) -> str:
     gene = feature.qualifiers.get("gene", [""])[0].strip()
     old_tag = feature.qualifiers.get("old_locus_tag", [""])[0]
     locus_tag = feature.qualifiers.get("locus_tag", [""])[0]
+
     return gene or old_tag or locus_tag or "unknown"
 
-
-# ---------- CORE ----------
+# ---------- Core fetch genbank features ----------
 
 def fetch_and_store_genbank_features(
     email: str,
@@ -192,7 +241,7 @@ def fetch_and_store_genbank_features(
     record_info.append(f"Sequence Length: {len(record.seq)} bp")
     record_info.append("")
 
-    # 2) regions for BED/FASTA (0-based half-open)
+    # 2) regions for BED/FASTA (0-based)
     regions: List[Tuple[int, int, str, str]] = []
 
     # Build CDS index
@@ -202,56 +251,54 @@ def fetch_and_store_genbank_features(
         record_info.append("Mode: --locus (full CDS per locus)")
         requested = [x.strip() for x in (locus_list or [])]
         for req in requested:
-            f = match_feature_by_name(req, key_map, cds_list)
-            if not f:
+            feature = match_feature_by_name(req, key_map, cds_list)
+            if not feature:
                 record_info.append(f" - '{req}' not matched to any CDS.")
                 continue
-            start = int(f.location.start)
-            end = int(f.location.end)
-            label = safe_label(f)
-            strand = strand_char(f)
+            start = int(feature.location.start)
+            end = int(feature.location.end)
+            label = CDS_labels(feature)
+            strand = strand_char(feature)
             record_info.append(f" - {label} (matched '{req}'): {start+1}..{end} ({strand}) length={end-start}")
             regions.append((start, end, strand, label))
 
     elif mode == "cds_region":
         record_info.append("Mode: --cds_region (CDS-relative sub-slices)")
-        for req_name, (sub_s, sub_e) in (cds_regions or {}).items():
-            f = match_feature_by_name(req_name, key_map, cds_list)
-            if not f:
+        for req_name, (sub_start, sub_end) in (cds_regions or []):
+            feature = match_feature_by_name(req_name, key_map, cds_list)
+            if not feature:
                 record_info.append(f" - '{req_name}' not matched to any CDS.")
                 continue
-            start = int(f.location.start)
-            end = int(f.location.end)
-            strand = strand_char(f)
+            start = int(feature.location.start)
+            end = int(feature.location.end)
+            strand = strand_char(feature)
             cds_len = end - start
 
-            # Clamp CDS-relative 1-based range to CDS length
-            cs = max(1, min(sub_s, cds_len))
-            ce = max(1, min(sub_e, cds_len))
-            if (cs, ce) != (sub_s, sub_e):
-                record_info.append(
-                    f"   Warning: {req_name} CDS subrange {sub_s}-{sub_e} clamped to {cs}-{ce} (CDS length {cds_len})."
-                )
+            # CDS-relative 1-based range to CDS length
+            cds_start = max(1, min(int(sub_start), int(cds_len)))
+            cds_end = max(1, min(int(sub_end), int(cds_len)))
+            if (cds_start, cds_end) != (sub_start, sub_end):
+                record_info.append(f"\tWarning: {req_name} CDS subrange {sub_start}-{sub_end} clamped to {cds_start}-{cds_end} (CDS length {cds_len}).")
 
             # Map CDS 1-based inclusive -> genomic 0-based half-open
             if strand == "+":
-                g_start = start + (cs - 1)
-                g_end   = start + ce
+                genomic_start = start + (cds_start - 1)
+                g_end = start + cds_end
             elif strand == "-":
-                g_start = end - ce
-                g_end   = end - (cs - 1)
+                genomic_start = end - cds_end
+                g_end   = end - (cds_start - 1)
             else:
-                g_start = start + (cs - 1)
-                g_end   = start + ce
+                genomic_start = start + (cds_start - 1)
+                g_end   = start + cds_end
 
-            base = safe_label(f)
-            label = f"{base}_{cs}-{ce}"
-            record_info.append(f" - {base} (matched '{req_name}'): CDS {cs}-{ce} -> genomic {g_start+1}..{g_end} ({strand})")
-            regions.append((g_start, g_end, strand, label))
+            base = CDS_labels(feature)
+            label = f"{base}_{cds_start}-{cds_end}"
+            record_info.append(f" - {base} (matched '{req_name}'): CDS {cds_start}-{cds_end} -> genomic {genomic_start+1}..{g_end} ({strand})")
+            regions.append((genomic_start, g_end, strand, label))
 
     elif mode == "acc_region":
         record_info.append("Mode: --acc_region (genomic/Accession sub-slices within CDS)")
-        for req_name, (abs_s, abs_e) in (acc_regions or {}).items():
+        for req_name, (acc_start, acc_end) in (acc_regions or []):
             f = match_feature_by_name(req_name, key_map, cds_list)
             if not f:
                 record_info.append(f" - '{req_name}' not matched to any CDS.")
@@ -260,36 +307,36 @@ def fetch_and_store_genbank_features(
             end = int(f.location.end)
 
             # Convert provided 1-based inclusive -> 0-based half-open
-            g_start_wish = abs_s - 1
-            g_end_wish   = abs_e
+            acc_start_sub = int(acc_start) - 1
+            acc_end_sub   = int(acc_end)
 
             # Clamp to CDS bounds
-            g_start = max(start, min(g_start_wish, end))
-            g_end   = max(start, min(g_end_wish,   end))
-            if (g_start, g_end) != (g_start_wish, g_end_wish):
+            genomic_start = max(start, min(acc_start_sub, end))
+            g_end   = max(start, min(acc_end_sub,end))
+            if (genomic_start, g_end) != (acc_start_sub, acc_end_sub):
                 record_info.append(
-                    f"   Warning: {req_name} accession range {abs_s}-{abs_e} clamped to {g_start+1}-{g_end} "
+                    f"   Warning: {req_name} accession range {acc_start}-{acc_end} clamped to {genomic_start+1}-{g_end} "
                     f"within CDS {start+1}-{end}."
                 )
-            if g_end <= g_start:
+            if g_end <= genomic_start:
                 record_info.append(f"   Warning: empty slice for {req_name} after clamping; skipping.")
                 continue
 
-            base = safe_label(f)
+            base = CDS_labels(f)
             strand = strand_char(f)
-            label = f"{base}_{g_start+1}-{g_end}"
-            record_info.append(f" - {base} (matched '{req_name}'): genomic {g_start+1}..{g_end} ({strand})")
-            regions.append((g_start, g_end, strand, label))
+            label = f"{base}_{genomic_start+1}-{g_end}"
+            record_info.append(f" - {base} (matched '{req_name}'): genomic {genomic_start+1}..{g_end} ({strand})")
+            regions.append((genomic_start, g_end, strand, label))
 
     else:
         record_info.append("Error: no valid mode selected.")
-        finalize_record_info(record_file, record_info, append)
+        genbank_records_report(record_file, record_info, append)
         return
 
     # 3) finalize outputs
-    finalize_record_info(record_file, record_info, append)
-    finalize_bed(bed_file, record.id, regions, append)
-    finalize_fasta(fasta_file, record, regions, merge_distance, append)
+    genbank_records_report(record_file, record_info, append)
+    create_locus_bed(bed_file, record.id, regions, append)
+    create_locus_fasta(fasta_file, record, regions, merge_distance, append)
 
 
 # ---------- CLI ----------
@@ -338,13 +385,13 @@ def main():
     elif args.cds_region:
         mode = "cds_region"
         locus_list = None
-        cds_regions = parse_name_ranges(args.cds_region)
+        cds_regions = parse_name_ranges_list(args.cds_region)
         acc_regions = None
     else:
         mode = "acc_region"
         locus_list = None
         cds_regions = None
-        acc_regions = parse_name_ranges(args.acc_region)
+        acc_regions = parse_name_ranges_list(args.acc_region)
 
     for acc in args.accession:
         fetch_and_store_genbank_features(
