@@ -132,7 +132,7 @@ rule variant_identifier:
     indels_index = "%s/{sample}/bcftools/{database}_indels.bcf.csi" %OUT_FOLDER,
     variants = rules.bcftools_variant_call.output.variants,
     variants_index = "%s/{sample}/bcftools/{database}_variants.bcf.csi" %OUT_FOLDER,
-    ref_bed = "%s/custom/{database}.bed6" %database_path
+    ref_bed = rules.fetch_genbank.output.bed
   params:
     options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Variant_identifier"]["options"]
   output:
