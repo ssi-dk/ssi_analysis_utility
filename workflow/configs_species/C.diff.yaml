@@ -2,6 +2,10 @@
 # This config defines analyses for the specified bacterial species e.g E.Coli  
 # and associated parameters.
 
+database:
+    genbank:
+        meta: examples/Metadata/genbank_fetcher_metafile.tsv
+
 analyses_to_run: 
 
     bowtie2:

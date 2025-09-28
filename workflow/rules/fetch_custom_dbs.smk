@@ -1,6 +1,6 @@
 rule fetch_genbank:
   input:
-    meta_file = "%s/metafiles/{database}_genbank_metafile.tsv" %database_path
+    meta_file = "%s/../examples/Metadata/{database}_genbank_metafile.tsv" %database_path
   output:
     fasta = "%s/custom/{database}.fasta" % database_path,
     bed = "%s/custom/{database}.bed6" % database_path,
