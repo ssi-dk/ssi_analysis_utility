@@ -81,7 +81,7 @@ analyses_to_run:
     
     amrfinder:
         Title : NCBI resistance gene finder
-        organism: --organism Escherichia # Leave blank or insert --organism alongside one of the supported organisms, listed here: https://github.com/evolarjun/amr/wiki/Curated-organisms
+        options: --organism "Klebsiella_pneumoniae" # Leave blank or insert --organism alongside one of the supported organisms, listed here: https://github.com/evolarjun/amr/wiki/Curated-organisms
         wrangler: workflow/scripts/AMR_wrangler.py
 
     kleborate:

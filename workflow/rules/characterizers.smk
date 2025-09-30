@@ -33,7 +33,7 @@ rule kleborate:
     params:
         options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["kleborate"]["options"]
     conda:
-        config["analysis_settings"]["kleborate"]["yaml"]
+        "../envs/kleborate.yaml"
     log:
     	stdout = "Logs/{sample}/Kleborate_{assembler}.log"
     message:
