@@ -127,7 +127,7 @@ rule AMRFinder:
 rule variant_identifier:
   input:
     kma_results = rules.custom_kmeralignment.output.results,
-    kma_seq = rules.custom_kmeralignment.output.seq,
+    kma_seq = rules.custom_kmerconsensus.output.seq,
     indels = rules.bcftools_filter_indels.output.indels,
     indels_index = "%s/{sample}/bcftools/{database}_indels.bcf.csi" %OUT_FOLDER,
     variants = rules.bcftools_variant_call.output.variants,
@@ -145,7 +145,7 @@ rule variant_identifier:
     "[Variant Identifier]: Identifying variants of {wildcards.database} on {wildcards.sample}"
   shell:
     """
-    cmd="python workflow/scripts/Variant_Identifier.py --sample_id {wildcards.sample}  --res {input.kma_results} --fsa {input.kma_seq} --call {input.variants} --indels {input.indels} --bed {input.ref_bed} -o {output.indentifyed_variants} {params.options}"
+    cmd="python workflow/scripts/Variant_Identifier.py --sample_id {wildcards.sample}  --res {input.kma_results} --fsa {input.kma_seq} --call {input.variants} --indels {input.indels} --bed {input.ref_bed} -o {output.indentifyed_variants} {params.options}  --log_file {log.stdout} > {log.stdout} 2>&1"
 
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
@@ -174,7 +174,7 @@ rule CDiff_Repeat_identifier:
 
     db_dir=$(dirname {input.seqs} | uniq)
 
-    cmd="python workflow/scripts/Repeat_Identifier.py --fasta {input.assembly} --ref_seq {input.seqs} --ref_meta {input.metas} --output {output.repeat_types} --sample_id {wildcards.sample} --repeats {params.repeats} --combos {params.combos} --suffix tsv --log_dir $(dirname {log.stdout})"
+    cmd="python workflow/scripts/Repeat_Identifier.py --fasta {input.assembly} --ref_seq {input.seqs} --ref_meta {input.metas} --output {output.repeat_types} --sample_id {wildcards.sample} --repeats {params.repeats} --combos {params.combos} --suffix tsv --log_file {log.stdout} > {log.stdout} 2>&1"
 
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1 
