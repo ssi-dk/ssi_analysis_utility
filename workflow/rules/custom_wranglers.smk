@@ -2,10 +2,10 @@ rule kma_filter:
     input:
         results = rules.custom_kmeralignment.output.results
     output:
-        filtered_tsv = "%s/{sample}/KMA_Filter/KMA_results.tsv" % OUT_FOLDER,
+        filtered_tsv = "%s/{sample}/KMA_Filter/KMA_results.tsv" % output_folder,
     params:
         options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["KMA_filter"]["options"],
-        log_dir = "%s/{sample}/KMA_results/" %OUT_FOLDER,
+        log_dir = "%s/{sample}/KMA_results/" %output_folder,
         sample = "{sample}"
     conda:
         "../envs/python_functions.yaml"

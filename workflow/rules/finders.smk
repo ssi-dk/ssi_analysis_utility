@@ -6,7 +6,7 @@ rule PlasmidFinder:
         database = rules.setup_PlasmidFinder.output.database
     output:
         # Output directory for plasmidfinder results.
-        out_dir = directory("%s/{sample}/PlasmidFinder" %OUT_FOLDER)
+        out_dir = directory("%s/{sample}/PlasmidFinder" %output_folder)
     conda:
         "../envs/plasmidfinder.yaml"
     log:
@@ -32,7 +32,7 @@ rule ResFinder:
         #point_database = rules.setup_PointFinder.output.database, #Pointfinder requires `species` definition
         disin_database = rules.setup_DisinFinder.output.database
     output:
-        out_dir = directory("%s/{sample}/ResFinder" %OUT_FOLDER)
+        out_dir = directory("%s/{sample}/ResFinder" %output_folder)
     conda:
         "../envs/resfinder.yaml"
     log:
@@ -56,7 +56,7 @@ rule VirulenceFinder:
         R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
         database = rules.setup_VirulenceFinder.output.database
     output:
-        out_dir = directory("%s/{sample}/VirulenceFinder" %OUT_FOLDER)
+        out_dir = directory("%s/{sample}/VirulenceFinder" %output_folder)
     conda:
         "../envs/virulencefinder.yaml"
     log:
@@ -80,7 +80,7 @@ rule serotypefinder:
         R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
         database = rules.setup_SerotypeFinder.output.database
     output:
-        out_dir = directory("%s/{sample}/SerotypeFinder" %OUT_FOLDER)
+        out_dir = directory("%s/{sample}/SerotypeFinder" %output_folder)
     conda:
         "../envs/serotypefinder.yaml"
     log:
@@ -106,7 +106,7 @@ rule AMRFinder:
         # Point mutation
         options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["amrfinder"]["options"]
     output:
-        result = "%s/{sample}/AMRFinder/{assembler}.tsv" %OUT_FOLDER
+        result = "%s/{sample}/AMRFinder/{assembler}.tsv" %output_folder
     conda:
         "../envs/amrfinder.yaml"
     log:
@@ -129,14 +129,14 @@ rule variant_identifier:
     kma_results = rules.custom_kmeralignment.output.results,
     kma_seq = rules.custom_kmeralignment.output.seq,
     indels = rules.bcftools_filter_indels.output.indels,
-    indels_index = "%s/{sample}/bcftools/{database}_indels.bcf.csi" %OUT_FOLDER,
+    indels_index = "%s/{sample}/bcftools/{database}_indels.bcf.csi" %output_folder,
     variants = rules.bcftools_variant_call.output.variants,
-    variants_index = "%s/{sample}/bcftools/{database}_variants.bcf.csi" %OUT_FOLDER,
+    variants_index = "%s/{sample}/bcftools/{database}_variants.bcf.csi" %output_folder,
     ref_bed = "%s/custom/{database}.bed6" %database_path
   params:
     options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Variant_identifier"]["options"]
   output:
-    indentifyed_variants = "%s/{sample}/Variant_identifier/variants_{database}.tsv" %OUT_FOLDER
+    indentifyed_variants = "%s/{sample}/Variant_identifier/variants_{database}.tsv" %output_folder
   conda:
     "../envs/python_functions.yaml"
   log:
@@ -158,7 +158,7 @@ rule CDiff_Repeat_identifier:
     metas = expand(rules.fetch_type_repeat_metadata.output.meta, TR = ["TR6", "TR10", "TRST"]),
     assembly = rules.shovill.output.assembly
   output:
-    repeat_types = "%s/{sample}/CDiff_Repeat_identifier/{assembler}_repeat_types.tsv" %OUT_FOLDER
+    repeat_types = "%s/{sample}/CDiff_Repeat_identifier/{assembler}_repeat_types.tsv" %output_folder
   params:
     repeats = ["TR6", "TR10"],
     combos = ["TRST"]

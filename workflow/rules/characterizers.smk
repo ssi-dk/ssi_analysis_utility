@@ -5,8 +5,8 @@ rule MLST:
         assembly = rules.shovill.output.assembly,
         datefile = rules.update_MLST.output.datefile
     output:
-        # "%s/{sample}/MLST/{sample}.tsv" %OUT_FOLDER
-        mlst_file = "%s/{sample}/MLST/{assembler}_mlst.tsv" %OUT_FOLDER
+        # "%s/{sample}/MLST/{sample}.tsv" %output_folder
+        mlst_file = "%s/{sample}/MLST/{assembler}_mlst.tsv" %output_folder
     conda:
         "../envs/mlst.yaml"
     log:
@@ -29,7 +29,7 @@ rule meningotype:
     input:
         assembly = rules.shovill.output.assembly
     output:
-        meningotype = "%s/{sample}/meningotype/{assembler}_meningotype.tsv" %OUT_FOLDER
+        meningotype = "%s/{sample}/meningotype/{assembler}_meningotype.tsv" %output_folder
     conda:
         "../envs/meningotype.yaml"
     log:

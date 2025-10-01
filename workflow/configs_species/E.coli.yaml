@@ -17,15 +17,19 @@ analyses_to_run:
             other: [98, 98, 10]
 
     plasmidfinder: 
+        options:
 
     resfinder: 
+        options:
 
     virulencefinder : 
+        options:
 
     serotypefinder :
-    
+        options:
+
     amrfinder:
         options: --organism 'Escherichia'
-        wrangler: workflow/scripts/AMR_wrangler.py
 
     mlst:
+    options:

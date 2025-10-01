@@ -3,7 +3,7 @@ rule shovill:
     R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
     R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1]
   output:
-    assembly = "%s/Assemblies/{sample}/{assembler}.fasta" %OUT_FOLDER
+    assembly = "%s/Assemblies/{sample}/{assembler}.fasta" %output_folder
   conda:
     "../envs/shovill.yaml"
   log:
