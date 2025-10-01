@@ -791,7 +791,7 @@ def extract_most_ambiguous_consensus(
 
 #################### MAIN #######################
 def main(args: argparse.Namespace) -> None:
-    setup_logging(args.log_dir, args.sample_id, "variant_handling")
+    setup_logging(log_file = args.log_file)
 
     sample = args.sample_id
     organism = args.organism
@@ -1001,11 +1001,11 @@ if __name__ == "__main__":
     parser.add_argument("--organism", required=True, help="Organism name (used to load species-specific resources)")
     parser.add_argument("-o", "--outputfile", default=None, help="Output filename. Default: per-sample output only")
     parser.add_argument("--suffix", choices=["tsv", "csv"], default="tsv", help="Output format. Default: tsv")
-    parser.add_argument("--log_dir", default="examples/Log")
     parser.add_argument("--call", required=True, help="Called genotypes")
     parser.add_argument("--indels", required=True, help="Pileup files")
     parser.add_argument("--res", required=True, help="KMA alignment results")
     parser.add_argument("--fsa", required=True, help="Consensus sequence")
+    parser.add_argument("--log_file", required = True, help = "File for logging")
     parser.add_argument("--bed", required=True, help="Bed6 file from the reference sequences (Accessions and Loci)")
     parser.add_argument(
         "--gene_list",

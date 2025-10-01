@@ -64,6 +64,7 @@ database_path = config['input_manager']['database_path']
 ### Define rules where samtools is necessary
 
 
+
 ##############################################################################
 #
 #                              Snakefile 
@@ -74,35 +75,35 @@ database_path = config['input_manager']['database_path']
 rule all:
     input:
         expand(
-            "%s/{sample}/PlasmidFinder/" % output_folder,
+            "%s/{sample}/PlasmidFinder/" %output_folder,
             sample = [
                 s for s in samples
                 if "plasmidfinder" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ]
         ),
         expand(
-            "%s/{sample}/ResFinder/" % output_folder,
+            "%s/{sample}/ResFinder/" %output_folder,
             sample = [
                 s for s in samples
                 if "resfinder" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ]
         ),
         expand(
-            "%s/{sample}/VirulenceFinder/" % output_folder,
+            "%s/{sample}/VirulenceFinder/" %output_folder,
             sample = [
                 s for s in samples
                 if "virulencefinder" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ]
         ),
         expand(
-            "%s/{sample}/SerotypeFinder/" % output_folder,
+            "%s/{sample}/SerotypeFinder/" %output_folder,
             sample = [
                 s for s in samples
                 if "serotypefinder" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ]
         ),
         expand(
-            "%s/{sample}/AMRFinder/{assembly}.tsv" % output_folder,
+            "%s/{sample}/AMRFinder/{assembly}.tsv" %output_folder,
             sample = [
                 s for s in samples
                 if "amrfinder" in species_configs[sample_to_organism[s]]["analyses_to_run"]
@@ -110,7 +111,7 @@ rule all:
             assembly = ["spades", "skesa"]
         ),
         expand(
-           "%s/{sample}/MLST/{assembler}_mlst.tsv" % output_folder,
+           "%s/{sample}/MLST/{assembler}_mlst.tsv" %output_folder,
            sample = [
                 s for s in samples 
                 if "mlst" in species_configs[sample_to_organism[s]]["analyses_to_run"]
@@ -134,12 +135,28 @@ rule all:
             assembler = ["spades", "skesa"]
         ),
         expand(
-            "%s/{sample}/kmeraligner/{database}.res" % output_folder,
+            "%s/{sample}/kmeraligner/{database}.res" %output_folder,
             sample = [
                 s for s in samples
                 if "kmeraligner" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ],
             database = "ecoligenes"
+        ),
+        expand(
+            "%s/{sample}/KMA_Filter/{database}.tsv" %output_folder,
+            sample = [
+                s for s in SAMPLES
+                if "KMA_filter" in species_configs[sample_to_organism[s]]["analyses_to_run"]
+            ],
+            database = "ecoligenes"
+        ),
+        expand(
+            "%s/{sample}/Kleborate/{assembler}" %output_folder,
+            sample=[
+                s for s in SAMPLES
+                if "kleborate" in species_configs[sample_to_organism[s]]["analyses_to_run"]
+            ],
+            assembler = ["spades", "skesa"]
         ),
         expand(
             "%s/{sample}/meningotype/{assembler}_meningotype.tsv" %output_folder, 
@@ -155,6 +172,7 @@ include : "rules/assemblers.smk"
 include : "rules/fetch_custom_dbs.smk"
 include : "rules/setup_dbs.smk"
 include : "rules/mappers.smk"
+include : "rules/htslib_utils.smk"
 include : "rules/finders.smk"
 include : "rules/assemblers.smk"
 include : "rules/characterizers.smk"

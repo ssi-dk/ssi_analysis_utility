@@ -13,3 +13,9 @@ species_map:
   Escherichia coli: E.coli
   E coli: E.coli
   E.coli: E.coli
+  K.Pneumoniae: K.pneumoniae
+  K Pneumoniae: K.pneumoniae
+  K. Pneumoniae: K.pneumoniae
+  Klebsiella pneumoniae: K.pneumoniae
+  Klebsiella Pneumoniae: K.pneumoniae 
+  KlebsiellaPneumoniae: K.pneumoniae 

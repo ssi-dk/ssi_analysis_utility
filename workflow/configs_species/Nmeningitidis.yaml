@@ -1,8 +1,3 @@
-###################### BACTERIAL SPECIES ###################################
-# This config defines analyses for the specified bacterial species e.g N. Meningitidis  
-# and associated parameters.
-
-
 analyses_to_run: 
 
     plasmidfinder:

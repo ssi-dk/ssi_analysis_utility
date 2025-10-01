@@ -244,7 +244,7 @@ def run_repeat_typing(fasta_path: str, repeat_names: List[str], combo_names: Lis
 # ---------------------------- Main CLI ---------------------------- #
 
 def main(args):
-    setup_logging(args.log_dir, args.sample_id, "repeat_typing")
+    setup_logging(log_file = args.log_file)
 
     try:
         results = run_repeat_typing(
@@ -276,6 +276,6 @@ if __name__ == "__main__":
     parser.add_argument("--ref_meta", nargs="+", help="Path to TR and TRST metadata files.")
     parser.add_argument("--output", required=True, help="Output file path")
     parser.add_argument("--suffix", choices=["tsv", "csv"], default="tsv", help="Output file format")
-    parser.add_argument("--log_dir", default="examples/Log", help="Logging directory")
+    parser.add_argument("--log_file", required = True, help = "File for logging")
     args = parser.parse_args()
     main(args)
