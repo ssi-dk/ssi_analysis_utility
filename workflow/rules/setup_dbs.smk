@@ -1,8 +1,8 @@
 rule setup_PlasmidFinder:
     conda:
-        config["analysis_settings"]["plasmidfinder"]["yaml"]
+        "../envs/plasmidfinder.yaml"
     output: 
-        database = directory("%s/%s" %(database_path, config["analysis_settings"]["plasmidfinder"]["database"]))
+        database = directory("%s/plasmidfinder_db" %database_path)
     log:
         stdout = 'Logs/Databases/setup_PlasmidFinder.log'
     message:
@@ -29,9 +29,9 @@ rule setup_PlasmidFinder:
 
 rule setup_ResFinder:
     conda:
-        config["analysis_settings"]["resfinder"]["yaml"]
+        "../envs/resfinder.yaml"
     output:
-        database = directory("%s/%s" % (database_path, config["analysis_settings"]["resfinder"]["database"]))
+        database = directory("%s/resfinder_db" %database_path)
     log:
         stdout = 'Logs/Databases/setup_ResFinder.log'
     message:
@@ -58,9 +58,9 @@ rule setup_ResFinder:
 
 rule setup_PointFinder:
     conda:
-        config["analysis_settings"]["resfinder"]["yaml"]
+        "../envs/resfinder.yaml"
     output:
-        database = directory("%s/%s" % (database_path, config["analysis_settings"]["pointfinder"]["database"]))
+        database = directory("%s/pointfinder_db" %database_path)
     log:
         stdout = 'Logs/Databases/setup_PointFinder.log'
     message:
@@ -88,9 +88,9 @@ rule setup_PointFinder:
 
 rule setup_DisinFinder:
     conda:
-        config["analysis_settings"]["resfinder"]["yaml"]
+        "../envs/resfinder.yaml"
     output:
-        database = directory("%s/%s" % (database_path, config["analysis_settings"]["disinfinder"]["database"]))
+        database = directory("%s/disinfinder_db" %database_path)
     log:
         stdout = 'Logs/Databases/setup_DisinFinder.log'
     message:
@@ -117,9 +117,9 @@ rule setup_DisinFinder:
 
 rule setup_VirulenceFinder:
     conda:
-        config["analysis_settings"]["virulencefinder"]["yaml"]
+        "../envs/virulencefinder.yaml"
     output:
-        database = directory("%s/%s" % (database_path, config["analysis_settings"]["virulencefinder"]["database"]))
+        database = directory("%s/virulencefinder_db" %database_path)
     log:
         stdout = 'Logs/Databases/setup_VirulenceFinder.log'
     message:
@@ -146,9 +146,9 @@ rule setup_VirulenceFinder:
 
 rule setup_SerotypeFinder:
     conda:
-        config["analysis_settings"]["serotypefinder"]["yaml"]
+        "../envs/serotypefinder.yaml"
     output:
-        database = directory("%s/%s" % (database_path, config["analysis_settings"]["serotypefinder"]["database"]))
+        database = directory("%s/serotypefinder_db" %database_path)
     log:
         stdout = 'Logs/Databases/setup_SerotypeFinder.log'
     message:
@@ -175,9 +175,9 @@ rule setup_SerotypeFinder:
 
 rule setup_AMRFinder:
     conda:
-        config["analysis_settings"]["amrfinder"]["yaml"]
+        "../envs/amrfinder.yaml"
     output:
-        database = directory("%s/%s" % (database_path, config["analysis_settings"]["amrfinder"]["database"]))
+        database = directory("%s/amrfinderplus/latest" %database_path)
     log:
         stdout = 'Logs/Databases/setup_AMRFinder.log'
     message:
@@ -194,7 +194,7 @@ rule setup_AMRFinder:
 
 rule update_MLST:
     conda:
-        config["analysis_settings"]["mlst"]["yaml"]
+        "../envs/mlst.yaml"
     output:
         datefile = "%s/mlst/creation.date" % database_path
     log:
@@ -205,6 +205,8 @@ rule update_MLST:
         """
         DIR=$(which mlst)
         MLSTDIR="$DIR/../../db/pubmlst"
+
+        mkdir -p $(dirname {output.datefile})
 
         mlst-download_pub_mlst -d $MLSTDIR  > {log.stdout} 2>&1
         mlst-make_blast_db >> {log.stdout} 2>&1 && date -I > {output.datefile}
@@ -222,7 +224,7 @@ rule setup_custom_kmeraligner_index:
     names = "%s/kmeraligner/{database}.name" %database_path,
     seqs = "%s/kmeraligner/{database}.seq.b" %database_path,
   conda:
-    config["analysis_settings"]["KMA"]["yaml"]
+    "../envs/kmeraligner.yaml"
   log:
     stdout = "Logs/Databases/setup_custom_kmeraligner_index_{database}.log"
   message:
@@ -276,7 +278,7 @@ rule setup_custom_samtool_index:
     source = "%s/samtools/{database}.fasta" %database_path, 
     index = "%s/samtools/{database}.fasta.fai" %database_path
   conda:
-    config["analysis_settings"]["htslib"]["yaml"]
+    "../envs/htslib.yaml"
   log:
     stdout = "Logs/Databases/setup_custom_samtool_index_{database}.log"
   message:

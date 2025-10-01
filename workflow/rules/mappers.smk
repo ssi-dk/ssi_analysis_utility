@@ -4,10 +4,10 @@ rule custom_kmeralignment:
     R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
     database = rules.setup_custom_kmeraligner_index.output.names
   params:
-    prefix = "%s/{sample}/kmeraligner/{database}" %OUT_FOLDER
+    prefix = "%s/{sample}/kmeraligner/{database}" %output_folder
   output:
-    results = "%s/{sample}/kmeraligner/{database}.res" %OUT_FOLDER,
-    sam = temp("%s/{sample}/samtools/{database}.sam" %OUT_FOLDER)
+    results = "%s/{sample}/kmeraligner/{database}.res" %output_folder,
+    sam = temp("%s/{sample}/samtools/{database}.sam" %output_folder)
   conda:
     "../envs/kmeraligner.yaml"
   log:
@@ -20,8 +20,8 @@ rule custom_kmeralignment:
     mkdir -p $(dirname {output.sam})
 
     db_path=$(dirname {input.database})/$(basename {input.database} .name)
-
     cmd="kma -ipe {input.R1} {input.R2} -o {params.prefix} -t_db $db_path -na -nc -nf -sam 4 > {output.sam}"
+
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
     """
@@ -32,11 +32,11 @@ rule custom_kmerconsensus:
     R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
     database = rules.setup_custom_kmeraligner_index.output.names
   params:
-    prefix = "%s/{sample}/kmerconsensus/{database}" %OUT_FOLDER
+    prefix = "%s/{sample}/kmerconsensus/{database}" %output_folder
   output:
-    results = temp("%s/{sample}/kmerconsensus/{database}.res" %OUT_FOLDER),
-    seq = temp("%s/{sample}/kmerconsensus/{database}.fsa" %OUT_FOLDER),
-    aln = temp("%s/{sample}/kmerconsensus/{database}.aln" %OUT_FOLDER)
+    results = temp("%s/{sample}/kmerconsensus/{database}.res" %output_folder),
+    seq = temp("%s/{sample}/kmerconsensus/{database}.fsa" %output_folder),
+    aln = temp("%s/{sample}/kmerconsensus/{database}.aln" %output_folder)
   conda:
     "../envs/kmeraligner.yaml"
   log:
@@ -45,9 +45,7 @@ rule custom_kmerconsensus:
     "[kmerconsensus]: Running KMA for {wildcards.database} on {wildcards.sample}"
   shell:
     """
-    mkdir -p $(dirname {output.seq})   
-
-    db_path=$(dirname {input.database})/$(basename {input.database} .name)
+    mkdir -p $(dirname {output.seq})
 
     cmd="kma -ipe {input.R1} {input.R2} -o {params.prefix} -t_db $db_path -nf -ref_fsa"
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
