@@ -1,4 +1,3 @@
-name: AMRFinder
 channels:
   - conda-forge
   - bioconda

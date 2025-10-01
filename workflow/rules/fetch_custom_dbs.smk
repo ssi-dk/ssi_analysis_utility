@@ -4,7 +4,7 @@ rule fetch_genbank:
     bed = temp("%s/GenBank/{accession}-{loci}.bed6" %database_path),
     meta = temp("%s/GenBank/{accession}-{loci}.txt" %database_path)
   conda:
-    "../envs/DatabaseFetch.yaml"
+    "../envs/fetch.yaml"
   log:
     stdout = 'Logs/Databases/fetch_genbank_{accession}-{loci}.log'
   message:

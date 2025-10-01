@@ -1,3 +1,4 @@
+name: Kleborate
 channels:
   - conda-forge
   - bioconda
