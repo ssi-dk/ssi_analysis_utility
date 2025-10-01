@@ -6,9 +6,10 @@ rule kma_filter:
         filtered_tsv = "%s/{sample}/KMA_Filter/{database}.tsv" % OUT_FOLDER,
     params:
         options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["KMA_filter"]["options"],
-        sample = "{sample}"
+        sample = "{sample}",
+        organism = lambda wildcards: sample_to_organism[wildcards.sample],
     conda:
-        config["analysis_settings"]["KMA_filter"]["yaml"]
+        "../envs/python_functions.yaml"
     log:
         stdout = "Logs/{sample}/KMA_results/{sample}_{database}.log"
     message:
@@ -17,5 +18,5 @@ rule kma_filter:
         """
         mkdir -p $(dirname {output.filtered_tsv})
 
-        python workflow/scripts/KMA_Filter.py --KMA_res {input.results} --sample_id {params.sample} --output {output.filtered_tsv} {params.options} --log_file {log.stdout} > {log.stdout} 2>&1
+        python workflow/scripts/KMA_Filter.py --KMA_res {input.results} --metafile examples/Metadata/kma_filter.tsv --sample_id {params.sample} --output {output.filtered_tsv} {params.options} > {log.stdout} 2>&1
         """
