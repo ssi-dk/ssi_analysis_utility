@@ -123,6 +123,30 @@ rule AMRFinder:
         eval $cmd >> {log.stdout} 2>&1
         """
 
+rule custom_snp_identifier:
+  input:
+    kma_results = rules.custom_kmeralignment.output.results,
+    variants = rules.bcftools_variant_call.output.variants,
+    variants_index = "%s/{sample}/bcftools/{database}_variants.bcf.csi" %OUT_FOLDER,
+    ref_bed = "%s/custom/{database}.bed6" %database_path,
+  params:
+    options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["SNP_identifier"]["options"]
+  output:
+    indentified_variants = "%s/{sample}/Variant_identifier/SNP_{database}.tsv" %OUT_FOLDER
+  conda:
+    "../envs/python_functions.yaml"
+  log:
+    stdout = "Logs/{sample}/SNP_identifier_{database}.log"
+  message:
+    "[Variant Identifier]: Identifying SNP of {wildcards.database} on {wildcards.sample}"
+  shell:
+    """
+    cmd="python workflow/scripts/SNP_identifier.py --res {input.kma_results} --call {input.variants} --bed {input.ref_bed} --metafile examples/Metadata/SNP_metafile.tsv -o {output.indentified_variants} {params.options} > {log.stdout} 2>&1"
+   
+    echo "Executing command:\n$cmd\n"
+    echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
+    eval $cmd >> {log.stdout} 2>&1
+    """
 
 rule variant_identifier:
   input:
@@ -145,9 +169,9 @@ rule variant_identifier:
     "[Variant Identifier]: Identifying variants of {wildcards.database} on {wildcards.sample}"
   shell:
     """
-    cmd="python workflow/scripts/Variant_Identifier.py --sample_id {wildcards.sample}  --res {input.kma_results} --fsa {input.kma_seq} --call {input.variants} --indels {input.indels} --bed {input.ref_bed} -o {output.indentifyed_variants} {params.options}  --log_file {log.stdout} > {log.stdout} 2>&1"
-
-    echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+    cmd="python workflow/scripts/Variant_Identifier.py --sample_id {wildcards.sample} --res {input.kma_results} --fsa {input.kma_seq} --call {input.variants} --indels {input.indels} --bed {input.ref_bed} -o {output.indentifyed_variants} {params.options} > {log.stdout} 2>&1"
+    echo "Executing command:\n$cmd\n"
+    echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
     """
 

@@ -4,7 +4,7 @@ rule samtools_sam_filtration:
   params:
     options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["samtools"]["view"]["options"]
   output:
-    bam = temp("%s/{sample}/samtools/{database}_filtered.bam" %OUT_FOLDER)
+    bam = "%s/{sample}/samtools/{database}_filtered.bam" %OUT_FOLDER
   conda:
     config["analysis_settings"]["htslib"]["yaml"]
   log:
@@ -26,7 +26,7 @@ rule samtools_bam_filtration:
   params:
     options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["samtools"]["view"]["options"]
   output:
-    bam = temp("%s/{sample}/samtools/{database}_filtered.bam" %OUT_FOLDER)
+    bam = "%s/{sample}/samtools/{database}_filtered.bam" %OUT_FOLDER
   conda:
     config["analysis_settings"]["htslib"]["yaml"]
   log:
@@ -48,7 +48,7 @@ rule samtools_sort:
   params:
     options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["samtools"]["sort"]["options"]
   output:
-    bam_sort = temp("%s/{sample}/samtools/{database}_sorted.bam" %OUT_FOLDER)
+    bam_sort = "%s/{sample}/samtools/{database}_sorted.bam" %OUT_FOLDER
   conda:
     config["analysis_settings"]["htslib"]["yaml"]
   log:
@@ -68,7 +68,7 @@ rule samtools_index:
   input:
     bam_sort = rules.samtools_sort.output.bam_sort
   output:
-    bam_index = temp("%s/{sample}/samtools/{database}_sorted.bam.bai" %OUT_FOLDER)
+    bam_index = "%s/{sample}/samtools/{database}_sorted.bam.bai" %OUT_FOLDER
   conda:
     config["analysis_settings"]["htslib"]["yaml"]
   log:
@@ -90,7 +90,7 @@ rule bcftools_pileup:
     bam_index = rules.samtools_index.output.bam_index,
     reference = "%s/samtools/{database}.fasta" %database_path
   output:
-    pileup = temp("%s/{sample}/bcftools/{database}.bcf" %OUT_FOLDER)
+    pileup = "%s/{sample}/bcftools/{database}.bcf" %OUT_FOLDER
   conda:
     config["analysis_settings"]["htslib"]["yaml"]
   log:
@@ -109,7 +109,7 @@ rule bcftools_index:
   input:
     pileup = "%s/{sample}/bcftools/{database}.bcf" %OUT_FOLDER
   output:
-    index = temp("%s/{sample}/bcftools/{database}.bcf.csi" %OUT_FOLDER)
+    index = "%s/{sample}/bcftools/{database}.bcf.csi" %OUT_FOLDER
   conda:
     config["analysis_settings"]["htslib"]["yaml"]
   log:
@@ -133,7 +133,7 @@ rule bcftools_filter_indels:
     region = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["bcftools"]["view"]["region"],
     options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["bcftools"]["view"]["options"]
   output:
-    indels = temp("%s/{sample}/bcftools/{database}_indels.bcf" %OUT_FOLDER)
+    indels = "%s/{sample}/bcftools/{database}_indels.bcf" %OUT_FOLDER
   conda:
     config["analysis_settings"]["htslib"]["yaml"]
   log:
@@ -154,7 +154,7 @@ rule bcftools_variant_call:
     pileup = rules.bcftools_pileup.output.pileup,
     index = rules.bcftools_index.output.index
   output: 
-    variants = temp("%s/{sample}/bcftools/{database}_variants.bcf" %OUT_FOLDER)
+    variants = "%s/{sample}/bcftools/{database}_variants.bcf" %OUT_FOLDER
   conda:
     config["analysis_settings"]["htslib"]["yaml"]
   log:

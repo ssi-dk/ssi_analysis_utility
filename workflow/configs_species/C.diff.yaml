@@ -75,7 +75,7 @@ analyses_to_run:
     Variant_identifier:
         Title : Detecting variants for C.diff 
         ID: 93
-        options : --gene_list tcdC  --organism 'Clostridioides difficile' --suffix tsv --deletion_region_buffer 5 --partial_overlap 0.3
+        options : --gene_list tcdC  --organism 'Clostridioides difficile' --deletion_region_buffer 5 --partial_overlap 0.3
         snp_info: #https://pubmed.ncbi.nlm.nih.gov/24374512/
             snp_117: [117,"A","T","tcdC","-"] # [genomic position within the loci, reference, alternative]
             snp_184: [184,"C","T","tcdC","-"]
@@ -94,4 +94,9 @@ analyses_to_run:
             del301_336_36: [0.10,5,10]
             del341_379_39: [0.10,5,10]
             del313_366_54: [0.10,5,10]
+    
+    SNP_identifier:
+        Title : Detecting variants for C.diff 
+        ID: 93
+        options : --organism 'Clostridioides difficile'
 
