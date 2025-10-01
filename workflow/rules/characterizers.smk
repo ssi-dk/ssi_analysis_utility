@@ -29,11 +29,11 @@ rule kleborate:
     input:
         assembly = rules.shovill.output.assembly
     output:
-       kleborate_outdir = directory("%s/{sample}/Kleborate/{assembler}" %OUT_FOLDER)
+       kleborate_outdir = directory("%s/{sample}/Kleborate/{assembler}" %output_folder)
     params:
         options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["kleborate"]["options"]
     conda:
-        config["analysis_settings"]["kleborate"]["yaml"]
+        "../envs/kleborate.yaml"
     log:
     	stdout = "Logs/{sample}/Kleborate_{assembler}.log"
     message:

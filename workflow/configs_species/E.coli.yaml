@@ -31,5 +31,8 @@ analyses_to_run:
     amrfinder:
         options: --organism 'Escherichia'
 
+    kleborate:
+        options: --preset 'escherichia'
+
     mlst:
         options:

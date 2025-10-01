@@ -60,7 +60,7 @@ rule custom_bowtie2alignment:
   params:
     options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["bowtie2"]["options"],
   output:
-    sam = temp("%s/{sample}/bowtie2/{database}.sam" %OUT_FOLDER)
+    sam = temp("%s/{sample}/bowtie2/{database}.sam" %output_folder)
   threads:
     max(1, workflow.cores * 0.3333333)
   conda:

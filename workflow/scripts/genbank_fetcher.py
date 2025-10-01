@@ -174,7 +174,6 @@ def main():
                         help="Merge CDS sequences if they are within this number of nucleotides (FASTA only)")
     parser.add_argument("--append", action="store_true",
                     help="Append to output/bed/fasta files instead of overwriting them.")
-    parser.add_argument("--log_dir", default="Logs/Databases/GenBank_Fetcher.log")
     args = parser.parse_args()
 
     for acc in args.accession:

@@ -145,7 +145,7 @@ rule all:
         expand(
             "%s/{sample}/KMA_Filter/{database}.tsv" %output_folder,
             sample = [
-                s for s in SAMPLES
+                s for s in samples
                 if "KMA_filter" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ],
             database = "ecoligenes"
@@ -153,7 +153,7 @@ rule all:
         expand(
             "%s/{sample}/Kleborate/{assembler}" %output_folder,
             sample=[
-                s for s in SAMPLES
+                s for s in samples
                 if "kleborate" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ],
             assembler = ["spades", "skesa"]
