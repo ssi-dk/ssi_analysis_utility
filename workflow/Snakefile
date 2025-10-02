@@ -18,6 +18,9 @@ SPECIES_PATH = config['input_manager']['config_species']
 # Setup output folder
 OUT_FOLDER = config['input_manager']['out_folder']
 
+# Setup metadata path
+metadata_path = config['input_manager']['metadata_path']
+
 # Use the sample names as wildcards
 SAMPLES = CSV_DATA['sample_name'].tolist()
 

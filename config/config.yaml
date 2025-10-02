@@ -7,6 +7,7 @@ input_manager:
     database_path: resources
     config_species : workflow/configs_species/
     out_folder: examples/Results  # Folder where the analysis results will be saved
+    metadata_path: examples/Metadata
 
 species_map:
   Clostridium difficile: C.diff
