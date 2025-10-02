@@ -5,10 +5,10 @@ rule MLST:
         assembly = rules.assembly.output,
         datefile = rules.update_MLST.output.datefile
     output:
-        # "%s/{sample}/MLST/{sample}.tsv" %OUT_FOLDER
-        mlst_file = "%s/{sample}/MLST/{assembler}_mlst.tsv" %OUT_FOLDER
+        # "%s/{sample}/MLST/{sample}.tsv" %output_folder
+        mlst_file = "%s/{sample}/MLST/{assembler}_mlst.tsv" %output_folder
     conda:
-        config["analysis_settings"]["mlst"]["yaml"]
+        "../envs/mlst.yaml"
     log:
     	stdout = "Logs/{sample}/{assembler}_mlst.log"
     message:
@@ -29,21 +29,20 @@ rule kleborate:
     input:
         assembly = rules.assembly.output
     output:
-       kleborate_outdir = directory("%s/{sample}/Kleborate/{assembler}" %OUT_FOLDER)
+       kleborate_outdir = directory("%s/{sample}/Kleborate/{assembler}" %output_folder)
     params:
         options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["kleborate"]["options"]
     conda:
-        config["analysis_settings"]["kleborate"]["yaml"]
+        "../envs/kleborate.yaml"
     log:
     	stdout = "Logs/{sample}/Kleborate_{assembler}.log"
     message:
     	"Kleborate: Running Kleborate on {wildcards.assembler} assembly from {wildcards.sample}"
     shell:
         """
-        echo {config}
         mkdir -p $(dirname {output.kleborate_outdir})
 
-        cmd="kleborate -a {input.assembly} --outdir {output.kleborate_outdir} {params.options}"
+        cmd="kleborate --assemblies {input.assembly} --outdir {output.kleborate_outdir} {params.options}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
@@ -55,9 +54,9 @@ rule meningotype:
     input:
         assembly = rules.assembly.output
     output:
-        meningotype = "%s/{sample}/meningotype/{assembler}_meningotype.tsv" %OUT_FOLDER
+        meningotype = "%s/{sample}/meningotype/{assembler}_meningotype.tsv" %output_folder
     conda:
-        config["analysis_settings"]["meningotype"]["yaml"]
+        "../envs/meningotype.yaml"
     log:
         stdout = "Logs/{sample}/{assembler}_meningotype.log"
     message:

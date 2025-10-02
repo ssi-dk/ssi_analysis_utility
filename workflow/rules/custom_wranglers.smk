@@ -3,12 +3,11 @@ rule kma_filter:
         results = rules.custom_kmeralignment.output.results,
         database = rules.setup_custom_kmeraligner_index.output.names
     output:
-        filtered_tsv = "%s/{sample}/KMA_Filter/{database}.tsv" % OUT_FOLDER,
+        filtered_tsv = "%s/{sample}/KMA_Filter/{database}.tsv" % output_folder,
     params:
-        options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["KMA_filter"]["options"],
-        sample = "{sample}"
+        options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["KMA_filter"]["options"]
     conda:
-        config["analysis_settings"]["KMA_filter"]["yaml"]
+        "../envs/python_functions.yaml"
     log:
         stdout = "Logs/{sample}/KMA_results/{sample}_{database}.log"
     message:
@@ -17,5 +16,5 @@ rule kma_filter:
         """
         mkdir -p $(dirname {output.filtered_tsv})
 
-        python workflow/scripts/KMA_Filter.py --KMA_res {input.results} --sample_id {params.sample} --output {output.filtered_tsv} {params.options} --log_file {log.stdout} > {log.stdout} 2>&1
+        python workflow/scripts/KMA_Filter.py --KMA_res {input.results} --sample_id {wildcards.sample} --output {output.filtered_tsv} {params.options} --log_file {log.stdout} > {log.stdout} 2>&1
         """

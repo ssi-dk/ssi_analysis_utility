@@ -3,19 +3,16 @@ import sys
 from Bio import Entrez, SeqIO
 from datetime import datetime
 import os
-import logging
-from logging_utils import setup_logging
-
 
 def fetch_and_store_genbank_features(email: str, accession: str, locus_filter=None, output_file=None, bed_file=None, fasta_file=None, merge_distance=None, append=False):
     Entrez.email = email
-    logging.info(f"Fetching GenBank record for {accession} from NCBI...")
+    print(f"Fetching GenBank record for {accession} from NCBI...")
 
     try:
         with Entrez.efetch(db="nucleotide", id=accession, rettype="gb", retmode="text") as handle:
             record = SeqIO.read(handle, "genbank")
     except Exception as e:
-        logging.error(f"Failed to fetch or parse {accession}: {e}")
+        print(f"Failed to fetch or parse {accession}: {e}")
         return
 
     output = []
@@ -33,9 +30,9 @@ def fetch_and_store_genbank_features(email: str, accession: str, locus_filter=No
     output.append("\nCoding sequence (CDS) coordinates:")
     matched_loci = set()
 
-    logging.debug("Handling genbank records.")
+    print("Handling genbank records.")
     if locus_filter:
-        logging.debug(f"Filtering records for: {locus_filter}")
+        print(f"Filtering records for: {locus_filter}")
     for feature in record.features:
         gene_name = feature.qualifiers.get("gene", [""])[0].strip()
         if feature.type == "CDS":            
@@ -76,11 +73,11 @@ def fetch_and_store_genbank_features(email: str, accession: str, locus_filter=No
 
                     if matched_fields:
                         matched = True
-                        logging.debug(f"MATCH: {matched_fields}")
+                        print(f"MATCH: {matched_fields}")
 
                         comments.extend(matched_fields)
                     else:
-                        logging.debug(f"CDS found, but no match!")
+                        print(f"CDS found, but no match!")
 
                 for lucus, fields in match_sources.items():
                     if len(fields) > 1:
@@ -177,10 +174,7 @@ def main():
                         help="Merge CDS sequences if they are within this number of nucleotides (FASTA only)")
     parser.add_argument("--append", action="store_true",
                     help="Append to output/bed/fasta files instead of overwriting them.")
-    parser.add_argument("--log_dir", default="Logs/Databases/GenBank_Fetcher.log")
     args = parser.parse_args()
-
-    setup_logging(args.log_dir, "-".join(args.accession), "genbank_fetcher")
 
     for acc in args.accession:
         fetch_and_store_genbank_features(
