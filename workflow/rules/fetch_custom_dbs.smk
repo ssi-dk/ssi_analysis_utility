@@ -1,22 +1,26 @@
 rule fetch_genbank:
+  params:
+    metafile = "%s/{database}_genbank_metafile.tsv" %metadata_path,
+    merge = 500
   output:
-    fasta = temp("%s/GenBank/{accession}-{loci}.fasta" %database_path),
-    bed = temp("%s/GenBank/{accession}-{loci}.bed6" %database_path),
-    meta = temp("%s/GenBank/{accession}-{loci}.txt" %database_path)
+    fasta = "%s/custom/{database}.fasta" % database_path,
+    bed = "%s/custom/{database}.bed6" % database_path,
+    records = "%s/custom/{database}.txt" % database_path
   conda:
-    config["analysis_settings"]["Clostridioides_difficile_db"]["yaml"]
+    "../envs/fetch.yaml"
   log:
-    stdout = 'Logs/Databases/fetch_genbank_{accession}-{loci}.log'
+    stdout = 'Logs/Databases/fetch_genbank_{database}.log'
   message:
-    "[fetch_genbank]: Fetching {wildcards.accession} from Genbank"
+    "[fetch_genbank]: Fetching {wildcards.database} from Genbank"
   shell:
     """
-    cmd="python workflow/scripts/genbank_fetcher.py -a {wildcards.accession} --locus $(echo {wildcards.loci} | tr _ ' ') -o {output.meta} --bed {output.bed} --fasta {output.fasta} --merge 500 --append"
+    mkdir -p $(dirname {output.fasta})
+
+    cmd="python workflow/scripts/genbank_fetcher.py --metafile {params.metafile} --bed {output.bed} --records {output.records} --fasta {output.fasta} --merge {params.merge} --append"
 
     echo "Executing command:\n$cmd\n" > {log.stdout}
     eval $cmd >> {log.stdout} 2>&1
     """
-
 
 rule fetch_type_repeat_sequence:
   output:
@@ -74,21 +78,4 @@ rule fetch_ecoligenes:
 
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
-    """
-
-
-rule fetch_cdifftoxins:
-  input:
-    fastas = ["%s/GenBank/AM180355.1-tcdA_tcdB_tcdC.fasta" %database_path, "%s/GenBank/AF271719.1-cdtA_cdtB.fasta" %database_path],
-    beds = ["%s/GenBank/AM180355.1-tcdA_tcdB_tcdC.bed6" %database_path, "%s/GenBank/AF271719.1-cdtA_cdtB.bed6" %database_path]
-  output:
-    fasta = "%s/custom/Cdiff_Toxins.fasta" %database_path,
-    bed = "%s/custom/Cdiff_Toxins.bed6" %database_path,
-  shell:
-    """
-    cat {input.fastas} > {output.fasta}
-
-    header=$(grep "#" -h {input.beds} | uniq)
-    genes=$(grep "#" -vh {input.beds} | uniq)
-    echo "$header\n$genes" > {output.bed}
     """

@@ -1,12 +1,10 @@
-####################### INPUT MANAGER #######################################
-# This section defines the input manager settings, which specify the path 
-# to the sample sheet and the output folder for analysis results.
-
 input_manager:
-    path: examples/samplesheet.tsv  # Path to the input samplesheet (CSV/TSV file)
+    samplesheet: examples/samplesheet.tsv  # Path to the input samplesheet (CSV/TSV file)
     database_path: resources
     config_species : workflow/configs_species/
-    out_folder: examples/Results  # Folder where the analysis results will be saved
+    metadata_path: examples/Metadata
+    output_folder: examples/Results  # Folder where the analysis results will be saved
+
 
 species_map:
   Clostridium difficile: C.diff
@@ -24,84 +22,3 @@ species_map:
   Klebsiella pneumoniae: K.pneumoniae
   Klebsiella Pneumoniae: K.pneumoniae 
   KlebsiellaPneumoniae: K.pneumoniae 
-
-###################### ANALYSIS & TOOLS SETTINGS ############################
-# This section provides paths to the yaml file for the conda environemt,
-# and script required for the various analysis
-
-analysis_settings:
-
-    KMA:
-        yaml : ../envs/kmeraligner.yaml
-    
-    Escherichia_coli_db:
-        yaml : ../envs/kmeraligner.yaml
-        database: Escherichia_coli_db
-
-    Clostridioides_difficile_db:
-        yaml: ../envs/DatabaseFetch.yaml
-        database: Clostridioides_difficile_db
-        species_config: C.diff
-
-    KMA_filter:
-        yaml: ../envs/python_functions.yaml
-
-    htslib:
-        yaml : ../envs/htslib.yaml
-
-    emm_typing:
-        yaml : ../envs/emm_typing.yaml
-        
-    assembly_lineage_determination:
-        yaml : ../envs/assembly_lineage_determination.yaml
-        script : workflow/scripts/ # Path to convert genome script directory
-    
-    plasmidfinder:
-        yaml : ../envs/plasmidfinder.yaml
-        database: plasmidfinder_db
-        
-    resfinder:
-        yaml : ../envs/resfinder.yaml
-        database: resfinder_db
-
-    pointfinder:
-        yaml : ../envs/pointfinder.yaml
-        database: pointfinder_db
-
-    disinfinder:
-        yaml : ../envs/disinfinder.yaml
-        database: disinfinder_db
-
-    virulencefinder:
-        yaml : ../envs/virulencefinder.yaml
-        database: virulencefinder_db
-        
-    LRE-finder:
-        yaml : ../envs/LREfinder.yaml
-        script: workflow/scripts/  # Path to LRE-finder script directory
-        
-    serotypefinder:
-        yaml : ../envs/serotypefinder.yaml
-        database: serotypefinder_db
-
-    amrfinder:
-        yaml : ../envs/amrfinder.yaml
-        database: amrfinderplus/latest
-
-    mlst:
-        yaml : ../envs/mlst.yaml
-        
-    Repeat_identifier:
-        yaml: ../envs/python_functions.yaml
-
-    Variant_identifier:
-        yaml: ../envs/python_functions.yaml
-
-    kleborate:
-        yaml: ../envs/kleborate.yaml
-    meningotype:
-        yaml : ../envs/meningotype.yaml
-
-    # Illumina lineage determination (commented out for now):
-    # reference_fasta_file: /home/simonescrima/Desktop/ssi_analysis_utility/resources/lineage_determination/MGAS5005.fasta  # Fasta file for reference genome
-    # lineage_variant_file: /home/simonescrima/Desktop/ssi_analysis_utility/resources/lineage_determination/Spyogenes_LOCs.tsv  # File with lineage variant

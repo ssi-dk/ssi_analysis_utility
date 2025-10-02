@@ -1,10 +1,25 @@
-###################### BACTERIAL SPECIES ###################################
-# This config defines analyses for the specified bacterial species e.g E.Coli  
-# and associated parameters.
-
 analyses_to_run: 
+
     KMA_filter:
-        Title : Kmer Aligner for Escherichia coli OH and stx typing
-        ID: 92
-        input_folder: kmeraligner
-        options: --organism "Escherichia coli"
+        options: --organism 'Escherichia coli'
+
+    plasmidfinder: 
+        options:
+
+    resfinder: 
+        options:
+
+    virulencefinder : 
+        options:
+
+    serotypefinder :
+        options:
+
+    amrfinder:
+        options: --organism 'Escherichia'
+
+    kleborate:
+        options: --preset 'escherichia'
+
+    mlst:
+        options:

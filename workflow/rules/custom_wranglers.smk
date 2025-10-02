@@ -2,12 +2,11 @@ rule kma_filter:
     input:
         results = rules.custom_kmeralignment.output.results,
         database = rules.setup_custom_kmeraligner_index.output.names
-    output:
-        filtered_tsv = "%s/{sample}/KMA_Filter/{database}.tsv" % OUT_FOLDER,
     params:
         options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["KMA_filter"]["options"],
-        sample = "{sample}",
-        organism = lambda wildcards: sample_to_organism[wildcards.sample],
+        metafile = "%s/kma_filter.tsv" %metadata_path
+    output:
+        filtered_tsv = "%s/{sample}/KMA_Filter/{database}.tsv" % output_folder,
     conda:
         "../envs/python_functions.yaml"
     log:
@@ -18,5 +17,8 @@ rule kma_filter:
         """
         mkdir -p $(dirname {output.filtered_tsv})
 
-        python workflow/scripts/KMA_Filter.py --KMA_res {input.results} --metafile examples/Metadata/kma_filter.tsv --sample_id {params.sample} --output {output.filtered_tsv} {params.options} > {log.stdout} 2>&1
+        cmd="python workflow/scripts/KMA_Filter.py --KMA_res {input.results} --metafile {params.metafile} --sample_id {wildcards.sample} --output {output.filtered_tsv} {params.options} > {log.stdout} 2>&1"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout}
+        eval $cmd >> {log.stdout} 2>&1
         """
