@@ -2,7 +2,7 @@
 # Runs Multi Locus Sequence Type to determine the ST profile of isolate
 rule MLST:
     input:
-        assembly = rules.shovill.output.assembly,
+        assembly = rules.assembly.output,
         datefile = rules.update_MLST.output.datefile
     output:
         # "%s/{sample}/MLST/{sample}.tsv" %output_folder
@@ -27,7 +27,7 @@ rule MLST:
 # Runs Kleborate characterising virulence and resistance in pathogen assemblies
 rule kleborate:
     input:
-        assembly = rules.shovill.output.assembly
+        assembly = rules.assembly.output
     output:
        kleborate_outdir = directory("%s/{sample}/Kleborate/{assembler}" %output_folder)
     params:
@@ -52,7 +52,7 @@ rule kleborate:
 # Runs meningotype on SPAdes assembled contigs to perform serotyping of N. Meningmeningitidis contigs
 rule meningotype:
     input:
-        assembly = rules.shovill.output.assembly
+        assembly = rules.assembly.output
     output:
         meningotype = "%s/{sample}/meningotype/{assembler}_meningotype.tsv" %output_folder
     conda:

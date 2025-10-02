@@ -108,7 +108,7 @@ rule all:
                 s for s in samples
                 if "amrfinder" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ],
-            assembly = ["spades", "skesa"]
+            assembly = ["spades"]
         ),
         expand(
            "%s/{sample}/MLST/{assembler}_mlst.tsv" %output_folder,
@@ -116,7 +116,7 @@ rule all:
                 s for s in samples 
                 if "mlst" in species_configs[sample_to_organism[s]]["analyses_to_run"]
            ],
-           assembler = ["spades", "skesa"]
+           assembler = ["spades"]
         ),
         expand(
             "%s/{sample}/Variant_identifier/variants_{database}.tsv" %output_folder,
@@ -132,7 +132,7 @@ rule all:
                 s for s in samples
                 if "CDiff_Repeat_identifier" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ],
-            assembler = ["spades", "skesa"]
+            assembler = ["skesa"]
         ),
         expand(
             "%s/{sample}/kmeraligner/{database}.res" %output_folder,
@@ -156,7 +156,7 @@ rule all:
                 s for s in samples
                 if "kleborate" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ],
-            assembler = ["spades", "skesa"]
+            assembler = ["shovill"]
         ),
         expand(
             "%s/{sample}/meningotype/{assembler}_meningotype.tsv" %output_folder, 
