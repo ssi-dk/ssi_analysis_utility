@@ -40,10 +40,9 @@ rule kleborate:
     	"Kleborate: Running Kleborate on {wildcards.assembler} assembly from {wildcards.sample}"
     shell:
         """
-        echo {config}
         mkdir -p $(dirname {output.kleborate_outdir})
 
-        cmd="kleborate -a {input.assembly} --outdir {output.kleborate_outdir} {params.options}"
+        cmd="kleborate --assemblies {input.assembly} --outdir {output.kleborate_outdir} {params.options}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1

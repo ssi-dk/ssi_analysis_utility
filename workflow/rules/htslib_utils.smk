@@ -22,7 +22,7 @@ rule samtools_sam_filtration:
 
 rule samtools_bam_filtration:
   input:
-    sam = "%s/{sample}/samtools/{database}.bam" %output_folder
+    bam = "%s/{sample}/samtools/{database}.bam" %output_folder
   params:
     options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["samtools"]["view"]["options"]
   output:
@@ -35,7 +35,7 @@ rule samtools_bam_filtration:
     "[custom_kmeralignment_samtools_filtration]: Filtering kmeralignment output for {wildcards.database} on {wildcards.sample}"
   shell:
     """
-    cmd="samtools view {input.sam} {params.options} -F 4 -bo {output.bam}"
+    cmd="samtools view {input.bam} {params.options} -F 4 -bo {output.bam}"
 
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
