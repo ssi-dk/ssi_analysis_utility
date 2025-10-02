@@ -174,7 +174,34 @@ rule variant_identifier:
     echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
     """
+    
+rule custom_deletion_identifier:
+  input:
+    kma_results = rules.custom_kmeralignment.output.results,
+    kma_seq = rules.custom_kmerconsensus.output.seq,
+    variants = rules.bcftools_variant_call.output.variants,
+    variants_index = "%s/{sample}/bcftools/{database}_variants.bcf.csi" %OUT_FOLDER,
+    indels = rules.bcftools_filter_indels.output.indels,
+    indels_index = "%s/{sample}/bcftools/{database}_indels.bcf.csi" %OUT_FOLDER,
+    ref_bed = "%s/custom/{database}.bed6" %database_path,
+  params:
+    options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["SNP_identifier"]["options"]
+  output:
+    indentified_variants = "%s/{sample}/Variant_identifier/Deletion_{database}.tsv" %OUT_FOLDER
+  conda:
+    "../envs/python_functions.yaml"
+  log:
+    stdout = "Logs/{sample}/Deletion_identifier_{database}.log"
+  message:
+    "[Variant Identifier]: Identifying Deletions of {wildcards.database} on {wildcards.sample}"
+  shell:
+    """
+    cmd="python workflow/scripts/deletion_identifier.py --res {input.kma_results} --fsa {input.kma_seq} --call {input.variants} --indels {input.indels} --bed {input.ref_bed} --metafile examples/Metadata/deletion_metafiles.tsv -o {output.indentified_variants} {params.options} > {log.stdout} 2>&1"
 
+    echo "Executing command:\n$cmd\n"
+    echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
+    eval $cmd >> {log.stdout} 2>&1
+    """
 
 rule CDiff_Repeat_identifier:
   input:

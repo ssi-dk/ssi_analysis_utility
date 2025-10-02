@@ -228,7 +228,7 @@ def run(organism: str,
         elif label == "other":
             snp_calls.append(f"{pos}_other:{detail}")
         else:
-            snp_calls.append(f"{pos}_-")
+            snp_calls.append(f"-")
 
     row = {
         "organism": organism,
