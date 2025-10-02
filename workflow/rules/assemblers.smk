@@ -3,7 +3,7 @@ rule spades:
     R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
     R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1]
   output:
-    assembly = "%s/{sample}/spades/{sample}.fasta" %OUT_FOLDER
+    assembly = "%s/{sample}/spades/{sample}.fasta" %output_folder
   conda:
     "../envs/shovill.yaml"
   log:
@@ -30,7 +30,7 @@ rule skesa:
     R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
     R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1]
   output:
-    assembly = "%s/{sample}/skesa/{sample}.fasta" %OUT_FOLDER
+    assembly = "%s/{sample}/skesa/{sample}.fasta" %output_folder
   conda:
     "../envs/shovill.yaml"
   log:
@@ -52,7 +52,7 @@ rule shovill:
     R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
     R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1]
   output:
-    assembly = "%s/{sample}/shovill/{sample}.fasta" %OUT_FOLDER
+    assembly = "%s/{sample}/shovill/{sample}.fasta" %output_folder
   conda:
     "../envs/shovill.yaml"
   log:
@@ -79,9 +79,9 @@ rule shovill:
 
 rule assembly:
   input:
-    "%s/{sample}/{assembler}/{sample}.fasta" %OUT_FOLDER
+    "%s/{sample}/{assembler}/{sample}.fasta" %output_folder
   output:
-    "%s/Assemblies/{sample}_{assembler}.fasta" %OUT_FOLDER
+    "%s/Assemblies/{sample}_{assembler}.fasta" %output_folder
   shell:
     """
     outdir=$(dirname {output})
