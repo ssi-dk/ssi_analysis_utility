@@ -136,7 +136,7 @@ rule variant_identifier:
   params:
     options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Variant_identifier"]["options"]
   output:
-    indentifyed_variants = "%s/{sample}/Variant_identifier/variants_{database}.tsv" %output_folder
+    indentified_variants = "%s/{sample}/Variant_identifier/variants_{database}.tsv" %output_folder
   conda:
     "../envs/python_functions.yaml"
   log:
@@ -145,7 +145,7 @@ rule variant_identifier:
     "[Variant Identifier]: Identifying variants of {wildcards.database} on {wildcards.sample}"
   shell:
     """
-    cmd="python workflow/scripts/Variant_Identifier.py --sample_id {wildcards.sample}  --res {input.kma_results} --fsa {input.kma_seq} --call {input.variants} --indels {input.indels} --bed {input.ref_bed} -o {output.indentifyed_variants} {params.options}  --log_file {log.stdout} > {log.stdout} 2>&1"
+    cmd="python workflow/scripts/Variant_Identifier.py --sample_id {wildcards.sample}  --res {input.kma_results} --fsa {input.kma_seq} --call {input.variants} --indels {input.indels} --bed {input.ref_bed} -o {output.indentified_variants} {params.options}  --log_file {log.stdout} > {log.stdout} 2>&1"
 
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1

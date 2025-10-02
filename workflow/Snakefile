@@ -18,6 +18,9 @@ species_config_path = "workflow/configs_species"
 # Setup output folder
 output_folder = config['input_manager']['output_folder']
 
+# Setup metadata path
+metadata_path = config['input_manager']['metadata_path']
+
 # Use the sample names as wildcards
 samples = samplesheet['sample_name'].tolist()
 

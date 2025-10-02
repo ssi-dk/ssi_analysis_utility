@@ -1,7 +1,10 @@
 input_manager:
     samplesheet: examples/samplesheet.tsv  # Path to the input samplesheet (CSV/TSV file)
     database_path: resources
-    output_folder: examples/Results  # Folder where the analysis results will be saved
+    config_species : workflow/configs_species/
+    metadata_path: examples/Metadata
+    out_folder: examples/Results  # Folder where the analysis results will be saved
+
 
 species_map:
   Clostridium difficile: C.diff
