@@ -664,12 +664,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-#python scripts/genbank_fetcher.py --accession AM180355.1 --cds_region tcdA:100-200 tcdB:300-400 tcdC:20-175 --bed genbank_coord_cds.bed6 --records genbank_records_cds.txt --fasta genbank_seq_cds.fasta --merge 200
-#python scripts/genbank_fetcher.py --meta meta_cds.tsv --bed genbank_coord_cds_meta.bed6 --records genbank_records_cds_meta.txt --fasta genbank_seq_cds_meta.fasta --merge 200
-
-#python scripts/genbank_fetcher.py --accession AM180355.1 --acc_region tcdA:795942-803175 tcdB:787492-794393 tcdC:804409-804908 --bed genbank_coord_acc.bed6 --records genbank_records_acc.txt --fasta genbank_seq_acc.fasta --merge 200
-#python scripts/genbank_fetcher.py --meta meta_acc.tsv --bed genbank_coord_acc_meta.bed6 --records genbank_records_acc_meta.txt --fasta genbank_seq_acc_meta.fasta --merge 200
-
-#python scripts/genbank_fetcher.py --accession AM180355.1 --locus tcdA tcdB tcdC --bed genbank_coord_locus.bed6 --records genbank_records_locus.txt --fasta genbank_seq_locus.fasta --merge 200
-#python scripts/genbank_fetcher.py --meta meta_locus.tsv --bed genbank_coord_locus_meta.bed6 --records genbank_records_locus_meta.txt --fasta genbank_seq_locus_meta.fasta --merge 200

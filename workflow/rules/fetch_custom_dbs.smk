@@ -8,7 +8,7 @@ rule fetch_genbank:
   params:
     merge = 500
   conda:
-    "../envs/DatabaseFetch.yaml"
+    "../envs/fetch.yaml"
   log:
     stdout = 'Logs/Databases/fetch_genbank_{database}.log'
   message:

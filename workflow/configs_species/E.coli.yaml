@@ -1,17 +1,9 @@
-###################### BACTERIAL SPECIES ###################################
-# This config defines analyses for the specified bacterial species e.g E.Coli  
-# and associated parameters.
-
 analyses_to_run: 
 
-    bowtie2:
-        options: --very-sensitive-local --no-unal -a 
-
     KMA_filter:
-        Title : Kmer Aligner for Escherichia coli OH and stx typing
         ID: 92
         input_folder: kmeraligner
-        additional_option : --Gene_list stx wzx wzy wzt wzm fliC fli eae ehxA --organism "Escherichia coli" --suffix tsv
+        options: --Gene_list stx wzx wzy wzt wzm fliC fli eae ehxA --organism "Escherichia coli" --suffix tsv
         thresholds:
             stx: [90, 90, 10]
             wzx: [90, 90, 10]
@@ -24,40 +16,23 @@ analyses_to_run:
             ehxA: [90, 90, 10]
             other: [98, 98, 10]
 
-    virulence_gene_detection: 
-        Title: Presence of Streptococcal virulence genes from the Virulence Factor Database
-
     plasmidfinder: 
-        Title : Plasmidfinder
-        database: resources/plasmidfinder_db/  # Path to PlasmidFinder database
+        options:
 
     resfinder: 
-        Title : Resfinder
-        resfinder_db: resources/resfinder_db/ # ResFinder database for AMR detection
-        pointfinder_db: resources/pointfinder_db/  # PointFinder database for AMR point mutations
-        disinfinder_db: resources/disinfinder_db/  # DisinFinder database for disinfectant resistance
+        options:
 
     virulencefinder : 
-        Title : Virulence finder
-        database: resources/virulencefinder_db  # VirulenceFinder database
+        options:
 
     serotypefinder :
-        Title : Serotypefinder
-        database: resources/serotypefinder_db/  # SerotypeFinder database
-    
+        options:
+
     amrfinder:
-        Title : NCBI resistance gene finder
-        organism: --organism Escherichia # Leave blank or insert --organism alongside one of the supported organisms, listed here: https://github.com/evolarjun/amr/wiki/Curated-organisms
-        wrangler: workflow/scripts/AMR_wrangler.py
+        options: --organism 'Escherichia'
 
     kleborate:
-        options: --preset escherichia
+        options: --preset 'escherichia'
 
     mlst:
-       Title : MLST by Torsten Seeman
-    
-    meningotype:
-        Title : Sero- and genotyping of N. meningitidis
-
-    spades: 
-        Title: Assembly of paired end sequencing data 
+        options:
