@@ -1,12 +1,12 @@
 rule samtools_sam_filtration:
   input:
-    sam = "%s/{sample}/samtools/{database}.sam" %OUT_FOLDER
+    sam = "%s/{sample}/samtools/{database}.sam" %output_folder
   params:
     options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["samtools"]["view"]["options"]
   output:
-    bam = "%s/{sample}/samtools/{database}_filtered.bam" %OUT_FOLDER
+    bam = temp("%s/{sample}/samtools/{database}_filtered.bam" %output_folder)
   conda:
-    config["analysis_settings"]["htslib"]["yaml"]
+    "../envs/htslib.yaml"
   log:
     stdout = "Logs/{sample}/custom_kmeralignment_samtools_filtration_{database}.log"
   message:
@@ -22,20 +22,20 @@ rule samtools_sam_filtration:
 
 rule samtools_bam_filtration:
   input:
-    sam = "%s/{sample}/samtools/{database}.bam" %OUT_FOLDER
+    bam = "%s/{sample}/samtools/{database}.bam" %output_folder
   params:
     options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["samtools"]["view"]["options"]
   output:
-    bam = "%s/{sample}/samtools/{database}_filtered.bam" %OUT_FOLDER
+    bam = temp("%s/{sample}/samtools/{database}_filtered.bam" %output_folder)
   conda:
-    config["analysis_settings"]["htslib"]["yaml"]
+    "../envs/htslib.yaml"
   log:
     stdout = "Logs/{sample}/custom_kmeralignment_samtools_filtration_{database}.log"
   message:
     "[custom_kmeralignment_samtools_filtration]: Filtering kmeralignment output for {wildcards.database} on {wildcards.sample}"
   shell:
     """
-    cmd="samtools view {input.sam} {params.options} -F 4 -bo {output.bam}"
+    cmd="samtools view {input.bam} {params.options} -F 4 -bo {output.bam}"
 
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
@@ -44,13 +44,14 @@ rule samtools_bam_filtration:
 
 rule samtools_sort:
   input:
-    bam = "%s/{sample}/samtools/{database}_filtered.bam" %OUT_FOLDER
+    bam = "%s/{sample}/samtools/{database}_filtered.bam" %output_folder
   params:
     options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["samtools"]["sort"]["options"]
   output:
-    bam_sort = "%s/{sample}/samtools/{database}_sorted.bam" %OUT_FOLDER
+    bam_sort = temp("%s/{sample}/samtools/{database}_sorted.bam" %output_folder),
+    index = temp("%s/{sample}/samtools/{database}_sorted.bam.bai" %output_folder)
   conda:
-    config["analysis_settings"]["htslib"]["yaml"]
+    "../envs/htslib.yaml"
   log:
     stdout = "Logs/{sample}/samtools_sort_{database}.log"
   message:
@@ -61,38 +62,23 @@ rule samtools_sort:
 
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
-    """
 
+    cmd="samtools index {output.bam_sort}"
 
-rule samtools_index:
-  input:
-    bam_sort = rules.samtools_sort.output.bam_sort
-  output:
-    bam_index = "%s/{sample}/samtools/{database}_sorted.bam.bai" %OUT_FOLDER
-  conda:
-    config["analysis_settings"]["htslib"]["yaml"]
-  log:
-    stdout = "Logs/{sample}/samtools_index_{database}.log"
-  message:
-    "[samtools_index]: Indexing sorted bam for {wildcards.database} on {wildcards.sample}"
-  shell:
-    """
-    cmd="samtools index {input.bam_sort}"
-
-    echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+    echo "\nIndexing Bam:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
     """
 
-
+    
 rule bcftools_pileup:
   input:
     bam_sort = rules.samtools_sort.output.bam_sort,
-    bam_index = rules.samtools_index.output.bam_index,
     reference = "%s/samtools/{database}.fasta" %database_path
   output:
-    pileup = "%s/{sample}/bcftools/{database}.bcf" %OUT_FOLDER
+    pileup = temp("%s/{sample}/bcftools/{database}.bcf" %output_folder),
+    index = temp("%s/{sample}/bcftools/{database}.bcf.csi" %output_folder)
   conda:
-    config["analysis_settings"]["htslib"]["yaml"]
+    "../envs/htslib.yaml"
   log:
     stdout = "Logs/{sample}/bcftools_pileup_{database}.log"
   message:
@@ -103,39 +89,25 @@ rule bcftools_pileup:
 
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
-    """
 
-rule bcftools_index:
-  input:
-    pileup = "%s/{sample}/bcftools/{database}.bcf" %OUT_FOLDER
-  output:
-    index = "%s/{sample}/bcftools/{database}.bcf.csi" %OUT_FOLDER
-  conda:
-    config["analysis_settings"]["htslib"]["yaml"]
-  log:
-    stdout = "Logs/{sample}/bcftools_index_{database}.log"
-  message:
-    "[bcftools_index]: Indexing mpileup of {wildcards.database} on {wildcards.sample}"
-  shell:
-    """
-    cmd="bcftools index -f {input.pileup}"
+    cmd="bcftools index -f {output.pileup}"
 
-    echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+    echo "\nIndexing Pileup:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
     """
 
 
 rule bcftools_filter_indels:
   input:
-    pileup = rules.bcftools_pileup.output.pileup,
-    index = rules.bcftools_index.output.index
+    pileup = rules.bcftools_pileup.output.pileup
   params:
     region = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["bcftools"]["view"]["region"],
     options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["bcftools"]["view"]["options"]
   output:
-    indels = "%s/{sample}/bcftools/{database}_indels.bcf" %OUT_FOLDER
+    indels = temp("%s/{sample}/bcftools/{database}_indels.bcf" %output_folder),
+    index = temp("%s/{sample}/bcftools/{database}_indels.bcf.csi" %output_folder)
   conda:
-    config["analysis_settings"]["htslib"]["yaml"]
+    "../envs/htslib.yaml"
   log:
     stdout = "Logs/{sample}/bcftools_filter_indels_{database}.log"
   message:
@@ -146,17 +118,22 @@ rule bcftools_filter_indels:
 
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
+
+    cmd="bcftools index -f {output.indels}"
+
+    echo "\nIndexing Pileup:\n$cmd\n" > {log.stdout} 2>&1
+    eval $cmd >> {log.stdout} 2>&1
     """
 
 
 rule bcftools_variant_call:
   input:
-    pileup = rules.bcftools_pileup.output.pileup,
-    index = rules.bcftools_index.output.index
+    pileup = rules.bcftools_pileup.output.pileup
   output: 
-    variants = "%s/{sample}/bcftools/{database}_variants.bcf" %OUT_FOLDER
+    variants = temp("%s/{sample}/bcftools/{database}_variants.bcf" %output_folder),
+    index = temp("%s/{sample}/bcftools/{database}_variants.bcf.csi" %output_folder)
   conda:
-    config["analysis_settings"]["htslib"]["yaml"]
+    "../envs/htslib.yaml"
   log:
     stdout = "Logs/{sample}/bcftools_variant_call_{database}.log"
   message:
@@ -166,5 +143,10 @@ rule bcftools_variant_call:
     cmd="bcftools call -mv -Ob --ploidy 1 {input.pileup} -o {output.variants}"
 
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+    eval $cmd >> {log.stdout} 2>&1
+
+    cmd="bcftools index -f {output.variants}"
+
+    echo "\nIndexing Pileup:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
     """
