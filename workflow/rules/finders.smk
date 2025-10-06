@@ -97,7 +97,6 @@ rule serotypefinder:
         eval $cmd >> {log.stdout} 2>&1
         """
 
-
 rule AMRFinder:
     input:
         assembly = rules.assembly.output,
@@ -123,34 +122,58 @@ rule AMRFinder:
         eval $cmd >> {log.stdout} 2>&1
         """
 
-
-rule variant_identifier:
+rule custom_snp_identifier:
+  input:
+    kma_results = rules.custom_kmeralignment.output.results,
+    variants = rules.bcftools_variant_call.output.variants,
+    variants_index = rules.bcftools_variant_call.output.index
+    ref_bed = "%s/custom/{database}.bed6" %database_path,
+  params:
+    options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["SNP_identifier"]["options"],
+    metafile = "%s/SNP_metafile.tsv" %metadata_path
+  output:
+    indentified_variants = "%s/{sample}/SNP_identifier/snp_{database}.tsv" %output_folder
+  conda:
+    "../envs/python_functions.yaml"
+  log:
+    stdout = "Logs/{sample}/SNP_identifier_{database}.log"
+  message:
+    "[Variant Identifier]: Identifying SNP of {wildcards.database} on {wildcards.sample}"
+  shell:
+    """
+    cmd="python workflow/scripts/SNP_identifier.py --res {input.kma_results} --call {input.variants} --bed {input.ref_bed} --metafile {params.metafile} -o {output.indentified_variants} {params.options} > {log.stdout} 2>&1"
+   
+    echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
+    eval $cmd >> {log.stdout} 2>&1
+    """
+    
+rule custom_deletion_identifier:
   input:
     kma_results = rules.custom_kmeralignment.output.results,
     kma_seq = rules.custom_kmerconsensus.output.seq,
     indels = rules.bcftools_filter_indels.output.indels,
-    indels_index = "%s/{sample}/bcftools/{database}_indels.bcf.csi" %output_folder,
+    indels_index = rules.bcftools_filter_indels.output.index,
     variants = rules.bcftools_variant_call.output.variants,
-    variants_index = "%s/{sample}/bcftools/{database}_variants.bcf.csi" %output_folder,
+    variants_index = rules.bcftools_variant_call.output.index,
     ref_bed = "%s/custom/{database}.bed6" %database_path
   params:
-    options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Variant_identifier"]["options"]
+    options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Deletion_identifier"]["options"],
+    metafile = "%s/deletion_metafiles.tsv" %metadata_path
   output:
     indentified_variants = "%s/{sample}/Variant_identifier/variants_{database}.tsv" %output_folder
   conda:
     "../envs/python_functions.yaml"
   log:
-    stdout = "Logs/{sample}/Variant_identifier_{database}.log"
+    stdout = "Logs/{sample}/Deletion_identifier_{database}.log"
   message:
-    "[Variant Identifier]: Identifying variants of {wildcards.database} on {wildcards.sample}"
+    "[Variant Identifier]: Identifying Deletions of {wildcards.database} on {wildcards.sample}"
   shell:
     """
-    cmd="python workflow/scripts/Variant_Identifier.py --sample_id {wildcards.sample}  --res {input.kma_results} --fsa {input.kma_seq} --call {input.variants} --indels {input.indels} --bed {input.ref_bed} -o {output.indentified_variants} {params.options}  --log_file {log.stdout} > {log.stdout} 2>&1"
+    cmd="python workflow/scripts/deletion_identifier.py --res {input.kma_results} --fsa {input.kma_seq} --call {input.variants} --indels {input.indels} --bed {input.ref_bed} --metafile {params.metafile} -o {output.indentified_variants} {params.options} > {log.stdout} 2>&1"
 
-    echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+    echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
     """
-
 
 rule CDiff_Repeat_identifier:
   input:

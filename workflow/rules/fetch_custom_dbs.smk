@@ -3,9 +3,9 @@ rule fetch_genbank:
     metafile = "%s/{database}_genbank_metafile.tsv" %metadata_path,
     merge = 500
   output:
-    fasta = "%s/custom/{database}.fasta" % database_path,
-    bed = "%s/custom/{database}.bed6" % database_path,
-    records = "%s/custom/{database}.txt" % database_path
+    fasta = "%s/custom/GenBank/{database}.fasta" % database_path,
+    bed = "%s/custom/GenBank/{database}.bed6" % database_path,
+    records = "%s/custom/GenBank/{database}.txt" % database_path
   conda:
     "../envs/fetch.yaml"
   log:
@@ -44,7 +44,7 @@ rule fetch_type_repeat_sequence:
 
 rule fetch_type_repeat_metadata:
   output:
-    meta = "%s/custom/{TR}.txt" %database_path
+    meta = "%s/custom/type_repeats/{TR}.txt" %database_path
   conda:
     "../envs/fetch.yaml"
   log:
