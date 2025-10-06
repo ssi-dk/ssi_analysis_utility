@@ -69,27 +69,7 @@ rule samtools_sort:
     eval $cmd >> {log.stdout} 2>&1
     """
 
-
-# rule samtools_index:
-#   input:
-#     bam_sort = rules.samtools_sort.output.bam_sort
-#   output:
-#     bam_index = temp("%s/{sample}/samtools/{database}_sorted.bam.bai" %output_folder)
-#   conda:
-#     "../envs/htslib.yaml"
-#   log:
-#     stdout = "Logs/{sample}/samtools_index_{database}.log"
-#   message:
-#     "[samtools_index]: Indexing sorted bam for {wildcards.database} on {wildcards.sample}"
-#   shell:
-#     """
-#     cmd="samtools index {input.bam_sort}"
-
-#     echo "\nIndexing Bam:\n$cmd\n" > {log.stdout} 2>&1
-#     eval $cmd >> {log.stdout} 2>&1
-#     """
-
-
+    
 rule bcftools_pileup:
   input:
     bam_sort = rules.samtools_sort.output.bam_sort,
@@ -115,25 +95,6 @@ rule bcftools_pileup:
     echo "\nIndexing Pileup:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
     """
-
-# rule bcftools_index:
-#   input:
-#     pileup = "%s/{sample}/bcftools/{database}.bcf" %output_folder
-#   output:
-#     index = temp("%s/{sample}/bcftools/{database}.bcf.csi" %output_folder)
-#   conda:
-#     "../envs/htslib.yaml"
-#   log:
-#     stdout = "Logs/{sample}/bcftools_index_{database}.log"
-#   message:
-#     "[bcftools_index]: Indexing mpileup of {wildcards.database} on {wildcards.sample}"
-#   shell:
-#     """
-#     cmd="bcftools index -f {input.pileup}"
-
-#     echo "\nIndexing Pileup:\n$cmd\n" > {log.stdout} 2>&1
-#     eval $cmd >> {log.stdout} 2>&1
-#     """
 
 
 rule bcftools_filter_indels:

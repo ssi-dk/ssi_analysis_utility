@@ -41,25 +41,10 @@ analyses_to_run:
             region: AM180355.1_tcdC_804309_805008
             options: -v indels -i 'INFO/DP>10'
 
-    Variant_identifier:
-        ID: 93 # Deletable -> doesn't seem to be used
-        options : --gene_list tcdC  --organism 'Clostridioides difficile' --suffix tsv --deletion_region_buffer 5 --partial_overlap 0.3
-        snp_info:
-            snp_117: [117,"A","T","tcdC","-"]
-            snp_184: [184,"C","T","tcdC","-"]
-        deletion_regions:
-            del330_347_18: [330, 347]
-            del301_336_36: [301, 336]
-            del341_379_39: [341, 379]
-            del313_366_54: [313, 366]
-        deletion_consensus_thresholds:
-            del330_347_18: [70]
-            del301_336_36: [70]
-            del341_379_39: [70]
-            del313_366_54: [70]
-        variant_gt_thresholds:
-            del330_347_18: [0.10,5,10]
-            del301_336_36: [0.10,5,10]
-            del341_379_39: [0.10,5,10]
-            del313_366_54: [0.10,5,10]
+    Deletion_identifier:
+        options : --organism 'Clostridioides difficile' --deletion_region_buffer 5 --partial_overlap 0.3
+    
+    SNP_identifier:
+        options : --organism 'Clostridioides difficile'
+
 

@@ -122,10 +122,18 @@ rule all:
            assembler = ["spades"]
         ),
         expand(
-            "%s/{sample}/Variant_identifier/variants_{database}.tsv" %output_folder,
+            "%s/{sample}/Deletion_identifier/deletion_{database}.tsv" %OUT_FOLDER,
             sample = [
-                s for s in samples
-                if "Variant_identifier" in species_configs[sample_to_organism[s]]["analyses_to_run"]
+                s for s in SAMPLES
+                if "Deletion_identifier" in species_configs[sample_to_organism[s]]["analyses_to_run"]
+            ],
+            database = "Cdiff_Toxins"
+        ),
+        expand(
+            "%s/{sample}/SNP_identifier/snp_{database}.tsv" %OUT_FOLDER,
+            sample = [
+                s for s in SAMPLES
+                if "SNP_identifier" in species_configs[sample_to_organism[s]]["analyses_to_run"]
             ],
             database = "Cdiff_Toxins"
         ),
