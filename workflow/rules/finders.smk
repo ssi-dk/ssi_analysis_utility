@@ -129,9 +129,7 @@ rule variant_identifier:
     kma_results = rules.custom_kmeralignment.output.results,
     kma_seq = rules.custom_kmerconsensus.output.seq,
     indels = rules.bcftools_filter_indels.output.indels,
-    indels_index = "%s/{sample}/bcftools/{database}_indels.bcf.csi" %output_folder,
     variants = rules.bcftools_variant_call.output.variants,
-    variants_index = "%s/{sample}/bcftools/{database}_variants.bcf.csi" %output_folder,
     ref_bed = "%s/custom/{database}.bed6" %database_path
   params:
     options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Variant_identifier"]["options"]
