@@ -2,24 +2,4 @@ analyses_to_run:
 
     KMA_filter:
         options: --organism 'Escherichia coli'
-
-    plasmidfinder: 
-        options:
-
-    resfinder: 
-        options:
-
-    virulencefinder : 
-        options:
-
-    serotypefinder :
-        options:
-
-    amrfinder:
-        options: --organism 'Escherichia'
-
-    kleborate:
-        options: --preset 'escherichia'
-
-    mlst:
-        options:
+        database: [ecoligenes]
