@@ -3,8 +3,8 @@ rule fetch_genbank:
     metafile = "%s/{database}_genbank_metafile.tsv" %metadata_path,
     merge = 500
   output:
-    fasta = "%s/custom/{database}.fasta" % database_path,
-    bed = "%s/custom/{database}.bed6" % database_path,
+    fasta = "%s/custom/{database,[^/]+}.fasta" % database_path,
+    bed = "%s/custom/{database,[^/]+}.bed6" % database_path,
   conda:
     "../envs/fetch.yaml"
   log:
@@ -13,6 +13,7 @@ rule fetch_genbank:
     "[fetch_genbank]: Fetching {wildcards.database} from Genbank"
   shell:
     """
+    set -euo pipefail
     mkdir -p $(dirname {output.fasta})
 
     cmd="python workflow/scripts/genbank_fetcher.py --metafile {params.metafile} --bed {output.bed} --fasta {output.fasta} --merge {params.merge} --append"

@@ -4,3 +4,5 @@ dependencies:
  - curl
  - python=3.9
  - biopython
+ - pandas
+ - curl

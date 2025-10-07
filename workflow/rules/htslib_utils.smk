@@ -19,7 +19,6 @@ rule samtools_sam_filtration:
     eval $cmd >> {log.stdout} 2>&1
     """
 
-
 rule samtools_bam_filtration:
   input:
     bam = "%s/{sample}/samtools/{database}.bam" %output_folder
@@ -40,7 +39,6 @@ rule samtools_bam_filtration:
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
     """
-
 
 rule samtools_sort:
   input:
@@ -69,7 +67,6 @@ rule samtools_sort:
     eval $cmd >> {log.stdout} 2>&1
     """
 
-    
 rule bcftools_pileup:
   input:
     bam_sort = rules.samtools_sort.output.bam_sort,
@@ -90,16 +87,16 @@ rule bcftools_pileup:
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
 
-    cmd="bcftools index -f {output.pileup}"
+    cmd="bcftools index -f {output.pileup} -o {output.index}"
 
     echo "\nIndexing Pileup:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
     """
 
-
 rule bcftools_filter_indels:
   input:
-    pileup = rules.bcftools_pileup.output.pileup
+    pileup = rules.bcftools_pileup.output.pileup,
+    pileup_index = rules.bcftools_pileup.output.index,
   params:
     region = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["bcftools"]["view"]["region"],
     options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["bcftools"]["view"]["options"]
@@ -119,16 +116,16 @@ rule bcftools_filter_indels:
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
 
-    cmd="bcftools index -f {output.indels}"
+    cmd="bcftools index -f {output.indels} -o {output.index}"
 
     echo "\nIndexing Pileup:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
     """
 
-
 rule bcftools_variant_call:
   input:
-    pileup = rules.bcftools_pileup.output.pileup
+    pileup = rules.bcftools_pileup.output.pileup,
+    pileup_index = rules.bcftools_pileup.output.index,
   output: 
     variants = temp("%s/{sample}/bcftools/{database}_variants.bcf" %output_folder),
     index = temp("%s/{sample}/bcftools/{database}_variants.bcf.csi" %output_folder)
@@ -145,7 +142,7 @@ rule bcftools_variant_call:
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
 
-    cmd="bcftools index -f {output.variants}"
+    cmd="bcftools index -f {output.variants} -o {output.index}"
 
     echo "\nIndexing Pileup:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1

@@ -132,7 +132,7 @@ rule custom_snp_identifier:
     options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["SNP_identifier"]["options"],
     metafile = "%s/SNP_metafile.tsv" %metadata_path
   output:
-    indentified_variants = "%s/{sample}/SNP_identifier/snp_{database}.tsv" %output_folder
+    indentified_variants = "%s/{sample}/snp_identifier/snp_{database}.tsv" %output_folder
   conda:
     "../envs/python_functions.yaml"
   log:
@@ -160,7 +160,7 @@ rule custom_deletion_identifier:
     options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Deletion_identifier"]["options"],
     metafile = "%s/deletion_metafiles.tsv" %metadata_path
   output:
-    indentified_variants = "%s/{sample}/deletion_identifier/variants_{database}.tsv" %output_folder
+    indentified_variants = "%s/{sample}/deletion_identifier/deletion_{database}.tsv" %output_folder
   conda:
     "../envs/python_functions.yaml"
   log:
