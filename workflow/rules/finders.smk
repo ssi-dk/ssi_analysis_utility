@@ -126,7 +126,7 @@ rule custom_snp_identifier:
   input:
     kma_results = rules.custom_kmeralignment.output.results,
     variants = rules.bcftools_variant_call.output.variants,
-    variants_index = rules.bcftools_variant_call.output.index
+    variants_index = rules.bcftools_variant_call.output.index,
     ref_bed = "%s/custom/{database}.bed6" %database_path,
   params:
     options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["SNP_identifier"]["options"],
