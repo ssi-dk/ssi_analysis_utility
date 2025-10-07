@@ -67,41 +67,47 @@ database_path = config['input_manager']['database_path']
 ### Define rules where samtools is necessary
 
 def list_results(samplesheet, species_configs):
-    """
-    Return a sorted list of generic .done target flags:
-      {output_folder}/{sample}/{analysis}/{database}.done
-
-    Requirements:
-      - species_configs[organism]['analyses_to_run'][analysis] has a 'database'
-        which may be a string or a list of strings.
-    """
     results = set()
 
-    for idx, row in samplesheet.iterrows():
+    for _, row in samplesheet.iterrows():
         sample = row["sample_name"]
         organism_raw = row["organism"]
         organism_norm = species_name_map.get(organism_raw, organism_raw)
-        print(f"SAMPLE IS {sample} with ORGANISM: {organism_raw} and normalized {organism_norm}")
 
         config = species_configs.get(organism_norm, {}) or {}
         analyses = config.get("analyses_to_run", {}) or {}
-        print(f"Config {config} and analyses {analyses}")
+
         for analysis_name, settings in analyses.items():
-
-            config_db_list = settings.get("database")
-            print(f"analysis_name {analysis_name} and settings {settings} and config_db_list {config_db_list}")
-
-            if config_db_list is None:
-                # No database -> we can't render a target path deterministically
+            # e.g. PlasmidFinder: true - so where no db currently is needed
+            if not isinstance(settings, dict):
+                results.add(f"{output_folder}/{sample}/{analysis_name}/{analysis_name}.done")
                 continue
-            if isinstance(config_db_list, str):
-                config_db_list = [config_db_list]
 
-            for database in config_db_list:
-                print(f"database {database}")
-                folder_flag = f"{output_folder}/{sample}/{analysis_name}/{database}.done"
-                print(f"folder flag {folder_flag}")
-                results.add(folder_flag)
+            assemblers = settings.get("assemblers")
+            databases = settings.get("database")
+
+            # ensure assemblers are a list of strings
+            if isinstance(assemblers, str):
+                assemblers = [assemblers]
+
+            if databases is None:
+                 # no database case
+                if assemblers:
+                    for tool in assemblers:
+                        results.add(f"{output_folder}/{sample}/{analysis_name}/{tool}.done")
+                else:
+                    results.add(f"{output_folder}/{sample}/{analysis_name}/{analysis_name}.done")
+            else:
+                # database case (can be single string or list of strings)
+                if isinstance(databases, str):
+                    databases = [databases]
+                if assemblers:
+                    for tool in assemblers:
+                        for database in databases:
+                            results.add(f"{output_folder}/{sample}/{analysis_name}/{tool}_{database}.done")
+                else:
+                    for database in databases:
+                        results.add(f"{output_folder}/{sample}/{analysis_name}/{database}.done")
 
     return sorted(results)
 

@@ -6,7 +6,8 @@ rule PlasmidFinder:
         database = rules.setup_PlasmidFinder.output.database
     output:
         # Output directory for plasmidfinder results.
-        out_dir = directory("%s/{sample}/PlasmidFinder" %output_folder)
+        out_dir = directory("%s/{sample}/PlasmidFinder" %output_folder),
+        done = touch("%s/{sample}/PlasmidFinder/PlasmidFinder.done" %output_folder)
     conda:
         "../envs/plasmidfinder.yaml"
     log:
@@ -32,7 +33,8 @@ rule ResFinder:
         #point_database = rules.setup_PointFinder.output.database, #Pointfinder requires `species` definition
         disin_database = rules.setup_DisinFinder.output.database
     output:
-        out_dir = directory("%s/{sample}/ResFinder" %output_folder)
+        out_dir = directory("%s/{sample}/ResFinder" %output_folder),
+        done = touch("%s/{sample}/ResFinder/ResFinder.done" %output_folder)
     conda:
         "../envs/resfinder.yaml"
     log:
@@ -56,7 +58,8 @@ rule VirulenceFinder:
         R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
         database = rules.setup_VirulenceFinder.output.database
     output:
-        out_dir = directory("%s/{sample}/VirulenceFinder" %output_folder)
+        out_dir = directory("%s/{sample}/VirulenceFinder" %output_folder),
+        done = touch("%s/{sample}/VirulenceFinder/VirulenceFinder.done" %output_folder)
     conda:
         "../envs/virulencefinder.yaml"
     log:
@@ -80,7 +83,8 @@ rule serotypefinder:
         R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
         database = rules.setup_SerotypeFinder.output.database
     output:
-        out_dir = directory("%s/{sample}/SerotypeFinder" %output_folder)
+        out_dir = directory("%s/{sample}/SerotypeFinder" %output_folder),
+        done = touch("%s/{sample}/SerotypeFinder/SerotypeFinder.done" %output_folder)
     conda:
         "../envs/serotypefinder.yaml"
     log:
@@ -105,7 +109,8 @@ rule AMRFinder:
         # Point mutation
         options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["amrfinder"]["options"]
     output:
-        result = "%s/{sample}/AMRFinder/{assembler}.tsv" %output_folder
+        result = "%s/{sample}/AMRFinder/{assembler}.tsv" %output_folder,
+        done = touch("%s/{sample}/AMRFinder/{assembler}.done" %output_folder)
     conda:
         "../envs/amrfinder.yaml"
     log:
@@ -129,14 +134,15 @@ rule custom_snp_identifier:
     variants_index = rules.bcftools_variant_call.output.index,
     ref_bed = rules.fetch_genbank.output.bed,
   params:
-    options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["SNP_identifier"]["options"],
+    options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["snp_identifier"]["options"],
     metafile = "%s/SNP_metafile.tsv" %metadata_path
   output:
-    indentified_variants = "%s/{sample}/snp_identifier/snp_{database}.tsv" %output_folder
+    indentified_variants = "%s/{sample}/snp_identifier/{database}.tsv" %output_folder,
+    done = touch("%s/{sample}/snp_identifier/{database}.done" %output_folder)
   conda:
     "../envs/python_functions.yaml"
   log:
-    stdout = "Logs/{sample}/SNP_identifier_{database}.log"
+    stdout = "Logs/{sample}/snp_identifier_{database}.log"
   message:
     "[Variant Identifier]: Identifying SNP of {wildcards.database} on {wildcards.sample}"
   shell:
@@ -157,10 +163,11 @@ rule custom_deletion_identifier:
     variants_index = rules.bcftools_variant_call.output.index,
     ref_bed = rules.fetch_genbank.output.bed,
   params:
-    options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Deletion_identifier"]["options"],
+    options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["deletion_identifier"]["options"],
     metafile = "%s/deletion_metafiles.tsv" %metadata_path
   output:
-    indentified_variants = "%s/{sample}/deletion_identifier/deletion_{database}.tsv" %output_folder
+    indentified_variants = "%s/{sample}/deletion_identifier/{database}.tsv" %output_folder,
+    done = touch("%s/{sample}/deletion_identifier/{database}.done" %output_folder)
   conda:
     "../envs/python_functions.yaml"
   log:
@@ -181,7 +188,8 @@ rule CDiff_Repeat_identifier:
     metas = expand(rules.fetch_type_repeat_metadata.output.meta, TR = ["TR6", "TR10", "TRST"]),
     assembly = rules.assembly.output
   output:
-    repeat_types = "%s/{sample}/CDiff_Repeat_identifier/{assembler}_repeat_types.tsv" %output_folder
+    repeat_types = "%s/{sample}/CDiff_Repeat_identifier/{assembler}_repeat_types.tsv" %output_folder,
+    done = touch("%s/{sample}/CDiff_Repeat_identifier/{assembler}.done" %output_folder)
   params:
     repeats = ["TR6", "TR10"],
     combos = ["TRST"]
