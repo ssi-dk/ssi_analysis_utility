@@ -127,7 +127,7 @@ rule custom_snp_identifier:
     kma_results = rules.custom_kmeralignment.output.results,
     variants = rules.bcftools_variant_call.output.variants,
     variants_index = rules.bcftools_variant_call.output.index,
-    ref_bed = "%s/custom/{database}.bed6" %database_path,
+    ref_bed = rules.fetch_genbank.output.bed,
   params:
     options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["SNP_identifier"]["options"],
     metafile = "%s/SNP_metafile.tsv" %metadata_path
@@ -155,12 +155,12 @@ rule custom_deletion_identifier:
     indels_index = rules.bcftools_filter_indels.output.index,
     variants = rules.bcftools_variant_call.output.variants,
     variants_index = rules.bcftools_variant_call.output.index,
-    ref_bed = "%s/custom/{database}.bed6" %database_path
+    ref_bed = rules.fetch_genbank.output.bed,
   params:
     options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["Deletion_identifier"]["options"],
     metafile = "%s/deletion_metafiles.tsv" %metadata_path
   output:
-    indentified_variants = "%s/{sample}/Variant_identifier/variants_{database}.tsv" %output_folder
+    indentified_variants = "%s/{sample}/deletion_identifier/variants_{database}.tsv" %output_folder
   conda:
     "../envs/python_functions.yaml"
   log:

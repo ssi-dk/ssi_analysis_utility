@@ -217,7 +217,7 @@ rule setup_custom_kmeraligner_index:
   input:
     source = "%s/custom/{database}.fasta" %database_path
   params:
-    prefix = "%s/kmeraligner/{database}" %database_path
+    prefix = "%s/custom/{database}" %database_path
   output:
     combined_size = "%s/kmeraligner/{database}.comp.b" %database_path,
     lengths = "%s/kmeraligner/{database}.length.b" %database_path,

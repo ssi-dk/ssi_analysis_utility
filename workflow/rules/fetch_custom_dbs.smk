@@ -3,9 +3,8 @@ rule fetch_genbank:
     metafile = "%s/{database}_genbank_metafile.tsv" %metadata_path,
     merge = 500
   output:
-    fasta = "%s/custom/GenBank/{database}.fasta" % database_path,
-    bed = "%s/custom/GenBank/{database}.bed6" % database_path,
-    records = "%s/custom/GenBank/{database}.txt" % database_path
+    fasta = "%s/custom/{database}.fasta" % database_path,
+    bed = "%s/custom/{database}.bed6" % database_path,
   conda:
     "../envs/fetch.yaml"
   log:
@@ -16,7 +15,7 @@ rule fetch_genbank:
     """
     mkdir -p $(dirname {output.fasta})
 
-    cmd="python workflow/scripts/genbank_fetcher.py --metafile {params.metafile} --bed {output.bed} --records {output.records} --fasta {output.fasta} --merge {params.merge} --append"
+    cmd="python workflow/scripts/genbank_fetcher.py --metafile {params.metafile} --bed {output.bed} --fasta {output.fasta} --merge {params.merge} --append"
 
     echo "Executing command:\n$cmd\n" > {log.stdout}
     eval $cmd >> {log.stdout} 2>&1
