@@ -1,73 +1,35 @@
-from pprint import pprint # devpkg for printing objects
 import pandas as pd
-import os
 import yaml
-from scripts import convert_external_genome
-import warnings
-import math
 
 #Custom python script defining all the required output files depending on the species specific config files
 from scripts import rule_all_functions 
 
 configfile: "config/config.yaml"
 
-# Read the CSV file
+# --- Inputs & paths from config file------------------------------------------------
 samplesheet_path = config['input_manager']['samplesheet']
+output_folder    = config['input_manager']['output_folder']
+metadata_path    = config['input_manager']['metadata_path']   # used by finder rules
+database_path    = config['input_manager']['database_path']   # used by setup rules
+species_config_path = config['input_manager']['config_species'] # Path to species specific configuration files
+species_name_map =  config['species_map'] # Load species_name_map from config file
+
 samplesheet = pd.read_csv(samplesheet_path, sep='\t')
 
-# Path to species specific configuration files
-species_config_path = "workflow/configs_species"
-
-# Setup output folder
-output_folder = config['input_manager']['output_folder']
-
-#remove?
-# Setup metadata path
-metadata_path = config['input_manager']['metadata_path']
-
-# Use the sample names as wildcards
-samples = samplesheet['sample_name'].tolist()
-
-#remove?
-# Create a dictionary for mapping sampleID to file paths
-sample_to_illumina = {row['sample_name']: row['Illumina_read_files'].split(',') for idx, row in samplesheet.iterrows()}
-sample_to_nanopore = {row['sample_name']: row['Nanopore_read_file'] for idx, row in samplesheet.iterrows()}
-sample_to_assembly_file = {row['sample_name']: row['assembly_file'] for idx, row in samplesheet.iterrows()}
+# --- Samples & read locations -------------------------------------------------
+sample_to_illumina, sample_to_nanopore, sample_to_assembly_file = rule_all_functions.sample_read_map(samplesheet)
 
 # ------------------ Species Mapping (from config) ------------------
 
-# Load species_name_map from config file
-species_name_map = config.get("species_map", {})
-
 # Map each sample species (from sample sheet information) to the normalized species name used for the Species specific config
-sample_to_organism = {
-    row['sample_name']: species_name_map.get(row['organism'], row['organism'])
-    for idx, row in samplesheet.iterrows()
-}
+sample_to_organism,unmapped_species = rule_all_functions.sample_map(species_name_map,samplesheet) 
 
-# Debug check if species have not properly been mapped
-unmapped_species = {
-    row['organism'] for idx, row in samplesheet.iterrows()
-    if row['organism'] not in species_name_map
-}
-if unmapped_species:
+if unmapped_species: #check if species have not properly been mapped
     warnings.warn("The following species are not mapped in config['species_map']: %s" % unmapped_species, UserWarning)
 
 # ------------------ Load Species-Specific Configs ------------------
 
-species_configs = {}
-for species in set(sample_to_organism.values()):
-    species_config_file = "%s/%s.yaml" %(species_config_path, species)
-    if os.path.exists(species_config_file):
-        with open(species_config_file, "r") as species_config_file:
-            species_configs[species] = yaml.load(species_config_file, 
-                                                 Loader=yaml.Loader)
-    else: # means the config is not found / available
-        warnings.warn("Warning: Configuration file %s not found. Skipping analyses for %s." % (species_config_file, species), UserWarning)
-        species_configs[species] = {}  # Empty config to ensure skipping analyses
-
-
-database_path = config['input_manager']['database_path']
+species_configs = rule_all_functions.sample_to_species_config(sample_to_organism,species_config_path)
 
 ##############################################################################
 #
