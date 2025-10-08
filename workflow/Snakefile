@@ -18,12 +18,14 @@ species_config_path = "workflow/configs_species"
 # Setup output folder
 output_folder = config['input_manager']['output_folder']
 
+#remove?
 # Setup metadata path
 metadata_path = config['input_manager']['metadata_path']
 
 # Use the sample names as wildcards
 samples = samplesheet['sample_name'].tolist()
 
+#remove?
 # Create a dictionary for mapping sampleID to file paths
 sample_to_illumina = {row['sample_name']: row['Illumina_read_files'].split(',') for idx, row in samplesheet.iterrows()}
 sample_to_nanopore = {row['sample_name']: row['Nanopore_read_file'] for idx, row in samplesheet.iterrows()}
