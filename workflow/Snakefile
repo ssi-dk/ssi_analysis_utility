@@ -6,6 +6,9 @@ from scripts import convert_external_genome
 import warnings
 import math
 
+#Custom python script defining all the required output files depending on the species specific config files
+from scripts import rule_all_functions 
+
 configfile: "config/config.yaml"
 
 # Read the CSV file
@@ -66,53 +69,6 @@ for species in set(sample_to_organism.values()):
 
 database_path = config['input_manager']['database_path']
 
-### Define rules where samtools is necessary
-
-def list_results(samplesheet, species_configs):
-    results = set()
-
-    for _, row in samplesheet.iterrows():
-        sample = row["sample_name"]
-        organism_raw = row["organism"]
-        organism_norm = species_name_map.get(organism_raw, organism_raw)
-
-        config = species_configs.get(organism_norm, {}) or {}
-        analyses = config.get("analyses_to_run", {}) or {}
-
-        for analysis_name, settings in analyses.items():
-            # e.g. PlasmidFinder: true - so where no db currently is needed
-            if not isinstance(settings, dict):
-                results.add(f"{output_folder}/{sample}/{analysis_name}/{analysis_name}.done")
-                continue
-
-            assemblers = settings.get("assemblers")
-            databases = settings.get("database")
-
-            # ensure assemblers are a list of strings
-            if isinstance(assemblers, str):
-                assemblers = [assemblers]
-
-            if databases is None:
-                 # no database case
-                if assemblers:
-                    for tool in assemblers:
-                        results.add(f"{output_folder}/{sample}/{analysis_name}/{tool}.done")
-                else:
-                    results.add(f"{output_folder}/{sample}/{analysis_name}/{analysis_name}.done")
-            else:
-                # database case (can be single string or list of strings)
-                if isinstance(databases, str):
-                    databases = [databases]
-                if assemblers:
-                    for tool in assemblers:
-                        for database in databases:
-                            results.add(f"{output_folder}/{sample}/{analysis_name}/{tool}_{database}.done")
-                else:
-                    for database in databases:
-                        results.add(f"{output_folder}/{sample}/{analysis_name}/{database}.done")
-
-    return sorted(results)
-
 ##############################################################################
 #
 #                              Snakefile 
@@ -122,8 +78,13 @@ def list_results(samplesheet, species_configs):
 # Define the dynamic input for rule all
 rule all:
     input:
-        lambda wc: list_results(samplesheet, species_configs)
-    
+        lambda wc: rule_all_functions.list_results(
+            samplesheet=samplesheet,
+            species_configs=species_configs,
+            output_folder=output_folder,
+            species_name_map=species_name_map,
+        )
+
 include : "rules/assemblers.smk"
 include : "rules/fetch_custom_dbs.smk"
 include : "rules/setup_dbs.smk"
