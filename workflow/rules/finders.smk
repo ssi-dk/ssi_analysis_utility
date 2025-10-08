@@ -105,7 +105,7 @@ rule serotypefinder:
 
 rule AMRFinder:
     input:
-        assembly = rules.assembly.output,
+        assembly = rules.assembly.output.output_assembly,
         database = rules.setup_AMRFinder.output.database
     params:
         # Point mutation
@@ -188,7 +188,7 @@ rule CDiff_Repeat_identifier:
   input:
     seqs  = expand(rules.fetch_type_repeat_sequence.output.seq, TR = ["TR6", "TR10"]),
     metas = expand(rules.fetch_type_repeat_metadata.output.meta, TR = ["TR6", "TR10", "TRST"]),
-    assembly = rules.assembly.output
+    assembly = rules.assembly.output.output_assembly
   output:
     repeat_types = "%s/{sample}/CDiff_Repeat_identifier/{assembler}_repeat_types.tsv" %output_folder,
     done = touch("%s/{sample}/CDiff_Repeat_identifier/{assembler}.done" %output_folder)

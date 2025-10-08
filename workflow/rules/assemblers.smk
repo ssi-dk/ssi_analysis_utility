@@ -3,11 +3,12 @@ rule spades:
     R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
     R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1]
   output:
-    assembly = "%s/{sample}/spades/{sample}.fasta" %output_folder
+    assembly = "%s/{sample}/spades/{sample}.fasta" %output_folder,
+    done = touch("%s/{sample}/spades/{sample}.done" %output_folder)
   conda:
     "../envs/shovill.yaml"
   log:
-    stdout = "Logs/Assemblies/{sample}_SPAdes.log"
+    stdout = "Logs/Assemblies/{sample}_spades.log"
   threads:
     max(1, workflow.cores * 0.66667)
   message:
@@ -30,7 +31,8 @@ rule skesa:
     R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
     R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1]
   output:
-    assembly = "%s/{sample}/skesa/{sample}.fasta" %output_folder
+    assembly = "%s/{sample}/skesa/{sample}.fasta" %output_folder,
+    done = touch("%s/{sample}/skesa/{sample}.done" %output_folder)
   conda:
     "../envs/shovill.yaml"
   log:
@@ -52,7 +54,8 @@ rule shovill:
     R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
     R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1]
   output:
-    assembly = "%s/{sample}/shovill/{sample}.fasta" %output_folder
+    assembly = "%s/{sample}/shovill/{sample}.fasta" %output_folder,
+    done = touch("%s/{sample}/shovill/{sample}.done" %output_folder)
   conda:
     "../envs/shovill.yaml"
   log:
@@ -63,6 +66,7 @@ rule shovill:
     "[Shovill]: Assemblying {wildcards.sample} using Shovill with {threads} CPU(s). This may take some time!\nInspect {log.stdout} for more details!"
   shell:
     """
+    mkdir -p $(dirname {output.assembly})
     outdir=$(dirname {output.assembly})
 
     cmd="shovill --R1 {input.R1} --R2 {input.R2} --outdir $outdir/ --force --cpus {threads}"
@@ -76,16 +80,20 @@ rule shovill:
 
     """
 
-
 rule assembly:
   input:
-    "%s/{sample}/{assembler}/{sample}.fasta" %output_folder
+    input_assembly = "%s/{sample}/{assembler}/{sample}.fasta" %output_folder
   output:
-    "%s/Assemblies/{sample}_{assembler}.fasta" %output_folder
+    output_assembly = "%s/Assemblies/{sample}_{assembler}.fasta" %output_folder,
+    done = touch("%s/Assemblies/{sample}_{assembler}.done" % output_folder)
+  log:
+    stdout = "Logs/Assemblies/{sample}_{assembler}_assembly.log"
   shell:
     """
-    outdir=$(dirname {output})
-    mkdir -p $outdir
+    mkdir -p $(dirname {output.output_assembly})
 
-    cp {input} {output}
+    cmd="cp {input.input_assembly} {output.output_assembly}"
+
+    echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+    eval $cmd >> {log.stdout} 2>&1 
     """

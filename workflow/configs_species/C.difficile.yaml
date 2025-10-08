@@ -26,6 +26,9 @@ analyses_to_run:
     options: --organism 'Clostridioides_difficile'
     assemblers: [spades, skesa]  
 
+  mlst:
+    assemblers: [spades,skesa]  
+
 tool_settings:
   samtools:
     view:

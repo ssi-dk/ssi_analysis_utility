@@ -1,12 +1,13 @@
 # Rule MLST:
 # Runs Multi Locus Sequence Type to determine the ST profile of isolate
-rule MLST:
+rule mlst:
     input:
-        assembly = rules.assembly.output,
+        assembly = rules.assembly.output.output_assembly,
         datefile = rules.update_MLST.output.datefile
     output:
         # "%s/{sample}/MLST/{sample}.tsv" %output_folder
-        mlst_file = "%s/{sample}/MLST/{assembler}_mlst.tsv" %output_folder
+        mlst_file = "%s/{sample}/mlst/{assembler}_mlst.tsv" %output_folder,
+        done = touch("%s/{sample}/mlst/{assembler}.done" %output_folder)
     conda:
         "../envs/mlst.yaml"
     log:
@@ -27,9 +28,10 @@ rule MLST:
 # Runs Kleborate characterising virulence and resistance in pathogen assemblies
 rule kleborate:
     input:
-        assembly = rules.assembly.output
+        assembly = rules.assembly.output.output_assembly
     output:
-       kleborate_outdir = directory("%s/{sample}/Kleborate/{assembler}" %output_folder)
+       kleborate_outdir = directory("%s/{sample}/kleborate/{assembler}" %output_folder),
+        done = touch("%s/{sample}/kleborate/{assembler}.done" %output_folder)
     params:
         options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["kleborate"]["options"]
     conda:
@@ -52,9 +54,10 @@ rule kleborate:
 # Runs meningotype on SPAdes assembled contigs to perform serotyping of N. Meningmeningitidis contigs
 rule meningotype:
     input:
-        assembly = rules.assembly.output
+        assembly = rules.assembly.output.output_assembly
     output:
-        meningotype = "%s/{sample}/meningotype/{assembler}_meningotype.tsv" %output_folder
+        meningotype = "%s/{sample}/meningotype/{assembler}_meningotype.tsv" %output_folder,
+        done = touch("%s/{sample}/meningotype/{assembler}.done" %output_folder)
     conda:
         "../envs/meningotype.yaml"
     log:

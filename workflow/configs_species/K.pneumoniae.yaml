@@ -11,9 +11,11 @@ analyses_to_run:
 
     amrfinder:
         options: --organism 'Klebsiella_pneumoniae'
-        assemblers: [shovill]  
+        assemblers: [spades]  
 
     kleborate:
         options: --preset kpsc
+        assemblers: [spades]  
 
-    mlst: true
+    mlst:
+        assemblers: [shovill]  

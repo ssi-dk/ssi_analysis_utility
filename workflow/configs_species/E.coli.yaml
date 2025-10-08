@@ -16,4 +16,6 @@ analyses_to_run:
     amrfinder:
         options: --organism 'Escherichia'
         assemblers: [skesa]  
-        
+    
+    mlst:
+        assemblers: [skesa]  
