@@ -69,14 +69,14 @@ rule setup_PointFinder:
         """
         git clone https://bitbucket.org/genomicepidemiology/pointfinder_db.git {output.database} > {log.stdout} 2>&1
 
-        for fasta in $(find {output.database} -iname '*.fsa'); do
-            idx_prefix={output.database}/$(basename $fasta .fsa)
+        for fasta in $(find {output.database} -type f -name '*.fsa'); do
+            idx_prefix="${{fasta%.*}}"
+
             cmd="kma index -i $fasta -o $idx_prefix"
             
             echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
             eval $cmd >> {log.stdout} 2>&1
 
-            
             if [ -z $idx_prefix.comb.b ]; then
                 echo '[pointfinder_db]: ERROR - $idx_prefix.comb.b was not created during KMA indexing. This likely means that the pointfinder_db has changed. Post this message on our Github repository!' 2>&1 >> {log.stdout}
             fi
@@ -84,7 +84,6 @@ rule setup_PointFinder:
         
         date -I > {output.database}/creation.date
         """
-
 
 rule setup_DisinFinder:
     conda:
