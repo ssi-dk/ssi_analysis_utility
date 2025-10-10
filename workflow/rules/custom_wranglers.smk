@@ -23,5 +23,5 @@ rule kma_filter:
         echo "Executing command:\n$cmd\n" > {log.stdout}
         eval $cmd >> {log.stdout} 2>&1
     
-        touch {output.done}
+        echo "KMA results succesfully wrangled for {wildcards.sample} on {wildcards.database}" > {output.done}
         """

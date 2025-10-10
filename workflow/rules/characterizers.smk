@@ -23,7 +23,7 @@ rule mlst:
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
 
-        touch {output.done}
+        echo "MLST completed succesfully for {wildcards.sample} with {wildcards.assembler} assembly" > {output.done}
     	"""
 
 # Rule Kleborate:
@@ -32,7 +32,7 @@ rule kleborate:
     input:
         assembly = rules.assembly.output.output_assembly
     output:
-       kleborate_outdir = directory("%s/{sample}/kleborate/{assembler}" %output_folder),
+        kleborate_outdir = directory("%s/{sample}/kleborate/{assembler}" %output_folder),
         done = temp("%s/{sample}/kleborate/{assembler}.done" %output_folder)
     params:
         options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["kleborate"]["options"]
@@ -41,7 +41,7 @@ rule kleborate:
     log:
     	stdout = "Logs/{sample}/Kleborate_{assembler}.log"
     message:
-    	"Kleborate: Running Kleborate on {wildcards.assembler} assembly from {wildcards.sample}"
+    	"[Kleborate]: Running Kleborate on {wildcards.assembler} assembly from {wildcards.sample}"
     shell:
         """
         mkdir -p $(dirname {output.kleborate_outdir})
@@ -51,7 +51,7 @@ rule kleborate:
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
 
-        touch {output.done}
+        echo "Kleborate completed succesfully for {wildcards.sample} with {wildcards.assembler} assembly" > {output.done}
     	"""
 
 # Rule meningotype
@@ -77,6 +77,6 @@ rule meningotype:
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
     
-        touch {output.done}
+        echo "Meningotype completed succesfully on {wildcards.sample} with {wildcards.assembler} assembly" > {output.done}
     	"""
 

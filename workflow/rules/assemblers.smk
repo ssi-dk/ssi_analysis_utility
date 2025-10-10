@@ -4,7 +4,6 @@ rule spades:
     R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1]
   output:
     assembly = "%s/{sample}/spades/{sample}.fasta" %output_folder,
-    done = temp("%s/{sample}/spades/{sample}.done" %output_folder)
   conda:
     "../envs/shovill.yaml"
   log:
@@ -23,8 +22,6 @@ rule spades:
     cmd="mv $outdir/contigs.fasta {output.assembly}"
     echo "### SPAdes Done!###\nExecuting command:\n$cmd\n" >> {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
-
-    touch {output.done}
     """
 
 
@@ -34,7 +31,6 @@ rule skesa:
     R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1]
   output:
     assembly = "%s/{sample}/skesa/{sample}.fasta" %output_folder,
-    done = temp("%s/{sample}/skesa/{sample}.done" %output_folder)
   conda:
     "../envs/shovill.yaml"
   log:
@@ -42,14 +38,12 @@ rule skesa:
   threads:
     max(1, workflow.cores * 0.66667)
   message:
-    "[SPAdes]: Assemblying {wildcards.sample} using Skesa with {threads} core(s). This may take some time!\nInspect {log.stdout} for more details!"
+    "[Skesa]: Assemblying {wildcards.sample} using Skesa with {threads} core(s). This may take some time!\nInspect {log.stdout} for more details!"
   shell:
     """
     cmd="skesa --reads {input.R1},{input.R2} --contigs_out {output.assembly} --cores {threads}"
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
-    
-    touch {output.done}
     """
 
 
@@ -59,7 +53,6 @@ rule shovill:
     R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1]
   output:
     assembly = "%s/{sample}/shovill/{sample}.fasta" %output_folder,
-    done = temp("%s/{sample}/shovill/{sample}.done" %output_folder)
   conda:
     "../envs/shovill.yaml"
   log:
@@ -81,8 +74,6 @@ rule shovill:
     cmd="mv $outdir/contigs.fa {output.assembly}"
     echo "### Shovil Done!###\nExecuting command:\n$cmd\n" >> {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
-
-    touch {output.done}
     """
 
 rule assembly:
@@ -102,5 +93,5 @@ rule assembly:
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1 
 
-    touch {output.done}
+    echo "Assembly successfully created for {wildcard.sample}" > {output.done}
     """

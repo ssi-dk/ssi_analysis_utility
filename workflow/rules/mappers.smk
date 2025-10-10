@@ -8,8 +8,7 @@ rule custom_kmeralignment:
     prefix_db = rules.setup_custom_kmeraligner_index.params.prefix    
   output:
     results = "%s/{sample}/kmeraligner/{database}.res" %output_folder,
-    sam = temp("%s/{sample}/samtools/{database}.sam" %output_folder),
-    done = temp(f"{output_folder}" + "/{sample}/kmeraligner/{database}.done")
+    sam = temp("%s/{sample}/samtools/{database}.sam" %output_folder)
   conda:
     "../envs/kmeraligner.yaml"
   log:
@@ -25,8 +24,6 @@ rule custom_kmeralignment:
 
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
-
-    touch {output.done}
     """
 
 rule custom_kmerconsensus:

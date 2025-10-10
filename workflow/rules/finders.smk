@@ -13,7 +13,7 @@ rule plasmidfinder:
   log:
     stdout = 'Logs/{sample}/plasmidfinder.log'
   message:
-    "[plasmidfinder]: Running plasmidfinder on {wildcards.sample}"
+    "[PlasmidFinder]: Running PlasmidFinder on {wildcards.sample}"
   shell:
     """
     mkdir -p {output.out_dir}
@@ -23,7 +23,7 @@ rule plasmidfinder:
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
         
-    touch {output.done}
+    echo "PlasmidFinder completed successfully for {wildcards.sample}" > {output.done}
     """
 
 rule resfinder:
@@ -44,7 +44,7 @@ rule resfinder:
   log:
     stdout = 'Logs/{sample}/resfinder.log'
   message:
-    "[resfinder]: Running resfinder, PointFinder, and DisinFinder on {wildcards.sample}"
+    "[ResFinder]: Running ResFinder, PointFinder, and DisinFinder on {wildcards.sample}"
   shell:
     """
     mkdir -p {output.out_dir}
@@ -54,7 +54,7 @@ rule resfinder:
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
 
-    touch {output.done}
+    echo "ResFinder completed successfully for {wildcards.sample}" > {output.done}
     """
 
 rule virulencefinder:
@@ -70,7 +70,7 @@ rule virulencefinder:
   log:
     stdout = 'Logs/{sample}/virulencefinder.log'
   message:
-    "[virulencefinder]: Running virulencefinder on {wildcards.sample}"
+    "[VirulenceFinder]: Running VirulenceFinder on {wildcards.sample}"
   shell:
     """
     mkdir -p {output.out_dir}
@@ -80,7 +80,7 @@ rule virulencefinder:
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
 
-    touch {output.done}
+    echo "VirulenceFinder completed successfully for {wildcards.sample}" > {output.done}
     """
 
 rule serotypefinder:
@@ -96,7 +96,7 @@ rule serotypefinder:
   log:
     stdout = 'Logs/{sample}/serotypefinder.log'
   message:
-    "[serotypefinder]: Running serotypefinder on {wildcards.sample}"
+    "[SerotypeFinder]: Running SerotypeFinder on {wildcards.sample}"
   shell:
     """
     mkdir -p {output.out_dir}
@@ -106,10 +106,10 @@ rule serotypefinder:
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
 
-    touch {output.done}
+    echo "SerotypeFinder completed successfully for {wildcards.sample}" > {output.done}
     """
 
-rule AMRFinder:
+rule amrfinder:
   input:
     assembly = rules.assembly.output.output_assembly,
     database = rules.setup_AMRFinder.output.database
@@ -124,7 +124,7 @@ rule AMRFinder:
   log:
     stdout = 'Logs/{sample}/amrfinder_{assembler}.log'
   message:
-    "[amrfinder]: Running amrfinder for {wildcards.sample} using ({wildcards.assembler}) contigs"
+    "[AMRFinderPlus]: Running AMRFinderPlus for {wildcards.sample} using ({wildcards.assembler}) contigs"
   shell:
     """
     mkdir -p $(dirname {output.result})
@@ -134,10 +134,10 @@ rule AMRFinder:
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
 
-    touch {output.done}
+    echo "AMRFinderPlus completed successfully for {wildcards.sample} with {wildcards.assembler} assembly" > {output.done}
     """
 
-rule custom_snp_identifier:
+rule snp_identifier:
   input:
     kma_results = rules.custom_kmeralignment.output.results,
     variants = rules.bcftools_variant_call.output.variants,
@@ -154,7 +154,7 @@ rule custom_snp_identifier:
   log:
     stdout = "Logs/{sample}/snp_identifier_{database}.log"
   message:
-    "[Variant Identifier]: Identifying SNP of {wildcards.database} on {wildcards.sample}"
+    "[SNP Identifier]: Identifying SNPs of {wildcards.database} on {wildcards.sample}"
   shell:
     """
     cmd="python workflow/scripts/SNP_identifier.py --res {input.kma_results} --call {input.variants} --bed {input.ref_bed} --metafile {params.metafile} -o {output.indentified_variants} {params.options} > {log.stdout} 2>&1"
@@ -162,10 +162,10 @@ rule custom_snp_identifier:
     echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
 
-    touch {output.done}
+    echo "SNP identification completed successfully of {wildcards.database} on {wildcards.sample}" > {output.done}
     """
     
-rule custom_deletion_identifier:
+rule deletion_identifier:
   input:
     kma_results = rules.custom_kmeralignment.output.results,
     kma_seq = rules.custom_kmerconsensus.output.seq,
@@ -185,7 +185,7 @@ rule custom_deletion_identifier:
   log:
     stdout = "Logs/{sample}/Deletion_identifier_{database}.log"
   message:
-    "[Variant Identifier]: Identifying Deletions of {wildcards.database} on {wildcards.sample}"
+    "[Deletion Identifier]: Identifying deletions of {wildcards.database} on {wildcards.sample}"
   shell:
     """
     cmd="python workflow/scripts/deletion_identifier.py --res {input.kma_results} --fsa {input.kma_seq} --call {input.variants} --indels {input.indels} --bed {input.ref_bed} --metafile {params.metafile} -o {output.indentified_variants} {params.options} > {log.stdout} 2>&1"
@@ -193,10 +193,10 @@ rule custom_deletion_identifier:
     echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
 
-    touch {output.done}
+    echo "Deletion identification completed successfully of {wildcards.database} on {wildcards.sample}" > {output.done}
     """
 
-rule CDiff_Repeat_identifier:
+rule cdiff_repeat_identifier:
   input:
     seqs  = expand(rules.fetch_type_repeat_sequence.output.seq, TR = ["TR6", "TR10"]),
     metas = expand(rules.fetch_type_repeat_metadata.output.meta, TR = ["TR6", "TR10", "TRST"]),
@@ -212,7 +212,7 @@ rule CDiff_Repeat_identifier:
   log:
     stdout = "Logs/{sample}/CDiff_Repeat_identifier/{assembler}_repeat_types.log"
   message:
-    "[CDiff Repeat identifier]: Running repeat analysis on {wildcards.assembler} assembly for {wildcards.sample}"
+    "[CDiff Repeat identifier]: Identifying C. Difficile repeats in {wildcards.sample} on {wildcards.assembler} assembly"
   shell:
     """
     mkdir -p $(dirname {output.repeat_types})
@@ -224,5 +224,5 @@ rule CDiff_Repeat_identifier:
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1 
     
-    touch {output.done}
+    echo "C. difficile repeat identification completed successfully on {wildcards.sample} with {wildcards.assembler} assembly" > {output.done}
     """
