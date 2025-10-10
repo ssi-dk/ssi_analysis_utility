@@ -93,5 +93,5 @@ rule assembly:
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1 
 
-    echo "Assembly successfully created for {wildcard.sample}" > {output.done}
+    echo "Assembly successfully created for {wildcards.sample}" > {output.done}
     """
