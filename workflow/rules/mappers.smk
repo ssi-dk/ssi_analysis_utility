@@ -9,7 +9,7 @@ rule custom_kmeralignment:
   output:
     results = "%s/{sample}/kmeraligner/{database}.res" %output_folder,
     sam = temp("%s/{sample}/samtools/{database}.sam" %output_folder),
-    done = touch(f"{output_folder}" + "/{sample}/kmeraligner/{database}.done")
+    done = temp(f"{output_folder}" + "/{sample}/kmeraligner/{database}.done")
   conda:
     "../envs/kmeraligner.yaml"
   log:
@@ -25,6 +25,8 @@ rule custom_kmeralignment:
 
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
+
+    touch {output.done}
     """
 
 rule custom_kmerconsensus:

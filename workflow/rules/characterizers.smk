@@ -7,7 +7,7 @@ rule mlst:
     output:
         # "%s/{sample}/MLST/{sample}.tsv" %output_folder
         mlst_file = "%s/{sample}/mlst/{assembler}_mlst.tsv" %output_folder,
-        done = touch("%s/{sample}/mlst/{assembler}.done" %output_folder)
+        done = temp("%s/{sample}/mlst/{assembler}.done" %output_folder)
     conda:
         "../envs/mlst.yaml"
     log:
@@ -22,6 +22,8 @@ rule mlst:
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
+
+        touch {output.done}
     	"""
 
 # Rule Kleborate:
@@ -31,7 +33,7 @@ rule kleborate:
         assembly = rules.assembly.output.output_assembly
     output:
        kleborate_outdir = directory("%s/{sample}/kleborate/{assembler}" %output_folder),
-        done = touch("%s/{sample}/kleborate/{assembler}.done" %output_folder)
+        done = temp("%s/{sample}/kleborate/{assembler}.done" %output_folder)
     params:
         options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["kleborate"]["options"]
     conda:
@@ -48,6 +50,8 @@ rule kleborate:
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
+
+        touch {output.done}
     	"""
 
 # Rule meningotype
@@ -57,7 +61,7 @@ rule meningotype:
         assembly = rules.assembly.output.output_assembly
     output:
         meningotype = "%s/{sample}/meningotype/{assembler}_meningotype.tsv" %output_folder,
-        done = touch("%s/{sample}/meningotype/{assembler}.done" %output_folder)
+        done = temp("%s/{sample}/meningotype/{assembler}.done" %output_folder)
     conda:
         "../envs/meningotype.yaml"
     log:
@@ -72,5 +76,7 @@ rule meningotype:
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
+    
+        touch {output.done}
     	"""
 

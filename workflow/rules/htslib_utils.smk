@@ -48,7 +48,7 @@ rule samtools_sort:
   output:
     bam_sort = temp("%s/{sample}/samtools/{database}_sorted.bam" %output_folder),
     index = temp("%s/{sample}/samtools/{database}_sorted.bam.bai" %output_folder),
-    done = touch("%s/{sample}/samtools/{database}.done" %output_folder)
+    done = temp("%s/{sample}/samtools/{database}.done" %output_folder)
   conda:
     "../envs/htslib.yaml"
   log:
@@ -66,6 +66,8 @@ rule samtools_sort:
 
     echo "\nIndexing Bam:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
+
+    touch {output.done}
     """
 
 rule bcftools_pileup:
@@ -130,7 +132,7 @@ rule bcftools_variant_call:
   output: 
     variants = temp("%s/{sample}/bcftools/{database}_variants.bcf" %output_folder),
     index = temp("%s/{sample}/bcftools/{database}_variants.bcf.csi" %output_folder),
-    done = touch("%s/{sample}/bcftools/{database}.done" %output_folder)
+    done = temp("%s/{sample}/bcftools/{database}.done" %output_folder)
   conda:
     "../envs/htslib.yaml"
   log:
@@ -148,4 +150,6 @@ rule bcftools_variant_call:
 
     echo "\nIndexing Pileup:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
+
+    touch {output.done}
     """

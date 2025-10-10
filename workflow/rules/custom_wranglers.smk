@@ -7,7 +7,7 @@ rule kma_filter:
         metafile = "%s/kma_filter.tsv" %metadata_path
     output:
         filtered_tsv = "%s/{sample}/kma_filter/{database}.tsv" % output_folder,
-        done = touch(f"{output_folder}" + "/{sample}/kma_filter/{database}.done")  # note folder name; pick one casing and keep it everywhere
+        done = temp("%s/{sample}/kma_filter/{database}.done" %output_folder)  # note folder name; pick one casing and keep it everywhere
     conda:
         "../envs/python_functions.yaml"
     log:
@@ -22,4 +22,6 @@ rule kma_filter:
 
         echo "Executing command:\n$cmd\n" > {log.stdout}
         eval $cmd >> {log.stdout} 2>&1
+    
+        touch {output.done}
         """

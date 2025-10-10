@@ -4,7 +4,7 @@ rule spades:
     R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1]
   output:
     assembly = "%s/{sample}/spades/{sample}.fasta" %output_folder,
-    done = touch("%s/{sample}/spades/{sample}.done" %output_folder)
+    done = temp("%s/{sample}/spades/{sample}.done" %output_folder)
   conda:
     "../envs/shovill.yaml"
   log:
@@ -23,6 +23,8 @@ rule spades:
     cmd="mv $outdir/contigs.fasta {output.assembly}"
     echo "### SPAdes Done!###\nExecuting command:\n$cmd\n" >> {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
+
+    touch {output.done}
     """
 
 
@@ -32,7 +34,7 @@ rule skesa:
     R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1]
   output:
     assembly = "%s/{sample}/skesa/{sample}.fasta" %output_folder,
-    done = touch("%s/{sample}/skesa/{sample}.done" %output_folder)
+    done = temp("%s/{sample}/skesa/{sample}.done" %output_folder)
   conda:
     "../envs/shovill.yaml"
   log:
@@ -46,6 +48,8 @@ rule skesa:
     cmd="skesa --reads {input.R1},{input.R2} --contigs_out {output.assembly} --cores {threads}"
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
+    
+    touch {output.done}
     """
 
 
@@ -55,7 +59,7 @@ rule shovill:
     R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1]
   output:
     assembly = "%s/{sample}/shovill/{sample}.fasta" %output_folder,
-    done = touch("%s/{sample}/shovill/{sample}.done" %output_folder)
+    done = temp("%s/{sample}/shovill/{sample}.done" %output_folder)
   conda:
     "../envs/shovill.yaml"
   log:
@@ -78,6 +82,7 @@ rule shovill:
     echo "### Shovil Done!###\nExecuting command:\n$cmd\n" >> {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
 
+    touch {output.done}
     """
 
 rule assembly:
@@ -85,7 +90,7 @@ rule assembly:
     input_assembly = "%s/{sample}/{assembler}/{sample}.fasta" %output_folder
   output:
     output_assembly = "%s/Assemblies/{sample}_{assembler}.fasta" %output_folder,
-    done = touch("%s/Assemblies/{sample}_{assembler}.done" % output_folder)
+    done = temp("%s/Assemblies/{sample}_{assembler}.done" % output_folder)
   log:
     stdout = "Logs/Assemblies/{sample}_{assembler}_assembly.log"
   shell:
@@ -96,4 +101,6 @@ rule assembly:
 
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1 
+
+    touch {output.done}
     """

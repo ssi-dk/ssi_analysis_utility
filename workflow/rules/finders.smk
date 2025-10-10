@@ -1,133 +1,141 @@
 rule plasmidfinder:
-    input:
-        # Input paired-end Illumina reads.
-        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
-        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
-        database = rules.setup_PlasmidFinder.output.database
-    output:
-        # Output directory for plasmidfinder results.
-        out_dir = directory("%s/{sample}/plasmidfinder" %output_folder),
-        done = touch("%s/{sample}/plasmidfinder/plasmidfinder.done" %output_folder)
-    conda:
-        "../envs/plasmidfinder.yaml"
-    log:
-        stdout = 'Logs/{sample}/plasmidfinder.log'
-    message:
-        "[plasmidfinder]: Running plasmidfinder on {wildcards.sample}"
-    shell:
-        """
-        mkdir -p {output.out_dir}
+  input:
+    # Input paired-end Illumina reads.
+    R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
+    R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
+    database = rules.setup_PlasmidFinder.output.database
+  output:
+    # Output directory for plasmidfinder results.
+    out_dir = directory("%s/{sample}/plasmidfinder" %output_folder),
+    done = temp("%s/{sample}/plasmidfinder/plasmidfinder.done" %output_folder)
+  conda:
+    "../envs/plasmidfinder.yaml"
+  log:
+    stdout = 'Logs/{sample}/plasmidfinder.log'
+  message:
+    "[plasmidfinder]: Running plasmidfinder on {wildcards.sample}"
+  shell:
+    """
+    mkdir -p {output.out_dir}
 
-        cmd="plasmidfinder.py -i {input.R1} {input.R2} -o {output.out_dir} -p {input.database} -x"
+    cmd="plasmidfinder.py -i {input.R1} {input.R2} -o {output.out_dir} -p {input.database} -x"
 
-        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-        eval $cmd >> {log.stdout} 2>&1
-        """
+    echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+    eval $cmd >> {log.stdout} 2>&1
+        
+    touch {output.done}
+    """
 
 rule resfinder:
-    input:
-        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
-        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
-        res_database = rules.setup_ResFinder.output.database,
-        point_database = rules.setup_PointFinder.output.database, #Pointfinder requires `species` definition
-        disin_database = rules.setup_DisinFinder.output.database
-    params:
-        # Point mutation
-        options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["resfinder"]["options"]
-    output:
-        out_dir = directory("%s/{sample}/resfinder" %output_folder),
-        done = touch("%s/{sample}/resfinder/resfinder.done" %output_folder)
-    conda:
-        "../envs/resfinder.yaml"
-    log:
-        stdout = 'Logs/{sample}/resfinder.log'
-    message:
-        "[resfinder]: Running resfinder, PointFinder, and DisinFinder on {wildcards.sample}"
-    shell:
-        """
-        mkdir -p {output.out_dir}
+  input:
+    R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
+    R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
+    res_database = rules.setup_ResFinder.output.database,
+    point_database = rules.setup_PointFinder.output.database, #Pointfinder requires `species` definition
+    disin_database = rules.setup_DisinFinder.output.database
+  params:
+    # Point mutation
+    options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["resfinder"]["options"]
+  output:
+    out_dir = directory("%s/{sample}/resfinder" %output_folder),
+    done = temp("%s/{sample}/resfinder/resfinder.done" %output_folder)
+  conda:
+    "../envs/resfinder.yaml"
+  log:
+    stdout = 'Logs/{sample}/resfinder.log'
+  message:
+    "[resfinder]: Running resfinder, PointFinder, and DisinFinder on {wildcards.sample}"
+  shell:
+    """
+    mkdir -p {output.out_dir}
 
-        cmd="run_resfinder.py -ifq {input.R1} {input.R2} -o {output.out_dir} --acquired -db_res {input.res_database} --disinfectant -db_disinf {input.disin_database} --point -db_point {input.point_database} {params.options}"
+    cmd="run_resfinder.py -ifq {input.R1} {input.R2} -o {output.out_dir} --acquired -db_res {input.res_database} --disinfectant -db_disinf {input.disin_database} --point -db_point {input.point_database} {params.options}"
  
-        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-        eval $cmd >> {log.stdout} 2>&1
-        """
+    echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+    eval $cmd >> {log.stdout} 2>&1
 
+    touch {output.done}
+    """
 
 rule virulencefinder:
-    input:
-        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
-        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
-        database = rules.setup_VirulenceFinder.output.database
-    output:
-        out_dir = directory("%s/{sample}/virulencefinder" %output_folder),
-        done = touch("%s/{sample}/virulencefinder/virulencefinder.done" %output_folder)
-    conda:
-        "../envs/virulencefinder.yaml"
-    log:
-        stdout = 'Logs/{sample}/virulencefinder.log'
-    message:
-        "[virulencefinder]: Running virulencefinder on {wildcards.sample}"
-    shell:
-        """
-        mkdir -p {output.out_dir}
+  input:
+    R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
+    R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
+    database = rules.setup_VirulenceFinder.output.database
+  output:
+    out_dir = directory("%s/{sample}/virulencefinder" %output_folder),
+    done = temp("%s/{sample}/virulencefinder/virulencefinder.done" %output_folder)
+  conda:
+    "../envs/virulencefinder.yaml"
+  log:
+    stdout = 'Logs/{sample}/virulencefinder.log'
+  message:
+    "[virulencefinder]: Running virulencefinder on {wildcards.sample}"
+  shell:
+    """
+    mkdir -p {output.out_dir}
 
-        cmd="virulencefinder.py -i {input.R1} {input.R2} -o {output.out_dir} -p {input.database}"
+    cmd="virulencefinder.py -i {input.R1} {input.R2} -o {output.out_dir} -p {input.database}"
 
-        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-        eval $cmd >> {log.stdout} 2>&1
-        """
+    echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+    eval $cmd >> {log.stdout} 2>&1
 
+    touch {output.done}
+    """
 
 rule serotypefinder:
-    input:
-        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
-        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
-        database = rules.setup_SerotypeFinder.output.database
-    output:
-        out_dir = directory("%s/{sample}/serotypefinder" %output_folder),
-        done = touch("%s/{sample}/serotypefinder/serotypefinder.done" %output_folder)
-    conda:
-        "../envs/serotypefinder.yaml"
-    log:
-        stdout = 'Logs/{sample}/serotypefinder.log'
-    message:
-        "[serotypefinder]: Running serotypefinder on {wildcards.sample}"
-    shell:
-        """
-        mkdir -p {output.out_dir}
+  input:
+    R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
+    R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
+    database = rules.setup_SerotypeFinder.output.database
+  output:
+    out_dir = directory("%s/{sample}/serotypefinder" %output_folder),
+    done = temp("%s/{sample}/serotypefinder/serotypefinder.done" %output_folder)
+  conda:
+    "../envs/serotypefinder.yaml"
+  log:
+    stdout = 'Logs/{sample}/serotypefinder.log'
+  message:
+    "[serotypefinder]: Running serotypefinder on {wildcards.sample}"
+  shell:
+    """
+    mkdir -p {output.out_dir}
 
-        cmd="serotypefinder -i {input.R1} {input.R2} -o {output.out_dir} -p {input.database} -x"
+    cmd="serotypefinder -i {input.R1} {input.R2} -o {output.out_dir} -p {input.database} -x"
 
-        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-        eval $cmd >> {log.stdout} 2>&1
-        """
+    echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+    eval $cmd >> {log.stdout} 2>&1
+
+    touch {output.done}
+    """
 
 rule AMRFinder:
-    input:
-        assembly = rules.assembly.output.output_assembly,
-        database = rules.setup_AMRFinder.output.database
-    params:
-        # Point mutation
-        options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["amrfinder"]["options"]
-    output:
-        result = "%s/{sample}/amrfinder/{assembler}.tsv" %output_folder,
-        done = touch("%s/{sample}/amrfinder/{assembler}.done" %output_folder)
-    conda:
-        "../envs/amrfinder.yaml"
-    log:
-        stdout = 'Logs/{sample}/amrfinder_{assembler}.log'
-    message:
-        "[amrfinder]: Running amrfinder for {wildcards.sample} using ({wildcards.assembler}) contigs"
-    shell:
-        """
-        mkdir -p $(dirname {output.result})
+  input:
+    assembly = rules.assembly.output.output_assembly,
+    database = rules.setup_AMRFinder.output.database
+  params:
+    # Point mutation
+    options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["amrfinder"]["options"]
+  output:
+    result = "%s/{sample}/amrfinder/{assembler}.tsv" %output_folder,
+    done = temp("%s/{sample}/amrfinder/{assembler}.done" %output_folder)
+  conda:
+    "../envs/amrfinder.yaml"
+  log:
+    stdout = 'Logs/{sample}/amrfinder_{assembler}.log'
+  message:
+    "[amrfinder]: Running amrfinder for {wildcards.sample} using ({wildcards.assembler}) contigs"
+  shell:
+    """
+    mkdir -p $(dirname {output.result})
 
-        cmd="amrfinder --nucleotide {input.assembly} --database {input.database} {params.options} --output {output.result}"
+    cmd="amrfinder --nucleotide {input.assembly} --database {input.database} {params.options} --output {output.result}"
 
-        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-        eval $cmd >> {log.stdout} 2>&1
-        """
+    echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+    eval $cmd >> {log.stdout} 2>&1
+
+    touch {output.done}
+    """
 
 rule custom_snp_identifier:
   input:
@@ -140,7 +148,7 @@ rule custom_snp_identifier:
     metafile = "%s/SNP_metafile.tsv" %metadata_path
   output:
     indentified_variants = "%s/{sample}/snp_identifier/{database}.tsv" %output_folder,
-    done = touch("%s/{sample}/snp_identifier/{database}.done" %output_folder)
+    done = temp("%s/{sample}/snp_identifier/{database}.done" %output_folder)
   conda:
     "../envs/python_functions.yaml"
   log:
@@ -153,6 +161,8 @@ rule custom_snp_identifier:
    
     echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
+
+    touch {output.done}
     """
     
 rule custom_deletion_identifier:
@@ -169,7 +179,7 @@ rule custom_deletion_identifier:
     metafile = "%s/deletion_metafiles.tsv" %metadata_path
   output:
     indentified_variants = "%s/{sample}/deletion_identifier/{database}.tsv" %output_folder,
-    done = touch("%s/{sample}/deletion_identifier/{database}.done" %output_folder)
+    done = temp("%s/{sample}/deletion_identifier/{database}.done" %output_folder)
   conda:
     "../envs/python_functions.yaml"
   log:
@@ -182,6 +192,8 @@ rule custom_deletion_identifier:
 
     echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
+
+    touch {output.done}
     """
 
 rule CDiff_Repeat_identifier:
@@ -191,7 +203,7 @@ rule CDiff_Repeat_identifier:
     assembly = rules.assembly.output.output_assembly
   output:
     repeat_types = "%s/{sample}/CDiff_Repeat_identifier/{assembler}_repeat_types.tsv" %output_folder,
-    done = touch("%s/{sample}/CDiff_Repeat_identifier/{assembler}.done" %output_folder)
+    done = temp("%s/{sample}/CDiff_Repeat_identifier/{assembler}.done" %output_folder)
   params:
     repeats = ["TR6", "TR10"],
     combos = ["TRST"]
@@ -211,4 +223,6 @@ rule CDiff_Repeat_identifier:
 
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1 
+    
+    touch {output.done}
     """
