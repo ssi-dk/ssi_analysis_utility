@@ -1,0 +1,42 @@
+analyses_to_run:
+  kma_filter:
+    options: --organism 'Clostridioides difficile'
+    database: [Cdiff_Toxins]
+
+  snp_identifier:
+    options: --organism 'Clostridioides difficile'
+    database: [Cdiff_Toxins]
+
+  deletion_identifier:
+    options: --organism 'Clostridioides difficile' --deletion_region_buffer 5 --partial_overlap 0.3
+    database: [Cdiff_Toxins]
+
+  CDiff_Repeat_identifier:
+    repeats: TR6 TR10
+    combos: TRST
+    assemblers: [spades, skesa]  
+
+  plasmidfinder: true
+
+  virulencefinder: true
+
+  serotypefinder: true
+
+  amrfinder:
+    options: --organism 'Clostridioides_difficile'
+    assemblers: [spades, skesa]  
+
+  mlst:
+    assemblers: [spades,skesa]  
+
+tool_settings:
+  samtools:
+    view:
+      options: -q 20
+    sort:
+      options: -n
+
+  bcftools:
+    view:
+      region: AM180355.1_tcdC_804309_805008
+      options: -v indels -i 'INFO/DP>10'

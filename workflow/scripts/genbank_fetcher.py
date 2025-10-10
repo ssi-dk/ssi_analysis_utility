@@ -570,12 +570,12 @@ def main():
     parser.add_argument("--metafile", help="TSV with columns: accession, gene, start, end, organism.")
 
     # outputs
-    parser.add_argument("-r", "--records", default="genbank_record.txt",
-                        help="Text report file (default: genbank_record.txt)")
-    parser.add_argument("--bed", default="genbank_coord.bed6",
-                        help="BED6 output file (default: genbank_coord.bed6)")
-    parser.add_argument("--fasta", default="genbank_seq.fasta",
-                        help="FASTA output file with extracted slices (default: genbank_seq.fasta)")
+    parser.add_argument("-r", "--records",
+                        help="Text report file")
+    parser.add_argument("--bed",
+                        help="BED6 output file")
+    parser.add_argument("--fasta",
+                        help="FASTA output file with extracted slices")
 
     parser.add_argument("--merge", type=int,
                         help="Merge FASTA regions if gap ≤ this value (same strand).")

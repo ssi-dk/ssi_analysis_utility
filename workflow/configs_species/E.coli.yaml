@@ -1,25 +1,21 @@
 analyses_to_run: 
 
-    KMA_filter:
+    kma_filter:
         options: --organism 'Escherichia coli'
+        database: [ecoligenes]
+    
+    resfinder:
+        options: --species 'Escherichia coli'
 
-    plasmidfinder: 
-        options:
+    plasmidfinder: true
 
-    resfinder: 
-        options:
+    virulencefinder: true
 
-    virulencefinder : 
-        options:
-
-    serotypefinder :
-        options:
-
+    serotypefinder: true
+    
     amrfinder:
         options: --organism 'Escherichia'
-
-    kleborate:
-        options: --preset 'escherichia'
-
+        assemblers: [skesa]  
+    
     mlst:
-        options:
+        assemblers: [skesa]  

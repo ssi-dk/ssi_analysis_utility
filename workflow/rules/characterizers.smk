@@ -1,12 +1,13 @@
 # Rule MLST:
 # Runs Multi Locus Sequence Type to determine the ST profile of isolate
-rule MLST:
+rule mlst:
     input:
-        assembly = rules.assembly.output,
+        assembly = rules.assembly.output.output_assembly,
         datefile = rules.update_MLST.output.datefile
     output:
         # "%s/{sample}/MLST/{sample}.tsv" %output_folder
-        mlst_file = "%s/{sample}/MLST/{assembler}_mlst.tsv" %output_folder
+        mlst_file = "%s/{sample}/mlst/{assembler}_mlst.tsv" %output_folder,
+        done = temp("%s/{sample}/mlst/{assembler}.done" %output_folder)
     conda:
         "../envs/mlst.yaml"
     log:
@@ -21,15 +22,18 @@ rule MLST:
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
+
+        echo "MLST completed succesfully for {wildcards.sample} with {wildcards.assembler} assembly" > {output.done}
     	"""
 
 # Rule Kleborate:
 # Runs Kleborate characterising virulence and resistance in pathogen assemblies
 rule kleborate:
     input:
-        assembly = rules.assembly.output
+        assembly = rules.assembly.output.output_assembly
     output:
-       kleborate_outdir = directory("%s/{sample}/Kleborate/{assembler}" %output_folder)
+        kleborate_outdir = directory("%s/{sample}/kleborate/{assembler}" %output_folder),
+        done = temp("%s/{sample}/kleborate/{assembler}.done" %output_folder)
     params:
         options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["kleborate"]["options"]
     conda:
@@ -37,7 +41,7 @@ rule kleborate:
     log:
     	stdout = "Logs/{sample}/Kleborate_{assembler}.log"
     message:
-    	"Kleborate: Running Kleborate on {wildcards.assembler} assembly from {wildcards.sample}"
+    	"[Kleborate]: Running Kleborate on {wildcards.assembler} assembly from {wildcards.sample}"
     shell:
         """
         mkdir -p $(dirname {output.kleborate_outdir})
@@ -46,15 +50,18 @@ rule kleborate:
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
+
+        echo "Kleborate completed succesfully for {wildcards.sample} with {wildcards.assembler} assembly" > {output.done}
     	"""
 
 # Rule meningotype
 # Runs meningotype on SPAdes assembled contigs to perform serotyping of N. Meningmeningitidis contigs
 rule meningotype:
     input:
-        assembly = rules.assembly.output
+        assembly = rules.assembly.output.output_assembly
     output:
-        meningotype = "%s/{sample}/meningotype/{assembler}_meningotype.tsv" %output_folder
+        meningotype = "%s/{sample}/meningotype/{assembler}_meningotype.tsv" %output_folder,
+        done = temp("%s/{sample}/meningotype/{assembler}.done" %output_folder)
     conda:
         "../envs/meningotype.yaml"
     log:
@@ -69,5 +76,7 @@ rule meningotype:
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
+    
+        echo "Meningotype completed succesfully on {wildcards.sample} with {wildcards.assembler} assembly" > {output.done}
     	"""
 

@@ -1,22 +1,21 @@
-analyses_to_run: 
+analyses_to_run:
+    
+    plasmidfinder: true
+    
+    resfinder:
+        options: --species 'Klebsiella'
+    
+    virulencefinder: true
 
-    plasmidfinder: 
-        options:
-
-    resfinder: 
-        options:
-
-    virulencefinder : 
-        options:
-
-    serotypefinder :
-        options:
+    serotypefinder: true
 
     amrfinder:
         options: --organism 'Klebsiella_pneumoniae'
+        assemblers: [spades]  
 
     kleborate:
         options: --preset kpsc
+        assemblers: [spades]  
 
     mlst:
-       options:
+        assemblers: [shovill]  
