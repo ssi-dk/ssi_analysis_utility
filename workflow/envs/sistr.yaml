@@ -1,0 +1,12 @@
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.10  # or 3.10/3.11 if compatibility issues arise
+  - sistr_cmd  # or latest compatible version
+  - blast>=2.2.30
+  - mafft>=7.271
+  - numpy>=1.11.1
+  - pandas=1.5.3
+  - setuptools

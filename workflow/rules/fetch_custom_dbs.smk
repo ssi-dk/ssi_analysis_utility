@@ -103,3 +103,21 @@ rule fetch_Senterica_Scheme:
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
     """
+
+rule fetch_Senterica_Serovar:
+  output:
+    source = "%s/custom/Senterica_serovar.txt" %database_path
+  conda:
+    "../envs/fetch.yaml"
+  log:
+    stdout = "Logs/Databases/setup_senterica.log"
+  message:
+    "[fetch_Senterica_Scheme]: Downloading Achtman 7 Gene MLST scheme for Salmonella Enterica"
+  shell:
+    """
+    mkdir -p $(dirname {output.source})
+    cmd="curl -fSL https://raw.githubusercontent.com/phac-nml/sistr_cmd/master/sistr/data/serovar-list.txt -o {output.source}"
+
+    echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+    eval $cmd >> {log.stdout} 2>&1
+    """

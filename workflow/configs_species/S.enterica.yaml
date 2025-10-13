@@ -11,3 +11,6 @@ analyses_to_run:
     assemblers: [skesa]  
 
   seqsero2: true
+
+  sistr:
+    assemblers: [skesa,spades]  

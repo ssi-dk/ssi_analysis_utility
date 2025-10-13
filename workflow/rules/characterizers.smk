@@ -106,3 +106,32 @@ rule seqsero2:
 
         echo "seqsero2 completed succesfully for {wildcards.sample}" > {output.done}
         """
+
+rule sistr:
+    input:
+        assembly = rules.assembly.output.output_assembly,
+        serovarlist = rules.fetch_Senterica_Serovar.output.source
+    output:
+        sistr_tab = "%s/{sample}/sistr/{assembler}_sistr.tab" %output_folder,
+        gmlst_profile = "%s/{sample}/sistr/{assembler}_cgmlst_profiles.csv" %output_folder,
+        allele_results = "%s/{sample}/sistr/{assembler}_allele-results.json" %output_folder,
+        done = temp("%s/{sample}/sistr/{assembler}.done" %output_folder)
+    threads:
+        max(1, workflow.cores * 0.3333333)
+    conda:
+        "../envs/sistr.yaml"
+    log:
+        stdout = 'Logs/{sample}/{assembler}_SISTR_serovar.log'
+    message:
+        "[Salmonella_serovar]: Predict Salmonella serovar with SISTR"
+    shell:
+        """
+        mkdir -p $(dirname {output.sistr_tab})
+
+        cmd="sistr -f tab --qc -t {threads} -l {input.serovarlist} --cgmlst-profiles {output.gmlst_profile} --alleles-output {output.allele_results} --output-prediction {output.sistr_tab} {input.assembly}"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+
+        echo "sistr completed succesfully on {wildcards.sample} with {wildcards.assembler} assembly" > {output.done}
+        """
