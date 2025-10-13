@@ -25,3 +25,7 @@ species_map:
   N.meningitidis: N.meningitidis
   N. meningitidis: N.meningitidis
   N meningitidis: N.meningitidis
+  Salmonella enterica: S.enterica
+  S.enterica: S.enterica
+  S. enterica: S.enterica
+  S enterica: S.enterica
