@@ -83,16 +83,11 @@ rule custom_bowtie2alignment:
         """
 
 
-def get_assembly_input(wildcards):
-    assembler = wildcards.assembler
-    if "_" in assembler:
-        assembler = assembler.split("_")[0]
-    return f"{output_folder}/{wildcards.sample}/Assemblies/{wildcards.sample}_{assembler}.fasta"
-
 
 rule custom_blaster:
     input:
-        assembly = get_assembly_input,
+        # A complete access to the wildcard is needed, if we try to call the output of different rule we have the blending of wildcards 
+        assembly = lambda wildcards: f"{output_folder}/{wildcards.sample}/Assemblies/{wildcards.sample}_{wildcards.assembler}.fasta",
         database = lambda wc: f"{database_path}/custom/blast/{wc.database}.fasta"
         #path = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["custom_blaster"]["path_to_custom"] # Fixed from the config as a path until we have a hosting and setup 
     params:
@@ -106,7 +101,6 @@ rule custom_blaster:
         stdout = "Logs/{sample}/custom_blaster_{assembler}_{database}.log"
     message:
         "[setup_{wildcards.database}]: Setting up the {wildcards.database} database from the temporary storage folder"
-
     shell:
         """
         mkdir -p $(dirname {output.results})
