@@ -15,7 +15,13 @@ analyses_to_run:
     
     amrfinder:
         options: --organism 'Escherichia'
-        assemblers: [skesa]  
+        assemblers: [shovill]  
     
     mlst:
-        assemblers: [skesa]  
+        assemblers: [shovill]  
+    
+    custom_blaster:
+        options: "-perc_identity 90.0"
+        assemblers: [shovill]
+        database : [OXAndm,junctions]
+        path_to_custom: "/home/simonescrima/Desktop/ssi_analysis_utility/examples/Dataset/databases/oxa_ndm.fasta"

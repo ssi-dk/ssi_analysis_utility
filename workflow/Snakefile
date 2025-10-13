@@ -12,7 +12,9 @@ output_folder    = config['input_manager']['output_folder']
 metadata_path    = config['input_manager']['metadata_path']   # used by finder rules
 database_path    = config['input_manager']['database_path']   # used by setup rules
 species_config_path = config['input_manager']['config_species'] # Path to species specific configuration files
+temp_storage_path = config['input_manager']['temp_storage']
 species_name_map =  config['species_map'] # Load species_name_map from config file
+
 
 samplesheet = pd.read_csv(samplesheet_path, sep='\t')
 
@@ -31,6 +33,7 @@ if unmapped_species: #check if species have not properly been mapped
 
 species_configs = rule_all_functions.sample_to_species_config(sample_to_organism,species_config_path)
 
+print(species_configs)
 ##############################################################################
 #
 #                              Snakefile 

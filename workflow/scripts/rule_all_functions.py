@@ -114,5 +114,5 @@ def list_results(samplesheet, species_configs, output_folder, species_name_map):
                 else:
                     for database in databases:
                         results.add(f"{output_folder}/{sample}/{analysis_name}/{database}.done")
-
+    print(sorted(results))
     return sorted(results)

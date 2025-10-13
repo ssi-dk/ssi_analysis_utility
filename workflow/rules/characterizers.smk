@@ -2,7 +2,7 @@
 # Runs Multi Locus Sequence Type to determine the ST profile of isolate
 rule mlst:
     input:
-        assembly = rules.assembly.output.output_assembly,
+        assembly = lambda wildcards: f"{output_folder}/{wildcards.sample}/Assemblies/{wildcards.sample}_{wildcards.assembler}.fasta",
         datefile = rules.update_MLST.output.datefile
     output:
         # "%s/{sample}/MLST/{sample}.tsv" %output_folder
@@ -30,7 +30,7 @@ rule mlst:
 # Runs Kleborate characterising virulence and resistance in pathogen assemblies
 rule kleborate:
     input:
-        assembly = rules.assembly.output.output_assembly
+        assembly = lambda wildcards: f"{output_folder}/{wildcards.sample}/Assemblies/{wildcards.sample}_{wildcards.assembler}.fasta",
     output:
         kleborate_outdir = directory("%s/{sample}/kleborate/{assembler}" %output_folder),
         done = temp("%s/{sample}/kleborate/{assembler}.done" %output_folder)
@@ -58,7 +58,7 @@ rule kleborate:
 # Runs meningotype on SPAdes assembled contigs to perform serotyping of N. Meningmeningitidis contigs
 rule meningotype:
     input:
-        assembly = rules.assembly.output.output_assembly
+        assembly = lambda wildcards: f"{output_folder}/{wildcards.sample}/Assemblies/{wildcards.sample}_{wildcards.assembler}.fasta",
     output:
         meningotype = "%s/{sample}/meningotype/{assembler}_meningotype.tsv" %output_folder,
         done = temp("%s/{sample}/meningotype/{assembler}.done" %output_folder)
