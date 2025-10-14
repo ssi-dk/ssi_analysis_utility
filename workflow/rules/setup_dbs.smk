@@ -301,6 +301,9 @@ rule setup_custom_samtool_index:
     """
 
 
+# Place holder rule until we have an online repo for all dbs
+# We store momentarily in Dataset/databases
+
 rule custom_blast_setup:
     conda:
         "../envs/blast.yaml"

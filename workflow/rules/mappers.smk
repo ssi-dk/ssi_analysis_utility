@@ -88,8 +88,7 @@ rule custom_blaster:
     input:
         # A complete access to the wildcard is needed, if we try to call the output of different rule we have the blending of wildcards 
         assembly = lambda wildcards: f"{output_folder}/{wildcards.sample}/Assemblies/{wildcards.sample}_{wildcards.assembler}.fasta",
-        database = lambda wc: f"{database_path}/custom/blast/{wc.database}.fasta"
-        #path = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["custom_blaster"]["path_to_custom"] # Fixed from the config as a path until we have a hosting and setup 
+        database = lambda wildcards: f"{database_path}/custom/blast/{wildcards.database}.fasta"
     params:
         options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["custom_blaster"]["options"],    
     output:
