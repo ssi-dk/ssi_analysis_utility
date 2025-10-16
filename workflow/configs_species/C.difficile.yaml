@@ -16,12 +16,6 @@ analyses_to_run:
     combos: TRST
     assemblers: [spades, skesa]  
 
-  plasmidfinder: true
-
-  virulencefinder: true
-
-  serotypefinder: true
-
   amrfinder:
     options: --organism 'Clostridioides_difficile'
     assemblers: [spades, skesa]  
