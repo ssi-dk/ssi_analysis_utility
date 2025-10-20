@@ -1,5 +1,6 @@
 import pandas as pd
 import yaml
+import warnings
 
 #Custom python script defining all the required output files depending on the species specific config files
 from scripts import rule_all_functions 

@@ -7,22 +7,26 @@ input_manager:
     temp_storage: examples/Dataset/databases
 
 species_map:
-    Clostridium difficile: C.difficile
-    Clostridioides difficile: C.difficile
-    C. difficile: C.difficile
-    C difficile: C.difficile
-    C. diff: C.difficile
-    C.diff: C.difficile
-    Escherichia coli: E.coli
-    E coli: E.coli
-    E.coli: E.coli
-    Klebsiella pneumoniae: K.pneumoniae
-    Klebsiella Pneumoniae: K.pneumoniae 
-    KlebsiellaPneumoniae: K.pneumoniae 
-    K.Pneumoniae: K.pneumoniae
-    K Pneumoniae: K.pneumoniae
-    K. Pneumoniae: K.pneumoniae
-    Neisseria meningitidis: N.meningitidis
-    N.meningitidis: N.meningitidis
-    N. meningitidis: N.meningitidis
-    N meningitidis: N.meningitidis
+  Clostridium difficile: C.difficile
+  Clostridioides difficile: C.difficile
+  C. difficile: C.difficile
+  C difficile: C.difficile
+  C. diff: C.difficile
+  C.diff: C.difficile
+  Escherichia coli: E.coli
+  E coli: E.coli
+  E.coli: E.coli
+  Klebsiella pneumoniae: K.pneumoniae
+  Klebsiella Pneumoniae: K.pneumoniae 
+  KlebsiellaPneumoniae: K.pneumoniae 
+  K.Pneumoniae: K.pneumoniae
+  K Pneumoniae: K.pneumoniae
+  K. Pneumoniae: K.pneumoniae
+  Neisseria meningitidis: N.meningitidis
+  N.meningitidis: N.meningitidis
+  N. meningitidis: N.meningitidis
+  N meningitidis: N.meningitidis
+  Salmonella enterica: S.enterica
+  S.enterica: S.enterica
+  S. enterica: S.enterica
+  S enterica: S.enterica
