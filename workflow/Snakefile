@@ -39,12 +39,7 @@ species_configs = rule_all_functions.sample_to_species_config(sample_to_organism
 #                              Snakefile 
 #
 ##############################################################################
-print(rule_all_functions.list_results(
-            samplesheet=samplesheet,
-            species_configs=species_configs,
-            output_folder=output_folder,
-            species_name_map=species_name_map,
-        ))
+
 # Define the dynamic input for rule all
 rule all:
     input:
