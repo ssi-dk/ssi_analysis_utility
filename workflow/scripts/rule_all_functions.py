@@ -4,6 +4,7 @@ import yaml
 from typing import Dict, Tuple, Set, List
 import warnings
 
+
 def sample_read_map(
     samplesheet: pd.DataFrame,
     sample_col: str = "sample_name",
@@ -29,6 +30,7 @@ def sample_read_map(
     }
 
     return sample_to_illumina, sample_to_nanopore, sample_to_assembly_file
+
 
 def sample_map(
     species_name_map: Dict[str, str],
@@ -114,5 +116,5 @@ def list_results(samplesheet, species_configs, output_folder, species_name_map):
                 else:
                     for database in databases:
                         results.add(f"{output_folder}/{sample}/{analysis_name}/{database}.done")
-    print(sorted(results))
+
     return sorted(results)

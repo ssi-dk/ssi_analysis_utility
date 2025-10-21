@@ -122,3 +122,25 @@ rule fetch_Senterica_Serovar:
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
     """
+
+
+# Place holder rule until we have an online repo for all dbs
+# We store momentarily in Dataset/databases
+rule fetch_blast_database:
+    conda:
+        "../envs/blast.yaml"
+    input: 
+        source = "%s/{database}.fasta" %temp_storage_path
+    output:
+        source = "%s/custom/blast/{database}.fasta" %database_path
+    log:
+        stdout = 'Logs/Databases/setup_{database}.log'
+    message:
+        "[Fetch {wildcards.database} Blast database]: Setting up the {wildcards.database} database from the temporary storage folder"
+    shell:
+        """
+        cmd="cp {input.source} {output.database}"
+            
+        echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+        """

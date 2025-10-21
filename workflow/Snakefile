@@ -34,17 +34,21 @@ if unmapped_species: #check if species have not properly been mapped
 
 species_configs = rule_all_functions.sample_to_species_config(sample_to_organism,species_config_path)
 
-print(species_configs)
 ##############################################################################
 #
 #                              Snakefile 
 #
 ##############################################################################
-
+print(rule_all_functions.list_results(
+            samplesheet=samplesheet,
+            species_configs=species_configs,
+            output_folder=output_folder,
+            species_name_map=species_name_map,
+        ))
 # Define the dynamic input for rule all
 rule all:
     input:
-        lambda wc: rule_all_functions.list_results(
+        rule_all_functions.list_results(
             samplesheet=samplesheet,
             species_configs=species_configs,
             output_folder=output_folder,

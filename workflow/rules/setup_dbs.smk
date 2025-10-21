@@ -301,24 +301,3 @@ rule setup_custom_samtool_index:
     """
 
 
-# Place holder rule until we have an online repo for all dbs
-# We store momentarily in Dataset/databases
-
-rule custom_blast_setup:
-    conda:
-        "../envs/blast.yaml"
-    input: 
-        source = "%s/{database}.fasta" %temp_storage_path
-    output:
-        custom_database = "%s/custom/blast/{database}.fasta" %database_path
-    log:
-        stdout = 'Logs/Databases/setup_{database}.log'
-    message:
-        "[setup_{wildcards.database}]: Setting up the {wildcards.database} database from the temporary storage folder"
-    shell:
-        """
-        cmd="cp {input.source} {output.custom_database}"
-            
-        echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
-        eval $cmd >> {log.stdout} 2>&1
-        """
