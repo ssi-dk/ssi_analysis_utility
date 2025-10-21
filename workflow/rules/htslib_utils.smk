@@ -19,6 +19,7 @@ rule samtools_sam_filtration:
         eval $cmd >> {log.stdout} 2>&1
         """
 
+
 rule samtools_bam_filtration:
     input:
         bam = "%s/{sample}/samtools/{database}.bam" %output_folder
@@ -39,6 +40,7 @@ rule samtools_bam_filtration:
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
         """
+
 
 rule samtools_sort:
     input:
@@ -67,6 +69,7 @@ rule samtools_sort:
         eval $cmd >> {log.stdout} 2>&1
         """
 
+
 rule bcftools_pileup:
     input:
         bam_sort = rules.samtools_sort.output.bam_sort,
@@ -92,6 +95,7 @@ rule bcftools_pileup:
         echo "\nIndexing Pileup:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
         """
+
 
 rule bcftools_filter_indels:
     input:
@@ -121,6 +125,7 @@ rule bcftools_filter_indels:
         echo "\nIndexing Pileup:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
         """
+
 
 rule bcftools_variant_call:
     input:

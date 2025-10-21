@@ -76,12 +76,12 @@ rule shovill:
         eval $cmd >> {log.stdout} 2>&1
         """
 
+
 rule assembly:
     input:
         input_assembly = "%s/{sample}/{assembler}/{sample}.fasta" %output_folder
     output:
-        output_assembly = "%s/{sample}/Assemblies/{sample}_{assembler}.fasta" %output_folder,
-        done = temp("%s/{sample}/Assemblies/{sample}_{assembler}.done" % output_folder)
+        output_assembly = "%s/{sample}/Assemblies/{sample}_{assembler}.fasta" %output_folder
     log:
         stdout = "Logs/Assemblies/{sample}_{assembler}_assembly.log"
     shell:

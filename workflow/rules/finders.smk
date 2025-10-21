@@ -26,6 +26,7 @@ rule plasmidfinder:
         echo "PlasmidFinder completed successfully for {wildcards.sample}" > {output.done}
         """
 
+
 rule resfinder:
     input:
         R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
@@ -57,6 +58,7 @@ rule resfinder:
         echo "ResFinder completed successfully for {wildcards.sample}" > {output.done}
         """
 
+
 rule virulencefinder:
     input:
         R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
@@ -83,6 +85,7 @@ rule virulencefinder:
         echo "VirulenceFinder completed successfully for {wildcards.sample}" > {output.done}
         """
 
+
 rule serotypefinder:
     input:
         R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
@@ -108,6 +111,7 @@ rule serotypefinder:
 
         echo "SerotypeFinder completed successfully for {wildcards.sample}" > {output.done}
         """
+
 
 rule amrfinder:
     input:
@@ -137,6 +141,7 @@ rule amrfinder:
         echo "AMRFinderPlus completed successfully for {wildcards.sample} with {wildcards.assembler} assembly" > {output.done}
         """
 
+
 rule snp_identifier:
     input:
         kma_results = rules.custom_kmeralignment.output.results,
@@ -164,7 +169,8 @@ rule snp_identifier:
 
         echo "SNP identification completed successfully of {wildcards.database} on {wildcards.sample}" > {output.done}
         """
-    
+
+
 rule deletion_identifier:
     input:
         kma_results = rules.custom_kmeralignment.output.results,
@@ -195,6 +201,7 @@ rule deletion_identifier:
 
         echo "Deletion identification completed successfully of {wildcards.database} on {wildcards.sample}" > {output.done}
         """
+
 
 rule cdiff_repeat_identifier:
     input:

@@ -1,8 +1,6 @@
 import pandas as pd
 import yaml
 import warnings
-
-#Custom python script defining all the required output files depending on the species specific config files
 from scripts import rule_all_functions 
 
 configfile: "config/config.yaml"
@@ -15,7 +13,6 @@ database_path    = config['input_manager']['database_path']   # used by setup ru
 species_config_path = config['input_manager']['config_species'] # Path to species specific configuration files
 temp_storage_path = config['input_manager']['temp_storage']
 species_name_map =  config['species_map'] # Load species_name_map from config file
-
 
 samplesheet = pd.read_csv(samplesheet_path, sep='\t')
 

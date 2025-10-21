@@ -26,6 +26,7 @@ rule custom_kmeralignment:
         eval $cmd >> {log.stdout} 2>&1
         """
 
+
 rule custom_kmerconsensus:
     input:
         R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
@@ -52,6 +53,7 @@ rule custom_kmerconsensus:
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
         """
+
 
 rule custom_bowtie2alignment:
     input:

@@ -2,7 +2,7 @@
 # Runs Multi Locus Sequence Type to determine the ST profile of isolate
 rule mlst:
     input:
-        assembly = lambda wildcards: f"{output_folder}/{wildcards.sample}/Assemblies/{wildcards.sample}_{wildcards.assembler}.fasta",
+        assembly = rules.assembly.output.output_assembly,
         datefile = rules.update_MLST.output.datefile
     output:
         # "%s/{sample}/MLST/{sample}.tsv" %output_folder
@@ -26,11 +26,12 @@ rule mlst:
         echo "MLST completed succesfully for {wildcards.sample} with {wildcards.assembler} assembly" > {output.done}
     	"""
 
+
 # Rule Kleborate:
 # Runs Kleborate characterising virulence and resistance in pathogen assemblies
 rule kleborate:
     input:
-        assembly = lambda wildcards: f"{output_folder}/{wildcards.sample}/Assemblies/{wildcards.sample}_{wildcards.assembler}.fasta",
+        assembly = rules.assembly.output.output_assembly,
     output:
         kleborate_outdir = directory("%s/{sample}/kleborate/{assembler}" %output_folder),
         done = temp("%s/{sample}/kleborate/{assembler}.done" %output_folder)
@@ -54,11 +55,12 @@ rule kleborate:
         echo "Kleborate completed succesfully for {wildcards.sample} with {wildcards.assembler} assembly" > {output.done}
     	"""
 
+
 # Rule meningotype
 # Runs meningotype on SPAdes assembled contigs to perform serotyping of N. Meningmeningitidis contigs
 rule meningotype:
     input:
-        assembly = lambda wildcards: f"{output_folder}/{wildcards.sample}/Assemblies/{wildcards.sample}_{wildcards.assembler}.fasta",
+        assembly = rules.assembly.output.output_assembly,
     output:
         meningotype = "%s/{sample}/meningotype/{assembler}_meningotype.tsv" %output_folder,
         done = temp("%s/{sample}/meningotype/{assembler}.done" %output_folder)
@@ -79,6 +81,7 @@ rule meningotype:
     
         echo "Meningotype completed succesfully on {wildcards.sample} with {wildcards.assembler} assembly" > {output.done}
     	"""
+
 
 rule seqsero2:
     input:
@@ -106,6 +109,7 @@ rule seqsero2:
 
         echo "seqsero2 completed succesfully for {wildcards.sample}" > {output.done}
         """
+
 
 rule sistr:
     input:

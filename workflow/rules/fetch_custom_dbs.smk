@@ -22,6 +22,7 @@ rule fetch_genbank:
         eval $cmd >> {log.stdout} 2>&1
         """
 
+
 rule fetch_type_repeat_sequence:
     output:
         seq = "%s/custom/type_repeats/{TR}.fasta" %database_path
@@ -104,6 +105,7 @@ rule fetch_Senterica_Scheme:
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
     """
+
 
 rule fetch_Senterica_Serovar:
   output:

@@ -85,6 +85,7 @@ rule setup_PointFinder:
         date -I > {output.database}/creation.date
         """
 
+
 rule setup_DisinFinder:
     conda:
         "../envs/resfinder.yaml"
@@ -191,6 +192,7 @@ rule setup_AMRFinder:
         date -I > {output.database}/creation.date
         """
 
+
 rule update_MLST:
     conda:
         "../envs/mlst.yaml"
@@ -241,6 +243,7 @@ rule setup_custom_kmeraligner_index:
     date -I > {params.prefix}_creation.date
     """
 
+
 rule setup_custom_bowtie2_index:
   input:
     source = "%s/custom/{database}.fasta" %database_path
@@ -269,6 +272,7 @@ rule setup_custom_bowtie2_index:
 
     date -I > {params.prefix}_creation.date
     """
+
 
 rule setup_custom_samtool_index:
   input:
@@ -299,5 +303,3 @@ rule setup_custom_samtool_index:
 
     date -I > $outdir/creation.date
     """
-
-
