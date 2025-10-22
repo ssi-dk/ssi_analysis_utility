@@ -8,3 +8,5 @@ wget -nc ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR254/086/SRR25448586/SRR25448586_1
 wget -nc ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR254/086/SRR25448586/SRR25448586_2.fastq.gz
 wget -nc ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR262/062/SRR26205262/SRR26205262_1.fastq.gz
 wget -nc ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR262/062/SRR26205262/SRR26205262_2.fastq.gz
+wget -nc ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR404/SRR404118/SRR404118_2.fastq.gz
+wget -nc ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR404/SRR404118/SRR404118_1.fastq.gz

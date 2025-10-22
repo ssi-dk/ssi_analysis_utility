@@ -29,3 +29,4 @@ species_map:
   S.enterica: S.enterica
   S. enterica: S.enterica
   S enterica: S.enterica
+  s.aureus: S.aureus

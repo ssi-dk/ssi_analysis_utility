@@ -109,6 +109,31 @@ rule serotypefinder:
     echo "SerotypeFinder completed successfully for {wildcards.sample}" > {output.done}
     """
 
+
+rule spa_typing:
+    input:
+        assembly = rules.assembly.output.output_assembly,
+        database = rules.setup_Spatyper.output.database
+    output:
+        done = temp("%s/{sample}/spa_typing/{assembler}.done" %output_folder)
+    conda:
+        "../envs/spatyper.yaml"
+    log:
+        stdout = 'Logs/{sample}/spatyper_{assembler}.log'
+    message:
+        "[Spatyping]: Running Spatyper for {wildcards.sample} using ({wildcards.assembler}) contigs"
+    shell:
+        """
+        outdir=$(dirname {output.done})
+        cmd="spatyper.py -i {input.assembly} -db {input.database} -o $outdir"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+
+        echo "Spatyping completed successfully for {wildcards.sample} with {wildcards.assembler} assembly" > {output.done}
+        """
+
+
 rule amrfinder:
   input:
     assembly = rules.assembly.output.output_assembly,
@@ -136,6 +161,7 @@ rule amrfinder:
 
     echo "AMRFinderPlus completed successfully for {wildcards.sample} with {wildcards.assembler} assembly" > {output.done}
     """
+
 
 rule snp_identifier:
   input:

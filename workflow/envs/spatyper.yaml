@@ -1,0 +1,5 @@
+name: spatyper
+channels:
+ - conda-forge
+dependencies:
+ - genomicepidemiology::spatyper
