@@ -19,3 +19,8 @@ analyses_to_run:
     
     mlst:
         assemblers: [skesa]  
+    
+    custom_blaster:
+        options: "-perc_identity 90.0"
+        assemblers: [skesa]
+        database : [OXAndm]

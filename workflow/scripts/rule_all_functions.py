@@ -4,6 +4,7 @@ import yaml
 from typing import Dict, Tuple, Set, List
 import warnings
 
+
 def sample_read_map(
     samplesheet: pd.DataFrame,
     sample_col: str = "sample_name",
@@ -29,6 +30,7 @@ def sample_read_map(
     }
 
     return sample_to_illumina, sample_to_nanopore, sample_to_assembly_file
+
 
 def sample_map(
     species_name_map: Dict[str, str],
