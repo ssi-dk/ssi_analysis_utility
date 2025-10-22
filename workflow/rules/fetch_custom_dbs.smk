@@ -141,7 +141,7 @@ rule fetch_blast_database:
         "[Fetch {wildcards.database} Blast database]: Setting up the {wildcards.database} database from the temporary storage folder"
     shell:
         """
-        cmd="cp {input.source} {output.database}"
+        cmd="cp {input.source} {output.source}"
             
         echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
