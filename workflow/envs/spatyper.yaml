@@ -1,5 +1,8 @@
 name: spatyper
 channels:
  - conda-forge
+ - bioconda
+ - genomicepidemiology
 dependencies:
+ - bioconda::blast=2.14.0
  - genomicepidemiology::spatyper

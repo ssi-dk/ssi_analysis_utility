@@ -173,8 +173,6 @@ rule setup_SerotypeFinder:
 
 
 rule setup_Spatyper:
-    conda:
-        "../envs/spatyper.yaml"
     output:
         database = directory("%s/spatyper_db" %database_path)
     log:
@@ -183,19 +181,10 @@ rule setup_Spatyper:
         "[Setup Spatyper]: Setting up SerotypeFinder database"
     shell:
         """
-        git clone https://bitbucket.org/genomicepidemiology/spatyper_db.git {output.database} > {log.stdout} 2>&1
+        cmd="git clone https://bitbucket.org/genomicepidemiology/spatyper_db.git {output.database}"
 
-        for fasta in $(find {output.database} -iname '*.fsa'); do
-            idx_prefix={output.database}/$(basename $fasta .fsa)
-            cmd="kma index -i $fasta -o $idx_prefix"
-            
-            echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
-            eval $cmd >> {log.stdout} 2>&1
-            
-            if [ -z $idx_prefix.comb.b ]; then
-                echo '[serotypefinder_db]: ERROR - $idx_prefix.comb.b was not created during KMA indexing. This likely means that the serotypefinder_db has changed. Post this message on our Github repository!' 2>&1 >> {log.stdout}
-            fi
-        done
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
 
         date -I > {output.database}/creation.date
         """
