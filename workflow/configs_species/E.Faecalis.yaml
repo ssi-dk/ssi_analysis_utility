@@ -7,9 +7,13 @@ analyses_to_run:
     serotypefinder: true
     
     amrfinder:
-        options: --organism 'Escherichia'
+        options: --organism 'Enterococcus_faecalis'
         assemblers: [shovill]  
     
+    kmeraligner:
+        database: [elmDB]
+        options : -ID 80 -1t1 -cge
+
     mlst:
         assemblers: [shovill]  
     

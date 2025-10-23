@@ -144,7 +144,7 @@ rule amrfinder:
 
 rule snp_identifier:
     input:
-        kma_results = rules.custom_kmeralignment.output.results,
+        kma_results = rules.kmeraligner.output.results,
         variants = rules.bcftools_variant_call.output.variants,
         variants_index = rules.bcftools_variant_call.output.index,
         ref_bed = rules.fetch_genbank.output.bed,
@@ -173,7 +173,7 @@ rule snp_identifier:
 
 rule deletion_identifier:
     input:
-        kma_results = rules.custom_kmeralignment.output.results,
+        kma_results = rules.kmeraligner.output.results,
         kma_seq = rules.custom_kmerconsensus.output.seq,
         indels = rules.bcftools_filter_indels.output.indels,
         indels_index = rules.bcftools_filter_indels.output.index,
@@ -238,8 +238,8 @@ rule cdiff_repeat_identifier:
 rule LREfinder:
     input:
         # A complete access to the wildcard is needed, if we try to call the output of different rule we have the blending of wildcards 
-        res = rules.custom_kmeralignment.output.results,
-        matrix = rules.custom_kmeralignment.output.matrix
+        res = rules.kmeraligner.output.results,
+        matrix = rules.kmeraligner.output.matrix
     # params:
     #     options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["custom_blaster"]["options"],    
     output:

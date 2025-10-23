@@ -1,19 +1,21 @@
-rule custom_kmeralignment:
+rule kmeraligner:
     input:
         R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
         R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
         database = rules.setup_custom_kmeraligner_index.output.names
     params:
         prefix_out = "%s/{sample}/kmeraligner/{database}" %output_folder,
-        prefix_db = rules.setup_custom_kmeraligner_index.params.prefix    
+        prefix_db = rules.setup_custom_kmeraligner_index.params.prefix,   
+        options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["kmeraligner"]["options"]
     output:
         results = "%s/{sample}/kmeraligner/{database}.res" %output_folder,
         matrix = "%s/{sample}/kmeraligner/{database}.mat.gz" %output_folder,
-        sam = temp("%s/{sample}/samtools/{database}.sam" %output_folder)
+        sam = temp("%s/{sample}/samtools/{database}.sam" %output_folder),
+        done = "%s/{sample}/kmeraligner/{database}.done" %output_folder
     conda:
         "../envs/kmeraligner.yaml"
     log:
-        stdout = "Logs/{sample}/custom_kmeralignment_{database}.log"
+        stdout = "Logs/{sample}/kmeraligner{database}.log"
     message:
         "[kmeraligner]: Running KMA for {wildcards.database} on {wildcards.sample}"
     shell:
@@ -21,10 +23,12 @@ rule custom_kmeralignment:
         mkdir -p $(dirname {output.results})
         mkdir -p $(dirname {output.sam})
 
-        cmd="kma -ipe {input.R1} {input.R2} -o {params.prefix_out} -t_db {params.prefix_db} -na -nc -nf -sam 4 -matrix > {output.sam}"
+        cmd="kma -ipe {input.R1} {input.R2} -o {params.prefix_out} -t_db {params.prefix_db} {params.options} -na -nc -nf -sam 4 -matrix > {output.sam}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
+
+        echo "Setup of {input.database} successfully executed for {wildcards.sample}" > {output.done}
         """
 
 

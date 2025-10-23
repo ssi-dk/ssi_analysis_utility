@@ -1,6 +1,6 @@
 rule kma_filter:
     input:
-        results = rules.custom_kmeralignment.output.results,
+        results = rules.kmeraligner.output.results,
         database = rules.setup_custom_kmeraligner_index.output.names
     params:
         options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["kma_filter"]["options"],
