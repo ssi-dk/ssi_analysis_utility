@@ -1,0 +1,19 @@
+analyses_to_run: 
+
+    plasmidfinder: true
+
+    virulencefinder: true
+
+    serotypefinder: true
+    
+    amrfinder:
+        options: --organism 'Escherichia'
+        assemblers: [shovill]  
+    
+    mlst:
+        assemblers: [shovill]  
+    
+    LREfinder:
+        database : [elmDB]
+
+

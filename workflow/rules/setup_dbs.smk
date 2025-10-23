@@ -172,7 +172,6 @@ rule setup_SerotypeFinder:
         date -I > {output.database}/creation.date
         """
 
-
 rule setup_AMRFinder:
     conda:
         "../envs/amrfinder.yaml"
@@ -303,3 +302,37 @@ rule setup_custom_samtool_index:
 
     date -I > $outdir/creation.date
     """
+
+
+# rule setup_LREfinder:
+#     conda:
+#         "../envs/serotypefinder.yaml"
+#     output:
+#         database = directory("%s/LREfinder_db" %database_path)
+#     log:
+#         stdout = 'Logs/Databases/LREfinder_db.log'
+#     message:
+#         "[setup_LREfinder]: Setting up LREfinder database"
+#     shell:
+#         """
+#         outdir=$(dirname {output.database})
+#         mkdir -p $outdir
+
+#         curl -O https://bitbucket.org/genomicepidemiology/lre-finder/src/master/elmDB.tar.gz  > {log.stdout} 2>&1
+#         mv elmDB.tar.gz {output.database}
+#         tar -xvzf elmDB.tar.gz
+
+#         for fasta in $(find {output.database} -iname '*elmDB*.fsa'); do
+#             idx_prefix={output.database}/$(basename $fasta .fsa)
+#             cmd="kma index -i $fasta -o $idx_prefix"
+            
+#             echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
+#             eval $cmd >> {log.stdout} 2>&1
+            
+#             if [ -z $idx_prefix.comb.b ]; then
+#                 echo '[LREfinder_db]: ERROR - $idx_prefix.comb.b was not created during KMA indexing. This likely means that the serotypefinder_db has changed. Post this message on our Github repository!' 2>&1 >> {log.stdout}
+#             fi
+#         done
+
+#         date -I > {output.database}/creation.date
+#         """

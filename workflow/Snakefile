@@ -47,6 +47,13 @@ rule all:
             species_name_map=species_name_map,
         )
 
+print(rule_all_functions.list_results(
+            samplesheet=samplesheet,
+            species_configs=species_configs,
+            output_folder=output_folder,
+            species_name_map=species_name_map,
+        ))
+
 include : "rules/assemblers.smk"
 include : "rules/fetch_custom_dbs.smk"
 include : "rules/setup_dbs.smk"

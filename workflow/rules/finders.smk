@@ -238,29 +238,27 @@ rule cdiff_repeat_identifier:
 rule LREfinder:
     input:
         # A complete access to the wildcard is needed, if we try to call the output of different rule we have the blending of wildcards 
-        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
-        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
-        results_kma = rules.custom_kmeralignment.output.results,
+        res = rules.custom_kmeralignment.output.results,
         matrix = rules.custom_kmeralignment.output.matrix
     # params:
     #     options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["custom_blaster"]["options"],    
     output:
-        results = "%s/{sample}/LRE-finder/{sample}_pos.tsv" %output_folder,
-        done = temp("%s/{sample}/LRE-finder/{sample}}_{database}.done" %output_folder)
+        results = "%s/{sample}/LREfinder/{database}.tsv" %output_folder,
+        done = temp("%s/{sample}/LREfinder/{database}.done" %output_folder)
     conda:
-        "../envs/blast.yaml"
+        "../envs/python_functions.yaml"
     log:
-        stdout = "Logs/{sample}/LRE-finder_{sample}.log"
+        stdout = "Logs/{sample}/LRE-finder_{database}.log"
     message:
         "[LRE-finder]: Identify genes and mutations leading to linezolid resistance in E. faecalis and E. faecium"
     shell:
         """
         mkdir -p $(dirname {output.results})
-
-        python workflow/scripts/LRE-finderMS.py -ires {input.results_kma} -imat {input.matrix} -o {output.results}
+    
+        cmd="python workflow/scripts/LRE-FinderMS.py -ires {input.res} -imat {input.matrix} -o {output.results}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
 
-        echo "LRE-finder successfully executed for {wildcards.sample}" > {output.done}
+        echo "LRE-finder successfully executed" > {output.done}
         """

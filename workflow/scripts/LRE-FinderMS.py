@@ -241,7 +241,10 @@ def main():
                          "T[%]",
                          "N[%]",
                          "-[%]"]]
-    df_final.to_csv(pos+".tsv",
+    base, ext = os.path.splitext(pos)
+    pos = pos if pos.endswith('.tsv') else pos + '.tsv'
+    
+    df_final.to_csv(pos,
                     sep="\t") # write final tsv 
 
 
