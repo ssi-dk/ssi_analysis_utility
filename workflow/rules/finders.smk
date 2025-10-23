@@ -125,7 +125,7 @@ rule spa_typing:
     shell:
         """
         outdir=$(dirname {output.done})
-        cmd="spatyper.py -i {input.assembly} -db {input.database} -o $outdir"
+        cmd="spatyper.py -i {input.assembly} -db {input.database}/ -o $outdir"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
