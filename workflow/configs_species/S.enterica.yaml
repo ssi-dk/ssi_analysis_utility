@@ -12,5 +12,5 @@ analyses_to_run:
 
   seqsero2: true
 
-  #sistr:
-  #assemblers: [skesa,spades]  
+  sistr:
+    assemblers: [skesa,spades]  
