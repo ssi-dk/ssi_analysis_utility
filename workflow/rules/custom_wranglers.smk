@@ -1,21 +1,27 @@
 rule kma_filter:
     input:
-        results = rules.custom_kmeralignment.output.results
-    output:
-        filtered_tsv = "%s/{sample}/KMA_Filter/KMA_results.tsv" % OUT_FOLDER,
+        results = rules.custom_kmeralignment.output.results,
+        database = rules.setup_custom_kmeraligner_index.output.names
     params:
-        options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["KMA_filter"]["options"],
-        log_dir = "%s/{sample}/KMA_results/" %OUT_FOLDER,
-        sample = "{sample}"
+        options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["kma_filter"]["options"],
+        metafile = "%s/kma_filter.tsv" %metadata_path
+    output:
+        filtered_tsv = "%s/{sample}/kma_filter/{database}.tsv" % output_folder,
+        done = temp("%s/{sample}/kma_filter/{database}.done" %output_folder)  # note folder name; pick one casing and keep it everywhere
     conda:
-        config["analysis_settings"]["KMA_filter"]["yaml"]
+        "../envs/python_functions.yaml"
     log:
-        stdout = "Logs/{sample}/KMA_results/{sample}_KMA_filter.log"
+        stdout = "Logs/{sample}/KMA_results/{sample}_{database}.log"
     message:
         "[KMA Filter]: Filtering KMA .res result for {wildcards.sample}"
     shell:
         """
         mkdir -p $(dirname {output.filtered_tsv})
 
-        python workflow/scripts/KMA_Filter.py --KMA_res {input.kma_res} --sample_id {params.sample} --output {output.filtered_tsv} {params.options} --log_dir {params.log_dir} > {log.stdout} 2>&1
+        cmd="python workflow/scripts/KMA_Filter.py --KMA_res {input.results} --metafile {params.metafile} --sample_id {wildcards.sample} --output {output.filtered_tsv} {params.options} > {log.stdout} 2>&1"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout}
+        eval $cmd >> {log.stdout} 2>&1
+    
+        echo "KMA results succesfully wrangled for {wildcards.sample} on {wildcards.database}" > {output.done}
         """
