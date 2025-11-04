@@ -5,12 +5,12 @@ analyses_to_run:
 
   amrfinder:
     options: --organism 'Salmonella'
-    assemblers: [skesa]  
+    assemblers: shovill
     
   mlst:
-    assemblers: [skesa]  
+    assemblers: shovill
 
   seqsero2: true
 
   sistr:
-    assemblers: [skesa,spades]  
+    assemblers: shovill

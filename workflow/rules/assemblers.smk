@@ -10,6 +10,7 @@ rule spades:
         stdout = "Logs/Assemblies/{sample}_spades.log"
     threads:
         max(1, workflow.cores * 0.66667)
+    priority: 2
     message:
         "[SPAdes]: Assemblying {wildcards.sample} using SPAdes with {threads} thread(s). This may take some time!\nInspect {log.stdout} for more details!"
     shell:
@@ -37,6 +38,7 @@ rule skesa:
         stdout = "Logs/Assemblies/{sample}_Skesa.log"
     threads:
         max(1, workflow.cores * 0.66667)
+    priority: 2
     message:
         "[Skesa]: Assemblying {wildcards.sample} using Skesa with {threads} core(s). This may take some time!\nInspect {log.stdout} for more details!"
     shell:
@@ -59,6 +61,7 @@ rule shovill:
         stdout = "Logs/Assemblies/{sample}_Shovill.log"
     threads:
         max(1, workflow.cores * 0.66667)
+    priority: 2
     message:
         "[Shovill]: Assemblying {wildcards.sample} using Shovill with {threads} CPU(s). This may take some time!\nInspect {log.stdout} for more details!"
     shell:
@@ -92,6 +95,4 @@ rule assembly:
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1 
-
-        echo "Assembly successfully created for {wildcards.sample}" > {output.done}
         """

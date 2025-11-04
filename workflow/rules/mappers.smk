@@ -66,6 +66,7 @@ rule custom_bowtie2alignment:
         sam = temp("%s/{sample}/bowtie2/{database}.sam" %output_folder)
     threads:
         max(1, workflow.cores * 0.3333333)
+    priority: 2
     conda:
         "../envs/bowtie2.yaml"
     log:

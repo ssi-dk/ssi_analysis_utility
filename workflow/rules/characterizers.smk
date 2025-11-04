@@ -92,6 +92,7 @@ rule seqsero2:
         done = temp("%s/{sample}/seqsero2/seqsero2.done" %output_folder)
     threads:
         max(1, workflow.cores * 0.3333333)
+    priority: 1
     conda:
         "../envs/seqsero2.yaml"
     log:
@@ -122,6 +123,7 @@ rule sistr:
         done = temp("%s/{sample}/sistr/{assembler}.done" %output_folder)
     threads:
         max(1, workflow.cores * 0.3333333)
+    priority: 2
     conda:
         "../envs/sistr.yaml"
     log:

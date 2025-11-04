@@ -2,7 +2,7 @@ analyses_to_run:
 
     kma_filter:
         options: --organism 'Escherichia coli'
-        database: [ecoligenes]
+        database: ecoligenes
     
     resfinder:
         options: --species 'Escherichia coli'
@@ -15,12 +15,12 @@ analyses_to_run:
     
     amrfinder:
         options: --organism 'Escherichia'
-        assemblers: [skesa]  
+        assemblers: shovill 
     
     mlst:
-        assemblers: [skesa]  
+        assemblers: shovill  
     
     custom_blaster:
         options: "-perc_identity 90.0"
-        assemblers: [skesa]
-        database : [OXAndm]
+        assemblers: shovill
+        database : OXAndm

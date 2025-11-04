@@ -8,12 +8,12 @@ analyses_to_run:
 
     amrfinder: # Leave blank or insert --organism alongside one of the supported organisms, listed here: https://github.com/evolarjun/amr/wiki/Curated-organisms
         options: --organism 'Neisseria_meningitidis'
-        assemblers: [spades]  
+        assemblers: shovill
 
     mlst:
-        assemblers: [spades]  
+        assemblers: shovill
 
     meningotype:
-        assemblers: [spades]  
+        assemblers: shovill
 
                 
