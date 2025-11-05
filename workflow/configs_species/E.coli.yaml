@@ -17,10 +17,8 @@ analyses_to_run:
         options: --organism 'Escherichia'
         assemblers: [skesa]  
     
-    CHtyper: 
-        Title : CHtyper
-        ID: 90
-        coverage: 60    
+    chtyper:
+        database: fumCH_db 
     
     mlst:
         assemblers: [skesa]  
