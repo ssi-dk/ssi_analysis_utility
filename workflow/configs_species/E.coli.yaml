@@ -17,6 +17,9 @@ analyses_to_run:
         options: --organism 'Escherichia'
         assemblers: shovill 
     
+    chtyper:
+        database: fumCH_db 
+    
     mlst:
         assemblers: shovill  
     
