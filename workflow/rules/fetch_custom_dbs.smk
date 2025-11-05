@@ -126,6 +126,32 @@ rule fetch_Senterica_Serovar:
     """
 
 
+rule fetch_chtyper_db:
+    output:
+        source = "%s/custom/fumCH_db.fasta" %database_path
+    conda:
+        "../envs/fetch.yaml"
+    log:
+        stdout = "Logs/Databases/setup_chtyper_database.log"
+    message:
+        "[fetch_chtyper_db]: Downloading custom database for CHtyper"
+    shell:
+        """
+        outdir=$(dirname {output.source})
+        mkdir -p $outdir
+    
+        cmd="curl https://bitbucket.org/genomicepidemiology/chtyper_db/raw/654ca48d250e0a69c6c06b4be5a96d807b23f806/fimH.fsa -o $outdir/fimH.fsa"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+    
+        cmd="curl https://bitbucket.org/genomicepidemiology/chtyper_db/raw/654ca48d250e0a69c6c06b4be5a96d807b23f806/fumC.fsa -o $outdir/fumC.fsa"
+        eval $cmd >> {log.stdout} 2>&1 
+
+        cmd="cat $outdir/fimH.fsa $outdir/fumC.fsa > {output.source}"
+        eval $cmd >> {log.stdout} 2>&1
+        """
+
 # Place holder rule until we have an online repo for all dbs
 # We store momentarily in Dataset/databases
 rule fetch_blast_database:

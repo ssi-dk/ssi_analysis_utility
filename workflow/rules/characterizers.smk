@@ -55,6 +55,31 @@ rule kleborate:
         echo "Kleborate completed succesfully for {wildcards.sample} with {wildcards.assembler} assembly" > {output.done}
     	"""
 
+rule chtyper:
+    input:
+        results = rules.custom_kmeralignment.output.results
+    params:
+        id = 90,
+        coverage = 60
+    output:
+        filtered_tsv = "%s/{sample}/chtyper/{database}_chtyper.tsv" % output_folder,
+        done = "%s/{sample}/chtyper/{database}.done" % output_folder
+    log:
+        stdout = "Logs/{sample}/{database}_chtyper.log"
+    message:
+    	"[CH Typer]: Running Chtyper on {wildcards.database} assembly for {wildcards.sample}"
+    shell:
+        """
+        mkdir -p $(dirname {output.filtered_tsv})
+
+        echo "Running awk filter on {input.results}" > {log.stdout} 2>&1
+
+        awk -F'\t' 'NR==1{{for(i=1;i<=NF;i++){{if($i=="Template_Identity")id=i;if($i=="Template_Coverage")cov=i}}print;next}} ($id+0>{params.id} && $cov+0>{params.coverage})' {input.results} > {output.filtered_tsv} 2>> {log.stdout}
+        
+        echo "CH Typer completed succesfully for {wildcards.sample} on {wildcards.database}" > {output.done}
+
+        """
+
 
 # Rule meningotype
 # Runs meningotype on SPAdes assembled contigs to perform serotyping of N. Meningmeningitidis contigs
