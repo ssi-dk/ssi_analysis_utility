@@ -1,0 +1,22 @@
+amrfinder: {assembler}.tsv
+plasmidfinder: results_tab.tsv
+resfinder:
+  - ResFinder_results_tab.txt
+  - PointFinder_results.txt
+  - pointfinder_kma/kma_{organism_option}_{read1}.res
+  - DisinFinder_results_tab.txt
+serotypefinder: results_tab.tsv
+virulencefinder: results_tab.tsv
+kmeraligner: {database}.res
+kma_filter: {database}.tsv
+mlst: {assembler}_mlst.tsv
+custom_blaster: blast_{assembler}_{database}.tsv
+snp_identifier: {database}.tsv
+deletion_identifier: {database}.tsv
+cdiff_repeat_identifier: {assembler}_repeat_types.tsv
+meningotype: {assembler}_meningotype.tsv
+kleborate:
+  - {assembler}/klebsiella_pneumo_complex_hAMRonization_output.txt
+  - {assembler}/klebsiella_pneumo_complex_output.txt
+sistr: {assembler}_cgmlst_profiles.csv
+seqsero2: SeqSero_result.tsv
