@@ -267,14 +267,20 @@ def long_table_creation(df: pd.DataFrame,
     return long
 
 # ---------- core work moved here ----------
-def save_long_table(samplesheet_path: str, catalogue_path: str, config_species_root: str, output_folder: str, na_filter: bool) -> None:
+def save_long_table(
+    samplesheet_path: str,
+    catalogue_path: str,
+    config_species_root: str,
+    output_folder: str,
+    na_filter: bool,
+    extend: bool,
+) -> None:
 
     if not os.path.exists(samplesheet_path):
         raise FileNotFoundError(f"Samplesheet not found: {samplesheet_path}")
     if not os.path.exists(catalogue_path):
         raise FileNotFoundError(f"Catalogue not found: {catalogue_path}")
 
-    # check output dir exists
     os.makedirs(output_folder, exist_ok=True)
 
     samplesheet = pd.read_csv(samplesheet_path, sep="\t")
@@ -287,7 +293,9 @@ def save_long_table(samplesheet_path: str, catalogue_path: str, config_species_r
     print(f"Using catalogue: {catalogue_path}")
     print(f"\nSuccessfully read results catalogue with {len(catalogue)} entries.\n")
 
+    combined_frames: List[pd.DataFrame] = []  # used only when extend=True
     written: List[str] = []
+
     for _, row in samplesheet.iterrows():
         sample = str(row["sample_name"])
         species_cfg_file = str(row["config"])
@@ -335,7 +343,7 @@ def save_long_table(samplesheet_path: str, catalogue_path: str, config_species_r
                 for fpath in files:
                     print(f"\t\t• {fpath}")
 
-            # Read files: special-case mlst as headerless
+            # Read files
             for fp in files:
                 if not os.path.isfile(fp):
                     continue
@@ -344,7 +352,6 @@ def save_long_table(samplesheet_path: str, catalogue_path: str, config_species_r
                     df = read_table_mlst(fp)
                 else:
                     df = read_table_information(fp)
-
                 if df is None:
                     continue
 
@@ -359,13 +366,12 @@ def save_long_table(samplesheet_path: str, catalogue_path: str, config_species_r
 
         print("")
 
-        out_path = os.path.join(output_folder, f"{sample}_longtable.txt")
+        # Build per-sample table
         if sample_frames:
             out_df = pd.concat(sample_frames, ignore_index=True)
         else:
             out_df = pd.DataFrame(columns=["sample_name", "tool", "filename", "organism", "field", "value"])
 
-        # Filtering value columns with na or na similar strings, NA, nan, NA..NA etc
         if na_filter and not out_df.empty:
             before = len(out_df)
             out_df = out_df[~out_df["value"].apply(value_is_na)].copy()
@@ -373,7 +379,28 @@ def save_long_table(samplesheet_path: str, catalogue_path: str, config_species_r
             if removed > 0:
                 print(f"  (Filtered {removed} NA-like rows for {sample} due to --na)")
 
-        out_df.to_csv(out_path, sep="\t", index=False)
+        if extend:
+            # collect for one combined write/append later
+            combined_frames.append(out_df)
+        else:
+            # write per-sample file
+            out_path = os.path.join(output_folder, f"{sample}_longtable.txt")
+            out_df.to_csv(out_path, sep="\t", index=False)
+            written.append(out_path)
+
+    if extend:
+        # Write/append the single combined file
+        combined = pd.concat(combined_frames, ignore_index=True) if combined_frames else \
+                   pd.DataFrame(columns=["sample_name", "tool", "filename", "organism", "field", "value"])
+        out_path = os.path.join(output_folder, "Longtable.txt")
+        exists_before = os.path.exists(out_path)
+
+        if exists_before:
+            combined.to_csv(out_path, sep="\t", index=False, mode="a", header=False)
+            print(f"Appended {len(combined)} rows to existing file: {out_path}")
+        else:
+            combined.to_csv(out_path, sep="\t", index=False)
+            print(f"Wrote {len(combined)} rows to: {out_path}")
         written.append(out_path)
 
     print("Long-table files written:")
@@ -384,10 +411,11 @@ def save_long_table(samplesheet_path: str, catalogue_path: str, config_species_r
         except Exception:
             print(f"  - {path}")
 
+
 # ---------- main ----------
 def main():
     parser = argparse.ArgumentParser(
-        description="Resolve outputs per sample and emit per-sample long-table TSVs."
+        description="Resolve outputs per sample and emit per-sample or combined long-table TSVs."
     )
     parser.add_argument("--config", required=True, help="Path to main config YAML")
     parser.add_argument("--sample_sheet", help="Optional path to samplesheet (TSV)")
@@ -396,6 +424,11 @@ def main():
         "-n", "--na",
         action="store_true",
         help="If set, drop rows where the 'value' field is empty or NA-like (NA, N/A, NaN, NA..NA)."
+    )
+    parser.add_argument(
+        "-e", "--extend",
+        action="store_true",
+        help="If set, append all samples into {output_folder}/Longtable.txt (create if missing). Without this flag, write per-sample files."
     )
     args = parser.parse_args()
 
@@ -412,25 +445,19 @@ def main():
         print(f"  {key}: {value}")
     print()
 
-    samplesheet_path = None
-    catalogue_path = None
-    config_species_root = None
-    output_folder = None
-    na_filter = False
-
-    if args.sample_sheet:
-        samplesheet_path = args.sample_sheet 
-    else:
-        samplesheet_path = input_manager["samplesheet"]
-    if args.catalogue:
-        catalogue_path = args.catalogue
-    else:
-        catalogue_path = input_manager["result_catalogue"]
-
+    samplesheet_path    = args.sample_sheet or input_manager["samplesheet"]
+    catalogue_path      = args.catalogue    or input_manager["result_catalogue"]
     config_species_root = input_manager["config_species"]
-    output_folder = input_manager["output_folder"]
+    output_folder       = input_manager["output_folder"]
 
-    save_long_table(samplesheet_path,catalogue_path,config_species_root,output_folder,na_filter)
+    save_long_table(
+        samplesheet_path=samplesheet_path,
+        catalogue_path=catalogue_path,
+        config_species_root=config_species_root,
+        output_folder=output_folder,
+        na_filter=args.na,
+        extend=args.extend,
+    )
 
 if __name__ == "__main__":
     main()
