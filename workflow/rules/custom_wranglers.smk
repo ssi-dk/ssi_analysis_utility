@@ -3,7 +3,7 @@ rule kma_filter:
         results = rules.custom_kmeralignment.output.results,
         database = rules.setup_custom_kmeraligner_index.output.names
     params:
-        options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["kma_filter"]["options"],
+        options = lambda wildcards: options_lookup[wildcards.sample]["kma_filter"],
         metafile = "%s/kma_filter.tsv" %metadata_path
     output:
         filtered_tsv = "%s/{sample}/kma_filter/{database}.tsv" % output_folder,

@@ -61,7 +61,7 @@ rule custom_bowtie2alignment:
         R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
         database = rules.setup_custom_bowtie2_index.output.bt2_1 # just locate one of the bt2 files to activate the db_setup
     params:
-        options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["bowtie2"]["options"],
+        options = lambda wildcards: options_lookup[wildcards.sample]["bowtie2"]
     output:
         sam = temp("%s/{sample}/bowtie2/{database}.sam" %output_folder)
     threads:
@@ -92,7 +92,7 @@ rule custom_blaster:
         assembly = rules.assembly.output.output_assembly,
         database = rules.fetch_blast_database.output.source
     params:
-        options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["custom_blaster"]["options"],    
+        options = lambda wildcards: options_lookup[wildcards.sample]["custom_blaster"]    
     output:
         results = "%s/{sample}/custom_blaster/blast_{assembler}_{database}.tsv" %output_folder,
         done = temp("%s/{sample}/custom_blaster/{assembler}_{database}.done" %output_folder)

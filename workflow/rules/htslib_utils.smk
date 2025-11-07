@@ -2,7 +2,7 @@ rule samtools_sam_filtration:
     input:
         sam = "%s/{sample}/samtools/{database}.sam" %output_folder
     params:
-        options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["tool_settings"]["samtools"]["view"]["options"]
+        options = lambda wildcards: tool_lookup[wildcards.sample]["samtools"]["view"]
     output:
         bam = temp("%s/{sample}/samtools/{database}_filtered.bam" %output_folder)
     conda:
@@ -24,7 +24,7 @@ rule samtools_bam_filtration:
     input:
         bam = "%s/{sample}/samtools/{database}.bam" %output_folder
     params:
-        options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["tool_settings"]["samtools"]["view"]["options"]
+        options = lambda wildcards: tool_lookup[wildcards.sample]["samtools"]["view"]
     output:
         bam = temp("%s/{sample}/samtools/{database}_filtered.bam" %output_folder)
     conda:
@@ -46,7 +46,7 @@ rule samtools_sort:
     input:
         bam = "%s/{sample}/samtools/{database}_filtered.bam" %output_folder
     params:
-        options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["tool_settings"]["samtools"]["sort"]["options"]
+        options = lambda wildcards: tool_lookup[wildcards.sample]["samtools"]["sort"]
     output:
         bam_sort = temp("%s/{sample}/samtools/{database}_sorted.bam" %output_folder),
         index = temp("%s/{sample}/samtools/{database}_sorted.bam.bai" %output_folder)
@@ -102,8 +102,7 @@ rule bcftools_filter_indels:
         pileup = rules.bcftools_pileup.output.pileup,
         pileup_index = rules.bcftools_pileup.output.index,
     params:
-        region = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["tool_settings"]["bcftools"]["view"]["region"],
-        options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["tool_settings"]["bcftools"]["view"]["options"]
+        options = lambda wildcards: tool_lookup[wildcards.sample]["bcftools"]["view"]
     output:
         indels = temp("%s/{sample}/bcftools/{database}_indels.bcf" %output_folder),
         index = temp("%s/{sample}/bcftools/{database}_indels.bcf.csi" %output_folder)
@@ -115,7 +114,7 @@ rule bcftools_filter_indels:
         "[bcftools_filter_indels]: Filtering indels of {wildcards.database} on {wildcards.sample}"
     shell:
         """
-        cmd="bcftools view -r {params.region} {params.options} -Ob -o {output.indels} {input.pileup}"
+        cmd="bcftools view {params.options} -Ob -o {output.indels} {input.pileup}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1

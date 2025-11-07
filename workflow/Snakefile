@@ -19,6 +19,11 @@ result_catalogue = config['input_manager']['result_catalogue']
 
 samplesheet = pd.read_csv(samplesheet_path, sep='\t')
 
+options_lookup, tool_lookup = rule_all_functions.build_config_lookups(
+    samplesheet=samplesheet,
+    config_dir=species_config_path,
+)
+
 # --- Samples & read locations -------------------------------------------------
 sample_to_illumina, sample_to_nanopore, sample_to_assembly = rule_all_functions.sample_read_map(
     samplesheet,

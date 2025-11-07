@@ -4,6 +4,56 @@ import yaml
 from typing import Dict, Tuple, Set, List
 import warnings
 
+def build_config_lookups(samplesheet, config_dir, sample_col="sample_name", config_col="config"):
+    """
+    Returns two plain dict lookups:
+
+      options_lookup[sample][analysis] -> options string
+      tool_lookup[sample][tool][subtool] -> options string
+
+    """
+    options_lookup = {}   # { sample: { analysis: "options" } }
+    tool_lookup    = {}   # { sample: { tool: { subtool: "options" } } }
+
+    for _, row in samplesheet.iterrows():
+        sample   = str(row[sample_col])
+        config_name = str(row[config_col])
+        config_path = config_name if os.path.isabs(config_name) else os.path.join(config_dir, config_name)
+
+        # ensure nested dicts exist
+        if sample not in options_lookup:
+            options_lookup[sample] = {}
+        if sample not in tool_lookup:
+            tool_lookup[sample] = {}
+
+        config = {}
+        if not os.path.exists(config_path):
+            warnings.warn(f"Config file not found for sample {sample}: {config_path}. Using empty.")
+        else:
+            try:
+                with open(config_path, "r") as fh:
+                    config = yaml.safe_load(fh) or {}
+            except Exception as e:
+                warnings.warn(f"Could not read YAML for {sample} ({config_path}): {e}. Using empty.")
+
+        # --- analyses_to_run: store only 'options' values ---
+        if "analyses_to_run" in config and isinstance(config["analyses_to_run"], dict):
+            for analysis_key, settings in config["analyses_to_run"].items():
+                if isinstance(settings, dict) and "options" in settings:
+                    options_lookup[sample][analysis_key] = settings["options"]
+
+        # --- tool_settings: store only 'options' values ---
+        if "tool_settings" in config and isinstance(config["tool_settings"], dict):
+            for tool, subtools in config["tool_settings"].items():           # e.g., samtools
+                if not isinstance(subtools, dict):
+                    continue
+                if tool not in tool_lookup[sample]:
+                    tool_lookup[sample][tool] = {}
+                for subtool, params in subtools.items():                  # e.g., view / sort
+                    if isinstance(params, dict) and "options" in params:
+                        tool_lookup[sample][tool][subtool] = params["options"]
+
+    return options_lookup, tool_lookup
 
 def sample_read_map(
     samplesheet: pd.DataFrame,
@@ -48,49 +98,6 @@ def sample_read_map(
         sample_to_assembly[sample] = Assembly_full
 
     return sample_to_illumina, sample_to_nanopore, sample_to_assembly
-
-
-def sample_map(
-    species_name_map: Dict[str, str],
-    samplesheet: pd.DataFrame,
-    sample_col: str = "sample_name",
-    organism_col: str = "organism"
-) -> Tuple[Dict[str, str], Set[str]]:
-    """
-    Map each sample to a normalized species name and return any unmapped raw species.
-      - sample_to_organism: {sample: normalized_species}
-      - unmapped_species: set of raw species not present in species_name_map
-    """
-    sample_to_organism = {
-        row[sample_col]: species_name_map.get(row[organism_col], row[organism_col])
-        for idx, row in samplesheet.iterrows()
-    }
-
-    unmapped_species = {
-        row[organism_col] for idx, row in samplesheet.iterrows()
-        if row[organism_col] not in species_name_map
-    }
-
-    return sample_to_organism, unmapped_species
-
-
-def sample_to_species_config(
-    sample_to_organism : dict,
-    species_config_path : str = 'workflow/configs_species/'
-    ) -> Dict:
-    species_configs = {}
-    for species in set(sample_to_organism.values()):
-       
-        species_config_file = os.path.join(species_config_path, f"{species}.yaml")
-
-        if os.path.exists(species_config_file):
-            with open(species_config_file, "r") as species_config_file:
-                species_configs[species] = yaml.load(species_config_file,Loader=yaml.Loader)
-        else: # means the config is not found / available
-            warnings.warn("Warning: Configuration file %s not found. Skipping analyses for %s." % (species_config_file, species), UserWarning)
-            species_configs[species] = {}  # Empty config to ensure skipping analyses
-
-    return species_configs
 
 def list_results(samplesheet, output_folder, species_config_path):
     results = set()
@@ -166,34 +173,9 @@ def list_results(samplesheet, output_folder, species_config_path):
     ['examples/Results/ERR142064/amrfinder/spades.done', 
     'examples/Results/ERR142064/cdiff_repeat_identifier/skesa.done', 
     'examples/Results/ERR142064/cdiff_repeat_identifier/spades.done', 
-    'examples/Results/ERR142064/deletion_identifier/Cdiff_Toxins.done', 
-    'examples/Results/ERR142064/kma_filter/Cdiff_Toxins.done', 
-    'examples/Results/ERR142064/mlst/spades.done', 
-    'examples/Results/ERR142064/snp_identifier/Cdiff_Toxins.done', 
-    'examples/Results/ERR3528110/amrfinder/shovill.done', 
-    'examples/Results/ERR3528110/chtyper/fumCH_db.done', 
-    'examples/Results/ERR3528110/custom_blaster/shovill_OXAndm.done',
-    'examples/Results/ERR3528110/kma_filter/ecoligenes.done', 
-    'examples/Results/ERR3528110/mlst/shovill.done', 
-    'examples/Results/ERR3528110/plasmidfinder/plasmidfinder.done',
-    'examples/Results/ERR3528110/resfinder/resfinder.done',
-    'examples/Results/ERR3528110/serotypefinder/serotypefinder.done', 
-    'examples/Results/ERR3528110/virulencefinder/virulencefinder.done', 
-    'examples/Results/SRR25448586/amrfinder/shovill.done', 
-    'examples/Results/SRR25448586/meningotype/shovill.done', 
-    'examples/Results/SRR25448586/mlst/shovill.done', 
-    'examples/Results/SRR25448586/plasmidfinder/plasmidfinder.done', 
-    'examples/Results/SRR25448586/serotypefinder/serotypefinder.done', 
-    'examples/Results/SRR25448586/virulencefinder/virulencefinder.done', 
-    'examples/Results/SRR26205262/amrfinder/shovill.done', 
-    'examples/Results/SRR26205262/mlst/shovill.done', 
-    'examples/Results/SRR26205262/resfinder/resfinder.done', 
-    'examples/Results/SRR26205262/seqsero2/seqsero2.done', 
-    'examples/Results/SRR26205262/sistr/shovill.done', 
-    'examples/Results/SRR4046826/amrfinder/shovill.done', 
-    'examples/Results/SRR4046826/kleborate/shovill.done', 
-    'examples/Results/SRR4046826/mlst/shovill.done', 
-    'examples/Results/SRR4046826/plasmidfinder/plasmidfinder.done', 
+    .
+    .
+    .
     'examples/Results/SRR4046826/resfinder/resfinder.done', 
     'examples/Results/SRR4046826/serotypefinder/serotypefinder.done', 
     'examples/Results/SRR4046826/virulencefinder/virulencefinder.done']

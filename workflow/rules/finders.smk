@@ -36,7 +36,7 @@ rule resfinder:
         disin_database = rules.setup_DisinFinder.output.database
     params:
         # Point mutation
-        options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["resfinder"]["options"]
+        options = lambda wildcards: options_lookup[wildcards.sample]["resfinder"]
     output:
         resistance = "%s/{sample}/resfinder/ResFinder_results_tab.txt" %output_folder,
         done = temp("%s/{sample}/resfinder/resfinder.done" %output_folder)
@@ -116,7 +116,7 @@ rule amrfinder:
         database = rules.setup_AMRFinder.output.database
     params:
         # Point mutation
-        options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["amrfinder"]["options"]
+        options = lambda wildcards: options_lookup[wildcards.sample]["amrfinder"]
     output:
         result = "%s/{sample}/amrfinder/{assembler}.tsv" %output_folder,
         done = temp("%s/{sample}/amrfinder/{assembler}.done" %output_folder)
@@ -146,7 +146,7 @@ rule snp_identifier:
         variants_index = rules.bcftools_variant_call.output.index,
         ref_bed = rules.fetch_genbank.output.bed,
     params:
-        options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["snp_identifier"]["options"],
+        options = lambda wildcards: options_lookup[wildcards.sample]["snp_identifier"],
         metafile = "%s/SNP_metafile.tsv" %metadata_path
     output:
         indentified_variants = "%s/{sample}/snp_identifier/{database}.tsv" %output_folder,
@@ -178,7 +178,7 @@ rule deletion_identifier:
         variants_index = rules.bcftools_variant_call.output.index,
         ref_bed = rules.fetch_genbank.output.bed,
     params:
-        options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["deletion_identifier"]["options"],
+        options = lambda wildcards: options_lookup[wildcards.sample]["deletion_identifier"],
         metafile = "%s/deletion_metafiles.tsv" %metadata_path
     output:
         indentified_variants = "%s/{sample}/deletion_identifier/{database}.tsv" %output_folder,
