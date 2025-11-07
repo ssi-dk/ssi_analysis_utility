@@ -32,5 +32,4 @@ tool_settings:
 
   bcftools:
     view:
-      region: AM180355.1_tcdC_804309_805008
-      options: -v indels -i 'INFO/DP>10'
+      options: -v indels -i 'INFO/DP>10' -r AM180355.1_tcdC_804309_805008

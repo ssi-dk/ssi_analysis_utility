@@ -6,6 +6,7 @@ analyses_to_run:
     
     resfinder:
         options: --species 'Escherichia coli'
+        organism: 'Escherichia_coli'
 
     plasmidfinder: true
 
