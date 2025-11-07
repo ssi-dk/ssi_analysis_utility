@@ -3,7 +3,8 @@ input_manager:
     database_path: resources
     config_species : workflow/configs_species
     metadata_path: examples/Metadata
-    read_path: examples/Dataset/reads
+    illumina_read_path: examples/Dataset/reads
+    nanopore_read_path: examples/Dataset/reads
     assembly_path: examples/Dataset/assembly_path
     output_folder: examples/Results  # Folder where the analysis results will be saved
     temp_storage: examples/Dataset/databases

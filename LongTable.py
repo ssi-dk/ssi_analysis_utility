@@ -312,9 +312,9 @@ def save_long_table(
 
         print(f"=== Sample: {sample} | species config: {species_cfg_file} ===")
         if not relevant_tools:
-            print("  (No relevant catalogue entries)\n")
+            print("(No relevant catalogue entries)\n")
         else:
-            print("  Relevant catalogue entries:")
+            print("Relevant catalogue entries:")
 
         # per-tool organism fallback (pretty)
         tool_org_fallbacks: Dict[str, Optional[str]] = {}
@@ -442,13 +442,12 @@ def main():
     input_manager = config["input_manager"]
     print("Input manager section:")
     for key, value in input_manager.items():
-        print(f"  {key}: {value}")
-    print()
+        print(f"\t {key}: {value}")
 
-    samplesheet_path    = args.sample_sheet or input_manager["samplesheet"]
-    catalogue_path      = args.catalogue    or input_manager["result_catalogue"]
+    samplesheet_path = args.sample_sheet or input_manager["samplesheet"]
+    catalogue_path = args.catalogue or input_manager["result_catalogue"]
     config_species_root = input_manager["config_species"]
-    output_folder       = input_manager["output_folder"]
+    output_folder = input_manager["output_folder"]
 
     save_long_table(
         samplesheet_path=samplesheet_path,
