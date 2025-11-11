@@ -5,3 +5,4 @@ ERR142064	examples/Dataset/reads/ERR142064_1.fastq.gz,examples/Dataset/reads/ERR
 SRR4046826	examples/Dataset/reads/SRR4046826_1.fastq.gz,examples/Dataset/reads/SRR4046826_2.fastq.gz	Na	examples/Dataset/assemblies/SRR4046826.fasta	Klebsiella Pneumoniae	Na	Na
 SRR25448586	examples/Dataset/reads/SRR25448586_1.fastq.gz,examples/Dataset/reads/SRR25448586_2.fastq.gz	Na	Na	Neisseria meningitidis	Na	Na
 SRR26205262	examples/Dataset/reads/SRR26205262_1.fastq.gz,examples/Dataset/reads/SRR26205262_2.fastq.gz	Na	Na	Salmonella enterica	enterica	I
+ERR2929615	examples/Dataset/reads/ERR2929615_1.fastq.gz,examples/Dataset/reads/ERR2929615_2.fastq.gz	Na	Na	E.Faecalis	Na	I
