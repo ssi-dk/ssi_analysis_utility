@@ -7,26 +7,43 @@ input_manager:
     temp_storage: examples/Dataset/databases
 
 species_map:
-  Clostridium difficile: C.difficile
-  Clostridioides difficile: C.difficile
-  C. difficile: C.difficile
-  C difficile: C.difficile
-  C. diff: C.difficile
-  C.diff: C.difficile
-  Escherichia coli: E.coli
-  E coli: E.coli
-  E.coli: E.coli
-  Klebsiella pneumoniae: K.pneumoniae
-  Klebsiella Pneumoniae: K.pneumoniae 
-  KlebsiellaPneumoniae: K.pneumoniae 
-  K.Pneumoniae: K.pneumoniae
-  K Pneumoniae: K.pneumoniae
-  K. Pneumoniae: K.pneumoniae
-  Neisseria meningitidis: N.meningitidis
-  N.meningitidis: N.meningitidis
-  N. meningitidis: N.meningitidis
-  N meningitidis: N.meningitidis
-  Salmonella enterica: S.enterica
-  S.enterica: S.enterica
-  S. enterica: S.enterica
-  S enterica: S.enterica
+    Clostridium difficile: C.difficile
+    Clostridioides difficile: C.difficile
+    C. difficile: C.difficile
+    C difficile: C.difficile
+    C. diff: C.difficile
+    C.diff: C.difficile
+    Escherichia coli: E.coli
+    E coli: E.coli
+    E.coli: E.coli
+    Klebsiella pneumoniae: K.pneumoniae
+    Klebsiella Pneumoniae: K.pneumoniae 
+    KlebsiellaPneumoniae: K.pneumoniae 
+    K.Pneumoniae: K.pneumoniae
+    K Pneumoniae: K.pneumoniae
+    K. Pneumoniae: K.pneumoniae
+    Neisseria meningitidis: N.meningitidis
+    N.meningitidis: N.meningitidis
+    N. meningitidis: N.meningitidis
+    N meningitidis: N.meningitidis
+    Salmonella enterica: S.enterica
+    S.enterica: S.enterica
+    S. enterica: S.enterica
+    S enterica: S.enterica
+
+conda_envs:
+    shovill: /home/simonescrima/.local/share/mamba/envs/shovill
+    fetch: /home/simonescrima/.local/share/mamba/envs/fetch
+    amrfinder: /home/simonescrima/.local/share/mamba/envs/amrfinder
+    mlst: /home/simonescrima/.local/share/mamba/envs/mlst
+    plasmidfinder: /home/simonescrima/.local/share/mamba/envs/plasmidfinder
+    resfinder: /home/simonescrima/.local/share/mamba/envs/resfinder
+    virulencefinder: /home/simonescrima/.local/share/mamba/envs/virulencefinder
+    serotypefinder: /home/simonescrima/.local/share/mamba/envs/serotypefinder
+    blast: /home/simonescrima/.local/share/mamba/envs/blast
+    kleborate: /home/simonescrima/.local/share/mamba/envs/kleborate
+    meningotype: /home/simonescrima/.local/share/mamba/envs/meningotype
+    seqsero2: /home/simonescrima/.local/share/mamba/envs/seqsero2
+    sistr: /home/simonescrima/.local/share/mamba/envs/sistr
+    htslib: /home/simonescrima/.local/share/mamba/envs/htslib
+    kmeraligner: /home/simonescrima/.local/share/mamba/envs/kmeraligner

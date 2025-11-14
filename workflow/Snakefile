@@ -3,6 +3,7 @@ import yaml
 import warnings
 from scripts import rule_all_functions 
 
+
 configfile: "config/config.yaml"
 
 # --- Inputs & paths from config file------------------------------------------------
@@ -15,6 +16,9 @@ temp_storage_path = config['input_manager']['temp_storage']
 species_name_map =  config['species_map'] # Load species_name_map from config file
 
 samplesheet = pd.read_csv(samplesheet_path, sep='\t')
+
+# Load the config section with conda environments
+conda_envs = config.get("conda_envs", {})
 
 # --- Samples & read locations -------------------------------------------------
 sample_to_illumina, sample_to_nanopore, sample_to_assembly_file = rule_all_functions.sample_read_map(samplesheet)
@@ -30,6 +34,11 @@ if unmapped_species: #check if species have not properly been mapped
 # ------------------ Load Species-Specific Configs ------------------
 
 species_configs = rule_all_functions.sample_to_species_config(sample_to_organism,species_config_path)
+
+
+
+
+
 
 ##############################################################################
 #

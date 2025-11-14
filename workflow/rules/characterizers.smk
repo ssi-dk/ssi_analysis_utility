@@ -9,7 +9,8 @@ rule mlst:
         mlst_file = "%s/{sample}/mlst/{assembler}_mlst.tsv" %output_folder,
         done = temp("%s/{sample}/mlst/{assembler}.done" %output_folder)
     conda:
-        "../envs/mlst.yaml"
+        rule_all_functions.resolve_env(conda_envs,
+                                       "mlst")
     log:
     	stdout = "Logs/{sample}/{assembler}_mlst.log"
     message:
@@ -38,7 +39,8 @@ rule kleborate:
     params:
         options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["kleborate"]["options"]
     conda:
-        "../envs/kleborate.yaml"
+        rule_all_functions.resolve_env(conda_envs,
+                                       "kleborate")
     log:
     	stdout = "Logs/{sample}/Kleborate_{assembler}.log"
     message:
@@ -90,7 +92,8 @@ rule meningotype:
         meningotype = "%s/{sample}/meningotype/{assembler}_meningotype.tsv" %output_folder,
         done = temp("%s/{sample}/meningotype/{assembler}.done" %output_folder)
     conda:
-        "../envs/meningotype.yaml"
+        rule_all_functions.resolve_env(conda_envs,
+                                       "meningotype")
     log:
         stdout = "Logs/{sample}/{assembler}_meningotype.log"
     message:
@@ -119,7 +122,8 @@ rule seqsero2:
         max(1, workflow.cores * 0.3333333)
     priority: 1
     conda:
-        "../envs/seqsero2.yaml"
+        rule_all_functions.resolve_env(conda_envs,
+                                       "seqsero2")
     log:
         stdout = 'Logs/{sample}/seqsero2.log'
     message:
@@ -150,7 +154,8 @@ rule sistr:
         max(1, workflow.cores * 0.3333333)
     priority: 2
     conda:
-        "../envs/sistr.yaml"
+        rule_all_functions.resolve_env(conda_envs,
+                                        "sistr")
     log:
         stdout = 'Logs/{sample}/{assembler}_SISTR_serovar.log'
     message:

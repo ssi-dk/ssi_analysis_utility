@@ -5,7 +5,8 @@ rule spades:
     output:
         assembly = "%s/{sample}/spades/{sample}.fasta" %output_folder,
     conda:
-        "../envs/shovill.yaml"
+        rule_all_functions.resolve_env(conda_envs,
+                                       "shovill")
     log:
         stdout = "Logs/Assemblies/{sample}_spades.log"
     threads:
@@ -33,7 +34,8 @@ rule skesa:
     output:
         assembly = "%s/{sample}/skesa/{sample}.fasta" %output_folder,
     conda:
-        "../envs/shovill.yaml"
+        rule_all_functions.resolve_env(conda_envs,
+                                       "shovill")
     log:
         stdout = "Logs/Assemblies/{sample}_Skesa.log"
     threads:
@@ -56,7 +58,8 @@ rule shovill:
     output:
         assembly = "%s/{sample}/shovill/{sample}.fasta" %output_folder,
     conda:
-        "../envs/shovill.yaml"
+        rule_all_functions.resolve_env(conda_envs,
+                                       "shovill")
     log:
         stdout = "Logs/Assemblies/{sample}_Shovill.log"
     threads:

@@ -5,6 +5,29 @@ from typing import Dict, Tuple, Set, List
 import warnings
 
 
+def resolve_env(envs,
+                tool_name):
+    """
+    Return the conda environment path.
+    If it doesn't exist, fall back to the workflow/envs/<tool_name>.yaml.
+    """
+    
+    pipeline_dir = os.getcwd() 
+    # List of all envs from config if specified
+    user_env = envs.get(tool_name)
+    if user_env and os.path.exists(user_env):
+        return user_env
+    else:
+        # Revert to yaml if the env is not available
+        yaml_path = "%s/workflow/envs/%s.yaml" % (pipeline_dir, tool_name)
+        if os.path.exists(yaml_path):
+            return yaml_path
+        else:
+            # No yaml for the tool
+            raise ValueError(f"No valid conda environment or YAML found for '{tool_name}'.")
+
+
+
 def sample_read_map(
     samplesheet: pd.DataFrame,
     sample_col: str = "sample_name",
