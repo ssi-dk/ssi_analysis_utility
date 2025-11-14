@@ -6,8 +6,7 @@ rule mlst:
         datefile = rules.update_MLST.output.datefile
     output:
         # "%s/{sample}/MLST/{sample}.tsv" %output_folder
-        mlst_file = "%s/{sample}/mlst/{assembler}_mlst.tsv" %output_folder,
-        done = temp("%s/{sample}/mlst/{assembler}.done" %output_folder)
+        mlst_file = "%s/{sample}/mlst/{assembler}_mlst.tsv" %output_folder
     conda:
         "../envs/mlst.yaml"
     log:
@@ -22,8 +21,6 @@ rule mlst:
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
-
-        echo "MLST completed succesfully for {wildcards.sample} with {wildcards.assembler} assembly" > {output.done}
     	"""
 
 
@@ -33,10 +30,10 @@ rule kleborate:
     input:
         assembly = rules.assembly.output.output_assembly,
     output:
-        kleborate_outdir = directory("%s/{sample}/kleborate/{assembler}" %output_folder),
-        done = temp("%s/{sample}/kleborate/{assembler}.done" %output_folder)
+        kleborate = "%s/{sample}/kleborate/{assembler}/klebsiella_pneumo_complex_output.txt" %output_folder,
+        kleborate_hAMRonization = "%s/{sample}/kleborate/{assembler}/klebsiella_pneumo_complex_hAMRonization_output.txt" %output_folder
     params:
-        options = lambda wildcards: options_lookup[wildcards.sample]["kleborate"],
+        options = lambda wildcards: sample_configs[wildcards.sample]["kleborate"]["options"]
     conda:
         "../envs/kleborate.yaml"
     log:
@@ -45,14 +42,14 @@ rule kleborate:
     	"[Kleborate]: Running Kleborate on {wildcards.assembler} assembly from {wildcards.sample}"
     shell:
         """
-        mkdir -p $(dirname {output.kleborate_outdir})
+        outdir=$(dirname {output.kleborate})
 
-        cmd="kleborate --assemblies {input.assembly} --outdir {output.kleborate_outdir} {params.options}"
+        mkdir -p $outdir
+
+        cmd="kleborate --assemblies {input.assembly} --outdir $outdir {params.options}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
-
-        echo "Kleborate completed succesfully for {wildcards.sample} with {wildcards.assembler} assembly" > {output.done}
     	"""
 
 rule chtyper:
@@ -62,8 +59,7 @@ rule chtyper:
         id = 90,
         coverage = 60
     output:
-        filtered_tsv = "%s/{sample}/chtyper/{database}_chtyper.tsv" % output_folder,
-        done = "%s/{sample}/chtyper/{database}.done" % output_folder
+        filtered_tsv = "%s/{sample}/chtyper/{database}_chtyper.tsv" % output_folder
     log:
         stdout = "Logs/{sample}/{database}_chtyper.log"
     message:
@@ -75,9 +71,6 @@ rule chtyper:
         echo "Running awk filter on {input.results}" > {log.stdout} 2>&1
 
         awk -F'\t' 'NR==1{{for(i=1;i<=NF;i++){{if($i=="Template_Identity")id=i;if($i=="Template_Coverage")cov=i}}print;next}} ($id+0>{params.id} && $cov+0>{params.coverage})' {input.results} > {output.filtered_tsv} 2>> {log.stdout}
-        
-        echo "CH Typer completed succesfully for {wildcards.sample} on {wildcards.database}" > {output.done}
-
         """
 
 
@@ -87,8 +80,7 @@ rule meningotype:
     input:
         assembly = rules.assembly.output.output_assembly,
     output:
-        meningotype = "%s/{sample}/meningotype/{assembler}_meningotype.tsv" %output_folder,
-        done = temp("%s/{sample}/meningotype/{assembler}.done" %output_folder)
+        meningotype = "%s/{sample}/meningotype/{assembler}_meningotype.tsv" %output_folder
     conda:
         "../envs/meningotype.yaml"
     log:
@@ -103,8 +95,6 @@ rule meningotype:
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
-    
-        echo "Meningotype completed succesfully on {wildcards.sample} with {wildcards.assembler} assembly" > {output.done}
     	"""
 
 
@@ -113,8 +103,7 @@ rule seqsero2:
         R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
         R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
     output:
-        out_dir = directory("%s/{sample}/seqsero2" %output_folder),
-        done = temp("%s/{sample}/seqsero2/seqsero2.done" %output_folder)
+        out_dir = directory("%s/{sample}/seqsero2" %output_folder)
     threads:
         max(1, workflow.cores * 0.3333333)
     priority: 1
@@ -132,8 +121,6 @@ rule seqsero2:
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
-
-        echo "seqsero2 completed succesfully for {wildcards.sample}" > {output.done}
         """
 
 
@@ -144,8 +131,7 @@ rule sistr:
     output:
         sistr_tab = "%s/{sample}/sistr/{assembler}_sistr.tab" %output_folder,
         gmlst_profile = "%s/{sample}/sistr/{assembler}_cgmlst_profiles.csv" %output_folder,
-        allele_results = "%s/{sample}/sistr/{assembler}_allele-results.json" %output_folder,
-        done = temp("%s/{sample}/sistr/{assembler}.done" %output_folder)
+        allele_results = "%s/{sample}/sistr/{assembler}_allele-results.json" %output_folder
     threads:
         max(1, workflow.cores * 0.3333333)
     priority: 2
@@ -163,6 +149,4 @@ rule sistr:
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
-
-        echo "sistr completed succesfully on {wildcards.sample} with {wildcards.assembler} assembly" > {output.done}
         """

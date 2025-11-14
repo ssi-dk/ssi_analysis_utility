@@ -1,7 +1,7 @@
 import pandas as pd
 import yaml
 import warnings
-from scripts import rule_all_functions 
+from scripts import helper_functions
 
 configfile: "config/config.yaml"
 
@@ -15,17 +15,25 @@ nanopore_read_path_base = config['input_manager']['nanopore_read_path']
 assembly_path_base = config['input_manager']['assembly_path']
 output_folder = config['input_manager']['output_folder']
 temp_storage_path = config['input_manager']['temp_storage']
-result_catalogue = config['input_manager']['result_catalogue']
+results_catalogue_path = config['input_manager']['result_catalogue']
 
 samplesheet = pd.read_csv(samplesheet_path, sep='\t')
 
-options_lookup, tool_lookup = rule_all_functions.build_config_lookups(
-    samplesheet=samplesheet,
-    config_dir=species_config_path,
-)
+sample_configs = helper_functions.determine_sample_configs(samplesheet, "workflow/configs_species", True)
+
+with open(results_catalogue_path, "r") as catalgoue_file:
+    try:
+        results_catalogue = yaml.safe_load(catalgoue_file)
+    except:
+        print("Snakefile: LAZY DEVELOPPERS... Fill out except!!!")
+        yaml.safe_load(results_catalogue_path)
+
+#print(f"results_catalogue_path: {results_catalogue_path}\nresults_catalogue: {results_catalogue}") # As log_trace 
+
+all_results = helper_functions.list_results(sample_configs, results_catalogue, output_folder)
 
 # --- Samples & read locations -------------------------------------------------
-sample_to_illumina, sample_to_nanopore, sample_to_assembly = rule_all_functions.sample_read_map(
+sample_to_illumina, sample_to_nanopore, sample_to_assembly = helper_functions.sample_read_map(
     samplesheet,
     illumina_read_base=illumina_read_path_base,
     nanopore_read_base=nanopore_read_path_base,
@@ -41,11 +49,8 @@ sample_to_illumina, sample_to_nanopore, sample_to_assembly = rule_all_functions.
 # Define the dynamic input for rule all
 rule all:
     input:
-        rule_all_functions.list_results(
-            samplesheet=samplesheet,
-            output_folder=output_folder,
-            species_config_path=species_config_path,
-        )
+        all_results
+        
     
 include : "rules/assemblers.smk"
 include : "rules/fetch_custom_dbs.smk"

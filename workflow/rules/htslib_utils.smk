@@ -2,7 +2,7 @@ rule samtools_sam_filtration:
     input:
         sam = "%s/{sample}/samtools/{database}.sam" %output_folder
     params:
-        options = lambda wildcards: tool_lookup[wildcards.sample]["samtools"]["view"]
+        options = lambda wildcards: sample_configs[wildcards.sample]["samtools"]["view_options"]
     output:
         bam = temp("%s/{sample}/samtools/{database}_filtered.bam" %output_folder)
     conda:
@@ -24,7 +24,7 @@ rule samtools_bam_filtration:
     input:
         bam = "%s/{sample}/samtools/{database}.bam" %output_folder
     params:
-        options = lambda wildcards: tool_lookup[wildcards.sample]["samtools"]["view"]
+        options = lambda wildcards: sample_configs[wildcards.sample]["samtools"]["view_options"]
     output:
         bam = temp("%s/{sample}/samtools/{database}_filtered.bam" %output_folder)
     conda:
@@ -46,7 +46,7 @@ rule samtools_sort:
     input:
         bam = "%s/{sample}/samtools/{database}_filtered.bam" %output_folder
     params:
-        options = lambda wildcards: tool_lookup[wildcards.sample]["samtools"]["sort"]
+        options = lambda wildcards: sample_configs[wildcards.sample]["samtools"]["sort_options"]
     output:
         bam_sort = temp("%s/{sample}/samtools/{database}_sorted.bam" %output_folder),
         index = temp("%s/{sample}/samtools/{database}_sorted.bam.bai" %output_folder)
@@ -102,7 +102,7 @@ rule bcftools_filter_indels:
         pileup = rules.bcftools_pileup.output.pileup,
         pileup_index = rules.bcftools_pileup.output.index,
     params:
-        options = lambda wildcards: tool_lookup[wildcards.sample]["bcftools"]["view"]
+        options = lambda wildcards: sample_configs[wildcards.sample]["bcftools"]["view_options"]
     output:
         indels = temp("%s/{sample}/bcftools/{database}_indels.bcf" %output_folder),
         index = temp("%s/{sample}/bcftools/{database}_indels.bcf.csi" %output_folder)

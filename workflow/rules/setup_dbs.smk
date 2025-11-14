@@ -1,3 +1,4 @@
+
 rule setup_PlasmidFinder:
     conda:
         "../envs/plasmidfinder.yaml"

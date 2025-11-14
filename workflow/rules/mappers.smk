@@ -61,7 +61,7 @@ rule custom_bowtie2alignment:
         R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
         database = rules.setup_custom_bowtie2_index.output.bt2_1 # just locate one of the bt2 files to activate the db_setup
     params:
-        options = lambda wildcards: options_lookup[wildcards.sample]["bowtie2"]
+       options = lambda wildcards: sample_configs[wildcards.sample]["custom_bowtie2alignment"]["options"]
     output:
         sam = temp("%s/{sample}/bowtie2/{database}.sam" %output_folder)
     threads:
@@ -92,10 +92,9 @@ rule custom_blaster:
         assembly = rules.assembly.output.output_assembly,
         database = rules.fetch_blast_database.output.source
     params:
-        options = lambda wildcards: options_lookup[wildcards.sample]["custom_blaster"]    
+        options = lambda wildcards: sample_configs[wildcards.sample]["custom_blaster"]["options"]
     output:
-        results = "%s/{sample}/custom_blaster/blast_{assembler}_{database}.tsv" %output_folder,
-        done = temp("%s/{sample}/custom_blaster/{assembler}_{database}.done" %output_folder)
+        results = "%s/{sample}/custom_blaster/blast_{assembler}_{database}.tsv" %output_folder
     conda:
         "../envs/blast.yaml"
     log:
@@ -110,6 +109,4 @@ rule custom_blaster:
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
-
-        echo "Blast of {input.database} successfully executed for {wildcards.sample}" > {output.done}
         """
