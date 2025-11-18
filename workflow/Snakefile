@@ -3,7 +3,6 @@ import yaml
 import warnings
 from scripts import rule_all_functions 
 
-
 configfile: "config/config.yaml"
 
 # --- Inputs & paths from config file------------------------------------------------
@@ -14,11 +13,9 @@ database_path    = config['input_manager']['database_path']   # used by setup ru
 species_config_path = config['input_manager']['config_species'] # Path to species specific configuration files
 temp_storage_path = config['input_manager']['temp_storage']
 species_name_map =  config['species_map'] # Load species_name_map from config file
-
+conda_path = config['input_manager']['envs_location']
 samplesheet = pd.read_csv(samplesheet_path, sep='\t')
 
-# Load the config section with conda environments
-conda_envs = config.get("conda_envs", {})
 
 # --- Samples & read locations -------------------------------------------------
 sample_to_illumina, sample_to_nanopore, sample_to_assembly_file = rule_all_functions.sample_read_map(samplesheet)

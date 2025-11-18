@@ -1,6 +1,6 @@
 rule setup_PlasmidFinder:
     conda:
-        rule_all_functions.resolve_env(conda_envs,
+        rule_all_functions.resolve_env(conda_path,
                                         "plasmidfinder")
     output: 
         database = directory("%s/plasmidfinder_db" %database_path)
@@ -30,7 +30,7 @@ rule setup_PlasmidFinder:
 
 rule setup_ResFinder:
     conda:
-        rule_all_functions.resolve_env(conda_envs,
+        rule_all_functions.resolve_env(conda_path,
                                         "resfinder")
     output:
         database = directory("%s/resfinder_db" %database_path)
@@ -60,7 +60,7 @@ rule setup_ResFinder:
 
 rule setup_PointFinder:
     conda:
-        rule_all_functions.resolve_env(conda_envs,
+        rule_all_functions.resolve_env(conda_path,
                                         "resfinder")
     output:
         database = directory("%s/pointfinder_db" %database_path)
@@ -91,7 +91,7 @@ rule setup_PointFinder:
 
 rule setup_DisinFinder:
     conda:
-        rule_all_functions.resolve_env(conda_envs,
+        rule_all_functions.resolve_env(conda_path,
                                         "resfinder")
     output:
         database = directory("%s/disinfinder_db" %database_path)
@@ -121,7 +121,7 @@ rule setup_DisinFinder:
 
 rule setup_VirulenceFinder:
     conda:
-        rule_all_functions.resolve_env(conda_envs,
+        rule_all_functions.resolve_env(conda_path,
                                         "virulencefinder")
     output:
         database = directory("%s/virulencefinder_db" %database_path)
@@ -151,7 +151,7 @@ rule setup_VirulenceFinder:
 
 rule setup_SerotypeFinder:
     conda:
-        rule_all_functions.resolve_env(conda_envs,
+        rule_all_functions.resolve_env(conda_path,
                                         "serotypefinder")
     output:
         database = directory("%s/serotypefinder_db" %database_path)
@@ -181,7 +181,7 @@ rule setup_SerotypeFinder:
 
 rule setup_AMRFinder:
     conda:
-        rule_all_functions.resolve_env(conda_envs,
+        rule_all_functions.resolve_env(conda_path,
                                         "amrfinder")
     output:
         database = directory("%s/amrfinderplus/latest" %database_path)
@@ -202,7 +202,7 @@ rule setup_AMRFinder:
 
 rule update_MLST:
     conda:
-        rule_all_functions.resolve_env(conda_envs,
+        rule_all_functions.resolve_env(conda_path,
                                         "mlst")
     output:
         datefile = "%s/mlst/creation.date" % database_path
@@ -233,7 +233,7 @@ rule setup_custom_kmeraligner_index:
         names = "%s/kmeraligner/{database}.name" %database_path,
         seqs = "%s/kmeraligner/{database}.seq.b" %database_path,
     conda:
-        rule_all_functions.resolve_env(conda_envs,
+        rule_all_functions.resolve_env(conda_path,
                                        "kmeraligner")
     log:
         stdout = "Logs/Databases/setup_custom_kmeraligner_index_{database}.log"
@@ -266,7 +266,7 @@ rule setup_custom_bowtie2_index:
         bt2_1_rev = "%s/bowtie2/{database}.rev.1.bt2" %database_path,
         bt2_2_rev = "%s/bowtie2/{database}.rev.2.bt2" %database_path
     conda:
-            rule_all_functions.resolve_env(conda_envs,
+            rule_all_functions.resolve_env(conda_path,
                                            "bowtie2")
     log:
         stdout = "Logs/Databases/setup_custom_bowtie2index_{database}.log"
@@ -291,7 +291,7 @@ rule setup_custom_samtool_index:
         source = "%s/samtools/{database}.fasta" %database_path, 
         index = "%s/samtools/{database}.fasta.fai" %database_path
     conda:
-        rule_all_functions.resolve_env(conda_envs,
+        rule_all_functions.resolve_env(conda_path,
                                        "htslib")
     log:
         stdout = "Logs/Databases/setup_custom_samtool_index_{database}.log"

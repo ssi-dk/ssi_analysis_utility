@@ -6,7 +6,7 @@ rule fetch_genbank:
         fasta = "%s/custom/{database,[^/]+}.fasta" % database_path,
         bed = "%s/custom/{database,[^/]+}.bed6" % database_path,
     conda:
-        rule_all_functions.resolve_env(conda_envs,
+        rule_all_functions.resolve_env(conda_path,
                                         "fetch")
     log:
         stdout = 'Logs/Databases/fetch_genbank_{database}.log'
@@ -28,7 +28,7 @@ rule fetch_type_repeat_sequence:
     output:
         seq = "%s/custom/type_repeats/{TR}.fasta" %database_path
     conda:
-        rule_all_functions.resolve_env(conda_envs,
+        rule_all_functions.resolve_env(conda_path,
                                         "fetch")
     log:
         stdout = "Logs/Databases/fetch_type_repeat_sequences_{TR}.log"
@@ -49,7 +49,7 @@ rule fetch_type_repeat_metadata:
     output:
         meta = "%s/custom/type_repeats/{TR}.txt" %database_path
     conda:
-        rule_all_functions.resolve_env(conda_envs,
+        rule_all_functions.resolve_env(conda_path,
                                         "fetch")
     log:
         stdout = "Logs/Databases/fetch_type_repeat_metadata_{TR}.log"
@@ -70,7 +70,7 @@ rule fetch_ecoligenes:
     output:
         source = "%s/custom/ecoligenes.fasta" %database_path
     conda:
-        rule_all_functions.resolve_env(conda_envs,
+        rule_all_functions.resolve_env(conda_path,
                                         "fetch")
     log:
         stdout = "Logs/Databases/setup_ecoligenes_ecoligenes.log"
@@ -91,7 +91,7 @@ rule fetch_Senterica_Scheme:
         source = "%s/custom/SalmonellaAchtman7GeneMLST.fasta" %database_path,
         profile = "%s/custom/SalmonellaAchtman7GeneMLST.txt" %database_path
     conda:
-        rule_all_functions.resolve_env(conda_envs,
+        rule_all_functions.resolve_env(conda_path,
                                         "fetch")
     log:
         stdout = "Logs/Databases/setup_senterica.log"
@@ -116,7 +116,7 @@ rule fetch_Senterica_Serovar:
     output:
         source = "%s/custom/Senterica_serovar.txt" %database_path
     conda:
-        rule_all_functions.resolve_env(conda_envs,
+        rule_all_functions.resolve_env(conda_path,
                                         "fetch")
     log:
         stdout = "Logs/Databases/setup_senterica.log"
@@ -136,7 +136,7 @@ rule fetch_chtyper_db:
     output:
         source = "%s/custom/fumCH_db.fasta" %database_path
     conda:
-        rule_all_functions.resolve_env(conda_envs,
+        rule_all_functions.resolve_env(conda_path,
                                         "fetch")
     log:
         stdout = "Logs/Databases/setup_chtyper_database.log"
@@ -163,7 +163,7 @@ rule fetch_chtyper_db:
 # We store momentarily in Dataset/databases
 rule fetch_blast_database:
     conda:
-        rule_all_functions.resolve_env(conda_envs,
+        rule_all_functions.resolve_env(conda_path,
                                         "blast")
     input: 
         source = "%s/{database}.fasta" %temp_storage_path

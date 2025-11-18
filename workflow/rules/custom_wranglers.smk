@@ -9,7 +9,7 @@ rule kma_filter:
         filtered_tsv = "%s/{sample}/kma_filter/{database}.tsv" % output_folder,
         done = temp("%s/{sample}/kma_filter/{database}.done" %output_folder)  # note folder name; pick one casing and keep it everywhere
     conda:
-        rule_all_functions.resolve_env(conda_envs,
+        rule_all_functions.resolve_env(conda_path,
                                         "python_functions")
     log:
         stdout = "Logs/{sample}/KMA_results/{sample}_{database}.log"

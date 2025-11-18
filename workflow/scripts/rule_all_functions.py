@@ -5,21 +5,24 @@ from typing import Dict, Tuple, Set, List
 import warnings
 
 
-def resolve_env(envs,
+def resolve_env(envs_path,
                 tool_name):
     """
     Return the conda environment path.
     If it doesn't exist, fall back to the workflow/envs/<tool_name>.yaml.
     """
-    
+    # Get path
     pipeline_dir = os.getcwd() 
-    # List of all envs from config if specified
-    user_env = envs.get(tool_name)
-    if user_env and os.path.exists(user_env):
-        return user_env
+    
+    # Build path to env
+    full_path = os.path.join(envs_path, tool_name)
+    if os.path.exists(full_path):
+        print(full_path)
+        return full_path
     else:
         # Revert to yaml if the env is not available
         yaml_path = "%s/workflow/envs/%s.yaml" % (pipeline_dir, tool_name)
+        print(yaml_path)
         if os.path.exists(yaml_path):
             return yaml_path
         else:

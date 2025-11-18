@@ -9,7 +9,7 @@ rule plasmidfinder:
         replicons = "%s/{sample}/plasmidfinder/results_tab.tsv" %output_folder,
         done = temp("%s/{sample}/plasmidfinder/plasmidfinder.done" %output_folder)
     conda:
-        rule_all_functions.resolve_env(conda_envs,
+        rule_all_functions.resolve_env(conda_path,
                                         "plasmidfinder")
     log:
         stdout = 'Logs/{sample}/plasmidfinder.log'
@@ -42,7 +42,7 @@ rule resfinder:
         resistance = "%s/{sample}/resfinder/ResFinder_results_tab.txt" %output_folder,
         done = temp("%s/{sample}/resfinder/resfinder.done" %output_folder)
     conda:
-        rule_all_functions.resolve_env(conda_envs,
+        rule_all_functions.resolve_env(conda_path,
                                         "resfinder")
     log:
         stdout = 'Logs/{sample}/resfinder.log'
@@ -69,7 +69,7 @@ rule virulencefinder:
         virulence = "%s/{sample}/virulencefinder/results_tab.tsv" %output_folder,
         done = temp("%s/{sample}/virulencefinder/virulencefinder.done" %output_folder)
     conda:
-        rule_all_functions.resolve_env(conda_envs,
+        rule_all_functions.resolve_env(conda_path,
                                         "virulencefinder")
     log:
         stdout = 'Logs/{sample}/virulencefinder.log'
@@ -96,7 +96,7 @@ rule serotypefinder:
         serotype = "%s/{sample}/serotypefinder/results_tab.tsv" %output_folder,
         done = temp("%s/{sample}/serotypefinder/serotypefinder.done" %output_folder)
     conda:
-        rule_all_functions.resolve_env(conda_envs,
+        rule_all_functions.resolve_env(conda_path,
                                         "serotypefinder")
     log:
         stdout = 'Logs/{sample}/serotypefinder.log'
@@ -125,7 +125,7 @@ rule amrfinder:
         result = "%s/{sample}/amrfinder/{assembler}.tsv" %output_folder,
         done = temp("%s/{sample}/amrfinder/{assembler}.done" %output_folder)
     conda:
-        rule_all_functions.resolve_env(conda_envs,
+        rule_all_functions.resolve_env(conda_path,
                                         "amrfinder")
     log:
         stdout = 'Logs/{sample}/amrfinder_{assembler}.log'
@@ -157,7 +157,7 @@ rule snp_identifier:
         indentified_variants = "%s/{sample}/snp_identifier/{database}.tsv" %output_folder,
         done = temp("%s/{sample}/snp_identifier/{database}.done" %output_folder)
     conda:
-        rule_all_functions.resolve_env(conda_envs,
+        rule_all_functions.resolve_env(conda_path,
                                         "python_functions")
     log:
         stdout = "Logs/{sample}/snp_identifier_{database}.log"
@@ -190,7 +190,7 @@ rule deletion_identifier:
         indentified_variants = "%s/{sample}/deletion_identifier/{database}.tsv" %output_folder,
         done = temp("%s/{sample}/deletion_identifier/{database}.done" %output_folder)
     conda:
-        rule_all_functions.resolve_env(conda_envs,
+        rule_all_functions.resolve_env(conda_path,
                                         "python_functions")
     log:
         stdout = "Logs/{sample}/deletion_identifier_{database}.log"
@@ -219,7 +219,7 @@ rule cdiff_repeat_identifier:
         repeat_types = "%s/{sample}/cdiff_repeat_identifier/{assembler}_repeat_types.tsv" %output_folder,
         done = temp("%s/{sample}/cdiff_repeat_identifier/{assembler}.done" %output_folder)
     conda:
-        rule_all_functions.resolve_env(conda_envs,
+        rule_all_functions.resolve_env(conda_path,
                                         "python_functions")
     log:
         stdout = "Logs/{sample}/cdiff_repeat_identifier_{assembler}_repeat_types.log"
