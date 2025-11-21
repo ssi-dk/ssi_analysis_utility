@@ -103,7 +103,7 @@ rule seqsero2:
         R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
         R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
     output:
-        out_dir = directory("%s/{sample}/seqsero2" %output_folder)
+        seqsero = "%s/{sample}/seqsero2/SeqSero_result.tsv" %output_folder
     threads:
         max(1, workflow.cores * 0.3333333)
     priority: 1
@@ -115,9 +115,10 @@ rule seqsero2:
         "[seqsero2]: Running seqsero2 on {wildcards.sample}"
     shell:
         """
-        mkdir -p {output.out_dir}
+        outdir=$(dirname {output.seqsero})
+        mkdir -p $outdir
 
-        cmd="SeqSero2_package.py -m k -t 2 -b mem -i {input.R1} {input.R2} -d {output.out_dir} -n {wildcards.sample} -p {threads}"
+        cmd="SeqSero2_package.py -m k -t 2 -b mem -i {input.R1} {input.R2} -d $outdir -n {wildcards.sample} -p {threads}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1

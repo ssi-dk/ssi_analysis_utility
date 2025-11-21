@@ -4,9 +4,23 @@ import yaml
 from typing import Dict, Tuple, Set, List
 import warnings
 import sys
+import itertools
+from copy import deepcopy
+
+
+def read_results_catalogue(results_catalogue_path):
+    with open(results_catalogue_path, "r") as catalgoue_file:
+        try:
+            results_catalogue = yaml.safe_load(catalgoue_file)
+        except:
+            print("read_results_catalogue(results_catalogue_path): LAZY DEVELOPPERS... Fill out except!!!")
+            yaml.safe_load(results_catalogue_path)
+
+    return(results_catalogue)
+
 
 def determine_sample_configs(samplesheet, config_dir, enable_defaults):
-    print("Determining sample configurations")
+    #print("Determining sample configurations") #DEBUG msg
     # Create a dict for sample names and dict files
     sample_configs = {}
 
@@ -96,56 +110,125 @@ def sample_read_map(
     return sample_to_illumina, sample_to_nanopore, sample_to_assembly
 
 
+def map_configs_to_results(configs, results_dir, results_file):
+    """
+    Expand list-valued configuration fields into all possible combinations
+    and format the result file pattern for each concrete configuration set.
+
+    Example:
+        configs = { "assemblers": ["spades","skesa"], "sample": "ERR142064" }
+        results_file = "{assemblers}_repeat_types.tsv"
+
+    Produces:
+        [
+            ".../spades_repeat_types.tsv",
+            ".../skesa_repeat_types.tsv"
+        ]
+    """
+    # Work on a copy to avoid mutating the original dictionary
+    cfg = deepcopy(configs)
+
+    # Prepare to expand every config key; scalar values become 1-item lists
+    keys = list(cfg.keys())
+    value_lists = []
+    for k in keys:
+        v = cfg[k]
+        if isinstance(v, list):
+            # Already a list → keep as is
+            value_lists.append(v)
+        else:
+            # Scalar → wrap into list so itertools.product works uniformly
+            value_lists.append([v])
+
+    results = []
+
+    # Cartesian product over all config values
+    # → yields one fully concrete mapping per file to generate
+    for combo in itertools.product(*value_lists):
+        mapping = dict(zip(keys, combo))  # map keys to this particular combination
+
+        try:
+            # Attempt to apply the mapping to the filename format string
+            path = f"{results_dir}/{results_file.format(**mapping)}"
+        except KeyError:
+            # If the result pattern references a config key that isn't present, silently skip.
+            continue
+
+        results.append(path)
+
+    return results
+
 
 def list_results(sample_configs, results_catalogue, output_folder):
-    print("Determining results files to create")
-    results_files = []
+    """
+    Construct a full list of output file paths for each sample by:
+      - iterating over all sample modules
+      - matching module names to the results catalogue
+      - expanding list-valued configuration fields (assemblers, repeats, etc.)
+      - formatting each results entry using module configs
+    """
 
-    # Matching each sample-module configurations to the results catalogue
+    results_files = []
+    seen = set()  # Used to deduplicate while preserving ordering
+
+    # Iterate over all modules for individual samples
     for sample, modules in sample_configs.items():
 
-        #print(f"Inspecting modules for {sample}") # AS Log_debug
-        
-        # Extracting module specific configs
-        for module in modules:
-            configs = modules.get(module)
+        # Iterate over all configurations for any sample specific module
+        for sample_module, configs in modules.items():
 
-            # Ensure that there are results file for module
-            if module in results_catalogue.keys():
-                results_dir = f"{output_folder}/{sample}/{module}"
-                results_per_module = results_catalogue.get(module)
+            # Skip modules that are NOT in the results catalogue
+            if sample_module not in results_catalogue:
+                continue
 
-                # Ensuring that module results are handles as same object
-                if type(results_per_module) is str:
-                    results_per_module = [results_per_module]
+            # Construct the directory where results for this module live
+            results_dir = f"{output_folder}/{sample}/{sample_module}"
 
-                # Iterating over individual results files
-                for module_results in results_per_module:
-                    if type(module_results) is list:
-                        if len(module_results) > 1:
-                            sys.exit(f"Module results out of bounds: {module_results}")
-                        module_results = module_results[0]
+            # Normalise results definitions into a list for uniform iteration
+            module_results = results_catalogue.get(sample_module)
+            if isinstance(module_results, str):
+                module_results = [module_results]
 
-                    results_file = f"{results_dir}/{module_results}"
+            # Case 1: Current module has configurations that must be mapped to the results file
+            if isinstance(configs, dict):
 
-                    # Update results file with configuration
-                    if type(configs) is dict:
-                        configs["sample"] = sample
+                # Copy configs and add the sample name for sloppy mapping
+                configs_copy = deepcopy(configs)
+                configs_copy["sample"] = sample
 
-                        # Map ALL configs to current result file regardless of being mapable
-                        try:
-                            # Sloppily map configs to results file    
-                            results_file = f"{results_dir}/{module_results.format(**configs)}"
-                        except KeyError as e:
-                            # Ignore when sloppy mapping fails
-                            pass
+                # Handle multiple module result files
+                for results_file in module_results:
 
-                    # Collect results files
-                    results_files.append(results_file)
+                    # Map configuration parameters to results files
+                    concrete_paths = map_configs_to_results(
+                        configs_copy,
+                        results_dir,
+                        results_file
+                    )
 
+                    # Prevent potential duplications, then record final paths
+                    for path in concrete_paths:
+                        if path not in seen:
+                            seen.add(path)
+                            results_files.append(path)
 
-    # Ensure that we indeed have results files
-    if len(results_files) < 1:
+            # Case 2: Current module has *no* configs at all (rare but allowed)
+            else:
+                # Use raw file patterns with no mapping
+                for results_file in module_results:
+                    path = f"{results_dir}/{results_file}"
+                    if path not in seen:
+                        seen.add(path)
+                        results_files.append(path)
+
+    # Fail fast if no files were generated at all
+    if not results_files:
         sys.exit("Warning: No result files detected.")
 
-    return(results_files)
+    return results_files
+
+
+def read_tsv(path):
+    raw = pd.read_csv(path, sep = "\t")
+    file = os.path.basename(path)
+    raw["file"] = file

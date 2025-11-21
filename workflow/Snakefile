@@ -6,31 +6,26 @@ from scripts import helper_functions
 configfile: "config/config.yaml"
 
 # --- Inputs & paths from config file------------------------------------------------
-samplesheet_path = config['input_manager']['samplesheet']
-database_path = config['input_manager']['database_path']   # used by setup rules
-species_config_path = config['input_manager']['config_species'] # Path to species specific configuration files
-metadata_path = config['input_manager']['metadata_path']   # used by finder rules
-illumina_read_path_base = config['input_manager']['illumina_read_path']
-nanopore_read_path_base = config['input_manager']['nanopore_read_path']
-assembly_path_base = config['input_manager']['assembly_path']
-output_folder = config['input_manager']['output_folder']
-temp_storage_path = config['input_manager']['temp_storage']
-results_catalogue_path = config['input_manager']['result_catalogue']
+samplesheet_path = config['samplesheet']
+database_path = config['database_path']   # used by setup rules
+species_config_path = config['config_species'] # Path to species specific configuration files
+metadata_path = config['metadata_path']   # used by finder rules
+illumina_read_path_base = config['illumina_read_path']
+nanopore_read_path_base = config['nanopore_read_path']
+assembly_path_base = config['assembly_path']
+output_folder = config['output_folder']
+temp_storage_path = config['temp_storage']
+results_catalogue_path = config['result_catalogue']
 
 samplesheet = pd.read_csv(samplesheet_path, sep='\t')
 
 sample_configs = helper_functions.determine_sample_configs(samplesheet, "workflow/configs_species", True)
 
-with open(results_catalogue_path, "r") as catalgoue_file:
-    try:
-        results_catalogue = yaml.safe_load(catalgoue_file)
-    except:
-        print("Snakefile: LAZY DEVELOPPERS... Fill out except!!!")
-        yaml.safe_load(results_catalogue_path)
+results_catalogue = helper_functions.read_results_catalogue(results_catalogue_path)
 
 #print(f"results_catalogue_path: {results_catalogue_path}\nresults_catalogue: {results_catalogue}") # As log_trace 
 
-all_results = helper_functions.list_results(sample_configs, results_catalogue, output_folder)
+all_results_files = helper_functions.list_results(sample_configs, results_catalogue, output_folder)
 
 # --- Samples & read locations -------------------------------------------------
 sample_to_illumina, sample_to_nanopore, sample_to_assembly = helper_functions.sample_read_map(
@@ -49,7 +44,17 @@ sample_to_illumina, sample_to_nanopore, sample_to_assembly = helper_functions.sa
 # Define the dynamic input for rule all
 rule all:
     input:
-        all_results
+        "%s/all_results.tsv" %output_folder
+
+
+rule longtable:
+    input:
+        all_results_files
+    output:
+        "%s/all_results.tsv" %output_folder
+    run:
+        for results_file in all_results_files:
+            # Input long table functionality here
         
     
 include : "rules/assemblers.smk"

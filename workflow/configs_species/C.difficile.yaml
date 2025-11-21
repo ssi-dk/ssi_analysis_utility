@@ -13,8 +13,7 @@ deletion_identifier:
 cdiff_repeat_identifier:
     repeats: TR6 TR10
     combos: TRST
-    assemblers: spades
-    assemblers: skesa
+    assemblers: [spades, skesa]
 
 amrfinder:
     options: --organism 'Clostridioides_difficile'
