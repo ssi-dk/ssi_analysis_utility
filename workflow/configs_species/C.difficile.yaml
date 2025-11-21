@@ -27,6 +27,4 @@ samtools:
     sort_options: -n
 
 bcftools:
-    view:
-        region: AM180355.1_tcdC_804309_805008
-        options: -v indels -i 'INFO/DP>10'
+    view_options: -r AM180355.1_tcdC_804309_805008 -v indels -i 'INFO/DP>10'

@@ -46,16 +46,24 @@ rule all:
     input:
         "%s/all_results.tsv" %output_folder
 
-
 rule longtable:
     input:
         all_results_files
     output:
-        "%s/all_results.tsv" %output_folder
-    run:
-        for results_file in all_results_files:
-            # Input long table functionality here
-        
+        output_files = "%s/all_results.tsv" %output_folder
+    conda:
+        "envs/python_functions.yaml"
+    log:
+        "Logs/LongTable.log"
+    message:
+        "[LongTable]: Collapsing all module outputs into a long table"
+    shell:
+        r"""
+        cmd="python workflow/scripts/LongTable.py --config config/config.yaml --na --extend"
+
+        echo "Executing command:\n$cmd\n" > {log}
+        eval $cmd >> {log} 2>&1
+        """
     
 include : "rules/assemblers.smk"
 include : "rules/fetch_custom_dbs.smk"
