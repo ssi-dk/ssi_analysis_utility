@@ -384,7 +384,7 @@ def save_long_table(
             combined_frames.append(out_df)
         else:
             # write per-sample file
-            out_path = os.path.join(output_folder, f"{sample}_longtable.txt")
+            out_path = os.path.join(output_folder, f"{sample}/{sample}_longtable.txt")
             out_df.to_csv(out_path, sep="\t", index=False)
             written.append(out_path)
 
