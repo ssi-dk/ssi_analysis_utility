@@ -141,9 +141,9 @@ rule snp_identifier:
         "[SNP Identifier]: Identifying SNPs of {wildcards.database} on {wildcards.sample}"
     shell:
         """
-        cmd="python workflow/scripts/SNP_identifier.py --res {input.kma_results} --call {input.variants} --bed {input.ref_bed} --metafile {params.metafile} -o {output.indentified_variants} {params.options} > {log.stdout} 2>&1"
+        cmd="python workflow/scripts/SNP_identifier.py --res {input.kma_results} --call {input.variants} --bed {input.ref_bed} --metafile {params.metafile} -o {output.indentified_variants} {params.options}"
     
-        echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
         """
 
@@ -170,9 +170,9 @@ rule deletion_identifier:
         "[Deletion Identifier]: Identifying deletions of {wildcards.database} on {wildcards.sample}"
     shell:
         """
-        cmd="python workflow/scripts/deletion_identifier.py --res {input.kma_results} --fsa {input.kma_seq} --call {input.variants} --indels {input.indels} --bed {input.ref_bed} --metafile {params.metafile} -o {output.indentified_variants} {params.options} > {log.stdout} 2>&1"
+        cmd="python workflow/scripts/deletion_identifier.py --res {input.kma_results} --fsa {input.kma_seq} --call {input.variants} --indels {input.indels} --bed {input.ref_bed} --metafile {params.metafile} -o {output.indentified_variants} {params.options}"
 
-        echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
         """
 
@@ -199,7 +199,7 @@ rule cdiff_repeat_identifier:
 
         db_dir=$(dirname {input.seqs} | uniq)
 
-        cmd="python workflow/scripts/Repeat_Identifier.py --fasta {input.assembly} --ref_seq {input.seqs} --ref_meta {input.metas} --output {output.repeat_types} --sample_id {wildcards.sample} --repeats {params.repeats} --combos {params.combos} --suffix tsv --log_file {log.stdout} > {log.stdout} 2>&1"
+        cmd="python workflow/scripts/Repeat_Identifier.py --fasta {input.assembly} --ref_seq {input.seqs} --ref_meta {input.metas} --output {output.repeat_types} --sample_id {wildcards.sample} --repeats {params.repeats} --combos {params.combos} --suffix tsv"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1 
