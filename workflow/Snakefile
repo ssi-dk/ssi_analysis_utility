@@ -28,12 +28,20 @@ results_catalogue = helper_functions.read_results_catalogue(results_catalogue_pa
 all_results_files = helper_functions.list_results(sample_configs, results_catalogue, output_folder)
 
 # --- Samples & read locations -------------------------------------------------
-sample_to_illumina, sample_to_nanopore, sample_to_assembly = helper_functions.sample_read_map(
+Sample_dict, sample_to_illumina, sample_to_nanopore, sample_to_assembly = helper_functions.sample_read_map(
     samplesheet,
     illumina_read_base=illumina_read_path_base,
     nanopore_read_base=nanopore_read_path_base,
     assembly_base=assembly_path_base
 )
+
+# The sample_dicts contains a identicial sample string as key and value, 
+# This is simply to have a list similar to the other dicts if we want sample specific longtables further down  
+Samples = list(Sample_dict.keys()) 
+
+#define the long table output files to activate rule all
+Longtable_samples_output = [f"{output_folder}/{sample}/{sample}_longtable.tsv" for sample in Samples]
+Longtable_all = f"{output_folder}/all_results.tsv"
 
 ##############################################################################
 #
@@ -44,17 +52,37 @@ sample_to_illumina, sample_to_nanopore, sample_to_assembly = helper_functions.sa
 # Define the dynamic input for rule all
 rule all:
     input:
-        "%s/all_results.tsv" %output_folder
+        Longtable_samples_output,
+        Longtable_all
 
-rule longtable:
+rule longtable_samples:
     input:
         all_results_files
     output:
-        output_files = "%s/all_results.tsv" %output_folder
+        Longtable_samples_output
     conda:
         "envs/python_functions.yaml"
     log:
-        "Logs/LongTable.log"
+        "Logs/LongTableSamples.log"
+    message:
+        "[LongTable]: Collapsing all module outputs into a sample specific long table"
+    shell:
+        r"""
+        cmd="python workflow/scripts/LongTable.py --config config/config.yaml --na"
+
+        echo "Executing command:\n$cmd\n" > {log}
+        eval $cmd >> {log} 2>&1
+        """
+
+rule longtable_all:
+    input:
+        all_results_files
+    output:
+        Longtable_all
+    conda:
+        "envs/python_functions.yaml"
+    log:
+        "Logs/LongTableAll.log"
     message:
         "[LongTable]: Collapsing all module outputs into a long table"
     shell:

@@ -74,7 +74,7 @@ def sample_read_map(
     illumina_read_base: str = "",
     nanopore_read_base: str = "",
     assembly_base: str = "",
-) -> Tuple[Dict[str, List[str]], Dict[str, str], Dict[str, str]]:
+) -> Tuple[Dict[str, str], Dict[str, List[str]], Dict[str, str], Dict[str, str]]:
     """
     read_base and assembly_base are the paths defined in the config files for the input data
 
@@ -85,6 +85,7 @@ def sample_read_map(
     #{'ERR3528110': ['examples/Dataset/reads/ERR3528110_1.fastq.gz', 'examples/Dataset/reads/ERR3528110_2.fastq.gz'],
     """
 
+    samples = {}
     sample_to_illumina = {} 
     sample_to_nanopore = {}
     sample_to_assembly = {}
@@ -92,6 +93,7 @@ def sample_read_map(
     for idx, row in samplesheet.iterrows():
         sample = row[sample_col] #the key -> 'ERR3528110'
 
+        samples[sample] = sample 
         # --- Illumina ---
         illumina_reads = str(row[read_col]).split(',')
         illumina_full = [os.path.join(illumina_read_base, read) for read in illumina_reads]
@@ -107,7 +109,7 @@ def sample_read_map(
         Assembly_full = os.path.join(assembly_base, Assembly_seq)
         sample_to_assembly[sample] = Assembly_full
 
-    return sample_to_illumina, sample_to_nanopore, sample_to_assembly
+    return samples, sample_to_illumina, sample_to_nanopore, sample_to_assembly
 
 
 def map_configs_to_results(configs, results_dir, results_file):
