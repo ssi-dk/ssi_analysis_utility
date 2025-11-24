@@ -6,8 +6,7 @@ rule plasmidfinder:
         database = rules.setup_PlasmidFinder.output.database
     output:
         # Output directory for plasmidfinder results.
-        replicons = "%s/{sample}/plasmidfinder/results_tab.tsv" %output_folder,
-        done = temp("%s/{sample}/plasmidfinder/plasmidfinder.done" %output_folder)
+        replicons = "%s/{sample}/plasmidfinder/results_tab.tsv" %output_folder
     conda:
         "../envs/plasmidfinder.yaml"
     log:
@@ -21,9 +20,7 @@ rule plasmidfinder:
         cmd="plasmidfinder.py -i {input.R1} {input.R2} -o $outdir -p {input.database} -x"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-        eval $cmd >> {log.stdout} 2>&1
-            
-        echo "PlasmidFinder completed successfully for {wildcards.sample}" > {output.done}
+        eval $cmd >> {log.stdout} 2>&1            
         """
 
 
@@ -35,11 +32,9 @@ rule resfinder:
         point_database = rules.setup_PointFinder.output.database, #Pointfinder requires `species` definition
         disin_database = rules.setup_DisinFinder.output.database
     params:
-        # Point mutation
-        options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["resfinder"]["options"]
+        options = lambda wildcards: sample_configs[wildcards.sample]["resfinder"]["options"]
     output:
-        resistance = "%s/{sample}/resfinder/ResFinder_results_tab.txt" %output_folder,
-        done = temp("%s/{sample}/resfinder/resfinder.done" %output_folder)
+        resistance = "%s/{sample}/resfinder/ResFinder_results_tab.txt" %output_folder
     conda:
         "../envs/resfinder.yaml"
     log:
@@ -53,8 +48,6 @@ rule resfinder:
     
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
-
-        echo "ResFinder completed successfully for {wildcards.sample}" > {output.done}
         """
 
 
@@ -64,8 +57,7 @@ rule virulencefinder:
         R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
         database = rules.setup_VirulenceFinder.output.database
     output:
-        virulence = "%s/{sample}/virulencefinder/results_tab.tsv" %output_folder,
-        done = temp("%s/{sample}/virulencefinder/virulencefinder.done" %output_folder)
+        virulence = "%s/{sample}/virulencefinder/results_tab.tsv" %output_folder
     conda:
         "../envs/virulencefinder.yaml"
     log:
@@ -79,8 +71,6 @@ rule virulencefinder:
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
-
-        echo "VirulenceFinder completed successfully for {wildcards.sample}" > {output.done}
         """
 
 
@@ -90,8 +80,7 @@ rule serotypefinder:
         R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
         database = rules.setup_SerotypeFinder.output.database
     output:
-        serotype = "%s/{sample}/serotypefinder/results_tab.tsv" %output_folder,
-        done = temp("%s/{sample}/serotypefinder/serotypefinder.done" %output_folder)
+        serotype = "%s/{sample}/serotypefinder/results_tab.tsv" %output_folder
     conda:
         "../envs/serotypefinder.yaml"
     log:
@@ -105,8 +94,6 @@ rule serotypefinder:
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
-
-        echo "SerotypeFinder completed successfully for {wildcards.sample}" > {output.done}
         """
 
 
@@ -115,11 +102,9 @@ rule amrfinder:
         assembly = rules.assembly.output.output_assembly,
         database = rules.setup_AMRFinder.output.database
     params:
-        # Point mutation
-        options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["amrfinder"]["options"]
+        options = lambda wildcards: sample_configs[wildcards.sample]["amrfinder"]["options"]
     output:
-        result = "%s/{sample}/amrfinder/{assembler}.tsv" %output_folder,
-        done = temp("%s/{sample}/amrfinder/{assembler}.done" %output_folder)
+        result = "%s/{sample}/amrfinder/{assembler}.tsv" %output_folder
     conda:
         "../envs/amrfinder.yaml"
     log:
@@ -134,8 +119,6 @@ rule amrfinder:
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
-
-        echo "AMRFinderPlus completed successfully for {wildcards.sample} with {wildcards.assembler} assembly" > {output.done}
         """
 
 
@@ -146,11 +129,10 @@ rule snp_identifier:
         variants_index = rules.bcftools_variant_call.output.index,
         ref_bed = rules.fetch_genbank.output.bed,
     params:
-        options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["snp_identifier"]["options"],
+        options = lambda wildcards: sample_configs[wildcards.sample]["snp_identifier"]["options"],
         metafile = "%s/SNP_metafile.tsv" %metadata_path
     output:
-        indentified_variants = "%s/{sample}/snp_identifier/{database}.tsv" %output_folder,
-        done = temp("%s/{sample}/snp_identifier/{database}.done" %output_folder)
+        indentified_variants = "%s/{sample}/snp_identifier/{database}.tsv" %output_folder
     conda:
         "../envs/python_functions.yaml"
     log:
@@ -163,8 +145,6 @@ rule snp_identifier:
     
         echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
-
-        echo "SNP identification completed successfully of {wildcards.database} on {wildcards.sample}" > {output.done}
         """
 
 
@@ -178,11 +158,10 @@ rule deletion_identifier:
         variants_index = rules.bcftools_variant_call.output.index,
         ref_bed = rules.fetch_genbank.output.bed,
     params:
-        options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["deletion_identifier"]["options"],
+        options = lambda wildcards: sample_configs[wildcards.sample]["deletion_identifier"]["options"],
         metafile = "%s/deletion_metafiles.tsv" %metadata_path
     output:
-        indentified_variants = "%s/{sample}/deletion_identifier/{database}.tsv" %output_folder,
-        done = temp("%s/{sample}/deletion_identifier/{database}.done" %output_folder)
+        indentified_variants = "%s/{sample}/deletion_identifier/{database}.tsv" %output_folder
     conda:
         "../envs/python_functions.yaml"
     log:
@@ -195,8 +174,6 @@ rule deletion_identifier:
 
         echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
-
-        echo "Deletion identification completed successfully of {wildcards.database} on {wildcards.sample}" > {output.done}
         """
 
 
@@ -206,11 +183,10 @@ rule cdiff_repeat_identifier:
         metas = expand(rules.fetch_type_repeat_metadata.output.meta, TR = ["TR6", "TR10", "TRST"]),
         assembly = rules.assembly.output.output_assembly
     params:
-        repeats = ["TR6", "TR10"],
-        combos = ["TRST"]
+        repeats = lambda wildcards: sample_configs[wildcards.sample]["cdiff_repeat_identifier"]["repeats"],
+        combos = lambda wildcards: sample_configs[wildcards.sample]["cdiff_repeat_identifier"]["combos"]
     output:
-        repeat_types = "%s/{sample}/cdiff_repeat_identifier/{assembler}_repeat_types.tsv" %output_folder,
-        done = temp("%s/{sample}/cdiff_repeat_identifier/{assembler}.done" %output_folder)
+        repeat_types = "%s/{sample}/cdiff_repeat_identifier/{assembler}_repeat_types.tsv" %output_folder
     conda:
         "../envs/python_functions.yaml"
     log:
@@ -227,6 +203,4 @@ rule cdiff_repeat_identifier:
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1 
-        
-        echo "C. difficile repeat identification completed successfully on {wildcards.sample} with {wildcards.assembler} assembly" > {output.done}
         """
