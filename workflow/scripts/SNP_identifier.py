@@ -166,6 +166,7 @@ def filter_variants_by_dp(
             filtered.append(rec)
     return filtered
 
+
 # ========================= Step 6: Check deletions spanning position =========================
 
 
@@ -209,31 +210,54 @@ def check_pos_deletions(
 def check_pos_snp(
     variants: List[pysam.VariantRecord],
     position: int,
+    expected_ref: str,
+    expected_alt: str,
 ) -> Optional[str]:
     """
     Check whether there is a SNP exactly at `position` (1-based) in `variants`.
 
-    - Only considers simple SNPs: len(REF) == 1 and len(ALT) == 1.
-    - Returns variant in the format '{ref}{pos}{alt}' using the BCF orientation.
-
-    If no SNP is present, returns None.
+    Logic:
+      - Look for simple SNPs (len(REF) == 1 and len(ALT) == 1) at that position.
+      - If any SNP matches expected_ref/expected_alt from metafile:
+            return '{ref}{pos}{alt}'  (e.g. 'A117T')
+      - Else if there is a SNP at that position but with different alleles:
+            return 'other'
+      - If there is no SNP at that position at all: return None
+        (caller will interpret as 'wt').
     """
+    expected_ref = expected_ref.upper()
+    expected_alt = expected_alt.upper()
+    saw_nonmatching_snp = False
+
     for rec in variants:
         if rec.pos != position:
             continue
         if not rec.alts:
             continue
 
-        ref = rec.ref
-        alt = rec.alts[0]  # first ALT only
+        ref = rec.ref.upper()
+        for alt in rec.alts:
+            if alt is None:
+                continue
+            alt = alt.upper()
 
-        # Only treat pure SNPs
-        if alt is None or len(ref) != 1 or len(alt) != 1:
-            print(f"The bcf records {rec.pos} with reference {rec.ref} and alternative {rec.alts[0]} is determined as a SNP")
-            continue
+            # Only treat pure SNPs
+            if len(ref) != 1 or len(alt) != 1:
+                continue
 
-        return f"{ref}{position}{alt}"
+            if ref == expected_ref and alt == expected_alt:
+                # Exact match to metafile definition
+                print(f"The bcf records {rec.pos} with reference {rec.ref} and alternative {alt} matches expected {expected_ref}>{expected_alt}")
+                return f"{ref}{position}{alt}"
+            else:
+                saw_nonmatching_snp = True
 
+    if saw_nonmatching_snp:
+        # There was a SNP at this position, but not the expected one
+        print(f"A SNP was found at position {position} but did not match expected {expected_ref}>{expected_alt}")
+        return "other"
+
+    # No SNP at that position
     return None
 
 
@@ -275,6 +299,8 @@ def run(
         gene = str(row["gene"])
         position = int(row["position"])
         gt_dp = int(row["gt_DP"])
+        expected_ref = str(row["reference"])
+        expected_alt = str(row["alternative"])
 
         if gene not in gene_to_contig:
             print(f"[WARN] Skipping {gene}:{position} - no contig mapping found in BCF.")
@@ -299,9 +325,14 @@ def run(
 
             # Step 7: Check_pos_SNP (only if no deletion)
             if variant is None:
-                variant = check_pos_snp(variants, position)
+                variant = check_pos_snp(
+                    variants=variants,
+                    position=position,
+                    expected_ref=expected_ref,
+                    expected_alt=expected_alt,
+                )
 
-            # If neither deletion nor SNP was found
+            # If neither deletion nor SNP was found (or no variant after DP filter)
             if variant is None:
                 variant = "wt"
 
