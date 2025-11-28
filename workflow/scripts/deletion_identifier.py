@@ -450,18 +450,6 @@ def assign_best_canonical_for_mpileup(
 
             len_diff = abs(obs_len - exp_len)
 
-            # Scoring scheme:
-            #
-            # 1) Prefer higher frac_expected
-            #      → more of the canonical region is deleted.
-            #
-            # 2) If tie, prefer higher frac_observed
-            #      → more of the observed deletion lies inside the canonical region.
-            #
-            # 3) If tie, prefer smaller abs(len_diff) = |obs_len - exp_len|.
-            #
-            # 4) If still tie, prefer smaller canonical length (exp_type),
-            #      e.g. 39 over 54.
             score_tuple = (frac_expected, frac_observed, -len_diff, -exp_type)
 
             print(
@@ -703,6 +691,7 @@ def run(
             gene_min_start = int(meta_g["del_start"].min())
             gene_max_end = int(meta_g["del_end"].max())
 
+            print(f"\n\t# ===============  [REDO] Step 4: Extract deletion variants overlapping the region ===============\n")
             mpileup_deletion_variants = extract_deletion_variants_in_region(
                 bcf=mpileup_bcf,
                 contig=contig_name,
@@ -711,6 +700,7 @@ def run(
                 region_buffer=deletion_region_buffer,
             )
 
+            print(f"\n\t# ===============  Classify mpileup deletion variants overlapping the region ===============\n")
             (
                 best_type,
                 best_len_diff,
