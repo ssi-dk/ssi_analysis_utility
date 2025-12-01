@@ -1,7 +1,7 @@
 samplesheet: examples/samplesheet.tsv
 database_path: resources
 config_species : workflow/configs_species
-metadata_path: examples/Metadata
+metadata_path: config/Metadata
 illumina_read_path: examples/Dataset/reads
 nanopore_read_path: examples/Dataset/reads
 assembly_path: examples/Dataset/assembly_path
