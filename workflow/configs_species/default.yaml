@@ -1,32 +1,31 @@
-analyses_to_run:
-    spa_typing:
-      assemblers: shovill
+spa_typing:
+    assemblers: shovill
 
-    mlst:
-      assemblers: shovill  
+mlst:
+    assemblers: shovill  
     
-    resfinder:
-      options: ""
+resfinder:
+    options: ""
 
-    plasmidfinder:
-      options: ""
+plasmidfinder:
+    options: ""
 
-    virulencefinder:
-      options: ""
+virulencefinder:
+    options: ""
 
-    serotypefinder:
-      options: ""
+serotypefinder:
+    options: ""
           
-    amrfinder:
-      assemblers: shovill
-      options: ""
+amrfinder:
+    assemblers: shovill
+    options: ""
     
-    meningotype:
-      assemblers: shovill
+meningotype:
+    assemblers: shovill
 
-    kmeraligner:
-      database: elmDB
-      options : -ID 80 -1t1 -cge
+kmeraligner:
+    database: elmDB
+    options : -ID 80 -1t1 -cge
 
-    LREfinder:
-      database: elmDB
+LREfinder:
+    database: elmDB
