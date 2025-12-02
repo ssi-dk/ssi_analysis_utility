@@ -1,0 +1,1546 @@
+sample_name	tool	filename	organism	field	value
+ERR3528110	kma_filter	ecoligenes.tsv	Escherichia coli	sample_id	ERR3528110
+ERR3528110	kma_filter	ecoligenes.tsv	Escherichia coli	stx	-
+ERR3528110	kma_filter	ecoligenes.tsv	Escherichia coli	wzx	Positive
+ERR3528110	kma_filter	ecoligenes.tsv	Escherichia coli	wzy	Positive
+ERR3528110	kma_filter	ecoligenes.tsv	Escherichia coli	wzt	Negative
+ERR3528110	kma_filter	ecoligenes.tsv	Escherichia coli	wzm	Negative
+ERR3528110	kma_filter	ecoligenes.tsv	Escherichia coli	fliC	Positive
+ERR3528110	kma_filter	ecoligenes.tsv	Escherichia coli	fli	Negative
+ERR3528110	kma_filter	ecoligenes.tsv	Escherichia coli	eae	Negative
+ERR3528110	kma_filter	ecoligenes.tsv	Escherichia coli	ehxA	Negative
+ERR3528110	kma_filter	ecoligenes.tsv	Escherichia coli	OH	O6;H1
+ERR3528110	kma_filter	ecoligenes.tsv	Escherichia coli	Other	-
+ERR3528110	kma_filter	ecoligenes.tsv	Escherichia coli	verbose	wzx_O6_1257_100.00_99.92_16.07;wzy_O6_1344_100.00_100.00_17.38;fliC_H1_1788_100.00_100.00_63.66
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Resistance gene	ant(3'')-Ia
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Resistance gene	aadA1b
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Resistance gene	aadA1
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Resistance gene	sul1
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Resistance gene	sul1
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Resistance gene	dfrA1
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Resistance gene	dfrA1
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Resistance gene	dfrA1
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Resistance gene	dfrA1
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Identity	98.87
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Identity	99.62
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Identity	100.00
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Identity	100.00
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Identity	99.88
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Identity	91.14
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Identity	89.24
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Identity	99.16
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Identity	99.79
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Alignment Length/Gene Length	972/972
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Alignment Length/Gene Length	792/792
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Alignment Length/Gene Length	792/792
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Alignment Length/Gene Length	840/840
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Alignment Length/Gene Length	867/867
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Alignment Length/Gene Length	432/474
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Alignment Length/Gene Length	468/474
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Alignment Length/Gene Length	474/474
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Alignment Length/Gene Length	474/474
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Coverage	99.28
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Coverage	100.0
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Coverage	100.0
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Coverage	100.0
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Coverage	100.0
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Coverage	91.14
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Coverage	89.87
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Coverage	100.0
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Coverage	100.0
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Position in reference	1..973
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Position in reference	1..793
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Position in reference	1..793
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Position in reference	1..841
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Position in reference	1..868
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Position in reference	1..433
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Position in reference	7..475
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Position in reference	1..475
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Position in reference	1..475
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Phenotype	Streptomycin
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Phenotype	Spectinomycin, Streptomycin
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Phenotype	Spectinomycin, Streptomycin
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Phenotype	Sulfamethoxazole
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Phenotype	Sulfamethoxazole
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Phenotype	Trimethoprim
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Phenotype	Trimethoprim
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Phenotype	Trimethoprim
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Phenotype	Trimethoprim
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Accession no.	X02340
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Accession no.	M95287
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Accession no.	JX185132
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Accession no.	U12338
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Accession no.	EU780013
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Accession no.	EU089668
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Accession no.	FJ215857
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Accession no.	AJ238350
+ERR3528110	resfinder	ResFinder_results_tab.txt	Escherichia coli	Accession no.	AF203818
+ERR3528110	resfinder	PointFinder_results.txt	Escherichia coli	Mutation	ampC-promoter n.-16_-15insTG
+ERR3528110	resfinder	PointFinder_results.txt	Escherichia coli	Nucleotide change	ins -> TG
+ERR3528110	resfinder	PointFinder_results.txt	Escherichia coli	Amino acid change	Promoter mutations
+ERR3528110	resfinder	PointFinder_results.txt	Escherichia coli	Resistance	Ampicillin, Ampicillin+Clavulanic Acid, Amoxicillin, Amoxicillin+Clavulanic Acid, Cefixime, Cefotaxime, Cefoxitin, Ceftazidime, Piperacillin
+ERR3528110	resfinder	PointFinder_results.txt	Escherichia coli	PMID	21653764
+ERR3528110	resfinder	DisinFinder_results_tab.txt	Escherichia coli	Resistance gene	qacE
+ERR3528110	resfinder	DisinFinder_results_tab.txt	Escherichia coli	Resistance gene	sitABCD
+ERR3528110	resfinder	DisinFinder_results_tab.txt	Escherichia coli	Identity	90.39
+ERR3528110	resfinder	DisinFinder_results_tab.txt	Escherichia coli	Identity	97.28
+ERR3528110	resfinder	DisinFinder_results_tab.txt	Escherichia coli	Alignment Length/Gene Length	333/333
+ERR3528110	resfinder	DisinFinder_results_tab.txt	Escherichia coli	Alignment Length/Gene Length	3459/3459
+ERR3528110	resfinder	DisinFinder_results_tab.txt	Escherichia coli	Coverage	94.59
+ERR3528110	resfinder	DisinFinder_results_tab.txt	Escherichia coli	Coverage	99.74
+ERR3528110	resfinder	DisinFinder_results_tab.txt	Escherichia coli	Position in reference	1..334
+ERR3528110	resfinder	DisinFinder_results_tab.txt	Escherichia coli	Position in reference	1..3460
+ERR3528110	resfinder	DisinFinder_results_tab.txt	Escherichia coli	Phenotype	Benzylkonium Chloride, Ethidium Bromide,  Chlorhexidine, Cetylpyridinium Chloride
+ERR3528110	resfinder	DisinFinder_results_tab.txt	Escherichia coli	Phenotype	Hydrogen peroxide
+ERR3528110	resfinder	DisinFinder_results_tab.txt	Escherichia coli	Accession no.	X68232
+ERR3528110	resfinder	DisinFinder_results_tab.txt	Escherichia coli	Accession no.	AY598030
+ERR3528110	plasmidfinder	results_tab.tsv		Database	enterobacteriales
+ERR3528110	plasmidfinder	results_tab.tsv		Plasmid	IncI1-I(Alpha)
+ERR3528110	plasmidfinder	results_tab.tsv		Identity	100.0
+ERR3528110	plasmidfinder	results_tab.tsv		Query / Template length	142 / 142
+ERR3528110	plasmidfinder	results_tab.tsv		Accession number	AP005147
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	AslA
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	cdt-IVB
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	cea
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	chuA
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	cia
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	cib
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	clbB
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	cnf1
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	csgA
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	fimH
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	focC
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	fyuA
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	gad
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	gad
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	hlyA
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	hra
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	iroN
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	irp2
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	iss
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	kpsE
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	kpsMII_K23
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	mchB
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	mchC
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	mchF
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	mcmA
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	nlpI
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	ompT
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	papA_F12
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	papC
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	pic
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	sfaD
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	sitA
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	sitA
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	terC
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	terC
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	usp
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	vat
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	yehA
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	yehB
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	yehC
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	yehD
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	yfcV
+ERR3528110	virulencefinder	results_tab.tsv		Virulence factor	yfcV
+ERR3528110	virulencefinder	results_tab.tsv		Identity	100.0
+ERR3528110	virulencefinder	results_tab.tsv		Identity	99.88
+ERR3528110	virulencefinder	results_tab.tsv		Identity	100.0
+ERR3528110	virulencefinder	results_tab.tsv		Identity	100.0
+ERR3528110	virulencefinder	results_tab.tsv		Identity	99.32
+ERR3528110	virulencefinder	results_tab.tsv		Identity	100.0
+ERR3528110	virulencefinder	results_tab.tsv		Identity	100.0
+ERR3528110	virulencefinder	results_tab.tsv		Identity	99.97
+ERR3528110	virulencefinder	results_tab.tsv		Identity	92.11
+ERR3528110	virulencefinder	results_tab.tsv		Identity	100.0
+ERR3528110	virulencefinder	results_tab.tsv		Identity	99.57
+ERR3528110	virulencefinder	results_tab.tsv		Identity	95.99
+ERR3528110	virulencefinder	results_tab.tsv		Identity	100.0
+ERR3528110	virulencefinder	results_tab.tsv		Identity	100.0
+ERR3528110	virulencefinder	results_tab.tsv		Identity	99.97
+ERR3528110	virulencefinder	results_tab.tsv		Identity	99.87
+ERR3528110	virulencefinder	results_tab.tsv		Identity	100.0
+ERR3528110	virulencefinder	results_tab.tsv		Identity	100.0
+ERR3528110	virulencefinder	results_tab.tsv		Identity	100.0
+ERR3528110	virulencefinder	results_tab.tsv		Identity	100.0
+ERR3528110	virulencefinder	results_tab.tsv		Identity	100.0
+ERR3528110	virulencefinder	results_tab.tsv		Identity	100.0
+ERR3528110	virulencefinder	results_tab.tsv		Identity	99.94
+ERR3528110	virulencefinder	results_tab.tsv		Identity	100.0
+ERR3528110	virulencefinder	results_tab.tsv		Identity	100.0
+ERR3528110	virulencefinder	results_tab.tsv		Identity	99.77
+ERR3528110	virulencefinder	results_tab.tsv		Identity	100.0
+ERR3528110	virulencefinder	results_tab.tsv		Identity	99.01
+ERR3528110	virulencefinder	results_tab.tsv		Identity	92.38
+ERR3528110	virulencefinder	results_tab.tsv		Identity	100.0
+ERR3528110	virulencefinder	results_tab.tsv		Identity	99.81
+ERR3528110	virulencefinder	results_tab.tsv		Identity	98.91
+ERR3528110	virulencefinder	results_tab.tsv		Identity	99.89
+ERR3528110	virulencefinder	results_tab.tsv		Identity	99.86
+ERR3528110	virulencefinder	results_tab.tsv		Identity	97.2
+ERR3528110	virulencefinder	results_tab.tsv		Identity	100.0
+ERR3528110	virulencefinder	results_tab.tsv		Identity	100.0
+ERR3528110	virulencefinder	results_tab.tsv		Identity	97.29
+ERR3528110	virulencefinder	results_tab.tsv		Identity	96.65
+ERR3528110	virulencefinder	results_tab.tsv		Identity	96.3
+ERR3528110	virulencefinder	results_tab.tsv		Identity	95.21
+ERR3528110	virulencefinder	results_tab.tsv		Identity	100.0
+ERR3528110	virulencefinder	results_tab.tsv		Identity	95.07
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	1656 / 1656
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	822 / 822
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	240 / 240
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	1983 / 1983
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	147 / 147
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	1881 / 1881
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	9621 / 9621
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	3045 / 3045
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	459 / 456
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	489 / 489
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	696 / 696
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	1941 / 2022
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	1401 / 1401
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	1401 / 1401
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	3075 / 3075
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	741 / 741
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	2178 / 2178
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	6108 / 6108
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	342 / 342
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	1149 / 1149
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	777 / 777
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	294 / 294
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	1551 / 1551
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	2115 / 2115
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	279 / 279
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	885 / 885
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	954 / 954
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	504 / 504
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	2513 / 2520
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	4116 / 4116
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	540 / 540
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	906 / 915
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	915 / 915
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	714 / 714
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	966 / 966
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	1782 / 1782
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	4131 / 4131
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	1035 / 1035
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	2481 / 2481
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	675 / 675
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	543 / 543
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	567 / 567
+ERR3528110	virulencefinder	results_tab.tsv		Query / Template length	774 / 750
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  Colicin E1
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  Outer membrane hemin receptor
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  Colicin ia
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  Colicin ib
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  Hybrid non-ribosomal peptide / polyketide megasynthase
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  Cytotoxic necrotizing factor 1
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	 curlin major subunit CsgA
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	   Type 1 fimbriae
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  S fimbrial/F1C minor subunit
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  Siderophore receptor
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  Glutamate decarboxylase
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  Glutamate decarboxylase
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  Hemolysin A
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  Heat-resistant agglutinin
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  Enterobactin siderophore receptor protein
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  High molecular weight protein 2 non-ribosomal peptide synthetase
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  Increased serum survival
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  Capsule polysaccharide export inner-membrane protein
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  Polysialic acid transport protein; Group 2 capsule
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  Microcin H47 part of colicin H
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  MchC protein
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  ABC transporter protein MchF
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  Microcin M part of colicin H
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  lipoprotein NlpI precursor
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  Outer membrane protease (protein protease 7)
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  Major pilin subunit F12
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  Outer membrane usher P fimbriae
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  serine protease autotransporters of Enterobacteriaceae (SPATE)
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  S fimbrial/F1C minor subunit
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  Iron transport protein
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  Iron transport protein
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  Tellurium ion resistance protein
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  Tellurium ion resistance protein
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  Uropathogenic specific protein
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  serine protease autotransporters of Enterobacteriaceae (SPATE)
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  Outer membrane lipoprotein, YHD fimbriael cluster
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	 Usher, YHD fimbriael cluster
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	 Chaperone, YHD fimbriael cluster
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	 Major pilin subunit, YHD fimbriael cluster
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  Fimbrial protein
+ERR3528110	virulencefinder	results_tab.tsv		Protein function	  Fimbrial protein
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	CP022686
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	CP000468
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	GG772217
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	UFZT01000001
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	QMGM01000002
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	HQ114281
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	NZ_QLAC01000024
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	AM261284
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	CP069646
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	CP010315
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	UARZ01000018
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	CP001671
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	CP001671
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	CP032936
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	CP040456
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	AE014075
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	CP001671
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	AE014075
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	CP011134
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	LR134208
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	AE014075
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	AE014075
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	AE014075
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	AJ586887
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	CP000243
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	ACGN01000009
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	AF247354
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	LN874954
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	AE014075
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	CP010315
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	ADUC01000392
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	UCUV01000002
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	CP000468
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	MG591698
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	FQSQ01000009
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	AE014075
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	CP042934
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	CP042934
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	CP042934
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	CP042934
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	UFZT01000001
+ERR3528110	virulencefinder	results_tab.tsv		Accession number	UGFD01000001
+ERR3528110	serotypefinder	results_tab.tsv		Database	H_type
+ERR3528110	serotypefinder	results_tab.tsv		Database	O_type
+ERR3528110	serotypefinder	results_tab.tsv		Database	O_type
+ERR3528110	serotypefinder	results_tab.tsv		Gene	fliC
+ERR3528110	serotypefinder	results_tab.tsv		Gene	wzx
+ERR3528110	serotypefinder	results_tab.tsv		Gene	wzy
+ERR3528110	serotypefinder	results_tab.tsv		Serotype	H1
+ERR3528110	serotypefinder	results_tab.tsv		Serotype	O6
+ERR3528110	serotypefinder	results_tab.tsv		Serotype	O6
+ERR3528110	serotypefinder	results_tab.tsv		Identity	100.0
+ERR3528110	serotypefinder	results_tab.tsv		Identity	99.92
+ERR3528110	serotypefinder	results_tab.tsv		Identity	100.0
+ERR3528110	serotypefinder	results_tab.tsv		Template / HSP length	1788 / 1788
+ERR3528110	serotypefinder	results_tab.tsv		Template / HSP length	1257 / 1257
+ERR3528110	serotypefinder	results_tab.tsv		Template / HSP length	1344 / 1344
+ERR3528110	serotypefinder	results_tab.tsv		Accession number	AB028471
+ERR3528110	serotypefinder	results_tab.tsv		Accession number	AJ426045
+ERR3528110	serotypefinder	results_tab.tsv		Accession number	AJ426423
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Contig id	contig00016
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Contig id	contig00016
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Contig id	contig00016
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Contig id	contig00016
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Start	8368
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Start	9201
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Start	9712
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Start	10534
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Stop	9204
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Stop	9545
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Stop	10500
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Stop	11004
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Strand	-
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Strand	-
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Strand	-
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Strand	-
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Element symbol	sul1
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Element symbol	qacEdelta1
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Element symbol	aadA1
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Element symbol	dfrA1
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Element name	sulfonamide-resistant dihydropteroate synthase Sul1
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Element name	quaternary ammonium compound efflux SMR transporter QacE delta 1
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Element name	ANT(3'')-Ia family aminoglycoside nucleotidyltransferase AadA1
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Element name	trimethoprim-resistant dihydrofolate reductase DfrA1
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Scope	core
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Scope	core
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Scope	core
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Scope	core
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Type	AMR
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Type	STRESS
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Type	AMR
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Type	AMR
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Subtype	AMR
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Subtype	BIOCIDE
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Subtype	AMR
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Subtype	AMR
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Class	SULFONAMIDE
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Class	QUATERNARY AMMONIUM
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Class	AMINOGLYCOSIDE
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Class	TRIMETHOPRIM
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Subclass	SULFONAMIDE
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Subclass	QUATERNARY AMMONIUM
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Subclass	STREPTOMYCIN
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Subclass	TRIMETHOPRIM
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Method	EXACTX
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Method	ALLELEX
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Method	EXACTX
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Method	EXACTX
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Target length	279
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Target length	115
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Target length	263
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Target length	157
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Reference sequence length	279
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Reference sequence length	115
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Reference sequence length	263
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Reference sequence length	157
+ERR3528110	amrfinder	shovill.tsv	Escherichia	% Coverage of reference	100.00
+ERR3528110	amrfinder	shovill.tsv	Escherichia	% Coverage of reference	100.00
+ERR3528110	amrfinder	shovill.tsv	Escherichia	% Coverage of reference	100.00
+ERR3528110	amrfinder	shovill.tsv	Escherichia	% Coverage of reference	100.00
+ERR3528110	amrfinder	shovill.tsv	Escherichia	% Identity to reference	100.00
+ERR3528110	amrfinder	shovill.tsv	Escherichia	% Identity to reference	100.00
+ERR3528110	amrfinder	shovill.tsv	Escherichia	% Identity to reference	100.00
+ERR3528110	amrfinder	shovill.tsv	Escherichia	% Identity to reference	100.00
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Alignment length	279
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Alignment length	115
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Alignment length	263
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Alignment length	157
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Closest reference accession	WP_000259031.1
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Closest reference accession	WP_000679427.1
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Closest reference accession	WP_001206317.1
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Closest reference accession	WP_000777555.1
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Closest reference name	sulfonamide-resistant dihydropteroate synthase Sul1
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Closest reference name	quaternary ammonium compound efflux SMR transporter QacE delta 1
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Closest reference name	ANT(3'')-Ia family aminoglycoside nucleotidyltransferase AadA1
+ERR3528110	amrfinder	shovill.tsv	Escherichia	Closest reference name	trimethoprim-resistant dihydrofolate reductase DfrA1
+ERR3528110	mlst	shovill_mlst.tsv		col1	ERR3528110_shovill
+ERR3528110	mlst	shovill_mlst.tsv		col2	escherichia
+ERR3528110	mlst	shovill_mlst.tsv		col3	73
+ERR3528110	mlst	shovill_mlst.tsv		col4	adk(36)
+ERR3528110	mlst	shovill_mlst.tsv		col5	fumC(24)
+ERR3528110	mlst	shovill_mlst.tsv		col6	gyrB(9)
+ERR3528110	mlst	shovill_mlst.tsv		col7	icd(13)
+ERR3528110	mlst	shovill_mlst.tsv		col8	mdh(17)
+ERR3528110	mlst	shovill_mlst.tsv		col9	purA(11)
+ERR3528110	mlst	shovill_mlst.tsv		col10	recA(25)
+ERR142064	snp_identifier	Cdiff_Toxins.tsv	Clostridioides difficile	snp_info	117_wt;184_wt
+ERR142064	deletion_identifier	Cdiff_Toxins.tsv	Clostridioides difficile	tcdCdel	-
+ERR142064	deletion_identifier	Cdiff_Toxins.tsv	Clostridioides difficile	tcdC_deletion_details	-
+ERR142064	deletion_identifier	Cdiff_Toxins.tsv	Clostridioides difficile	tcdC_deletion_consensus	-
+ERR142064	cdiff_repeat_identifier	spades_repeat_types.tsv		sample_id	ERR142064
+ERR142064	cdiff_repeat_identifier	spades_repeat_types.tsv		TR6	A015
+ERR142064	cdiff_repeat_identifier	spades_repeat_types.tsv		TR10	Unknown
+ERR142064	cdiff_repeat_identifier	spades_repeat_types.tsv		TRST	Unknown
+ERR142064	cdiff_repeat_identifier	skesa_repeat_types.tsv		sample_id	ERR142064
+ERR142064	cdiff_repeat_identifier	skesa_repeat_types.tsv		TR6	Unknown
+ERR142064	cdiff_repeat_identifier	skesa_repeat_types.tsv		TR10	Unknown
+ERR142064	cdiff_repeat_identifier	skesa_repeat_types.tsv		TRST	Unknown
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Contig id	NODE_16_length_81969_cov_27.531354
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Contig id	NODE_19_length_78581_cov_19.894307
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Contig id	NODE_22_length_72307_cov_22.501245
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Contig id	NODE_47_length_28473_cov_23.058439
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Contig id	NODE_8_length_114088_cov_21.325729
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Start	46
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Start	45770
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Start	2296
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Start	6428
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Start	25581
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Stop	615
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Stop	46170
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Stop	4719
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Stop	7363
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Stop	28556
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Strand	+
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Strand	-
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Strand	-
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Strand	-
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Strand	+
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Element symbol	blaAHM
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Element symbol	PnimB_G
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Element symbol	gyrA_T82I
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Element symbol	blaCDD
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Element symbol	mreE_V497L
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Element name	AHM family subclass B3-like metallo-beta-lactamase
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Element name	Clostridioides difficile metronidazole resistant nimB promoter
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Element name	Clostridioides difficile quinolone resistant GyrA
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Element name	CDD family class D beta-lactamase
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Element name	Clostridioides difficile cephalosporin resistant MreE
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Scope	core
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Scope	core
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Scope	core
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Scope	core
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Scope	core
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Type	AMR
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Type	AMR
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Type	AMR
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Type	AMR
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Type	AMR
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Subtype	AMR
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Subtype	POINT
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Subtype	POINT
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Subtype	AMR
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Subtype	POINT
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Class	BETA-LACTAM
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Class	NITROIMIDAZOLE
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Class	QUINOLONE
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Class	BETA-LACTAM
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Class	BETA-LACTAM
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Subclass	CARBAPENEM
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Subclass	METRONIDAZOLE
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Subclass	QUINOLONE
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Subclass	BETA-LACTAM
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Subclass	CEPHALOSPORIN
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Method	PARTIALX
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Method	POINTN
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Method	POINTX
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Method	BLASTX
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Method	POINTX
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Target length	190
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Target length	401
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Target length	808
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Target length	312
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Target length	992
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Reference sequence length	304
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Reference sequence length	401
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Reference sequence length	808
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Reference sequence length	308
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Reference sequence length	992
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	% Coverage of reference	62.50
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	% Coverage of reference	100.00
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	% Coverage of reference	100.00
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	% Coverage of reference	100.00
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	% Coverage of reference	100.00
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	% Identity to reference	98.42
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	% Identity to reference	99.75
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	% Identity to reference	99.63
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	% Identity to reference	98.72
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	% Identity to reference	99.60
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Alignment length	190
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Alignment length	401
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Alignment length	808
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Alignment length	312
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Alignment length	992
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Closest reference accession	WP_011860980.1
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Closest reference accession	NZ_CP037853.1:2640793-2641193
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Closest reference accession	WP_003429305.1
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Closest reference accession	WP_021361759.1
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Closest reference accession	WP_016729515.1
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Closest reference name	subclass B3-like metallo-beta-lactamase AHM-1
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Closest reference name	nimB promoter region
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Closest reference name	DNA gyrase subunit A GyrA
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Closest reference name	extended-spectrum class D beta-lactamase CDD-2
+ERR142064	amrfinder	spades.tsv	Clostridioides_difficile	Closest reference name	penicillin-binding protein MreE
+ERR142064	mlst	spades_mlst.tsv		col1	ERR142064_spades
+ERR142064	mlst	spades_mlst.tsv		col2	cdifficile
+ERR142064	mlst	spades_mlst.tsv		col3	1
+ERR142064	mlst	spades_mlst.tsv		col4	adk(1)
+ERR142064	mlst	spades_mlst.tsv		col5	atpA(1)
+ERR142064	mlst	spades_mlst.tsv		col6	dxr(1)
+ERR142064	mlst	spades_mlst.tsv		col7	glyA(10)
+ERR142064	mlst	spades_mlst.tsv		col8	recA(1)
+ERR142064	mlst	spades_mlst.tsv		col9	sodA(3)
+ERR142064	mlst	spades_mlst.tsv		col10	tpi(5)
+SRR4046826	plasmidfinder	results_tab.tsv		Database	enterobacteriales
+SRR4046826	plasmidfinder	results_tab.tsv		Database	enterobacteriales
+SRR4046826	plasmidfinder	results_tab.tsv		Database	enterobacteriales
+SRR4046826	plasmidfinder	results_tab.tsv		Database	enterobacteriales
+SRR4046826	plasmidfinder	results_tab.tsv		Plasmid	IncFIB(K)
+SRR4046826	plasmidfinder	results_tab.tsv		Plasmid	IncFII(K)
+SRR4046826	plasmidfinder	results_tab.tsv		Plasmid	IncFII(pKP91)
+SRR4046826	plasmidfinder	results_tab.tsv		Plasmid	IncR
+SRR4046826	plasmidfinder	results_tab.tsv		Identity	98.93
+SRR4046826	plasmidfinder	results_tab.tsv		Identity	95.95
+SRR4046826	plasmidfinder	results_tab.tsv		Identity	95.22
+SRR4046826	plasmidfinder	results_tab.tsv		Identity	98.8
+SRR4046826	plasmidfinder	results_tab.tsv		Query / Template length	560 / 560
+SRR4046826	plasmidfinder	results_tab.tsv		Query / Template length	148 / 148
+SRR4046826	plasmidfinder	results_tab.tsv		Query / Template length	230 / 230
+SRR4046826	plasmidfinder	results_tab.tsv		Query / Template length	251 / 251
+SRR4046826	plasmidfinder	results_tab.tsv		Accession number	JN233704
+SRR4046826	plasmidfinder	results_tab.tsv		Accession number	CP000648
+SRR4046826	plasmidfinder	results_tab.tsv		Accession number	CP000966
+SRR4046826	plasmidfinder	results_tab.tsv		Accession number	DQ449578
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Resistance gene	blaSHV-28
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Resistance gene	blaSHV-55
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Resistance gene	blaTEM-1A
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Resistance gene	fosA6
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Resistance gene	OqxA
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Resistance gene	OqxB
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Resistance gene	tet(A)
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Identity	99.88
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Identity	81.07
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Identity	100.00
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Identity	99.76
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Identity	99.23
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Identity	98.86
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Identity	97.73
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Alignment Length/Gene Length	861/861
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Alignment Length/Gene Length	789/861
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Alignment Length/Gene Length	861/861
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Alignment Length/Gene Length	420/420
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Alignment Length/Gene Length	1176/1176
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Alignment Length/Gene Length	3153/3153
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Alignment Length/Gene Length	1246/1275
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Coverage	100.0
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Coverage	81.07
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Coverage	100.0
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Coverage	100.0
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Coverage	100.0
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Coverage	100.0
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Coverage	97.73
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Position in reference	1..862
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Position in reference	73..862
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Position in reference	1..862
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Position in reference	1..421
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Position in reference	1..1177
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Position in reference	1..3154
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Position in reference	1..1247
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Phenotype	Unknown Beta-lactam
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Phenotype	Amoxicillin, Ampicillin, Aztreonam, Cefepime, Cefotaxime, Ceftazidime, Ceftriaxone, Piperacillin, Ticarcillin
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Phenotype	Amoxicillin, Ampicillin, Cephalothin, Piperacillin, Ticarcillin
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Phenotype	Fosfomycin
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Phenotype	Chloramphenicol, Nalidixic acid, Ciprofloxacin, Trimethoprim
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Phenotype	Chloramphenicol, Nalidixic acid, Ciprofloxacin, Trimethoprim
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Phenotype	Doxycycline, Tetracycline
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Accession no.	AF299299
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Accession no.	DQ054528
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Accession no.	HM749966
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Accession no.	KU254579
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Accession no.	EU370913
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Accession no.	EU370913
+SRR4046826	resfinder	ResFinder_results_tab.txt	Klebsiella	Accession no.	AF534183
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Mutation	acrR p.P161R
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Mutation	acrR p.G164A
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Mutation	acrR p.F172S
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Mutation	acrR p.R173G
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Mutation	acrR p.L195V
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Mutation	acrR p.F197I
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Mutation	acrR p.K201M
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Mutation	ompK36 p.N49S
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Mutation	ompK36 p.L59V
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Mutation	ompK36 p.G189T
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Mutation	ompK36 p.F198Y
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Mutation	ompK36 p.F207Y
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Mutation	ompK36 p.A217S
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Mutation	ompK36 p.T222L
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Mutation	ompK36 p.D223G
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Mutation	ompK36 p.L229A
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Mutation	ompK36 p.E232R
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Mutation	ompK36 p.N304E
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Mutation	ompK37 p.I70M
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Mutation	ompK37 p.I128M
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Mutation	ramR p.A19V
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Nucleotide change	CCG -> CGG
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Nucleotide change	GGC -> GCC
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Nucleotide change	TTC -> TCC
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Nucleotide change	CGA -> GGG
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Nucleotide change	CTC -> GTC
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Nucleotide change	TTT -> ATT
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Nucleotide change	AAG -> ATG
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Nucleotide change	AAC -> AGC
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Nucleotide change	CTT -> GTA
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Nucleotide change	GGC -> ACC
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Nucleotide change	TTC -> TAC
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Nucleotide change	TTC -> TAT
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Nucleotide change	GCT -> TCT
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Nucleotide change	ACC -> CTT
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Nucleotide change	GAC -> GGC
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Nucleotide change	CTG -> GCA
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Nucleotide change	GAA -> CGT
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Nucleotide change	AAC -> GAA
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Nucleotide change	ATT -> ATG
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Nucleotide change	ATT -> ATG
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Nucleotide change	GCG -> GTG
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Amino acid change	P -> R
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Amino acid change	G -> A
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Amino acid change	F -> S
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Amino acid change	R -> G
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Amino acid change	L -> V
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Amino acid change	F -> I
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Amino acid change	K -> M
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Amino acid change	N -> S
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Amino acid change	L -> V
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Amino acid change	G -> T
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Amino acid change	F -> Y
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Amino acid change	F -> Y
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Amino acid change	A -> S
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Amino acid change	T -> L
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Amino acid change	D -> G
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Amino acid change	L -> A
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Amino acid change	E -> R
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Amino acid change	N -> E
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Amino acid change	I -> M
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Amino acid change	I -> M
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Amino acid change	A -> V
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Resistance	Fluoroquinolone
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Resistance	Fluoroquinolone
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Resistance	Fluoroquinolone
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Resistance	Fluoroquinolone
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Resistance	Fluoroquinolone
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Resistance	Fluoroquinolone
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Resistance	Fluoroquinolone
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Resistance	Cephalosporins
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Resistance	Cephalosporins
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Resistance	Cephalosporins
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Resistance	Cephalosporins
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Resistance	Cephalosporins
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Resistance	Carbapenem
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Resistance	Cephalosporins
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Resistance	Cephalosporins
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Resistance	Cephalosporins
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Resistance	Cephalosporins
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Resistance	Cephalosporins
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Resistance	Carbapenem
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Resistance	Carbapenem
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	Resistance	Tigecycline
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	PMID	12936981
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	PMID	12936981
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	PMID	12936981
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	PMID	12936981
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	PMID	12936981
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	PMID	12936981
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	PMID	12936981
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	PMID	25245001
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	PMID	25245001
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	PMID	25245001
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	PMID	25245001
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	PMID	25245001
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	PMID	25245001
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	PMID	25245001
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	PMID	25245001
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	PMID	25245001
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	PMID	25245001
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	PMID	25245001
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	PMID	22282462
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	PMID	22282462
+SRR4046826	resfinder	PointFinder_results.txt	Klebsiella	PMID	28533243
+SRR4046826	resfinder	DisinFinder_results_tab.txt	Klebsiella	Resistance gene	OqxA
+SRR4046826	resfinder	DisinFinder_results_tab.txt	Klebsiella	Resistance gene	OqxB
+SRR4046826	resfinder	DisinFinder_results_tab.txt	Klebsiella	Identity	99.23
+SRR4046826	resfinder	DisinFinder_results_tab.txt	Klebsiella	Identity	98.86
+SRR4046826	resfinder	DisinFinder_results_tab.txt	Klebsiella	Alignment Length/Gene Length	1176/1176
+SRR4046826	resfinder	DisinFinder_results_tab.txt	Klebsiella	Alignment Length/Gene Length	3153/3153
+SRR4046826	resfinder	DisinFinder_results_tab.txt	Klebsiella	Coverage	100.0
+SRR4046826	resfinder	DisinFinder_results_tab.txt	Klebsiella	Coverage	100.0
+SRR4046826	resfinder	DisinFinder_results_tab.txt	Klebsiella	Position in reference	1..1177
+SRR4046826	resfinder	DisinFinder_results_tab.txt	Klebsiella	Position in reference	1..3154
+SRR4046826	resfinder	DisinFinder_results_tab.txt	Klebsiella	Phenotype	Benzylkonium Chloride, Cetylpyridinium Chloride
+SRR4046826	resfinder	DisinFinder_results_tab.txt	Klebsiella	Phenotype	Benzylkonium Chloride, Cetylpyridinium Chloride
+SRR4046826	resfinder	DisinFinder_results_tab.txt	Klebsiella	Accession no.	EU370913
+SRR4046826	resfinder	DisinFinder_results_tab.txt	Klebsiella	Accession no.	EU370913
+SRR4046826	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+SRR4046826	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+SRR4046826	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+SRR4046826	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+SRR4046826	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+SRR4046826	virulencefinder	results_tab.tsv		Database	virulence_ecoli
+SRR4046826	virulencefinder	results_tab.tsv		Virulence factor	clpK1
+SRR4046826	virulencefinder	results_tab.tsv		Virulence factor	fimH
+SRR4046826	virulencefinder	results_tab.tsv		Virulence factor	fyuA
+SRR4046826	virulencefinder	results_tab.tsv		Virulence factor	irp2
+SRR4046826	virulencefinder	results_tab.tsv		Virulence factor	iutA
+SRR4046826	virulencefinder	results_tab.tsv		Virulence factor	mrkA
+SRR4046826	virulencefinder	results_tab.tsv		Identity	96.7
+SRR4046826	virulencefinder	results_tab.tsv		Identity	99.39
+SRR4046826	virulencefinder	results_tab.tsv		Identity	100.0
+SRR4046826	virulencefinder	results_tab.tsv		Identity	99.9
+SRR4046826	virulencefinder	results_tab.tsv		Identity	95.43
+SRR4046826	virulencefinder	results_tab.tsv		Identity	98.83
+SRR4046826	virulencefinder	results_tab.tsv		Query / Template length	2883 / 2883
+SRR4046826	virulencefinder	results_tab.tsv		Query / Template length	489 / 489
+SRR4046826	virulencefinder	results_tab.tsv		Query / Template length	2022 / 2022
+SRR4046826	virulencefinder	results_tab.tsv		Query / Template length	6108 / 6108
+SRR4046826	virulencefinder	results_tab.tsv		Query / Template length	2190 / 2190
+SRR4046826	virulencefinder	results_tab.tsv		Query / Template length	603 / 597
+SRR4046826	virulencefinder	results_tab.tsv		Protein function	 heat shock survival AAA family ATPase ClpK. thermal stress survival
+SRR4046826	virulencefinder	results_tab.tsv		Protein function	   Type 1 fimbriae
+SRR4046826	virulencefinder	results_tab.tsv		Protein function	  Siderophore receptor
+SRR4046826	virulencefinder	results_tab.tsv		Protein function	  High molecular weight protein 2 non-ribosomal peptide synthetase
+SRR4046826	virulencefinder	results_tab.tsv		Protein function	  Ferric aerobactin receptor
+SRR4046826	virulencefinder	results_tab.tsv		Protein function	 type 3 fimbrial major subunit
+SRR4046826	virulencefinder	results_tab.tsv		Accession number	WP_053271808
+SRR4046826	virulencefinder	results_tab.tsv		Accession number	CYAI01000021
+SRR4046826	virulencefinder	results_tab.tsv		Accession number	NZ_MVDJ01000001
+SRR4046826	virulencefinder	results_tab.tsv		Accession number	FLXF01000001
+SRR4046826	virulencefinder	results_tab.tsv		Accession number	ABW83989
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Contig id	contig00006
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Contig id	contig00009
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Contig id	contig00022
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Contig id	contig00023
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Contig id	contig00023
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Contig id	contig00027
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Contig id	contig00038
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Start	214419
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Start	208472
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Start	77022
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Start	30710
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Start	31909
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Start	35172
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Start	849
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Stop	215276
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Stop	209050
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Stop	77438
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Stop	31882
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Stop	35058
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Stop	36368
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Stop	1706
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Strand	+
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Strand	+
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Strand	-
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Strand	+
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Strand	+
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Strand	-
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Strand	+
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Element symbol	blaSHV-28
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Element symbol	ramR_A19V
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Element symbol	fosA
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Element symbol	oqxA
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Element symbol	oqxB
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Element symbol	tet(A)
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Element symbol	blaTEM-1
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Element name	broad-spectrum class A beta-lactamase SHV-28
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Element name	Klebsiella pneumoniae tigecycline resistant RamR
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Element name	FosA5 family fosfomycin resistance glutathione transferase
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Element name	multidrug efflux RND transporter periplasmic adaptor subunit OqxA
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Element name	multidrug efflux RND transporter permease subunit OqxB
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Element name	tetracycline efflux MFS transporter Tet(A)
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Element name	broad-spectrum class A beta-lactamase TEM-1
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Scope	core
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Scope	core
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Scope	core
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Scope	core
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Scope	core
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Scope	core
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Scope	core
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Type	AMR
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Type	AMR
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Type	AMR
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Type	AMR
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Type	AMR
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Type	AMR
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Type	AMR
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Subtype	AMR
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Subtype	POINT
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Subtype	AMR
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Subtype	AMR
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Subtype	AMR
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Subtype	AMR
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Subtype	AMR
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Class	BETA-LACTAM
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Class	TETRACYCLINE
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Class	FOSFOMYCIN
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Class	PHENICOL/QUINOLONE
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Class	PHENICOL/QUINOLONE
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Class	TETRACYCLINE
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Class	BETA-LACTAM
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Subclass	BETA-LACTAM
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Subclass	TIGECYCLINE
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Subclass	FOSFOMYCIN
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Subclass	PHENICOL/QUINOLONE
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Subclass	PHENICOL/QUINOLONE
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Subclass	TETRACYCLINE
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Subclass	BETA-LACTAM
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Method	ALLELEX
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Method	POINTX
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Method	EXACTX
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Method	EXACTX
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Method	BLASTX
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Method	EXACTX
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Method	ALLELEX
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Target length	286
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Target length	193
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Target length	139
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Target length	391
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Target length	1050
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Target length	399
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Target length	286
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Reference sequence length	286
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Reference sequence length	193
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Reference sequence length	139
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Reference sequence length	391
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Reference sequence length	1050
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Reference sequence length	399
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Reference sequence length	286
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	% Coverage of reference	100.00
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	% Coverage of reference	100.00
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	% Coverage of reference	100.00
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	% Coverage of reference	100.00
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	% Coverage of reference	100.00
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	% Coverage of reference	100.00
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	% Coverage of reference	100.00
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	% Identity to reference	100.00
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	% Identity to reference	99.48
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	% Identity to reference	100.00
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	% Identity to reference	100.00
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	% Identity to reference	99.90
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	% Identity to reference	100.00
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	% Identity to reference	100.00
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Alignment length	286
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Alignment length	193
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Alignment length	139
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Alignment length	391
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Alignment length	1050
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Alignment length	399
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Alignment length	286
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Closest reference accession	WP_004179754.1
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Closest reference accession	WP_004176968.1
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Closest reference accession	WP_004146118.1
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Closest reference accession	WP_002914189.1
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Closest reference accession	WP_021312368.1
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Closest reference accession	WP_000804064.1
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Closest reference accession	WP_000027057.1
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Closest reference name	broad-spectrum class A beta-lactamase SHV-28
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Closest reference name	TetR/AcrR family transcriptional regulator RamR
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Closest reference name	FosA5 family fosfomycin resistance glutathione transferase
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Closest reference name	multidrug efflux RND transporter periplasmic adaptor subunit OqxA
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Closest reference name	multidrug efflux RND transporter permease subunit OqxB20
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Closest reference name	tetracycline efflux MFS transporter Tet(A)
+SRR4046826	amrfinder	shovill.tsv	Klebsiella_pneumoniae	Closest reference name	broad-spectrum class A beta-lactamase TEM-1
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Input_file_name	SRR4046826_shovill
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Input_file_name	SRR4046826_shovill
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Gene_symbol	tet(A).v1
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Gene_symbol	SHV-28
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Mutation	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Mutation	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Genetic_variation_type	Gene presence detected
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Genetic_variation_type	Gene presence detected
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Drug_class	Tetracycline antibiotic
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Drug_class	penicillin beta-lactam
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Input_sequence_ID	contig00027
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Input_sequence_ID	contig00006
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Input_gene_length	70658
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Input_gene_length	281229
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Input_gene_start	35168
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Input_gene_start	214418
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Input_gene_stop	36443
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Input_gene_stop	215279
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Reference_gene_length	1275
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Reference_gene_length	861
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Reference_gene_start	0
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Reference_gene_start	0
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Reference_gene_stop	1275
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Reference_gene_stop	861
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Sequence_identity	100.00%
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Sequence_identity	99.88%
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Coverage	100.00%
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Coverage	100.00%
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Reference_accession	ARO:3000050
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Reference_accession	ARO:3000008
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Strand_orientation	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Strand_orientation	+
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Software_name	Kleborate
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Software_name	Kleborate
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Software_version	3.2.4
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Software_version	3.2.4
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Reference_database_name	CARD
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Reference_database_name	CARD
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Reference_database_version	3.2.9
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Reference_database_version	3.2.9
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Input_protein_length	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Input_protein_length	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Reference_protein_length	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Reference_protein_length	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Input_protein_start	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Input_protein_start	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Input_protein_stop	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Input_protein_stop	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Antimicrobial_agent	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Antimicrobial_agent	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Coverage_depth	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Coverage_depth	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Coverage_ratio	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Coverage_ratio	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Predicted_phenotype	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Predicted_phenotype	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		predicted_phenotype_confidence_level	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		predicted_phenotype_confidence_level	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Reference_protein_start	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Reference_protein_start	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Reference_protein_stop	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Reference_protein_stop	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Resistance_mechanism	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_hAMRonization_output.txt		Resistance_mechanism	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		strain	SRR4046826_shovill
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		enterobacterales__species__species	Klebsiella pneumoniae
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		enterobacterales__species__species_match	strong
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		general__contig_stats__contig_count	188
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		general__contig_stats__N50	242296
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		general__contig_stats__largest_contig	397785
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		general__contig_stats__total_size	5542371
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		general__contig_stats__ambiguous_bases	no
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		general__contig_stats__QC_warnings	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__mlst__ST	ST15
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__mlst__gapA	1
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__mlst__infB	1
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__mlst__mdh	1
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__mlst__pgi	1
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__mlst__phoE	1
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__mlst__rpoB	1
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__mlst__tonB	1
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__ybst__YbST	524-1LV
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__ybst__Yersiniabactin	ybt 10; ICEKp4
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__ybst__ybtS	3
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__ybst__ybtX	3
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__ybst__ybtQ	4
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__ybst__ybtP	3
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__ybst__ybtA	3
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__ybst__irp2	341
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__ybst__irp1	7
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__ybst__ybtU	3
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__ybst__ybtT	3
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__ybst__ybtE	70
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__ybst__fyuA	32
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__ybst__spurious_ybt_hits	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__cbst__CbST	0
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__cbst__Colibactin	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__cbst__clbA	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__cbst__clbB	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__cbst__clbC	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__cbst__clbD	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__cbst__clbE	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__cbst__clbF	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__cbst__clbG	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__cbst__clbH	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__cbst__clbI	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__cbst__clbL	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__cbst__clbM	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__cbst__clbN	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__cbst__clbO	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__cbst__clbP	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__cbst__clbQ	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__cbst__spurious_clb_hits	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__abst__AbST	0
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__abst__Aerobactin	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__abst__iucA	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__abst__iucB	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__abst__iucC	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__abst__iucD	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__abst__iutA	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__abst__spurious_abst_hits	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__smst__SmST	0
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__smst__Salmochelin	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__smst__iroB	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__smst__iroC	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__smst__iroD	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__smst__iroN	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__smst__spurious_smst_hits	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__rmst__RmST	0
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__rmst__RmpADC	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__rmst__rmpA	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__rmst__rmpD	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__rmst__rmpC	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__rmst__spurious_rmst_hits	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__virulence_score__virulence_score	1
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__virulence_score__spurious_virulence_hits	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella__rmpa2__rmpA2	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__amr__AGly_acquired	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__amr__Col_acquired	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__amr__Fcyn_acquired	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__amr__Flq_acquired	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__amr__Gly_acquired	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__amr__MLS_acquired	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__amr__Phe_acquired	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__amr__Rif_acquired	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__amr__Sul_acquired	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__amr__Tet_acquired	tet(A).v1
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__amr__Tgc_acquired	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__amr__Tmt_acquired	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__amr__Bla_acquired	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__amr__Bla_inhR_acquired	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__amr__Bla_ESBL_acquired	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__amr__Bla_ESBL_inhR_acquired	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__amr__Bla_Carb_acquired	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__amr__Bla_chr	SHV-28^
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__amr__SHV_mutations	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__amr__Omp_mutations	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__amr__Col_mutations	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__amr__Flq_mutations	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__amr__truncated_resistance_hits	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__amr__spurious_resistance_hits	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__resistance_score__resistance_score	0
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__resistance_class_count__num_resistance_classes	2
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__resistance_gene_count__num_resistance_genes	2
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__cipro_prediction__Ciprofloxacin_prediction	wildtype S
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__cipro_prediction__Ciprofloxacin_profile_support	90.99% S (N=5168/5680)
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__cipro_prediction__Ciprofloxacin_profile	0^ QRDR, 0 PMQR, 0 aac(6`)-Ib-cr
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__cipro_prediction__Ciprofloxacin_MIC_prediction	0.25 mg/L [0.25-0.25]
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__wzi__wzi	wzi24
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__kaptive__K_locus	KL24
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__kaptive__K_type	K24
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__kaptive__K_locus_confidence	Typeable
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__kaptive__K_locus_problems	?2
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__kaptive__K_locus_identity	99.97%
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__kaptive__K_Missing_expected_genes	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__kaptive__O_locus	OL2α.1
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__kaptive__O_type	O1αβ,2α
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__kaptive__O_locus_confidence	Typeable
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__kaptive__O_locus_problems	-
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__kaptive__O_locus_identity	99.19%
+SRR4046826	kleborate	klebsiella_pneumo_complex_output.txt		klebsiella_pneumo_complex__kaptive__O_Missing_expected_genes	-
+SRR4046826	mlst	shovill_mlst.tsv		col1	SRR4046826_shovill
+SRR4046826	mlst	shovill_mlst.tsv		col2	klebsiella
+SRR4046826	mlst	shovill_mlst.tsv		col3	15
+SRR4046826	mlst	shovill_mlst.tsv		col4	gapA(1)
+SRR4046826	mlst	shovill_mlst.tsv		col5	infB(1)
+SRR4046826	mlst	shovill_mlst.tsv		col6	mdh(1)
+SRR4046826	mlst	shovill_mlst.tsv		col7	pgi(1)
+SRR4046826	mlst	shovill_mlst.tsv		col8	phoE(1)
+SRR4046826	mlst	shovill_mlst.tsv		col9	rpoB(1)
+SRR4046826	mlst	shovill_mlst.tsv		col10	tonB(1)
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Contig id	contig00002
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Contig id	contig00002
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Contig id	contig00002
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Start	38733
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Start	38733
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Start	38733
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Stop	39587
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Stop	39587
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Stop	39587
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Strand	-
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Strand	-
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Strand	-
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Element symbol	folP_G194GSG
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Element symbol	folP_P68L
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Element symbol	folP_R228S
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Element name	Neisseria meningitidis sulfonamide resistant FolP
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Element name	Neisseria meningitidis sulfonamide resistant FolP
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Element name	Neisseria meningitidis sulfonamide resistant FolP
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Scope	core
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Scope	core
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Scope	core
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Type	AMR
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Type	AMR
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Type	AMR
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Subtype	POINT
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Subtype	POINT
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Subtype	POINT
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Class	SULFONAMIDE
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Class	SULFONAMIDE
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Class	SULFONAMIDE
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Subclass	SULFONAMIDE
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Subclass	SULFONAMIDE
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Subclass	SULFONAMIDE
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Method	POINTX
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Method	POINTX
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Method	POINTX
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Target length	285
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Target length	285
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Target length	285
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Reference sequence length	283
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Reference sequence length	283
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Reference sequence length	283
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	% Coverage of reference	100.00
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	% Coverage of reference	100.00
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	% Coverage of reference	100.00
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	% Identity to reference	92.98
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	% Identity to reference	92.98
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	% Identity to reference	92.98
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Alignment length	285
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Alignment length	285
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Alignment length	285
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Closest reference accession	WP_002250329.1
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Closest reference accession	WP_002250329.1
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Closest reference accession	WP_002250329.1
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Closest reference name	dihydropteroate synthase FolP
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Closest reference name	dihydropteroate synthase FolP
+SRR25448586	amrfinder	shovill.tsv	Neisseria_meningitidis	Closest reference name	dihydropteroate synthase FolP
+SRR25448586	mlst	shovill_mlst.tsv		col1	SRR25448586_shovill
+SRR25448586	mlst	shovill_mlst.tsv		col2	neisseria
+SRR25448586	mlst	shovill_mlst.tsv		col3	3469
+SRR25448586	mlst	shovill_mlst.tsv		col4	abcZ(222)
+SRR25448586	mlst	shovill_mlst.tsv		col5	adk(3)
+SRR25448586	mlst	shovill_mlst.tsv		col6	aroE(58)
+SRR25448586	mlst	shovill_mlst.tsv		col7	fumC(261)
+SRR25448586	mlst	shovill_mlst.tsv		col8	gdh(263)
+SRR25448586	mlst	shovill_mlst.tsv		col9	pdhC(5)
+SRR25448586	mlst	shovill_mlst.tsv		col10	pgm(13)
+SRR25448586	meningotype	shovill_meningotype.tsv		SAMPLE_ID	examples/Results/SRR25448586/Assemblies/SRR25448586_shovill.fasta
+SRR25448586	meningotype	shovill_meningotype.tsv		SEROGROUP	C
+SRR25448586	meningotype	shovill_meningotype.tsv		ctrA	ctrA
+SRR25448586	meningotype	shovill_meningotype.tsv		MLST	3469
+SRR25448586	meningotype	shovill_meningotype.tsv		PorA	17-6,23
+SRR25448586	meningotype	shovill_meningotype.tsv		FetA	F3-36
+SRR25448586	meningotype	shovill_meningotype.tsv		PorB	NEIS2020_265
+SRR25448586	meningotype	shovill_meningotype.tsv		fHbp	544
+SRR25448586	meningotype	shovill_meningotype.tsv		NHBA	669
+SRR25448586	meningotype	shovill_meningotype.tsv		NadA	0
+SRR25448586	meningotype	shovill_meningotype.tsv		BAST	-
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Resistance gene	aac(6')-Iaa
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Resistance gene	aph(6)-Id
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Resistance gene	aadA7
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Resistance gene	aph(3'')-Ib
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Resistance gene	blaCMY-2
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Resistance gene	fosA7
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Resistance gene	FloR
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Resistance gene	FloR
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Resistance gene	qnrB5
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Resistance gene	qnrB19
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Resistance gene	sul1
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Resistance gene	sul2
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Resistance gene	tet(A)
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Identity	100.00
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Identity	100.00
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Identity	100.00
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Identity	100.00
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Identity	100.00
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Identity	99.76
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Identity	87.98
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Identity	98.27
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Identity	99.69
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Identity	100.00
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Identity	99.88
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Identity	100.00
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Identity	100.00
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Alignment Length/Gene Length	438/438
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Alignment Length/Gene Length	837/837
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Alignment Length/Gene Length	798/798
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Alignment Length/Gene Length	804/804
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Alignment Length/Gene Length	1146/1146
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Alignment Length/Gene Length	423/423
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Alignment Length/Gene Length	1071/1215
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Alignment Length/Gene Length	1215/1215
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Alignment Length/Gene Length	645/645
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Alignment Length/Gene Length	645/645
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Alignment Length/Gene Length	840/840
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Alignment Length/Gene Length	890/852
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Alignment Length/Gene Length	1275/1275
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Coverage	100.0
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Coverage	100.0
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Coverage	100.0
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Coverage	100.0
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Coverage	100.0
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Coverage	100.0
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Coverage	88.15
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Coverage	100.0
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Coverage	100.0
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Coverage	100.0
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Coverage	100.0
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Coverage	104.46
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Coverage	100.0
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Position in reference	1..439
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Position in reference	1..838
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Position in reference	1..799
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Position in reference	1..805
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Position in reference	1..1147
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Position in reference	1..424
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Position in reference	145..1216
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Position in reference	1..1216
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Position in reference	1..646
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Position in reference	1..646
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Position in reference	1..841
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Position in reference	1..891
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Position in reference	1..1276
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Phenotype	Amikacin, Tobramycin
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Phenotype	Streptomycin
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Phenotype	Spectinomycin, Streptomycin
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Phenotype	Streptomycin
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Phenotype	Amoxicillin, Amoxicillin+Clavulanic acid, Ampicillin, Ampicillin+Clavulanic acid, Cefotaxime, Cefoxitin, Ceftazidime, Piperacillin, Piperacillin+Tazobactam, Ticarcillin, Ticarcillin+Clavulanic acid
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Phenotype	Fosfomycin
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Phenotype	Chloramphenicol,Florfenicol
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Phenotype	Chloramphenicol,Florfenicol
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Phenotype	Ciprofloxacin
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Phenotype	Ciprofloxacin
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Phenotype	Sulfamethoxazole
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Phenotype	Sulfamethoxazole
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Phenotype	Doxycycline, Tetracycline
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Accession no.	NC_003197
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Accession no.	M28829
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Accession no.	AF224733
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Accession no.	AF321551
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Accession no.	X91840
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Accession no.	LAPJ01000014
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Accession no.	CP136914
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Accession no.	CP030849
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Accession no.	DQ303919
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Accession no.	EU432277
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Accession no.	U12338
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Accession no.	FJ197818
+SRR26205262	resfinder	ResFinder_results_tab.txt	Salmonella enterica	Accession no.	AF534183
+SRR26205262	resfinder	DisinFinder_results_tab.txt	Salmonella enterica	Resistance gene	qacE
+SRR26205262	resfinder	DisinFinder_results_tab.txt	Salmonella enterica	Identity	90.39
+SRR26205262	resfinder	DisinFinder_results_tab.txt	Salmonella enterica	Alignment Length/Gene Length	333/333
+SRR26205262	resfinder	DisinFinder_results_tab.txt	Salmonella enterica	Coverage	94.59
+SRR26205262	resfinder	DisinFinder_results_tab.txt	Salmonella enterica	Position in reference	1..334
+SRR26205262	resfinder	DisinFinder_results_tab.txt	Salmonella enterica	Phenotype	Benzylkonium Chloride, Ethidium Bromide,  Chlorhexidine, Cetylpyridinium Chloride
+SRR26205262	resfinder	DisinFinder_results_tab.txt	Salmonella enterica	Accession no.	X68232
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Contig id	contig00002
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Contig id	contig00013
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Contig id	contig00013
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Contig id	contig00013
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Contig id	contig00013
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Contig id	contig00013
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Contig id	contig00013
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Contig id	contig00013
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Contig id	contig00013
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Contig id	contig00013
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Contig id	contig00023
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Start	402751
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Start	54920
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Start	55753
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Start	56264
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Start	109653
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Start	139137
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Start	140013
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Start	140816
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Start	142988
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Start	144790
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Start	805
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Stop	403170
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Stop	55756
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Stop	56097
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Stop	57058
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Stop	110795
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Stop	139949
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Stop	140813
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Stop	141649
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Stop	144184
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Stop	146001
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Stop	1446
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Strand	-
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Strand	-
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Strand	-
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Strand	-
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Strand	-
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Strand	+
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Strand	+
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Strand	+
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Strand	+
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Strand	-
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Strand	-
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Element symbol	fosA7.7
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Element symbol	sul1
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Element symbol	qacEdelta1
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Element symbol	aadA7
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Element symbol	blaCMY-2
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Element symbol	sul2
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Element symbol	aph(3'')-Ib
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Element symbol	aph(6)-Id
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Element symbol	tet(A)
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Element symbol	floR
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Element symbol	qnrB19
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Element name	fosfomycin resistance glutathione transferase FosA7.7
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Element name	sulfonamide-resistant dihydropteroate synthase Sul1
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Element name	quaternary ammonium compound efflux SMR transporter QacE delta 1
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Element name	ANT(3'')-Ia family aminoglycoside nucleotidyltransferase AadA7
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Element name	extended-spectrum class C beta-lactamase CMY-2
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Element name	sulfonamide-resistant dihydropteroate synthase Sul2
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Element name	aminoglycoside O-phosphotransferase APH(3'')-Ib
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Element name	aminoglycoside O-phosphotransferase APH(6)-Id
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Element name	tetracycline efflux MFS transporter Tet(A)
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Element name	chloramphenicol/florfenicol efflux MFS transporter FloR
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Element name	quinolone resistance pentapeptide repeat protein QnrB19
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Scope	core
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Scope	core
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Scope	core
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Scope	core
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Scope	core
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Scope	core
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Scope	core
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Scope	core
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Scope	core
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Scope	core
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Scope	core
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Type	AMR
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Type	AMR
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Type	STRESS
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Type	AMR
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Type	AMR
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Type	AMR
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Type	AMR
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Type	AMR
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Type	AMR
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Type	AMR
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Type	AMR
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Subtype	AMR
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Subtype	AMR
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Subtype	BIOCIDE
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Subtype	AMR
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Subtype	AMR
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Subtype	AMR
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Subtype	AMR
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Subtype	AMR
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Subtype	AMR
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Subtype	AMR
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Subtype	AMR
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Class	FOSFOMYCIN
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Class	SULFONAMIDE
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Class	QUATERNARY AMMONIUM
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Class	AMINOGLYCOSIDE
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Class	BETA-LACTAM
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Class	SULFONAMIDE
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Class	AMINOGLYCOSIDE
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Class	AMINOGLYCOSIDE
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Class	TETRACYCLINE
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Class	PHENICOL
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Class	QUINOLONE
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Subclass	FOSFOMYCIN
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Subclass	SULFONAMIDE
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Subclass	QUATERNARY AMMONIUM
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Subclass	STREPTOMYCIN
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Subclass	CEPHALOSPORIN
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Subclass	SULFONAMIDE
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Subclass	STREPTOMYCIN
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Subclass	STREPTOMYCIN
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Subclass	TETRACYCLINE
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Subclass	CHLORAMPHENICOL/FLORFENICOL
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Subclass	QUINOLONE
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Method	ALLELEX
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Method	BLASTX
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Method	ALLELEX
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Method	EXACTX
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Method	ALLELEX
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Method	EXACTX
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Method	EXACTX
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Method	EXACTX
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Method	EXACTX
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Method	EXACTX
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Method	ALLELEX
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Target length	140
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Target length	279
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Target length	115
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Target length	265
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Target length	381
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Target length	271
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Target length	267
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Target length	278
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Target length	399
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Target length	404
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Target length	214
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Reference sequence length	140
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Reference sequence length	279
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Reference sequence length	115
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Reference sequence length	265
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Reference sequence length	381
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Reference sequence length	271
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Reference sequence length	267
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Reference sequence length	278
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Reference sequence length	399
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Reference sequence length	404
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Reference sequence length	214
+SRR26205262	amrfinder	shovill.tsv	Salmonella	% Coverage of reference	100.00
+SRR26205262	amrfinder	shovill.tsv	Salmonella	% Coverage of reference	100.00
+SRR26205262	amrfinder	shovill.tsv	Salmonella	% Coverage of reference	100.00
+SRR26205262	amrfinder	shovill.tsv	Salmonella	% Coverage of reference	100.00
+SRR26205262	amrfinder	shovill.tsv	Salmonella	% Coverage of reference	100.00
+SRR26205262	amrfinder	shovill.tsv	Salmonella	% Coverage of reference	100.00
+SRR26205262	amrfinder	shovill.tsv	Salmonella	% Coverage of reference	100.00
+SRR26205262	amrfinder	shovill.tsv	Salmonella	% Coverage of reference	100.00
+SRR26205262	amrfinder	shovill.tsv	Salmonella	% Coverage of reference	100.00
+SRR26205262	amrfinder	shovill.tsv	Salmonella	% Coverage of reference	100.00
+SRR26205262	amrfinder	shovill.tsv	Salmonella	% Coverage of reference	100.00
+SRR26205262	amrfinder	shovill.tsv	Salmonella	% Identity to reference	100.00
+SRR26205262	amrfinder	shovill.tsv	Salmonella	% Identity to reference	99.64
+SRR26205262	amrfinder	shovill.tsv	Salmonella	% Identity to reference	100.00
+SRR26205262	amrfinder	shovill.tsv	Salmonella	% Identity to reference	100.00
+SRR26205262	amrfinder	shovill.tsv	Salmonella	% Identity to reference	100.00
+SRR26205262	amrfinder	shovill.tsv	Salmonella	% Identity to reference	100.00
+SRR26205262	amrfinder	shovill.tsv	Salmonella	% Identity to reference	100.00
+SRR26205262	amrfinder	shovill.tsv	Salmonella	% Identity to reference	100.00
+SRR26205262	amrfinder	shovill.tsv	Salmonella	% Identity to reference	100.00
+SRR26205262	amrfinder	shovill.tsv	Salmonella	% Identity to reference	100.00
+SRR26205262	amrfinder	shovill.tsv	Salmonella	% Identity to reference	100.00
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Alignment length	140
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Alignment length	279
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Alignment length	115
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Alignment length	265
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Alignment length	381
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Alignment length	271
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Alignment length	267
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Alignment length	278
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Alignment length	399
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Alignment length	404
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Alignment length	214
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Closest reference accession	WP_058653118.1
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Closest reference accession	WP_000259031.1
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Closest reference accession	WP_000679427.1
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Closest reference accession	WP_001436322.1
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Closest reference accession	WP_000976514.1
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Closest reference accession	WP_001043260.1
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Closest reference accession	WP_001082319.1
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Closest reference accession	WP_000480968.1
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Closest reference accession	WP_000804063.1
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Closest reference accession	WP_000214122.1
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Closest reference accession	WP_012954666.1
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Closest reference name	fosfomycin resistance glutathione transferase FosA7.7
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Closest reference name	sulfonamide-resistant dihydropteroate synthase Sul1
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Closest reference name	quaternary ammonium compound efflux SMR transporter QacE delta 1
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Closest reference name	ANT(3'')-Ia family aminoglycoside nucleotidyltransferase AadA7
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Closest reference name	extended-spectrum class C beta-lactamase CMY-2
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Closest reference name	sulfonamide-resistant dihydropteroate synthase Sul2
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Closest reference name	aminoglycoside O-phosphotransferase APH(3'')-Ib
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Closest reference name	aminoglycoside O-phosphotransferase APH(6)-Id
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Closest reference name	tetracycline efflux MFS transporter Tet(A)
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Closest reference name	chloramphenicol/florfenicol efflux MFS transporter FloR
+SRR26205262	amrfinder	shovill.tsv	Salmonella	Closest reference name	quinolone resistance pentapeptide repeat protein QnrB19
+SRR26205262	mlst	shovill_mlst.tsv		col1	SRR26205262_shovill
+SRR26205262	mlst	shovill_mlst.tsv		col2	salmonella_2
+SRR26205262	mlst	shovill_mlst.tsv		col3	1628
+SRR26205262	mlst	shovill_mlst.tsv		col4	aroC(46)
+SRR26205262	mlst	shovill_mlst.tsv		col5	dnaN(60)
+SRR26205262	mlst	shovill_mlst.tsv		col6	hemD(10)
+SRR26205262	mlst	shovill_mlst.tsv		col7	hisD(9)
+SRR26205262	mlst	shovill_mlst.tsv		col8	purE(6)
+SRR26205262	mlst	shovill_mlst.tsv		col9	sucA(12)
+SRR26205262	mlst	shovill_mlst.tsv		col10	thrA(17)
+SRR26205262	seqsero2	SeqSero_result.tsv		Sample name	SRR26205262
+SRR26205262	seqsero2	SeqSero_result.tsv		Output directory	/dpssi/home/henras/WP6/ssi_analysis_utility/examples/Results/SRR26205262/seqsero2
+SRR26205262	seqsero2	SeqSero_result.tsv		Input files	SRR26205262_1.fastq.gz
+SRR26205262	seqsero2	SeqSero_result.tsv		O antigen prediction	4
+SRR26205262	seqsero2	SeqSero_result.tsv		H1 antigen prediction(fliC)	e,h
+SRR26205262	seqsero2	SeqSero_result.tsv		H2 antigen prediction(fljB)	1,5
+SRR26205262	seqsero2	SeqSero_result.tsv		Predicted identification	Salmonella enterica subspecies enterica (subspecies I)
+SRR26205262	seqsero2	SeqSero_result.tsv		Predicted antigenic profile	4:e,h:1,5
+SRR26205262	seqsero2	SeqSero_result.tsv		Predicted serotype	Reading
+SRR26205262	sistr	shovill_sistr.tab		antigenic_formula	1,4,[5],12:e,h:1,5
+SRR26205262	sistr	shovill_sistr.tab		cgmlst_distance	0.042424242424242475
+SRR26205262	sistr	shovill_sistr.tab		cgmlst_found_loci	328
+SRR26205262	sistr	shovill_sistr.tab		cgmlst_genome_match	SRR3098278
+SRR26205262	sistr	shovill_sistr.tab		cgmlst_matching_alleles	316
+SRR26205262	sistr	shovill_sistr.tab		cgmlst_subspecies	enterica
+SRR26205262	sistr	shovill_sistr.tab		fasta_filepath	/dpssi/home/henras/WP6/ssi_analysis_utility/examples/Results/SRR26205262/Assemblies/SRR26205262_shovill.fasta
+SRR26205262	sistr	shovill_sistr.tab		genome	SRR26205262_shovill
+SRR26205262	sistr	shovill_sistr.tab		h1	e,h
+SRR26205262	sistr	shovill_sistr.tab		h2	1,5
+SRR26205262	sistr	shovill_sistr.tab		o_antigen	1,4,[5],12
+SRR26205262	sistr	shovill_sistr.tab		predicted_serovar_in_list	Y
+SRR26205262	sistr	shovill_sistr.tab		qc_messages	INFO: Number of cgMLST330 loci found (n=328)
+SRR26205262	sistr	shovill_sistr.tab		qc_status	PASS
+SRR26205262	sistr	shovill_sistr.tab		serogroup	B
+SRR26205262	sistr	shovill_sistr.tab		serovar	Reading
+SRR26205262	sistr	shovill_sistr.tab		serovar_antigen	Saintpaul|Reading
+SRR26205262	sistr	shovill_sistr.tab		serovar_cgmlst	Reading

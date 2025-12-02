@@ -6,3 +6,4 @@ examples/results/
 examples/Dataset/reads/*gz
 resources/
 *DS_store
+.gitignore

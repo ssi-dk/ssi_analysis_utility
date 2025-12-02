@@ -244,7 +244,16 @@ def run_repeat_typing(fasta_path: str, repeat_names: List[str], combo_names: Lis
 # ---------------------------- Main CLI ---------------------------- #
 
 def main(args):
-    setup_logging(log_file = args.log_file)
+    if args.log_file:
+        # Use your existing logging setup to log to a file
+        setup_logging(log_file=args.log_file)
+    else:
+        # Simple stdout logging if no file is provided
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s - %(levelname)s - %(message)s",
+            stream=sys.stdout,
+        )
 
     try:
         results = run_repeat_typing(
@@ -276,6 +285,6 @@ if __name__ == "__main__":
     parser.add_argument("--ref_meta", nargs="+", help="Path to TR and TRST metadata files.")
     parser.add_argument("--output", required=True, help="Output file path")
     parser.add_argument("--suffix", choices=["tsv", "csv"], default="tsv", help="Output file format")
-    parser.add_argument("--log_file", required = True, help = "File for logging")
+    parser.add_argument("--log_file",default=None,help="Optional log file; if omitted, logs are printed to stdout")
     args = parser.parse_args()
     main(args)

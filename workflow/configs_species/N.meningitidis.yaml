@@ -1,19 +1,15 @@
-analyses_to_run:
-    
-    plasmidfinder: true
-    
-    virulencefinder: true
+plasmidfinder: true
 
-    serotypefinder: true
+virulencefinder: true
 
-    amrfinder: # Leave blank or insert --organism alongside one of the supported organisms, listed here: https://github.com/evolarjun/amr/wiki/Curated-organisms
-        options: --organism 'Neisseria_meningitidis'
-        assemblers: [spades]  
+serotypefinder: true
 
-    mlst:
-        assemblers: [spades]  
+amrfinder: # Leave blank or insert --organism alongside one of the supported organisms, listed here: https://github.com/evolarjun/amr/wiki/Curated-organisms
+    options: --organism 'Neisseria_meningitidis'
+    assemblers: shovill
 
-    meningotype:
-        assemblers: [spades]  
+mlst:
+    assemblers: shovill
 
-                
+meningotype:
+    assemblers: shovill

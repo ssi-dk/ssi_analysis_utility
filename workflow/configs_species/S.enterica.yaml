@@ -1,16 +1,14 @@
-analyses_to_run: 
+resfinder:
+  options: --species 'Salmonella enterica'
 
-  resfinder:
-    options: --species 'Salmonella enterica'
+amrfinder:
+  options: --organism 'Salmonella'
+  assemblers: shovill
+  
+mlst:
+  assemblers: shovill
 
-  amrfinder:
-    options: --organism 'Salmonella'
-    assemblers: [skesa]  
-    
-  mlst:
-    assemblers: [skesa]  
+seqsero2: true
 
-  seqsero2: true
-
-  sistr:
-    assemblers: [skesa,spades]  
+sistr:
+  assemblers: shovill
