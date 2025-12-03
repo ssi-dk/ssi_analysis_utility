@@ -5,7 +5,7 @@ input_manager:
     metadata_path: examples/Metadata
     output_folder: examples/Results  # Folder where the analysis results will be saved
     temp_storage: examples/Dataset/databases
-    envs_location : /home/simonescrima/.local/share/mamba/envs/
+    envs_location : workflow/envs/
 
 species_map:
     Clostridium difficile: C.difficile
