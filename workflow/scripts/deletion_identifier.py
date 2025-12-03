@@ -1000,9 +1000,9 @@ def run(
                 and chosen_obs_len is not None
             ):
                 category = chosen_category
-                deletion_start = chosen_obs_start
-                deletion_end = chosen_obs_end
-                deletion_length = chosen_obs_len
+                deletion_start = int(chosen_obs_start)
+                deletion_end = int(chosen_obs_end)
+                deletion_length = int(chosen_obs_len)
 
                 if (
                     chosen_frac_expected is not None
@@ -1073,7 +1073,20 @@ def run(
         )
         fallback.to_csv(output_path, sep="\t", index=False)
     else:
-        # Make sure columns are ordered / stringified nicely
+        # Make sure coordinate and length columns are integers (no .0)
+        int_cols = [
+            "expected_start",
+            "expected_end",
+            "expected_variant",
+            "deletion_start",
+            "deletion_end",
+            "deletion_length",
+        ]
+        for col in int_cols:
+            # Use nullable Int64 to be safe; in practice nonzero_df should have no NaN here
+            nonzero_df[col] = nonzero_df[col].astype("Int64")
+
+        # Format overlap percentages as float strings with 2 decimals
         nonzero_df["expected_overlap_pct"] = nonzero_df["expected_overlap_pct"].map(
             lambda x: f"{x:.2f}" if isinstance(x, (float, int)) else x
         )
