@@ -195,7 +195,7 @@ def extract_deletion_variants_in_region(
     return records
 
 
-# ========================= Step 5: Filter deletions by IMF/IDV/DP =========================
+# ========================= Step 5: INFO helpers =========================
 
 
 def _get_info_float(rec: pysam.VariantRecord, key: str) -> float:
@@ -230,44 +230,6 @@ def _get_info_int(rec: pysam.VariantRecord, key: str) -> int:
     return 0
 
 
-def filter_deletions_by_thresholds(
-    variants: List[pysam.VariantRecord],
-    gt_IMF: float,
-    gt_IDV: float,
-    gt_DP: int,
-) -> List[pysam.VariantRecord]:
-    """
-    Filter deletion variants to only those that pass IMF, IDV, DP thresholds.
-    """
-
-    filtered: List[pysam.VariantRecord] = []
-    print(
-        f"[INFO] Filtering {len(variants)} deletion records by "
-        f"IMF>={gt_IMF}, IDV>={gt_IDV}, DP>={gt_DP}"
-    )
-    for rec in variants:
-        IMF = _get_info_float(rec, "IMF")
-        IDV = _get_info_float(rec, "IDV")
-        DP = _get_info_int(rec, "DP")
-        print(
-            f"[DEBUG] Deletion record at {rec.pos} with IMF={IMF}, "
-            f"IDV={IDV}, DP={DP} vs thresholds IMF>={gt_IMF}, "
-            f"IDV>={gt_IDV}, DP>={gt_DP}"
-        )
-        if IMF >= gt_IMF and IDV >= gt_IDV and DP >= gt_DP:
-            filtered.append(rec)
-            print(
-                f"[DEBUG] Record at {rec.pos}: {rec.ref} -> {rec.alts[0]} PASSED thresholds"
-            )
-        else:
-            print(
-                f"[DEBUG] Record at {rec.pos}: {rec.ref} -> {rec.alts[0]} FAILED thresholds"
-            )
-
-    print(f"[INFO] Records remaining after threshold filter: {len(filtered)}")
-    return filtered
-
-
 # ========================= Deletion span helper =========================
 
 
@@ -287,48 +249,275 @@ def get_deletion_span(rec: pysam.VariantRecord) -> Optional[Tuple[int, int, int]
     return None
 
 
-# ========================= Step 6: Pick best deletion (length only) =========================
+# ========================= Call-based canonical assignment (categories 1–3) =========================
 
 
-def pick_best_deletion(
+def assign_best_canonical_for_call(
     variants: List[pysam.VariantRecord],
-) -> Optional[Tuple[int, int, int]]:
+    meta_gene: pd.DataFrame,
+    min_frac: float = 0.6,
+) -> Tuple[
+    Optional[int],
+    Optional[int],
+    Optional[int],
+    Optional[int],
+    Optional[int],
+    Optional[float],
+    Optional[float],
+    Optional[bool],
+]:
     """
-    Pick the 'best' deletion from a list of deletion records.
+    Given 'call' deletion variants for a single gene and that gene's
+    metafile subset (with del_start, del_end, del_type, gt_IMF, gt_IDV, gt_DP),
+    pick the best canonical deletion type and annotate whether it passes
+    IMF/IDV/DP thresholds.
 
-    For now, choose the deletion with the largest length (len(REF) - len(ALT))
-    considering the first deletion-like ALT in each record.
+    Scoring rules (canonical matching):
 
-    Returns (start, end, length) of the best deletion, or None if no
-    deletions could be parsed.
+      1) We first filter on the expected-side fraction:
+         frac_expected = overlap / expected_len
+         and require frac_expected >= min_frac.
+
+      2) For all remaining candidates, we build a score tuple:
+
+           score_tuple = (
+               frac_expected,
+               frac_observed,
+               -len_diff,
+               -exp_type,
+           )
+
+         Meaning:
+
+           - Prefer higher frac_expected
+               → more of the canonical region is deleted.
+
+           - If tie, prefer higher frac_observed
+               → more of the observed deletion lies inside the canonical region.
+
+           - If tie, prefer smaller absolute length difference
+               (len_diff = |obs_len - exp_len|).
+
+           - If still tie, prefer smaller canonical length (exp_type)
+               → e.g. 39 over 54.
+
+         This is expected-centric: it is optimised for
+         "how well does this observed deletion fulfil the canonical window
+         we defined?", then refined by how well the observed event is
+         contained by that canonical window.
+
+    We maintain two "best" candidates:
+      - best_pass: passes IMF/IDV/DP thresholds
+      - best_fail: fails at least one of IMF/IDV/DP
+
+    Categories will be:
+
+      Category 1 (high confidence):
+        - best_pass exists AND len_diff <= 1
+
+      Category 2 (good confidence):
+        - best_pass exists AND len_diff > 1
+
+      Category 3 (lower confidence):
+        - no best_pass, but best_fail exists (any len_diff)
+
+    This function itself does not assign category numbers; it just returns:
+
+      (best_del_type,
+       best_len_diff,
+       best_obs_start,
+       best_obs_end,
+       best_obs_len,
+       best_frac_expected,
+       best_frac_observed,
+       best_passes_thresholds)
+
+    If no candidate passes min_frac, all values are None.
     """
 
-    best_span: Optional[Tuple[int, int, int]] = None
+    if not variants:
+        print("[INFO] No call variants provided for canonical assignment.")
+        return None, None, None, None, None, None, None, None
+
+    # Best candidates among threshold-passing and threshold-failing
+    best_pass_score: Optional[Tuple[float, float, int, int]] = None
+    best_fail_score: Optional[Tuple[float, float, int, int]] = None
+
+    best_pass_data = {
+        "type": None,
+        "len_diff": None,
+        "obs_start": None,
+        "obs_end": None,
+        "obs_len": None,
+        "frac_expected": None,
+        "frac_observed": None,
+    }
+    best_fail_data = {
+        "type": None,
+        "len_diff": None,
+        "obs_start": None,
+        "obs_end": None,
+        "obs_len": None,
+        "frac_expected": None,
+        "frac_observed": None,
+    }
+
+    print(
+        f"[INFO] Assigning best canonical deletion from {len(variants)} call variants "
+        f"and {len(meta_gene)} canonical windows with min_frac={min_frac}."
+    )
 
     for rec in variants:
         span = get_deletion_span(rec)
         if span is None:
             continue
-        del_start, del_end, del_len = span
-        if best_span is None or del_len > best_span[2]:
-            best_span = span
-            print(
-                f"[DEBUG] Chose deletion at record {rec.pos}: "
-                f"{rec.ref} -> {rec.alts[0]} (len={del_len}) as current best."
-            )
+        obs_start, obs_end, obs_len = span
 
-    if best_span is None:
-        print("[INFO] No valid deletion length could be determined from records.")
-    else:
+        IMF = _get_info_float(rec, "IMF")
+        IDV = _get_info_float(rec, "IDV")
+        DP = _get_info_int(rec, "DP")
+
         print(
-            f"[INFO] Best deletion span selected: {best_span[0]}-{best_span[1]} "
-            f"(len={best_span[2]})"
+            f"[DEBUG] Considering call deletion {obs_start}-{obs_end} (len={obs_len}) "
+            f"with IMF={IMF}, IDV={IDV}, DP={DP}"
         )
 
-    return best_span
+        for _, r in meta_gene.iterrows():
+            exp_start = int(r["del_start"])
+            exp_end = int(r["del_end"])
+            exp_type = int(r["del_type"])
+            exp_len = exp_end - exp_start + 1
+            gt_IMF = float(r["gt_IMF"])
+            gt_IDV = float(r["gt_IDV"])
+            gt_DP = int(r["gt_DP"])
+
+            overlap_start = max(obs_start, exp_start)
+            overlap_end = min(obs_end, exp_end)
+            overlap = max(0, overlap_end - overlap_start + 1)
+            if overlap <= 0:
+                continue
+
+            frac_expected = overlap / exp_len
+            if frac_expected < min_frac:
+                print(
+                    f"[DEBUG] Overlap between obs {obs_start}-{obs_end} and "
+                    f"exp {exp_start}-{exp_end} (type={exp_type}) has frac_expected="
+                    f"{frac_expected:.2f} < {min_frac}, skipping."
+                )
+                continue
+
+            frac_observed = overlap / obs_len
+            len_diff = abs(obs_len - exp_len)
+
+            passes_thresholds = (
+                IMF >= gt_IMF and IDV >= gt_IDV and DP >= gt_DP
+            )
+          
+            # Scoring scheme:
+            #
+            # 1) Prefer higher frac_expected → more of the canonical region is deleted.
+            #
+            # 2) If tie, prefer higher frac_observed → more of the observed deletion lies inside the canonical region.
+            #
+            # 3) If tie, prefer smaller abs(len_diff) = |obs_len - exp_len|.
+            #
+            # 4) If still tie, prefer smaller canonical length (exp_type), e.g. 39 over 54.
+
+            score_tuple = (frac_expected, frac_observed, -len_diff, -exp_type)
+
+            print(
+                f"[DEBUG] Call candidate: obs {obs_start}-{obs_end} len={obs_len} "
+                f"-> canonical {exp_start}-{exp_end} len={exp_len} (type={exp_type}), "
+                f"overlap={overlap}, frac_expected={frac_expected:.3f}, "
+                f"frac_observed={frac_observed:.3f}, len_diff={len_diff}, "
+                f"passes_thresholds={passes_thresholds}, score_tuple={score_tuple}"
+            )
+
+            if passes_thresholds:
+                # Compete for best_pass
+                if best_pass_score is None or score_tuple > best_pass_score:
+                    best_pass_score = score_tuple
+                    best_pass_data = {
+                        "type": exp_type,
+                        "len_diff": len_diff,
+                        "obs_start": obs_start,
+                        "obs_end": obs_end,
+                        "obs_len": obs_len,
+                        "frac_expected": frac_expected,
+                        "frac_observed": frac_observed,
+                    }
+                    print(
+                        f"[INFO] New best PASS candidate (call): type={exp_type}, "
+                        f"len_diff={len_diff}, score_tuple={score_tuple}"
+                    )
+            else:
+                # Compete for best_fail
+                if best_fail_score is None or score_tuple > best_fail_score:
+                    best_fail_score = score_tuple
+                    best_fail_data = {
+                        "type": exp_type,
+                        "len_diff": len_diff,
+                        "obs_start": obs_start,
+                        "obs_end": obs_end,
+                        "obs_len": obs_len,
+                        "frac_expected": frac_expected,
+                        "frac_observed": frac_observed,
+                    }
+                    print(
+                        f"[INFO] New best FAIL candidate (call): type={exp_type}, "
+                        f"len_diff={len_diff}, score_tuple={score_tuple}"
+                    )
+
+    # Decide which candidate wins overall according to the category rules:
+    #
+    # Category 1 / 2 prefer "best_pass" if it exists,
+    # otherwise Category 3 may use "best_fail".
+    if best_pass_score is not None:
+        # Use best_pass_data
+        t = best_pass_data["type"]
+        ld = best_pass_data["len_diff"]
+        os = best_pass_data["obs_start"]
+        oe = best_pass_data["obs_end"]
+        ol = best_pass_data["obs_len"]
+        fe = best_pass_data["frac_expected"]
+        fo = best_pass_data["frac_observed"]
+
+        fe_str = f"{fe:.3f}" if fe is not None else "NA"
+        fo_str = f"{fo:.3f}" if fo is not None else "NA"
+
+        print(
+            f"[INFO] Final CALL canonical assignment (threshold-passing): "
+            f"type={t}, len_diff={ld}, obs={os}-{oe}, "
+            f"frac_expected={fe_str}, frac_observed={fo_str}"
+        )
+        return t, ld, os, oe, ol, fe, fo, True
+
+    if best_fail_score is not None:
+        # Use best_fail_data
+        t = best_fail_data["type"]
+        ld = best_fail_data["len_diff"]
+        os = best_fail_data["obs_start"]
+        oe = best_fail_data["obs_end"]
+        ol = best_fail_data["obs_len"]
+        fe = best_fail_data["frac_expected"]
+        fo = best_fail_data["frac_observed"]
+
+        fe_str = f"{fe:.3f}" if fe is not None else "NA"
+        fo_str = f"{fo:.3f}" if fo is not None else "NA"
+
+        print(
+            f"[INFO] Final CALL canonical assignment (threshold-failing): "
+            f"type={t}, len_diff={ld}, obs={os}-{oe}, "
+            f"frac_expected={fe_str}, frac_observed={fo_str}"
+        )
+        return t, ld, os, oe, ol, fe, fo, False
+
+    print("[INFO] No call canonical deletion passed the overlap filter.")
+    return None, None, None, None, None, None, None, None
 
 
-# ========================= Step 7: Mpileup canonical assignment =========================
+# ========================= Mpileup canonical assignment (categories 4–5) =========================
+
 
 def assign_best_canonical_for_mpileup(
     variants: List[pysam.VariantRecord],
@@ -348,7 +537,7 @@ def assign_best_canonical_for_mpileup(
     metafile subset (with del_start, del_end, del_type), pick the best
     canonical deletion type.
 
-    Scoring rules:
+    Scoring rules (same as for call, but without IMF/IDV/DP):
 
       1) We first filter on the expected-side fraction:
          frac_expected = overlap / expected_len
@@ -450,6 +639,12 @@ def assign_best_canonical_for_mpileup(
 
             len_diff = abs(obs_len - exp_len)
 
+            # Scoring scheme:
+            #
+            # 1) Prefer higher frac_expected
+            # 2) If tie, prefer higher frac_observed
+            # 3) If tie, prefer smaller abs(len_diff)
+            # 4) If still tie, prefer smaller canonical length (exp_type)
             score_tuple = (frac_expected, frac_observed, -len_diff, -exp_type)
 
             print(
@@ -470,7 +665,7 @@ def assign_best_canonical_for_mpileup(
                 best_frac_expected = frac_expected
                 best_frac_observed = frac_observed
                 print(
-                    f"[INFO] New best canonical candidate: type={best_type}, "
+                    f"[INFO] New best canonical candidate (mpileup): type={best_type}, "
                     f"len_diff={best_len_diff}, score_tuple={best_score_tuple}"
                 )
 
@@ -513,18 +708,22 @@ def run(
     bcf_path: str,
     mpileup_bcf_path: str,
     meta_path: str,
-    fasta_path: str,
+    fasta_path: str,  # currently unused, kept for future extension
     output_path: str,
     deletion_region_buffer: int = 5,
     overlap_fraction: float = 0.6,
 ) -> None:
     # Step 1: load_deletion_metafile
-    print(f"\n# ========================= Step 1: load_deletion_metafile =========================\n")
+    print(
+        "\n# ========================= Step 1: load_deletion_metafile =========================\n"
+    )
 
     meta_df = load_deletion_metafile(meta_path)
 
     # Step 2: Check_organism
-    print(f"\n# ========================= Step 2: Check_organism =========================\n")
+    print(
+        "\n# ========================= Step 2: Check_organism =========================\n"
+    )
 
     org_meta = check_organism(meta_df, organism)
 
@@ -552,10 +751,10 @@ def run(
         return
 
     print(
-        f"[INFO] Using overlap_fraction={overlap_fraction} for canonical mpileup assignment."
+        f"[INFO] Using overlap_fraction={overlap_fraction} for canonical assignments."
     )
 
-    print(f"\n# ========================= Check BCF files =========================\n")
+    print("\n# ========================= Check BCF files =========================\n")
 
     # Open call BCF once
     try:
@@ -571,7 +770,9 @@ def run(
     except Exception as e:
         raise RuntimeError(f"Failed to open mpileup BCF file '{mpileup_bcf_path}': {e}")
 
-    print(f"\n# ========================= Step 3: Match_gene_bcf using the call BCF header =========================\n")
+    print(
+        "\n# ========================= Step 3: Match_gene_bcf using the call BCF header =========================\n"
+    )
 
     # Step 3: Match_gene_bcf using the call BCF header
     genes = sorted(org_meta["gene"].astype(str).unique())
@@ -579,7 +780,8 @@ def run(
 
     results: List[dict] = []
 
-    # Process per gene so mpileup produces only one canonical call per gene
+    # Process per gene so we produce at most one canonical call per gene
+    # from call BCF (categories 1–3) and, if needed, from mpileup (4–5).
     for gene in genes:
         meta_g = org_meta[org_meta["gene"] == gene].copy()
         print(
@@ -596,75 +798,229 @@ def run(
             contig_name = gene_to_contig[gene]
             print(f"[INFO] Using contig '{contig_name}' for gene '{gene}'.")
 
-        gene_rows: List[dict] = []
-        any_category1 = False
+        # Prepare storage for the final chosen assignment for this gene
+        chosen_type: Optional[int] = None
+        chosen_len_diff: Optional[int] = None
+        chosen_obs_start: Optional[int] = None
+        chosen_obs_end: Optional[int] = None
+        chosen_obs_len: Optional[int] = None
+        chosen_frac_expected: Optional[float] = None
+        chosen_frac_observed: Optional[float] = None
+        chosen_category: Optional[str] = None  # "1".."5"
+        chosen_source: Optional[str] = None  # "call" or "mpileup"
 
-        # --- Call BCF per window (category 1) ---
+        # ---------------------- CALL BCF (categories 1–3) ----------------------
+        print(
+            "\n# ========================= Step 4: CALL BCF – canonical classification (categories 1–3) =========================\n"
+        )
+
+        if contig_name != "-":
+            gene_min_start = int(meta_g["del_start"].min())
+            gene_max_end = int(meta_g["del_end"].max())
+
+            print(
+                f"[INFO] Call BCF: extracting candidate deletions spanning all windows for gene '{gene}' "
+                f"({gene_min_start}-{gene_max_end})"
+            )
+
+            call_deletion_variants = extract_deletion_variants_in_region(
+                bcf=bcf,
+                contig=contig_name,
+                start=gene_min_start,
+                end=gene_max_end,
+                region_buffer=deletion_region_buffer,
+            )
+
+            (
+                call_type,
+                call_len_diff,
+                call_obs_start,
+                call_obs_end,
+                call_obs_len,
+                call_frac_expected,
+                call_frac_observed,
+                call_passes_thresholds,
+            ) = assign_best_canonical_for_call(
+                variants=call_deletion_variants,
+                meta_gene=meta_g,
+                min_frac=overlap_fraction,
+            )
+
+            if call_type is not None:
+                # Decide category from call:
+                #   1: passes thresholds AND len_diff <= 1
+                #   2: passes thresholds AND len_diff > 1
+                #   3: fails thresholds (any len_diff)
+                if call_passes_thresholds:
+                    if call_len_diff is not None and call_len_diff <= 1:
+                        chosen_category = "1"
+                        print(
+                            f"[INFO] Call-based classification for gene '{gene}': "
+                            f"Category 1 (high confidence; len_diff={call_len_diff})"
+                        )
+                    else:
+                        chosen_category = "2"
+                        print(
+                            f"[INFO] Call-based classification for gene '{gene}': "
+                            f"Category 2 (good confidence; len_diff={call_len_diff})"
+                        )
+                else:
+                    chosen_category = "3"
+                    print(
+                        f"[INFO] Call-based classification for gene '{gene}': "
+                        f"Category 3 (thresholds not met; len_diff={call_len_diff})"
+                    )
+
+                chosen_type = call_type
+                chosen_len_diff = call_len_diff
+                chosen_obs_start = call_obs_start
+                chosen_obs_end = call_obs_end
+                chosen_obs_len = call_obs_len
+                chosen_frac_expected = call_frac_expected
+                chosen_frac_observed = call_frac_observed
+                chosen_source = "call"
+            else:
+                print(
+                    f"[INFO] Call BCF: no canonical deletion found for gene '{gene}' "
+                    f"(no Category 1–3)."
+                )
+        else:
+            print(
+                f"[INFO] Gene '{gene}' has no contig in call BCF, skipping call-based classification."
+            )
+
+        # ---------------------- MPILEUP (categories 4–5, fallback) ----------------------
+        print(
+            "\n# ========================= Step 5: MPILEUP BCF – canonical classification (categories 4–5) =========================\n"
+        )
+
+        if chosen_category is None and contig_name != "-":
+            print(
+                f"[INFO] No call-based Category 1–3 for gene '{gene}', "
+                f"checking mpileup BCF for canonical assignment (Category 4–5)."
+            )
+
+            gene_min_start = int(meta_g["del_start"].min())
+            gene_max_end = int(meta_g["del_end"].max())
+
+            print(
+                f"[INFO] Mpileup BCF: extracting candidate deletions spanning all windows for gene '{gene}' "
+                f"({gene_min_start}-{gene_max_end})"
+            )
+
+            mpileup_deletion_variants = extract_deletion_variants_in_region(
+                bcf=mpileup_bcf,
+                contig=contig_name,
+                start=gene_min_start,
+                end=gene_max_end,
+                region_buffer=deletion_region_buffer,
+            )
+
+            (
+                mp_type,
+                mp_len_diff,
+                mp_obs_start,
+                mp_obs_end,
+                mp_obs_len,
+                mp_frac_expected,
+                mp_frac_observed,
+            ) = assign_best_canonical_for_mpileup(
+                variants=mpileup_deletion_variants,
+                meta_gene=meta_g,
+                min_frac=overlap_fraction,
+            )
+
+            if mp_type is not None:
+                # Category 4: exact canonical length (len_diff == 0)
+                # Category 5: inexact canonical length (len_diff > 0)
+                if mp_len_diff is not None and mp_len_diff == 0:
+                    chosen_category = "4"
+                    print(
+                        f"[INFO] Mpileup-based classification for gene '{gene}': "
+                        f"Category 4 (exact canonical length; len_diff={mp_len_diff})"
+                    )
+                else:
+                    chosen_category = "5"
+                    print(
+                        f"[INFO] Mpileup-based classification for gene '{gene}': "
+                        f"Category 5 (inexact canonical length; len_diff={mp_len_diff})"
+                    )
+
+                chosen_type = mp_type
+                chosen_len_diff = mp_len_diff
+                chosen_obs_start = mp_obs_start
+                chosen_obs_end = mp_obs_end
+                chosen_obs_len = mp_obs_len
+                chosen_frac_expected = mp_frac_expected
+                chosen_frac_observed = mp_frac_observed
+                chosen_source = "mpileup"
+            else:
+                print(
+                    f"[INFO] Mpileup BCF: no canonical deletion assigned for gene '{gene}'."
+                )
+        elif chosen_category is not None:
+            print(
+                f"[INFO] Gene '{gene}' already has call-based category {chosen_category}; "
+                f"mpileup canonical mapping skipped."
+            )
+        else:
+            # contig_name == "-"
+            print(
+                f"[INFO] Gene '{gene}' has no contig mapping; mpileup classification skipped."
+            )
+
+        # ---------------------- Build per-window rows for this gene ----------------------
+        print(
+            "\n# ========================= Step 6: Build per-window rows for this gene =========================\n"
+        )
+
+        assigned_for_gene = False
         for _, row in meta_g.iterrows():
             species = str(row["species"])
             expected_start = int(row["del_start"])
             expected_end = int(row["del_end"])
             expected_variant = int(row["del_type"])
-            gt_IMF = float(row["gt_IMF"])
-            gt_IDV = float(row["gt_IDV"])
-            gt_DP = int(row["gt_DP"])
 
-            print(f"\n# ========================= Extracting bcf variants =========================\n")
-            print(
-                f"[INFO] Call BCF: Processing window {gene}:{expected_start}-{expected_end}, "
-                f"expected_len={expected_variant}"
-            )
+            deletion_start = None
+            deletion_end = None
+            deletion_length = None
+            expected_overlap_pct = None
+            observed_overlap_pct = None
+            category = "0"
 
-            if contig_name == "-":
-                # No contig match; forced wt
-                variant = "wt"
-                category = "0"
-                deletion_start = None
-                deletion_end = None
-                deletion_length = None
-            else:
-                print(f"\n# ========================= Step 4: Extract deletion variants overlapping the region =========================\n")
-                # Step 4: Extract deletion variants overlapping the region
-                deletion_variants = extract_deletion_variants_in_region(
-                    bcf=bcf,
-                    contig=contig_name,
-                    start=expected_start,
-                    end=expected_end,
-                    region_buffer=deletion_region_buffer,
+            # If we have a chosen canonical assignment (from call or mpileup),
+            # assign it to exactly ONE row whose del_type == chosen_type.
+            if (
+                not assigned_for_gene
+                and chosen_category is not None
+                and chosen_type is not None
+                and expected_variant == chosen_type
+                and chosen_obs_start is not None
+                and chosen_obs_end is not None
+                and chosen_obs_len is not None
+            ):
+                category = chosen_category
+                deletion_start = chosen_obs_start
+                deletion_end = chosen_obs_end
+                deletion_length = chosen_obs_len
+
+                if (
+                    chosen_frac_expected is not None
+                    and chosen_frac_observed is not None
+                ):
+                    expected_overlap_pct = chosen_frac_expected * 100.0
+                    observed_overlap_pct = chosen_frac_observed * 100.0
+
+                assigned_for_gene = True
+
+                print(
+                    f"[INFO] For gene '{gene}', assigning {('CALL' if chosen_source == 'call' else 'MPILEUP')} "
+                    f"canonical type={chosen_type} to window {expected_start}-{expected_end}, "
+                    f"category={category}, expected_overlap_pct={expected_overlap_pct}, "
+                    f"observed_overlap_pct={observed_overlap_pct}"
                 )
-                print(f"\n# ========================= Step 5: Filter by IMF/IDV/DP thresholds =========================\n")
-                # Step 5: Filter by IMF/IDV/DP thresholds
-                deletion_variants_filtered = filter_deletions_by_thresholds(
-                    variants=deletion_variants,
-                    gt_IMF=gt_IMF,
-                    gt_IDV=gt_IDV,
-                    gt_DP=gt_DP,
-                )
-                print(f"\n# ========================= Step 6: Pick best deletion and set variant/category =========================\n")
-                # Step 6: Pick best deletion and set variant/category
-                best_span = pick_best_deletion(deletion_variants_filtered)
 
-                if best_span is not None:
-                    deletion_start, deletion_end, deletion_length = best_span
-                    variant = str(deletion_length)
-                    category = "1"
-                    any_category1 = True
-                    print(
-                        f"[INFO] Call BCF: detected deletion len={deletion_length} "
-                        f"for {gene}:{expected_start}-{expected_end}, category=1"
-                    )
-                else:
-                    variant = "wt"
-                    category = "0"
-                    deletion_start = None
-                    deletion_end = None
-                    deletion_length = None
-                    print(
-                        f"[INFO] Call BCF: no passing deletion for {gene}:"
-                        f"{expected_start}-{expected_end}, category=0"
-                    )
-
-            gene_rows.append(
+            results.append(
                 {
                     "species": species,
                     "contig_name": contig_name,
@@ -675,117 +1031,11 @@ def run(
                     "deletion_start": deletion_start,
                     "deletion_end": deletion_end,
                     "deletion_length": deletion_length,
-                    "expected_overlap_pct": None,  # will be filled for mpileup mapping
-                    "observed_overlap_pct": None,  # will be filled for mpileup mapping
+                    "expected_overlap_pct": expected_overlap_pct,
+                    "observed_overlap_pct": observed_overlap_pct,
                     "category": category,
                 }
             )
-
-        print(f"\n# ========================= Step 7: Mpileup-based canonical assignment (categories 2 & 3) =========================\n")
-        # --- Mpileup-based canonical assignment (categories 2 & 3) ---
-        if not any_category1 and contig_name != "-":
-            print(
-                f"[INFO] No category 1 deletion for gene '{gene}', "
-                f"checking mpileup BCF for canonical assignment."
-            )
-            gene_min_start = int(meta_g["del_start"].min())
-            gene_max_end = int(meta_g["del_end"].max())
-
-            print(f"\n\t# ===============  [REDO] Step 4: Extract deletion variants overlapping the region ===============\n")
-            mpileup_deletion_variants = extract_deletion_variants_in_region(
-                bcf=mpileup_bcf,
-                contig=contig_name,
-                start=gene_min_start,
-                end=gene_max_end,
-                region_buffer=deletion_region_buffer,
-            )
-
-            print(f"\n\t# ===============  Classify mpileup deletion variants overlapping the region ===============\n")
-            (
-                best_type,
-                best_len_diff,
-                best_obs_start,
-                best_obs_end,
-                best_obs_len,
-                best_frac_expected,
-                best_frac_observed,
-            ) = assign_best_canonical_for_mpileup(
-                variants=mpileup_deletion_variants,
-                meta_gene=meta_g,
-                min_frac=overlap_fraction,
-            )
-
-            if best_type is not None:
-                # category 2: exact canonical length (len_diff == 0)
-                # category 3: mapped to canonical via scoring (len_diff > 0)
-                if best_len_diff == 0:
-                    chosen_category = "2"
-                else:
-                    chosen_category = "3"
-
-                print(
-                    f"[INFO] Mpileup canonical result for gene '{gene}': "
-                    f"type={best_type}, len_diff={best_len_diff}, category={chosen_category}"
-                )
-
-                # Compute overlap percentages for the chosen canonical window
-                # relative to its own expected_start/expected_end.
-                overlap_pct_expected = None
-                overlap_pct_observed = None
-
-                if (
-                    best_obs_start is not None
-                    and best_obs_end is not None
-                    and best_obs_len is not None
-                    and best_frac_expected is not None
-                    and best_frac_observed is not None
-                ):
-                    overlap_pct_expected = best_frac_expected * 100.0
-                    overlap_pct_observed = best_frac_observed * 100.0
-
-                # Assign to exactly one row with this del_type if it is still category 0
-                assigned = False
-                for row_dict in gene_rows:
-                    if (
-                        row_dict["category"] == "0"
-                        and int(row_dict["expected_variant"]) == int(best_type)
-                    ):
-                        row_dict["variant"] = str(best_type)
-                        row_dict["category"] = chosen_category
-                        row_dict["deletion_start"] = best_obs_start
-                        row_dict["deletion_end"] = best_obs_end
-                        row_dict["deletion_length"] = best_obs_len
-                        row_dict["expected_overlap_pct"] = overlap_pct_expected
-                        row_dict["observed_overlap_pct"] = overlap_pct_observed
-                        assigned = True
-                        print(
-                            f"[INFO] Assigned mpileup canonical type={best_type} to window "
-                            f"{gene}:{row_dict['expected_start']}-"
-                            f"{row_dict['expected_end']} "
-                            f"with category={chosen_category}, "
-                            f"expected_overlap_pct={overlap_pct_expected}, "
-                            f"observed_overlap_pct={overlap_pct_observed}"
-                        )
-                        break
-
-                if not assigned:
-                    print(
-                        f"[WARN] Mpileup canonical type={best_type} could not be assigned to any "
-                        f"category 0 window for gene '{gene}'."
-                    )
-            else:
-                print(
-                    f"[INFO] Mpileup BCF: no canonical deletion assigned for gene '{gene}'."
-                )
-
-        elif contig_name != "-":
-            print(
-                f"[INFO] Gene '{gene}' already has at least one category 1 call; "
-                f"mpileup canonical mapping skipped."
-            )
-
-        # Append per-gene rows to global result list
-        results.extend(gene_rows)
 
     # Build final DataFrame
     out_df = pd.DataFrame(results)
@@ -854,7 +1104,10 @@ def run(
 
 def main() -> None:
     arg = argparse.ArgumentParser(
-        description="Identify configured deletions from a call BCF and a mpileup BCF using a deletion metafile (no KMA/BED)."
+        description=(
+            "Identify configured deletions from a call BCF and a mpileup BCF "
+            "using a deletion metafile (no KMA/BED)."
+        )
     )
     arg.add_argument(
         "--organism", required=True, help="Organism name to filter metafile by."
@@ -903,7 +1156,7 @@ def main() -> None:
         default=0.6,
         help=(
             "Minimum fraction of expected deletion covered to consider mapping "
-            "from mpileup (default 0.6)."
+            "from call/mpileup (default 0.6)."
         ),
     )
 
