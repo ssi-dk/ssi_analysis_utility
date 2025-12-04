@@ -126,6 +126,25 @@ rule fetch_Senterica_Serovar:
     eval $cmd >> {log.stdout} 2>&1
     """
 
+rule setup_LREfinder:
+    conda:
+        "../envs/kmeraligner.yaml"
+    output:
+        database = "%s/custom/elmDB.fasta" %database_path
+    log:
+        stdout = 'Logs/Databases/LREfinder_db.log'
+    message:
+        "[setup_LREfinder]: Setting up LREfinder database"
+    shell:
+        """
+        outdir=$(dirname {output.database})
+        mkdir -p $outdir
+        curl -fSL https://bitbucket.org/genomicepidemiology/lre-finder/raw/fac445d190853cc90c1aed392a55102fe9df4376/elmDB.tar.gz --output elmDB.tar.gz 
+        tar -xvf elmDB.tar.gz
+        mv elmDB/elm.fsa {output.database}
+        rm -r elmDB/ elmDB.tar.gz
+        """
+
 
 rule fetch_chtyper_db:
     output:
