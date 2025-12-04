@@ -10,6 +10,42 @@ import pandas as pd
 import pysam
 
 
+# ========================= FASTA helpers =========================
+
+
+def load_fasta_sequences(fasta_path: str) -> Dict[str, str]:
+    """
+    Load a (possibly multi-)FASTA file into a dict: {header: sequence}.
+
+    The header is taken as the first whitespace-separated token after '>'.
+    Sequences are uppercased.
+    """
+    seqs: Dict[str, str] = {}
+    header: Optional[str] = None
+    chunks: List[str] = []
+
+    print(f"[INFO] Loading FASTA sequences from: {fasta_path}")
+    with open(fasta_path, "r") as fh:
+        for line in fh:
+            line = line.strip()
+            if not line:
+                continue
+            if line.startswith(">"):
+                # flush previous
+                if header is not None:
+                    seqs[header] = "".join(chunks).upper()
+                header = line[1:].split()[0]
+                chunks = []
+            else:
+                chunks.append(line)
+        # flush last
+        if header is not None:
+            seqs[header] = "".join(chunks).upper()
+
+    print(f"[INFO] Loaded {len(seqs)} sequences from FASTA.")
+    return seqs
+
+
 # ========================= Step 1: load_metafile =========================
 
 
@@ -310,7 +346,7 @@ def assign_best_canonical_for_call(
       - best_pass: passes IMF/IDV/DP thresholds
       - best_fail: fails at least one of IMF/IDV/DP
 
-    Categories will be:
+    Categories (decided in `run`) are:
 
       Category 1 (high confidence):
         - best_pass exists AND len_diff <= 1
@@ -409,20 +445,16 @@ def assign_best_canonical_for_call(
             frac_observed = overlap / obs_len
             len_diff = abs(obs_len - exp_len)
 
-            passes_thresholds = (
-                IMF >= gt_IMF and IDV >= gt_IDV and DP >= gt_DP
-            )
-          
+            passes_thresholds = IMF >= gt_IMF and IDV >= gt_IDV and DP >= gt_DP
+
             # Scoring scheme:
             #
             # 1) Prefer higher frac_expected → more of the canonical region is deleted.
-            #
-            # 2) If tie, prefer higher frac_observed → more of the observed deletion lies inside the canonical region.
-            #
+            # 2) If tie, prefer higher frac_observed → more of the observed deletion
+            #    lies inside the canonical region.
             # 3) If tie, prefer smaller abs(len_diff) = |obs_len - exp_len|.
-            #
-            # 4) If still tie, prefer smaller canonical length (exp_type), e.g. 39 over 54.
-
+            # 4) If still tie, prefer smaller canonical length (exp_type),
+            #    e.g. 39 over 54.
             score_tuple = (frac_expected, frac_observed, -len_diff, -exp_type)
 
             print(
@@ -708,7 +740,7 @@ def run(
     bcf_path: str,
     mpileup_bcf_path: str,
     meta_path: str,
-    fasta_path: str,  # currently unused, kept for future extension
+    fasta_path: str,  # now used to compute N%
     output_path: str,
     deletion_region_buffer: int = 5,
     overlap_fraction: float = 0.6,
@@ -744,6 +776,7 @@ def run(
                 "deletion_length",
                 "expected_overlap_pct",
                 "observed_overlap_pct",
+                "consensus_N_pct",
                 "category",
             ]
         )
@@ -753,6 +786,13 @@ def run(
     print(
         f"[INFO] Using overlap_fraction={overlap_fraction} for canonical assignments."
     )
+
+    # Load FASTA
+    print("\n# ========================= Load FASTA =========================\n")
+    try:
+        fasta_seqs = load_fasta_sequences(fasta_path)
+    except Exception as e:
+        raise RuntimeError(f"Failed to open consensus FASTA '{fasta_path}': {e}")
 
     print("\n# ========================= Check BCF files =========================\n")
 
@@ -986,7 +1026,38 @@ def run(
             deletion_length = None
             expected_overlap_pct = None
             observed_overlap_pct = None
+            consensus_N_pct = None
             category = "0"
+
+            # Compute consensus N% from FASTA for this expected window
+            if contig_name != "-" and contig_name in fasta_seqs:
+                seq = fasta_seqs[contig_name]
+                start_idx = expected_start - 1
+                end_idx = expected_end
+                if start_idx < 0 or end_idx > len(seq):
+                    print(
+                        f"[WARN] Expected window {gene}:{expected_start}-{expected_end} "
+                        f"out of FASTA bounds for contig '{contig_name}' (len={len(seq)}). "
+                        f"Skipping consensus N% calculation."
+                    )
+                else:
+                    region = seq[start_idx:end_idx]
+                    if region:
+                        n_count = sum(1 for base in region if base in ("N", "n"))
+                        consensus_N_pct = (n_count / len(region)) * 100.0
+                        print(
+                            f"[INFO] Consensus N% for {gene}:{expected_start}-{expected_end} on "
+                            f"{contig_name} = {consensus_N_pct:.2f}% ({n_count}/{len(region)} N)"
+                        )
+            elif contig_name == "-":
+                print(
+                    f"[INFO] No contig for gene '{gene}' in FASTA; consensus_N_pct left as None."
+                )
+            else:
+                print(
+                    f"[WARN] Contig '{contig_name}' not found in FASTA; "
+                    f"consensus_N_pct left as None."
+                )
 
             # If we have a chosen canonical assignment (from call or mpileup),
             # assign it to exactly ONE row whose del_type == chosen_type.
@@ -1014,7 +1085,8 @@ def run(
                 assigned_for_gene = True
 
                 print(
-                    f"[INFO] For gene '{gene}', assigning {('CALL' if chosen_source == 'call' else 'MPILEUP')} "
+                    f"[INFO] For gene '{gene}', assigning "
+                    f"{('CALL' if chosen_source == 'call' else 'MPILEUP')} "
                     f"canonical type={chosen_type} to window {expected_start}-{expected_end}, "
                     f"category={category}, expected_overlap_pct={expected_overlap_pct}, "
                     f"observed_overlap_pct={observed_overlap_pct}"
@@ -1033,6 +1105,7 @@ def run(
                     "deletion_length": deletion_length,
                     "expected_overlap_pct": expected_overlap_pct,
                     "observed_overlap_pct": observed_overlap_pct,
+                    "consensus_N_pct": consensus_N_pct,
                     "category": category,
                 }
             )
@@ -1067,6 +1140,7 @@ def run(
                     "deletion_length": "-",
                     "expected_overlap_pct": "-",
                     "observed_overlap_pct": "-",
+                    "consensus_N_pct": "-",
                     "category": "-",
                 }
             ]
@@ -1083,16 +1157,18 @@ def run(
             "deletion_length",
         ]
         for col in int_cols:
-            # Use nullable Int64 to be safe; in practice nonzero_df should have no NaN here
             nonzero_df[col] = nonzero_df[col].astype("Int64")
 
-        # Format overlap percentages as float strings with 2 decimals
-        nonzero_df["expected_overlap_pct"] = nonzero_df["expected_overlap_pct"].map(
-            lambda x: f"{x:.2f}" if isinstance(x, (float, int)) else x
-        )
-        nonzero_df["observed_overlap_pct"] = nonzero_df["observed_overlap_pct"].map(
-            lambda x: f"{x:.2f}" if isinstance(x, (float, int)) else x
-        )
+        # Format percentage columns as float strings with 2 decimals
+        pct_cols = [
+            "expected_overlap_pct",
+            "observed_overlap_pct",
+            "consensus_N_pct",
+        ]
+        for col in pct_cols:
+            nonzero_df[col] = nonzero_df[col].map(
+                lambda x: f"{x:.2f}" if isinstance(x, (float, int)) else x
+            )
 
         nonzero_df = nonzero_df[
             [
@@ -1107,6 +1183,7 @@ def run(
                 "deletion_length",
                 "expected_overlap_pct",
                 "observed_overlap_pct",
+                "consensus_N_pct",
                 "category",
             ]
         ]
@@ -1119,7 +1196,8 @@ def main() -> None:
     arg = argparse.ArgumentParser(
         description=(
             "Identify configured deletions from a call BCF and a mpileup BCF "
-            "using a deletion metafile (no KMA/BED)."
+            "using a deletion metafile (no KMA/BED), and report %N in the "
+            "consensus FASTA for each expected deletion window."
         )
     )
     arg.add_argument(
@@ -1144,7 +1222,10 @@ def main() -> None:
     arg.add_argument(
         "--fsa",
         required=True,
-        help="Consensus FASTA (currently unused but kept for future functionality).",
+        help=(
+            "Consensus FASTA; used to compute %N for each expected deletion "
+            "window defined in the metafile."
+        ),
     )
     arg.add_argument(
         "-o",
@@ -1154,7 +1235,7 @@ def main() -> None:
             "Output TSV path "
             "(species, contig_name, gene, expected_start, expected_end, "
             "expected_variant, deletion_start, deletion_end, deletion_length, "
-            "expected_overlap_pct, observed_overlap_pct, category)."
+            "expected_overlap_pct, observed_overlap_pct, consensus_N_pct, category)."
         ),
     )
     arg.add_argument(
