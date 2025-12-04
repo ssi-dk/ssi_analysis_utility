@@ -465,6 +465,7 @@ def assign_best_canonical_for_call(
                 f"passes_thresholds={passes_thresholds}, score_tuple={score_tuple}"
             )
 
+            # ---- Category 1–3 candidate scoring (CALL) ----
             if passes_thresholds:
                 # Compete for best_pass
                 if best_pass_score is None or score_tuple > best_pass_score:
@@ -483,7 +484,7 @@ def assign_best_canonical_for_call(
                         f"len_diff={len_diff}, score_tuple={score_tuple}"
                     )
             else:
-                # Compete for best_fail
+                # Compete for best_fail (potential Category 3)
                 if best_fail_score is None or score_tuple > best_fail_score:
                     best_fail_score = score_tuple
                     best_fail_data = {
@@ -505,7 +506,7 @@ def assign_best_canonical_for_call(
     # Category 1 / 2 prefer "best_pass" if it exists,
     # otherwise Category 3 may use "best_fail".
     if best_pass_score is not None:
-        # Use best_pass_data
+        # Use best_pass_data (this will become Category 1 or 2 in run())
         t = best_pass_data["type"]
         ld = best_pass_data["len_diff"]
         os = best_pass_data["obs_start"]
@@ -525,7 +526,7 @@ def assign_best_canonical_for_call(
         return t, ld, os, oe, ol, fe, fo, True
 
     if best_fail_score is not None:
-        # Use best_fail_data
+        # Use best_fail_data (this will become Category 3 in run())
         t = best_fail_data["type"]
         ld = best_fail_data["len_diff"]
         os = best_fail_data["obs_start"]
@@ -687,6 +688,7 @@ def assign_best_canonical_for_mpileup(
                 f"score_tuple={score_tuple}"
             )
 
+            # ---- Category 4–5 candidate scoring (MPILEUP) ----
             if best_score_tuple is None or score_tuple > best_score_tuple:
                 best_score_tuple = score_tuple
                 best_type = exp_type
@@ -734,7 +736,6 @@ def assign_best_canonical_for_mpileup(
 
 # ========================= Main routine =========================
 
-
 def run(
     organism: str,
     bcf_path: str,
@@ -777,6 +778,7 @@ def run(
                 "expected_overlap_pct",
                 "observed_overlap_pct",
                 "consensus_N_pct",
+                "consensus_N_length",
                 "category",
             ]
         )
@@ -887,7 +889,7 @@ def run(
             )
 
             if call_type is not None:
-                # Decide category from call:
+                # ---- Category 1–3 decision based on thresholds and length difference ----
                 #   1: passes thresholds AND len_diff <= 1
                 #   2: passes thresholds AND len_diff > 1
                 #   3: fails thresholds (any len_diff)
@@ -971,6 +973,7 @@ def run(
             )
 
             if mp_type is not None:
+                # ---- Category 4–5 decision based on length difference ----
                 # Category 4: exact canonical length (len_diff == 0)
                 # Category 5: inexact canonical length (len_diff > 0)
                 if mp_len_diff is not None and mp_len_diff == 0:
@@ -1011,7 +1014,7 @@ def run(
 
         # ---------------------- Build per-window rows for this gene ----------------------
         print(
-            "\n# ========================= Step 6: Build per-window rows for this gene =========================\n"
+            "\n# ========================= Step 6: Build per-window rows for this gene (incl. consensus N% and threshold) =========================\n"
         )
 
         assigned_for_gene = False
@@ -1020,6 +1023,7 @@ def run(
             expected_start = int(row["del_start"])
             expected_end = int(row["del_end"])
             expected_variant = int(row["del_type"])
+            consensus_N_threshold = float(row["consensus_N"])
 
             deletion_start = None
             deletion_end = None
@@ -1027,6 +1031,7 @@ def run(
             expected_overlap_pct = None
             observed_overlap_pct = None
             consensus_N_pct = None
+            consensus_N_length = None
             category = "0"
 
             # Compute consensus N% from FASTA for this expected window
@@ -1044,10 +1049,12 @@ def run(
                     region = seq[start_idx:end_idx]
                     if region:
                         n_count = sum(1 for base in region if base in ("N", "n"))
+                        consensus_N_length = n_count
                         consensus_N_pct = (n_count / len(region)) * 100.0
                         print(
                             f"[INFO] Consensus N% for {gene}:{expected_start}-{expected_end} on "
-                            f"{contig_name} = {consensus_N_pct:.2f}% ({n_count}/{len(region)} N)"
+                            f"{contig_name} = {consensus_N_pct:.2f}% ({n_count}/{len(region)} N), "
+                            f"threshold={consensus_N_threshold:.2f}%"
                         )
             elif contig_name == "-":
                 print(
@@ -1070,6 +1077,7 @@ def run(
                 and chosen_obs_end is not None
                 and chosen_obs_len is not None
             ):
+                # ---- This row receives the chosen deletion (Category 1–5) ----
                 category = chosen_category
                 deletion_start = int(chosen_obs_start)
                 deletion_end = int(chosen_obs_end)
@@ -1106,6 +1114,8 @@ def run(
                     "expected_overlap_pct": expected_overlap_pct,
                     "observed_overlap_pct": observed_overlap_pct,
                     "consensus_N_pct": consensus_N_pct,
+                    "consensus_N_length": consensus_N_length,
+                    "consensus_N_threshold": consensus_N_threshold,
                     "category": category,
                 }
             )
@@ -1113,16 +1123,103 @@ def run(
     # Build final DataFrame
     out_df = pd.DataFrame(results)
 
-    # Only keep rows where category != "0"
+    # Only keep rows where category != "0" (i.e. where a Category 1–5 call exists)
     nonzero_df = out_df[out_df["category"] != "0"].copy()
 
+    # Apply consensus_N threshold and per-gene longest selection
+    if not nonzero_df.empty:
+        print(
+            "\n# ========================= Step 7: Apply consensus_N threshold and per-gene longest-deletion selection =========================\n"
+        )
+
+        # Show candidate rows BEFORE consensus_N filtering
+        print("[INFO] Candidate rows before consensus_N filtering (one per gene, Category 1–5):")
+        for _, r in nonzero_df.iterrows():
+            gene = r["gene"]
+            es = r["expected_start"]
+            ee = r["expected_end"]
+            ev = r["expected_variant"]
+            cat = r["category"]
+            cn_pct = r["consensus_N_pct"]
+            cn_thr = r["consensus_N_threshold"]
+            cn_pct_str = f"{cn_pct:.2f}%" if isinstance(cn_pct, (float, int)) else "NA"
+            cn_thr_str = f"{cn_thr:.2f}%" if isinstance(cn_thr, (float, int)) else "NA"
+            print(
+                f"[INFO]   gene={gene}, window={es}-{ee}, expected_variant={ev}, "
+                f"category={cat}, consensus_N_pct={cn_pct_str}, threshold={cn_thr_str}"
+            )
+
+        before = len(nonzero_df)
+
+        # Keep only rows where consensus_N_pct >= consensus_N_threshold
+        # (i.e. consensus region is sufficiently N-rich by metafile threshold)
+        mask_keep = (
+            nonzero_df["consensus_N_pct"].notna()
+            & nonzero_df["consensus_N_threshold"].notna()
+            & (nonzero_df["consensus_N_pct"] >= nonzero_df["consensus_N_threshold"])
+        )
+
+        removed_df = nonzero_df[~mask_keep].copy()
+        nonzero_df = nonzero_df[mask_keep].copy()
+        after = len(nonzero_df)
+
+        print(
+            f"[INFO] Filtered by consensus_N threshold: kept {after} of {before} "
+            f"rows with non-zero category."
+        )
+
+        # Log any rows that were removed by consensus_N filtering
+        if not removed_df.empty:
+            print("[INFO] Rows removed by consensus_N threshold:")
+            for _, r in removed_df.iterrows():
+                gene = r["gene"]
+                es = r["expected_start"]
+                ee = r["expected_end"]
+                ev = r["expected_variant"]
+                cat = r["category"]
+                cn_pct = r["consensus_N_pct"]
+                cn_thr = r["consensus_N_threshold"]
+                cn_pct_str = f"{cn_pct:.2f}%" if isinstance(cn_pct, (float, int)) else "NA"
+                cn_thr_str = f"{cn_thr:.2f}%" if isinstance(cn_thr, (float, int)) else "NA"
+                print(
+                    f"[INFO]   REMOVED gene={gene}, window={es}-{ee}, expected_variant={ev}, "
+                    f"category={cat}, consensus_N_pct={cn_pct_str}, threshold={cn_thr_str}"
+                )
+
+        # If multiple windows for the same gene survive consensus_N filtering,
+        # keep the one with the longest expected canonical deletion (expected_variant).
+        if not nonzero_df.empty:
+            nonzero_df.sort_values(
+                ["gene", "expected_variant"], ascending=[True, False], inplace=True
+            )
+            nonzero_df = nonzero_df.groupby("gene", as_index=False).head(1)
+            print(
+                "[INFO] After per-gene longest-expected_variant selection, "
+                f"{len(nonzero_df)} rows remain:"
+            )
+            for _, r in nonzero_df.iterrows():
+                gene = r["gene"]
+                es = r["expected_start"]
+                ee = r["expected_end"]
+                ev = r["expected_variant"]
+                cat = r["category"]
+                cn_pct = r["consensus_N_pct"]
+                cn_pct_str = f"{cn_pct:.2f}%" if isinstance(cn_pct, (float, int)) else "NA"
+                print(
+                    f"[INFO]   SELECTED gene={gene}, window={es}-{ee}, expected_variant={ev}, "
+                    f"category={cat}, consensus_N_pct={cn_pct_str}"
+                )
+
     if nonzero_df.empty:
-        print("[INFO] No deletions detected (all category 0). Writing single dash row.")
+        print(
+            "[INFO] No deletions detected after consensus_N filtering. Writing single dash row."
+        )
         # Use first gene/species as context if possible
         first_row = org_meta.iloc[0]
         species = str(first_row["species"])
         gene = str(first_row["gene"])
         contig_name = "-"
+
         if gene in gene_to_contig:
             contig_name = gene_to_contig[gene]
 
@@ -1141,6 +1238,7 @@ def run(
                     "expected_overlap_pct": "-",
                     "observed_overlap_pct": "-",
                     "consensus_N_pct": "-",
+                    "consensus_N_length": "-",
                     "category": "-",
                 }
             ]
@@ -1155,9 +1253,10 @@ def run(
             "deletion_start",
             "deletion_end",
             "deletion_length",
+            "consensus_N_length",
         ]
         for col in int_cols:
-            nonzero_df[col] = nonzero_df[col].astype("Int64")
+            nonzero_df[col] = nonzero_df[col].astype(int)
 
         # Format percentage columns as float strings with 2 decimals
         pct_cols = [
@@ -1170,6 +1269,7 @@ def run(
                 lambda x: f"{x:.2f}" if isinstance(x, (float, int)) else x
             )
 
+        # Drop internal threshold column and order columns for output
         nonzero_df = nonzero_df[
             [
                 "species",
@@ -1184,13 +1284,13 @@ def run(
                 "expected_overlap_pct",
                 "observed_overlap_pct",
                 "consensus_N_pct",
+                "consensus_N_length",
                 "category",
             ]
         ]
         nonzero_df.to_csv(output_path, sep="\t", index=False)
 
     print(f"[INFO] Deletion summary written to: {output_path}")
-
 
 def main() -> None:
     arg = argparse.ArgumentParser(
