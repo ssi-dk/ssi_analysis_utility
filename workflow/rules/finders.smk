@@ -130,7 +130,6 @@ rule LREfinder:
     #     options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["custom_blaster"]["options"],    
     output:
         results = "%s/{sample}/LREfinder/{database}.tsv" %output_folder,
-        done = temp("%s/{sample}/LREfinder/{database}.done" %output_folder)
     conda:
         "../envs/python_functions.yaml"
     log:
@@ -146,7 +145,7 @@ rule LREfinder:
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
 
-        echo "LRE-finder successfully executed" > {output.done}
+        echo "LRE-finder successfully executed" > {log.stdout}
         """
 
 
