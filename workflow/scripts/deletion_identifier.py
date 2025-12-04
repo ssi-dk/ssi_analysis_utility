@@ -465,7 +465,6 @@ def assign_best_canonical_for_call(
                 f"passes_thresholds={passes_thresholds}, score_tuple={score_tuple}"
             )
 
-            # ---- Category 1–3 candidate scoring (CALL) ----
             if passes_thresholds:
                 # Compete for best_pass
                 if best_pass_score is None or score_tuple > best_pass_score:
@@ -484,7 +483,7 @@ def assign_best_canonical_for_call(
                         f"len_diff={len_diff}, score_tuple={score_tuple}"
                     )
             else:
-                # Compete for best_fail (potential Category 3)
+                # Compete for best_fail
                 if best_fail_score is None or score_tuple > best_fail_score:
                     best_fail_score = score_tuple
                     best_fail_data = {
@@ -506,7 +505,7 @@ def assign_best_canonical_for_call(
     # Category 1 / 2 prefer "best_pass" if it exists,
     # otherwise Category 3 may use "best_fail".
     if best_pass_score is not None:
-        # Use best_pass_data (this will become Category 1 or 2 in run())
+        # Use best_pass_data
         t = best_pass_data["type"]
         ld = best_pass_data["len_diff"]
         os = best_pass_data["obs_start"]
@@ -526,7 +525,7 @@ def assign_best_canonical_for_call(
         return t, ld, os, oe, ol, fe, fo, True
 
     if best_fail_score is not None:
-        # Use best_fail_data (this will become Category 3 in run())
+        # Use best_fail_data
         t = best_fail_data["type"]
         ld = best_fail_data["len_diff"]
         os = best_fail_data["obs_start"]
@@ -688,7 +687,6 @@ def assign_best_canonical_for_mpileup(
                 f"score_tuple={score_tuple}"
             )
 
-            # ---- Category 4–5 candidate scoring (MPILEUP) ----
             if best_score_tuple is None or score_tuple > best_score_tuple:
                 best_score_tuple = score_tuple
                 best_type = exp_type
@@ -736,6 +734,7 @@ def assign_best_canonical_for_mpileup(
 
 # ========================= Main routine =========================
 
+
 def run(
     organism: str,
     bcf_path: str,
@@ -779,6 +778,8 @@ def run(
                 "observed_overlap_pct",
                 "consensus_N_pct",
                 "consensus_N_length",
+                "classified_deletion_variant",
+                "classified_consensus_variant",
                 "category",
             ]
         )
@@ -823,7 +824,8 @@ def run(
     results: List[dict] = []
 
     # Process per gene so we produce at most one canonical call per gene
-    # from call BCF (categories 1–3) and, if needed, from mpileup (4–5).
+    # from call BCF (categories 1–3) and, if needed, from mpileup (4–5),
+    # and possibly override / upgrade with consensus classification (including category 6).
     for gene in genes:
         meta_g = org_meta[org_meta["gene"] == gene].copy()
         print(
@@ -848,8 +850,13 @@ def run(
         chosen_obs_len: Optional[int] = None
         chosen_frac_expected: Optional[float] = None
         chosen_frac_observed: Optional[float] = None
-        chosen_category: Optional[str] = None  # "1".."5"
-        chosen_source: Optional[str] = None  # "call" or "mpileup"
+        chosen_category: Optional[str] = None  # "1".."6"
+        chosen_source: Optional[str] = None  # "call" or "mpileup" or "consensus"
+
+        classified_deletion_variant: Optional[int] = None
+        classified_consensus_variant: Optional[int] = None
+        consensus_chosen_N_pct: Optional[float] = None
+        consensus_chosen_N_length: Optional[int] = None
 
         # ---------------------- CALL BCF (categories 1–3) ----------------------
         print(
@@ -889,25 +896,28 @@ def run(
             )
 
             if call_type is not None:
-                # ---- Category 1–3 decision based on thresholds and length difference ----
-                #   1: passes thresholds AND len_diff <= 1
-                #   2: passes thresholds AND len_diff > 1
-                #   3: fails thresholds (any len_diff)
+                # Decide category from call:
+                #   Category 1 (high confidence, exact-ish):
+                #     - passes thresholds AND len_diff <= 1
+                #   Category 2 (good confidence, inexact length):
+                #     - passes thresholds AND len_diff > 1
+                #   Category 3 (low support):
+                #     - fails thresholds (any len_diff)
                 if call_passes_thresholds:
                     if call_len_diff is not None and call_len_diff <= 1:
-                        chosen_category = "1"
+                        chosen_category = "1"  # Category 1: high confidence call
                         print(
                             f"[INFO] Call-based classification for gene '{gene}': "
                             f"Category 1 (high confidence; len_diff={call_len_diff})"
                         )
                     else:
-                        chosen_category = "2"
+                        chosen_category = "2"  # Category 2: good confidence call
                         print(
                             f"[INFO] Call-based classification for gene '{gene}': "
                             f"Category 2 (good confidence; len_diff={call_len_diff})"
                         )
                 else:
-                    chosen_category = "3"
+                    chosen_category = "3"  # Category 3: weak call, below IMF/IDV/DP
                     print(
                         f"[INFO] Call-based classification for gene '{gene}': "
                         f"Category 3 (thresholds not met; len_diff={call_len_diff})"
@@ -921,6 +931,7 @@ def run(
                 chosen_frac_expected = call_frac_expected
                 chosen_frac_observed = call_frac_observed
                 chosen_source = "call"
+                classified_deletion_variant = call_type
             else:
                 print(
                     f"[INFO] Call BCF: no canonical deletion found for gene '{gene}' "
@@ -973,17 +984,16 @@ def run(
             )
 
             if mp_type is not None:
-                # ---- Category 4–5 decision based on length difference ----
                 # Category 4: exact canonical length (len_diff == 0)
                 # Category 5: inexact canonical length (len_diff > 0)
                 if mp_len_diff is not None and mp_len_diff == 0:
-                    chosen_category = "4"
+                    chosen_category = "4"  # Category 4: mpileup exact canonical
                     print(
                         f"[INFO] Mpileup-based classification for gene '{gene}': "
                         f"Category 4 (exact canonical length; len_diff={mp_len_diff})"
                     )
                 else:
-                    chosen_category = "5"
+                    chosen_category = "5"  # Category 5: mpileup inexact canonical
                     print(
                         f"[INFO] Mpileup-based classification for gene '{gene}': "
                         f"Category 5 (inexact canonical length; len_diff={mp_len_diff})"
@@ -997,6 +1007,7 @@ def run(
                 chosen_frac_expected = mp_frac_expected
                 chosen_frac_observed = mp_frac_observed
                 chosen_source = "mpileup"
+                classified_deletion_variant = mp_type
             else:
                 print(
                     f"[INFO] Mpileup BCF: no canonical deletion assigned for gene '{gene}'."
@@ -1012,29 +1023,23 @@ def run(
                 f"[INFO] Gene '{gene}' has no contig mapping; mpileup classification skipped."
             )
 
-        # ---------------------- Build per-window rows for this gene ----------------------
+        # ---------------------- Step 6: Compute consensus N% per window (for this gene) ----------------------
         print(
-            "\n# ========================= Step 6: Build per-window rows for this gene (incl. consensus N% and threshold) =========================\n"
+            "\n# ========================= Step 6: Build per-window consensus stats for this gene (N% and threshold) =========================\n"
         )
 
-        assigned_for_gene = False
+        # Store consensus stats keyed by (start, end, del_type)
+        window_consensus_info: Dict[Tuple[int, int, int], dict] = {}
+
         for _, row in meta_g.iterrows():
-            species = str(row["species"])
             expected_start = int(row["del_start"])
             expected_end = int(row["del_end"])
             expected_variant = int(row["del_type"])
-            consensus_N_threshold = float(row["consensus_N"])
+            consensus_threshold = float(row["consensus_N"])
 
-            deletion_start = None
-            deletion_end = None
-            deletion_length = None
-            expected_overlap_pct = None
-            observed_overlap_pct = None
             consensus_N_pct = None
             consensus_N_length = None
-            category = "0"
 
-            # Compute consensus N% from FASTA for this expected window
             if contig_name != "-" and contig_name in fasta_seqs:
                 seq = fasta_seqs[contig_name]
                 start_idx = expected_start - 1
@@ -1054,7 +1059,7 @@ def run(
                         print(
                             f"[INFO] Consensus N% for {gene}:{expected_start}-{expected_end} on "
                             f"{contig_name} = {consensus_N_pct:.2f}% ({n_count}/{len(region)} N), "
-                            f"threshold={consensus_N_threshold:.2f}%"
+                            f"threshold={consensus_threshold:.2f}%"
                         )
             elif contig_name == "-":
                 print(
@@ -1066,22 +1071,206 @@ def run(
                     f"consensus_N_pct left as None."
                 )
 
-            # If we have a chosen canonical assignment (from call or mpileup),
+            key = (expected_start, expected_end, expected_variant)
+            window_consensus_info[key] = {
+                "consensus_N_pct": consensus_N_pct,
+                "consensus_N_length": consensus_N_length,
+                "consensus_threshold": consensus_threshold,
+            }
+
+        # ---------------------- Step 7: Consensus-based classification and category adjustment ----------------------
+        print(
+            "\n# ========================= Step 7: Consensus-based classification and category adjustment =========================\n"
+        )
+
+        # 1) Derive a per-gene "classified_consensus_variant" by:
+        #    - keeping only windows where consensus_N_pct >= consensus_N threshold
+        #    - if multiple windows pass, pick the one with the largest expected_variant
+        #      (i.e. the longest canonical deletion).
+        consensus_candidates: List[Tuple[int, int, int, float, int]] = []
+        # elements: (expected_variant, expected_start, expected_end, consensus_N_pct, consensus_N_length)
+
+        for _, row in meta_g.iterrows():
+            expected_start = int(row["del_start"])
+            expected_end = int(row["del_end"])
+            expected_variant = int(row["del_type"])
+            key = (expected_start, expected_end, expected_variant)
+            info = window_consensus_info.get(key, {})
+            c_pct = info.get("consensus_N_pct")
+            c_len = info.get("consensus_N_length")
+            c_thr = info.get("consensus_threshold", 0.0)
+
+            if c_pct is not None and c_pct >= c_thr:
+                consensus_candidates.append(
+                    (expected_variant, expected_start, expected_end, c_pct, c_len or 0)
+                )
+
+        if consensus_candidates:
+            # Pick the candidate with the largest expected_variant (longest canonical deletion)
+            consensus_candidates.sort(key=lambda x: x[0], reverse=True)
+            (
+                c_exp_variant,
+                c_exp_start,
+                c_exp_end,
+                c_pct,
+                c_n_len,
+            ) = consensus_candidates[0]
+            classified_consensus_variant = c_exp_variant
+            consensus_chosen_N_pct = c_pct
+            consensus_chosen_N_length = c_n_len
+
+            print(
+                f"[INFO] Consensus classification for gene '{gene}': "
+                f"selected expected_variant={c_exp_variant}, "
+                f"window={c_exp_start}-{c_exp_end}, "
+                f"consensus_N_pct={c_pct:.2f}%, "
+                f"consensus_N_length={c_n_len}"
+            )
+        else:
+            print(
+                f"[INFO] No consensus window for gene '{gene}' passed its consensus_N threshold; "
+                f"no consensus-based deletion classification."
+            )
+
+        # 2) Adjust category based on consensus rules:
+        #
+        #   Rule 1: If classification is Category 1 (exact-ish high-confidence call),
+        #           we do NOT let consensus change the category.
+        #
+        #   Rule 2: If we have a Category 2–5 from call/mpileup AND a consensus classification:
+        #
+        #       - If classified_consensus_variant == classified_deletion_variant:
+        #           * Let expected_len = classified_deletion_variant (canonical length).
+        #           * If consensus_N_length == expected_len (100% N in that window):
+        #                 → "exact" consensus support → new_category = category - 2
+        #           * Else (same variant but inexact N coverage):
+        #                 → "inexact" consensus support → new_category = category - 1
+        #           * Category is not allowed to go below 1.
+        #
+        #       - If classified_consensus_variant != classified_deletion_variant:
+        #           → Category 6 (conflict between read-based and consensus-based deletion).
+        #
+        #   Rule 3:
+        #       - If there is NO Category 1–5 (no call/mpileup deletion),
+        #         but consensus has a classification → Category 6 (consensus-only).
+        #
+        # NOTE: Category 6 means "conflict or consensus-only".
+        if classified_deletion_variant is not None and chosen_category is not None:
+            # We have a deletion classification (Categories 1–5)
+            if chosen_category == "1":
+                # Category 1: high confidence from call; do not change.
+                print(
+                    f"[INFO] Gene '{gene}' has Category 1 from CALL; "
+                    f"consensus will NOT change this classification."
+                )
+            else:
+                # Categories 2–5: allow consensus to upgrade or set conflict.
+                if classified_consensus_variant is not None:
+                    if classified_consensus_variant == classified_deletion_variant:
+                        # Consensus supports the SAME canonical deletion type
+                        expected_len = classified_deletion_variant  # canonical bp length
+                        if (
+                            consensus_chosen_N_length is not None
+                            and consensus_chosen_N_length == expected_len
+                        ):
+                            # Exact consensus support: boost by 2 categories
+                            boost = 2
+                            support_type = "exact"
+                        else:
+                            # Inexact but supportive: boost by 1 category
+                            boost = 1
+                            support_type = "inexact"
+
+                        original_cat_int = int(chosen_category)
+                        new_cat_int = max(1, original_cat_int - boost)
+                        print(
+                            f"[INFO] Consensus {support_type} support for gene '{gene}' "
+                            f"(deletion_variant={classified_deletion_variant}): "
+                            f"original_category={chosen_category} → new_category={new_cat_int}"
+                        )
+                        chosen_category = str(new_cat_int)
+                    else:
+                        # Consensus calls a different canonical variant → conflict
+                        print(
+                            f"[INFO] Conflict for gene '{gene}': "
+                            f"deletion_variant={classified_deletion_variant} from {chosen_source}, "
+                            f"but consensus_variant={classified_consensus_variant}. "
+                            f"Setting category=6 (conflict)."
+                        )
+                        chosen_category = "6"
+                else:
+                    print(
+                        f"[INFO] Gene '{gene}' has Category {chosen_category} from {chosen_source} "
+                        f"but consensus did not classify a deletion; category unchanged."
+                    )
+        else:
+            # No deletion from call/mpileup (no Category 1–5)
+            if classified_consensus_variant is not None:
+                # Consensus-only classification → Category 6
+                chosen_category = "6"
+                chosen_type = classified_consensus_variant
+                chosen_source = "consensus"
+                print(
+                    f"[INFO] Gene '{gene}' has no call/mpileup deletion but consensus "
+                    f"classifies expected_variant={classified_consensus_variant}; "
+                    f"setting category=6 (consensus-only)."
+                )
+            else:
+                print(
+                    f"[INFO] Gene '{gene}' has no deletion classification from call/mpileup "
+                    f"and no consensus classification (all remain category 0)."
+                )
+
+        # ---------------------- Step 8: Build per-window rows for this gene ----------------------
+        print(
+            "\n# ========================= Step 8: Build per-window rows for this gene =========================\n"
+        )
+
+        assigned_for_gene = False
+        for _, row in meta_g.iterrows():
+            species = str(row["species"])
+            expected_start = int(row["del_start"])
+            expected_end = int(row["del_end"])
+            expected_variant = int(row["del_type"])
+
+            deletion_start = None
+            deletion_end = None
+            deletion_length = None
+            expected_overlap_pct = None
+            observed_overlap_pct = None
+            consensus_N_pct = None
+            consensus_N_length = None
+            category = "0"
+
+            # Get precomputed consensus stats for this window
+            key = (expected_start, expected_end, expected_variant)
+            c_info = window_consensus_info.get(key, {})
+            if c_info:
+                consensus_N_pct = c_info.get("consensus_N_pct")
+                consensus_N_length = c_info.get("consensus_N_length")
+
+            # If we have a chosen canonical assignment (from call, mpileup or consensus-only),
             # assign it to exactly ONE row whose del_type == chosen_type.
             if (
                 not assigned_for_gene
                 and chosen_category is not None
                 and chosen_type is not None
                 and expected_variant == chosen_type
-                and chosen_obs_start is not None
-                and chosen_obs_end is not None
-                and chosen_obs_len is not None
             ):
-                # ---- This row receives the chosen deletion (Category 1–5) ----
                 category = chosen_category
-                deletion_start = int(chosen_obs_start)
-                deletion_end = int(chosen_obs_end)
-                deletion_length = int(chosen_obs_len)
+                if (
+                    chosen_obs_start is not None
+                    and chosen_obs_end is not None
+                    and chosen_obs_len is not None
+                    and chosen_source in ("call", "mpileup")
+                ):
+                    # We have real coordinates from BCF
+                    deletion_start = int(chosen_obs_start)
+                    deletion_end = int(chosen_obs_end)
+                    deletion_length = int(chosen_obs_len)
+                else:
+                    # consensus-only classification: keep deletion_* as None
+                    pass
 
                 if (
                     chosen_frac_expected is not None
@@ -1094,7 +1283,7 @@ def run(
 
                 print(
                     f"[INFO] For gene '{gene}', assigning "
-                    f"{('CALL' if chosen_source == 'call' else 'MPILEUP')} "
+                    f"{(chosen_source or 'UNKNOWN').upper()} "
                     f"canonical type={chosen_type} to window {expected_start}-{expected_end}, "
                     f"category={category}, expected_overlap_pct={expected_overlap_pct}, "
                     f"observed_overlap_pct={observed_overlap_pct}"
@@ -1115,7 +1304,8 @@ def run(
                     "observed_overlap_pct": observed_overlap_pct,
                     "consensus_N_pct": consensus_N_pct,
                     "consensus_N_length": consensus_N_length,
-                    "consensus_N_threshold": consensus_N_threshold,
+                    "classified_deletion_variant": classified_deletion_variant,
+                    "classified_consensus_variant": classified_consensus_variant,
                     "category": category,
                 }
             )
@@ -1123,103 +1313,16 @@ def run(
     # Build final DataFrame
     out_df = pd.DataFrame(results)
 
-    # Only keep rows where category != "0" (i.e. where a Category 1–5 call exists)
+    # Only keep rows where category != "0"
     nonzero_df = out_df[out_df["category"] != "0"].copy()
 
-    # Apply consensus_N threshold and per-gene longest selection
-    if not nonzero_df.empty:
-        print(
-            "\n# ========================= Step 7: Apply consensus_N threshold and per-gene longest-deletion selection =========================\n"
-        )
-
-        # Show candidate rows BEFORE consensus_N filtering
-        print("[INFO] Candidate rows before consensus_N filtering (one per gene, Category 1–5):")
-        for _, r in nonzero_df.iterrows():
-            gene = r["gene"]
-            es = r["expected_start"]
-            ee = r["expected_end"]
-            ev = r["expected_variant"]
-            cat = r["category"]
-            cn_pct = r["consensus_N_pct"]
-            cn_thr = r["consensus_N_threshold"]
-            cn_pct_str = f"{cn_pct:.2f}%" if isinstance(cn_pct, (float, int)) else "NA"
-            cn_thr_str = f"{cn_thr:.2f}%" if isinstance(cn_thr, (float, int)) else "NA"
-            print(
-                f"[INFO]   gene={gene}, window={es}-{ee}, expected_variant={ev}, "
-                f"category={cat}, consensus_N_pct={cn_pct_str}, threshold={cn_thr_str}"
-            )
-
-        before = len(nonzero_df)
-
-        # Keep only rows where consensus_N_pct >= consensus_N_threshold
-        # (i.e. consensus region is sufficiently N-rich by metafile threshold)
-        mask_keep = (
-            nonzero_df["consensus_N_pct"].notna()
-            & nonzero_df["consensus_N_threshold"].notna()
-            & (nonzero_df["consensus_N_pct"] >= nonzero_df["consensus_N_threshold"])
-        )
-
-        removed_df = nonzero_df[~mask_keep].copy()
-        nonzero_df = nonzero_df[mask_keep].copy()
-        after = len(nonzero_df)
-
-        print(
-            f"[INFO] Filtered by consensus_N threshold: kept {after} of {before} "
-            f"rows with non-zero category."
-        )
-
-        # Log any rows that were removed by consensus_N filtering
-        if not removed_df.empty:
-            print("[INFO] Rows removed by consensus_N threshold:")
-            for _, r in removed_df.iterrows():
-                gene = r["gene"]
-                es = r["expected_start"]
-                ee = r["expected_end"]
-                ev = r["expected_variant"]
-                cat = r["category"]
-                cn_pct = r["consensus_N_pct"]
-                cn_thr = r["consensus_N_threshold"]
-                cn_pct_str = f"{cn_pct:.2f}%" if isinstance(cn_pct, (float, int)) else "NA"
-                cn_thr_str = f"{cn_thr:.2f}%" if isinstance(cn_thr, (float, int)) else "NA"
-                print(
-                    f"[INFO]   REMOVED gene={gene}, window={es}-{ee}, expected_variant={ev}, "
-                    f"category={cat}, consensus_N_pct={cn_pct_str}, threshold={cn_thr_str}"
-                )
-
-        # If multiple windows for the same gene survive consensus_N filtering,
-        # keep the one with the longest expected canonical deletion (expected_variant).
-        if not nonzero_df.empty:
-            nonzero_df.sort_values(
-                ["gene", "expected_variant"], ascending=[True, False], inplace=True
-            )
-            nonzero_df = nonzero_df.groupby("gene", as_index=False).head(1)
-            print(
-                "[INFO] After per-gene longest-expected_variant selection, "
-                f"{len(nonzero_df)} rows remain:"
-            )
-            for _, r in nonzero_df.iterrows():
-                gene = r["gene"]
-                es = r["expected_start"]
-                ee = r["expected_end"]
-                ev = r["expected_variant"]
-                cat = r["category"]
-                cn_pct = r["consensus_N_pct"]
-                cn_pct_str = f"{cn_pct:.2f}%" if isinstance(cn_pct, (float, int)) else "NA"
-                print(
-                    f"[INFO]   SELECTED gene={gene}, window={es}-{ee}, expected_variant={ev}, "
-                    f"category={cat}, consensus_N_pct={cn_pct_str}"
-                )
-
     if nonzero_df.empty:
-        print(
-            "[INFO] No deletions detected after consensus_N filtering. Writing single dash row."
-        )
+        print("[INFO] No deletions detected (all category 0). Writing single dash row.")
         # Use first gene/species as context if possible
         first_row = org_meta.iloc[0]
         species = str(first_row["species"])
         gene = str(first_row["gene"])
         contig_name = "-"
-
         if gene in gene_to_contig:
             contig_name = gene_to_contig[gene]
 
@@ -1239,6 +1342,8 @@ def run(
                     "observed_overlap_pct": "-",
                     "consensus_N_pct": "-",
                     "consensus_N_length": "-",
+                    "classified_deletion_variant": "-",
+                    "classified_consensus_variant": "-",
                     "category": "-",
                 }
             ]
@@ -1254,9 +1359,12 @@ def run(
             "deletion_end",
             "deletion_length",
             "consensus_N_length",
+            "classified_deletion_variant",
+            "classified_consensus_variant",
         ]
         for col in int_cols:
-            nonzero_df[col] = nonzero_df[col].astype(int)
+            if col in nonzero_df.columns:
+                nonzero_df[col] = nonzero_df[col].astype("Int64")
 
         # Format percentage columns as float strings with 2 decimals
         pct_cols = [
@@ -1265,11 +1373,11 @@ def run(
             "consensus_N_pct",
         ]
         for col in pct_cols:
-            nonzero_df[col] = nonzero_df[col].map(
-                lambda x: f"{x:.2f}" if isinstance(x, (float, int)) else x
-            )
+            if col in nonzero_df.columns:
+                nonzero_df[col] = nonzero_df[col].map(
+                    lambda x: f"{x:.2f}" if isinstance(x, (float, int)) else x
+                )
 
-        # Drop internal threshold column and order columns for output
         nonzero_df = nonzero_df[
             [
                 "species",
@@ -1285,6 +1393,8 @@ def run(
                 "observed_overlap_pct",
                 "consensus_N_pct",
                 "consensus_N_length",
+                "classified_deletion_variant",
+                "classified_consensus_variant",
                 "category",
             ]
         ]
@@ -1292,12 +1402,14 @@ def run(
 
     print(f"[INFO] Deletion summary written to: {output_path}")
 
+
 def main() -> None:
     arg = argparse.ArgumentParser(
         description=(
             "Identify configured deletions from a call BCF and a mpileup BCF "
             "using a deletion metafile (no KMA/BED), and report %N in the "
-            "consensus FASTA for each expected deletion window."
+            "consensus FASTA for each expected deletion window, with "
+            "consensus-supported category adjustments."
         )
     )
     arg.add_argument(
@@ -1335,7 +1447,9 @@ def main() -> None:
             "Output TSV path "
             "(species, contig_name, gene, expected_start, expected_end, "
             "expected_variant, deletion_start, deletion_end, deletion_length, "
-            "expected_overlap_pct, observed_overlap_pct, consensus_N_pct, category)."
+            "expected_overlap_pct, observed_overlap_pct, consensus_N_pct, "
+            "consensus_N_length, classified_deletion_variant, "
+            "classified_consensus_variant, category)."
         ),
     )
     arg.add_argument(
