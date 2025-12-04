@@ -1,35 +1,47 @@
 import pandas as pd
 import yaml
 import warnings
-from scripts import rule_all_functions 
+from scripts import helper_functions
 
 configfile: "config/config.yaml"
 
 # --- Inputs & paths from config file------------------------------------------------
-samplesheet_path = config['input_manager']['samplesheet']
-output_folder    = config['input_manager']['output_folder']
-metadata_path    = config['input_manager']['metadata_path']   # used by finder rules
-database_path    = config['input_manager']['database_path']   # used by setup rules
-species_config_path = config['input_manager']['config_species'] # Path to species specific configuration files
-temp_storage_path = config['input_manager']['temp_storage']
-species_name_map =  config['species_map'] # Load species_name_map from config file
+samplesheet_path = config['samplesheet']
+database_path = config['database_path']   # used by setup rules
+species_config_path = config['config_species'] # Path to species specific configuration files
+metadata_path = config['metadata_path']   # used by finder rules
+illumina_read_path_base = config['illumina_read_path']
+nanopore_read_path_base = config['nanopore_read_path']
+assembly_path_base = config['assembly_path']
+output_folder = config['output_folder']
+temp_storage_path = config['temp_storage']
+results_catalogue_path = config['result_catalogue']
 
 samplesheet = pd.read_csv(samplesheet_path, sep='\t')
 
+sample_configs = helper_functions.determine_sample_configs(samplesheet, "workflow/configs_species", True)
+
+results_catalogue = helper_functions.read_results_catalogue(results_catalogue_path)
+
+#print(f"results_catalogue_path: {results_catalogue_path}\nresults_catalogue: {results_catalogue}") # As log_trace 
+
+all_results_files = helper_functions.list_results(sample_configs, results_catalogue, output_folder)
+
 # --- Samples & read locations -------------------------------------------------
-sample_to_illumina, sample_to_nanopore, sample_to_assembly_file = rule_all_functions.sample_read_map(samplesheet)
+Sample_dict, sample_to_illumina, sample_to_nanopore, sample_to_assembly = helper_functions.sample_read_map(
+    samplesheet,
+    illumina_read_base=illumina_read_path_base,
+    nanopore_read_base=nanopore_read_path_base,
+    assembly_base=assembly_path_base
+)
 
-# ------------------ Species Mapping (from config) ------------------
+# The sample_dicts contains a identicial sample string as key and value, 
+# This is simply to have a list similar to the other dicts if we want sample specific longtables further down  
+Samples = list(Sample_dict.keys()) 
 
-# Map each sample species (from sample sheet information) to the normalized species name used for the Species specific config
-sample_to_organism,unmapped_species = rule_all_functions.sample_map(species_name_map,samplesheet) 
-
-if unmapped_species: #check if species have not properly been mapped
-    warnings.warn("The following species are not mapped in config['species_map']: %s" % unmapped_species, UserWarning)
-
-# ------------------ Load Species-Specific Configs ------------------
-
-species_configs = rule_all_functions.sample_to_species_config(sample_to_organism,species_config_path)
+#define the long table output files to activate rule all
+Longtable_samples_output = [f"{output_folder}/{sample}/{sample}_longtable.tsv" for sample in Samples]
+Longtable_all = f"{output_folder}/all_results.tsv"
 
 ##############################################################################
 #
@@ -40,13 +52,47 @@ species_configs = rule_all_functions.sample_to_species_config(sample_to_organism
 # Define the dynamic input for rule all
 rule all:
     input:
-        rule_all_functions.list_results(
-            samplesheet=samplesheet,
-            species_configs=species_configs,
-            output_folder=output_folder,
-            species_name_map=species_name_map,
-        )
+        Longtable_samples_output,
+        Longtable_all
 
+rule longtable_samples:
+    input:
+        all_results_files
+    output:
+        Longtable_samples_output
+    conda:
+        "envs/python_functions.yaml"
+    log:
+        "Logs/LongTableSamples.log"
+    message:
+        "[LongTable]: Collapsing all module outputs into a sample specific long table"
+    shell:
+        r"""
+        cmd="python workflow/scripts/LongTable.py --config config/config.yaml --na"
+
+        echo "Executing command:\n$cmd\n" > {log}
+        eval $cmd >> {log} 2>&1
+        """
+
+rule longtable_all:
+    input:
+        all_results_files
+    output:
+        Longtable_all
+    conda:
+        "envs/python_functions.yaml"
+    log:
+        "Logs/LongTableAll.log"
+    message:
+        "[LongTable]: Collapsing all module outputs into a long table"
+    shell:
+        r"""
+        cmd="python workflow/scripts/LongTable.py --config config/config.yaml --na --extend"
+
+        echo "Executing command:\n$cmd\n" > {log}
+        eval $cmd >> {log} 2>&1
+        """
+    
 include : "rules/assemblers.smk"
 include : "rules/fetch_custom_dbs.smk"
 include : "rules/setup_dbs.smk"

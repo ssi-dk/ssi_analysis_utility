@@ -36,7 +36,7 @@ rule fetch_type_repeat_sequence:
         """
         mkdir -p $(dirname {output.seq})
 
-        cmd="curl -fSL https://raw.githubusercontent.com/ssi-dk/cdiff_fbi/refs/heads/raah_dev/db/TRST/{wildcards.TR}_repeat_sequences.fa -o {output.seq}"
+        cmd="curl -fSL https://raw.githubusercontent.com/RAHenriksen/ssi_analysis_utility_db/refs/heads/main/clostridioides_difficile/type_repeats/{wildcards.TR}.fasta -o {output.seq}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout}
         eval $cmd >> {log.stdout} 2>&1
@@ -56,8 +56,8 @@ rule fetch_type_repeat_metadata:
         """
         mkdir -p $(dirname {output.meta})
 
-        cmd="curl -fSL https://raw.githubusercontent.com/ssi-dk/cdiff_fbi/refs/heads/raah_dev/db/TRST/{wildcards.TR}_repeat_types.txt -o {output.meta}"
-        
+        cmd="curl -fSL https://raw.githubusercontent.com/RAHenriksen/ssi_analysis_utility_db/refs/heads/main/clostridioides_difficile/type_repeats/{wildcards.TR}.txt -o {output.meta}"
+
         echo "Executing command:\n$cmd\n" > {log.stdout}
         eval $cmd >> {log.stdout} 2>&1
         """
@@ -75,8 +75,9 @@ rule fetch_ecoligenes:
     shell:
         """
         mkdir -p $(dirname {output.source})
-        cmd="curl https://raw.githubusercontent.com/ssi-dk/ecoli_fbi/refs/heads/main/db/ecoligenes/ecoligenes.fsa -o {output.source}"
         
+        cmd="curl https://raw.githubusercontent.com/RAHenriksen/ssi_analysis_utility_db/refs/heads/main/escherichia_coli/ecoligenes.fasta -o {output.source}"
+
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
         """
