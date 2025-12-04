@@ -1,11 +1,8 @@
-spa_typing:
-    assemblers: shovill
-
 mlst:
     assemblers: shovill  
     
 resfinder:
-    options: ""
+    options: --species 'Other'
 
 plasmidfinder:
     options: ""
@@ -26,6 +23,3 @@ meningotype:
 kmeraligner:
     database: elmDB
     options : -ID 80 -1t1 -cge
-
-LREfinder:
-    database: elmDB
