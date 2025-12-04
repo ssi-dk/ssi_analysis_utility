@@ -30,3 +30,9 @@ species_map:
   S.enterica: S.enterica
   S. enterica: S.enterica
   S enterica: S.enterica
+  E.Faecium: E.Faecium
+  E. Faecium: E.Faecium
+  E Faecium: E.Faecium
+  E.Faecalis: E.Faecalis
+  E. Faecalis: E.Faecalis
+  E Faecalis: E.Faecalis

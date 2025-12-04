@@ -21,7 +21,7 @@ rule custom_kmeralignment:
         mkdir -p $(dirname {output.results})
         mkdir -p $(dirname {output.sam})
 
-        cmd="kma -ipe {input.R1} {input.R2} -o {params.prefix_out} -t_db {params.prefix_db} -na -nc -nf -sam 4 -matrix -ID 80 > {output.sam}"
+        cmd="kma -ipe {input.R1} {input.R2} -o {params.prefix_out} -t_db {params.prefix_db} -na -nc -nf -sam 4 -matrix > {output.sam}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
