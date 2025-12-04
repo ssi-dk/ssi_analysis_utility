@@ -285,6 +285,39 @@ def get_deletion_span(rec: pysam.VariantRecord) -> Optional[Tuple[int, int, int]
     return None
 
 
+# ========================= Category → support_source helper =========================
+
+
+def get_support_source(category: str) -> str:
+    """
+    Map a category code to a human-readable support source label.
+
+    Semantics (fallback when no per-gene label is set):
+
+      1,2,3 → "call"
+      4,5   → "mpileup"
+      6     → "consensus_only"   (no call/mpileup or consensus-only classification)
+      7     → "conflict"         (call/mpileup vs consensus classification differ)
+
+    '-' or '0' or anything else → "none" / "unknown"
+    """
+    if pd.isna(category):
+        return "none"
+    cat_str = str(category)
+
+    if cat_str in {"1", "2", "3"}:
+        return "call"
+    if cat_str in {"4", "5"}:
+        return "mpileup"
+    if cat_str == "6":
+        return "consensus_only"
+    if cat_str == "7":
+        return "conflict"
+    if cat_str in {"0", "-"}:
+        return "none"
+    return "unknown"
+
+
 # ========================= Call-based canonical assignment (categories 1–3) =========================
 
 
@@ -781,6 +814,7 @@ def run(
                 "classified_deletion_variant",
                 "classified_consensus_variant",
                 "category",
+                "support_source",
             ]
         )
         out_df.to_csv(output_path, sep="\t", index=False)
@@ -825,7 +859,7 @@ def run(
 
     # Process per gene so we produce at most one canonical call per gene
     # from call BCF (categories 1–3) and, if needed, from mpileup (4–5),
-    # and possibly override / upgrade with consensus classification (including category 6).
+    # and possibly override / upgrade with consensus classification (including category 6/7).
     for gene in genes:
         meta_g = org_meta[org_meta["gene"] == gene].copy()
         print(
@@ -850,13 +884,18 @@ def run(
         chosen_obs_len: Optional[int] = None
         chosen_frac_expected: Optional[float] = None
         chosen_frac_observed: Optional[float] = None
-        chosen_category: Optional[str] = None  # "1".."6"
+        chosen_category: Optional[str] = None  # "1".."7"
         chosen_source: Optional[str] = None  # "call" or "mpileup" or "consensus"
 
         classified_deletion_variant: Optional[int] = None
         classified_consensus_variant: Optional[int] = None
         consensus_chosen_N_pct: Optional[float] = None
         consensus_chosen_N_length: Optional[int] = None
+
+        # Track support source for this gene (to write into all rows for this gene)
+        support_source_for_gene: Optional[str] = None
+        # Track whether consensus actually adjusted the category (2–5 → better)
+        consensus_adjusted: bool = False
 
         # ---------------------- CALL BCF (categories 1–3) ----------------------
         print(
@@ -932,6 +971,7 @@ def run(
                 chosen_frac_observed = call_frac_observed
                 chosen_source = "call"
                 classified_deletion_variant = call_type
+                support_source_for_gene = "call"
             else:
                 print(
                     f"[INFO] Call BCF: no canonical deletion found for gene '{gene}' "
@@ -1008,6 +1048,7 @@ def run(
                 chosen_frac_observed = mp_frac_observed
                 chosen_source = "mpileup"
                 classified_deletion_variant = mp_type
+                support_source_for_gene = "mpileup"
             else:
                 print(
                     f"[INFO] Mpileup BCF: no canonical deletion assigned for gene '{gene}'."
@@ -1148,13 +1189,13 @@ def run(
         #           * Category is not allowed to go below 1.
         #
         #       - If classified_consensus_variant != classified_deletion_variant:
-        #           → Category 6 (conflict between read-based and consensus-based deletion).
+        #           → Category 7 (conflict between read-based and consensus-based deletion).
         #
         #   Rule 3:
         #       - If there is NO Category 1–5 (no call/mpileup deletion),
         #         but consensus has a classification → Category 6 (consensus-only).
         #
-        # NOTE: Category 6 means "conflict or consensus-only".
+        # NOTE: Category 6 means "consensus-only"; Category 7 means "conflict".
         if classified_deletion_variant is not None and chosen_category is not None:
             # We have a deletion classification (Categories 1–5)
             if chosen_category == "1":
@@ -1163,6 +1204,7 @@ def run(
                     f"[INFO] Gene '{gene}' has Category 1 from CALL; "
                     f"consensus will NOT change this classification."
                 )
+                # support_source_for_gene stays "call"
             else:
                 # Categories 2–5: allow consensus to upgrade or set conflict.
                 if classified_consensus_variant is not None:
@@ -1189,20 +1231,29 @@ def run(
                             f"original_category={chosen_category} → new_category={new_cat_int}"
                         )
                         chosen_category = str(new_cat_int)
+                        consensus_adjusted = True
+                        # If the original source was call/mpileup, tag as "+consensus"
+                        if chosen_source in ("call", "mpileup"):
+                            support_source_for_gene = f"{chosen_source}+consensus"
+                        else:
+                            # very unlikely, but just in case
+                            support_source_for_gene = "consensus"
                     else:
                         # Consensus calls a different canonical variant → conflict
                         print(
                             f"[INFO] Conflict for gene '{gene}': "
                             f"deletion_variant={classified_deletion_variant} from {chosen_source}, "
                             f"but consensus_variant={classified_consensus_variant}. "
-                            f"Setting category=6 (conflict)."
+                            f"Setting category=7 (conflict)."
                         )
-                        chosen_category = "6"
+                        chosen_category = "7"
+                        support_source_for_gene = "conflict"
                 else:
                     print(
                         f"[INFO] Gene '{gene}' has Category {chosen_category} from {chosen_source} "
                         f"but consensus did not classify a deletion; category unchanged."
                     )
+                    # support_source_for_gene stays "call" / "mpileup"
         else:
             # No deletion from call/mpileup (no Category 1–5)
             if classified_consensus_variant is not None:
@@ -1210,6 +1261,7 @@ def run(
                 chosen_category = "6"
                 chosen_type = classified_consensus_variant
                 chosen_source = "consensus"
+                support_source_for_gene = "consensus_only"
                 print(
                     f"[INFO] Gene '{gene}' has no call/mpileup deletion but consensus "
                     f"classifies expected_variant={classified_consensus_variant}; "
@@ -1220,6 +1272,7 @@ def run(
                     f"[INFO] Gene '{gene}' has no deletion classification from call/mpileup "
                     f"and no consensus classification (all remain category 0)."
                 )
+                # support_source_for_gene stays None
 
         # ---------------------- Step 8: Build per-window rows for this gene ----------------------
         print(
@@ -1307,6 +1360,7 @@ def run(
                     "classified_deletion_variant": classified_deletion_variant,
                     "classified_consensus_variant": classified_consensus_variant,
                     "category": category,
+                    "support_source": support_source_for_gene,
                 }
             )
 
@@ -1345,6 +1399,7 @@ def run(
                     "classified_deletion_variant": "-",
                     "classified_consensus_variant": "-",
                     "category": "-",
+                    "support_source": "none",
                 }
             ]
         )
@@ -1378,6 +1433,20 @@ def run(
                     lambda x: f"{x:.2f}" if isinstance(x, (float, int)) else x
                 )
 
+        # Fill in missing support_source (if any) from category using the helper
+        if "support_source" not in nonzero_df.columns:
+            nonzero_df["support_source"] = nonzero_df["category"].map(
+                get_support_source
+            )
+        else:
+            nonzero_df["support_source"] = nonzero_df.apply(
+                lambda r: r["support_source"]
+                if isinstance(r["support_source"], str)
+                and r["support_source"] not in ("", "none", "unknown", "nan")
+                else get_support_source(r["category"]),
+                axis=1,
+            )
+
         nonzero_df = nonzero_df[
             [
                 "species",
@@ -1396,6 +1465,7 @@ def run(
                 "classified_deletion_variant",
                 "classified_consensus_variant",
                 "category",
+                "support_source",
             ]
         ]
         nonzero_df.to_csv(output_path, sep="\t", index=False)
@@ -1449,7 +1519,7 @@ def main() -> None:
             "expected_variant, deletion_start, deletion_end, deletion_length, "
             "expected_overlap_pct, observed_overlap_pct, consensus_N_pct, "
             "consensus_N_length, classified_deletion_variant, "
-            "classified_consensus_variant, category)."
+            "classified_consensus_variant, category, support_source)."
         ),
     )
     arg.add_argument(
