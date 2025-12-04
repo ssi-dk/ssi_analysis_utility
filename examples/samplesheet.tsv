@@ -1,6 +1,6 @@
 sample_name	Illumina_read_files	Nanopore_read_file	assembly_file	config
-ERR3528110	ERR3528110_1.fastq.gz,ERR3528110_2.fastq.gz	Na	ERR3528110.fasta	E.coli.yaml
-ERR142064	ERR142064_1.fastq.gz,ERR142064_2.fastq.gz	Na	ERR142064.fasta	C.difficile.yaml
-SRR4046826	SRR4046826_1.fastq.gz,SRR4046826_2.fastq.gz	Na	SRR4046826.fasta	K.pneumoniae.yaml
-SRR25448586	SRR25448586_1.fastq.gz,SRR25448586_2.fastq.gz	Na	Na	N.meningitidis.yaml
-SRR26205262	SRR26205262_1.fastq.gz,SRR26205262_2.fastq.gz	Na	Na	S.enterica.yaml
+ERR3528110	ERR3528110_1.fastq.gz,ERR3528110_2.fastq.gz	Na	ERR3528110.fasta	E_coli.yaml
+ERR142064	ERR142064_1.fastq.gz,ERR142064_2.fastq.gz	Na	ERR142064.fasta	C_difficile.yaml
+SRR4046826	SRR4046826_1.fastq.gz,SRR4046826_2.fastq.gz	Na	SRR4046826.fasta	K_pneumoniae.yaml
+SRR25448586	SRR25448586_1.fastq.gz,SRR25448586_2.fastq.gz	Na	Na	N_meningitidis.yaml
+SRR26205262	SRR26205262_1.fastq.gz,SRR26205262_2.fastq.gz	Na	Na	S_enterica.yaml

@@ -23,8 +23,6 @@ sample_configs = helper_functions.determine_sample_configs(samplesheet, "workflo
 
 results_catalogue = helper_functions.read_results_catalogue(results_catalogue_path)
 
-#print(f"results_catalogue_path: {results_catalogue_path}\nresults_catalogue: {results_catalogue}") # As log_trace 
-
 all_results_files = helper_functions.list_results(sample_configs, results_catalogue, output_folder)
 
 # --- Samples & read locations -------------------------------------------------
