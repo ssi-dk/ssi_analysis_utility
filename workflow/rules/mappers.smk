@@ -8,7 +8,8 @@ rule custom_kmeralignment:
         prefix_db = rules.setup_custom_kmeraligner_index.params.prefix    
     output:
         results = "%s/{sample}/kmeraligner/{database}.res" %output_folder,
-        sam = temp("%s/{sample}/samtools/{database}.sam" %output_folder)
+        sam = temp("%s/{sample}/samtools/{database}.sam" %output_folder),
+        matrix = temp("%s/{sample}/kmeraligner/{database}.mat.gz" %output_folder)
     conda:
         "../envs/kmeraligner.yaml"
     log:
@@ -20,7 +21,7 @@ rule custom_kmeralignment:
         mkdir -p $(dirname {output.results})
         mkdir -p $(dirname {output.sam})
 
-        cmd="kma -ipe {input.R1} {input.R2} -o {params.prefix_out} -t_db {params.prefix_db} -na -nc -nf -sam 4 > {output.sam}"
+        cmd="kma -ipe {input.R1} {input.R2} -o {params.prefix_out} -t_db {params.prefix_db} -na -nc -nf -sam 4 -matrix > {output.sam}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1

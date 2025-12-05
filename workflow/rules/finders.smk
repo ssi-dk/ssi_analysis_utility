@@ -121,6 +121,33 @@ rule amrfinder:
         eval $cmd >> {log.stdout} 2>&1
         """
 
+rule LREfinder:
+    input:
+        # A complete access to the wildcard is needed, if we try to call the output of different rule we have the blending of wildcards 
+        res = rules.custom_kmeralignment.output.results,
+        matrix = rules.custom_kmeralignment.output.matrix
+    # params:
+    #     options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["custom_blaster"]["options"],    
+    output:
+        results = "%s/{sample}/LREfinder/{database}.tsv" %output_folder,
+    conda:
+        "../envs/python_functions.yaml"
+    log:
+        stdout = "Logs/{sample}/LRE-finder_{database}.log"
+    message:
+        "[LRE-finder]: Identify genes and mutations leading to linezolid resistance in E. faecalis and E. faecium"
+    shell:
+        """
+        mkdir -p $(dirname {output.results})
+    
+        cmd="python workflow/scripts/LRE-Typer.py -ires {input.res} -imat {input.matrix} -o {output.results}"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+
+        echo "LRE-finder successfully executed" > {log.stdout}
+        """
+
 
 rule snp_identifier:
     input:
