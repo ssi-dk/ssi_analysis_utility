@@ -337,11 +337,6 @@ def assign_best_canonical_for_call(
            - If still tie, prefer smaller canonical length (exp_type)
                → e.g. 39 over 54.
 
-         This is expected-centric: it is optimised for
-         "how well does this observed deletion fulfil the canonical window
-         we defined?", then refined by how well the observed event is
-         contained by that canonical window.
-
     We maintain two "best" candidates:
       - best_pass: passes IMF/IDV/DP thresholds
       - best_fail: fails at least one of IMF/IDV/DP
@@ -367,8 +362,6 @@ def assign_best_canonical_for_call(
        best_frac_expected,
        best_frac_observed,
        best_passes_thresholds)
-
-    If no candidate passes min_frac, all values are None.
     """
 
     if not variants:
@@ -447,14 +440,6 @@ def assign_best_canonical_for_call(
 
             passes_thresholds = IMF >= gt_IMF and IDV >= gt_IDV and DP >= gt_DP
 
-            # Scoring scheme:
-            #
-            # 1) Prefer higher frac_expected → more of the canonical region is deleted.
-            # 2) If tie, prefer higher frac_observed → more of the observed deletion
-            #    lies inside the canonical region.
-            # 3) If tie, prefer smaller abs(len_diff) = |obs_len - exp_len|.
-            # 4) If still tie, prefer smaller canonical length (exp_type),
-            #    e.g. 39 over 54.
             score_tuple = (frac_expected, frac_observed, -len_diff, -exp_type)
 
             print(
@@ -500,12 +485,8 @@ def assign_best_canonical_for_call(
                         f"len_diff={len_diff}, score_tuple={score_tuple}"
                     )
 
-    # Decide which candidate wins overall according to the category rules:
-    #
-    # Category 1 / 2 prefer "best_pass" if it exists,
-    # otherwise Category 3 may use "best_fail".
+    # Decide which candidate wins
     if best_pass_score is not None:
-        # Use best_pass_data
         t = best_pass_data["type"]
         ld = best_pass_data["len_diff"]
         os = best_pass_data["obs_start"]
@@ -525,7 +506,6 @@ def assign_best_canonical_for_call(
         return t, ld, os, oe, ol, fe, fo, True
 
     if best_fail_score is not None:
-        # Use best_fail_data
         t = best_fail_data["type"]
         ld = best_fail_data["len_diff"]
         os = best_fail_data["obs_start"]
@@ -567,52 +547,8 @@ def assign_best_canonical_for_mpileup(
     """
     Given mpileup deletion variants for a single gene and that gene's
     metafile subset (with del_start, del_end, del_type), pick the best
-    canonical deletion type.
-
-    Scoring rules (same as for call, but without IMF/IDV/DP):
-
-      1) We first filter on the expected-side fraction:
-         frac_expected = overlap / expected_len
-         and require frac_expected >= min_frac.
-
-      2) For all remaining candidates, we build a score tuple:
-
-           score_tuple = (
-               frac_expected,
-               frac_observed,
-               -len_diff,
-               -exp_type,
-           )
-
-         Meaning:
-
-           - Prefer higher frac_expected
-               → more of the canonical region is deleted.
-
-           - If tie, prefer higher frac_observed
-               → more of the observed deletion lies inside the canonical region.
-
-           - If tie, prefer smaller absolute length difference
-               (len_diff = |obs_len - exp_len|).
-
-           - If still tie, prefer smaller canonical length (exp_type)
-               → e.g. 39 over 54.
-
-         This is expected-centric: it is optimised for
-         "how well does this observed deletion fulfil the canonical window
-         we defined?", then refined by how well the observed event is
-         contained by that canonical window.
-
-    Returns:
-      (best_del_type,
-       best_len_diff,
-       best_obs_start,
-       best_obs_end,
-       best_obs_len,
-       best_frac_expected,
-       best_frac_observed)
-
-      If no candidate passes min_frac, all values are None.
+    canonical deletion type using the same scoring as call
+    (without IMF/IDV/DP thresholds).
     """
 
     if not variants:
@@ -627,7 +563,6 @@ def assign_best_canonical_for_mpileup(
     best_frac_expected: Optional[float] = None
     best_frac_observed: Optional[float] = None
 
-    # score_tuple = (frac_expected, frac_observed, -len_diff, -exp_type)
     best_score_tuple: Optional[Tuple[float, float, int, int]] = None
 
     print(
@@ -665,18 +600,11 @@ def assign_best_canonical_for_mpileup(
                 )
                 continue
 
-            # Reciprocal: what fraction of the observed deletion lies inside
-            # the canonical (expected) window?
+            # Reciprocal: fraction of observed deletion inside canonical window
             frac_observed = overlap / obs_len
 
             len_diff = abs(obs_len - exp_len)
 
-            # Scoring scheme:
-            #
-            # 1) Prefer higher frac_expected
-            # 2) If tie, prefer higher frac_observed
-            # 3) If tie, prefer smaller abs(len_diff)
-            # 4) If still tie, prefer smaller canonical length (exp_type)
             score_tuple = (frac_expected, frac_observed, -len_diff, -exp_type)
 
             print(
@@ -705,16 +633,8 @@ def assign_best_canonical_for_mpileup(
         print("[INFO] No mpileup canonical deletion passed the overlap filter.")
         return None, None, None, None, None, None, None
 
-    # Prepare nicely formatted strings for logging
-    if best_frac_expected is not None:
-        fe_str = f"{best_frac_expected:.3f}"
-    else:
-        fe_str = "NA"
-
-    if best_frac_observed is not None:
-        fo_str = f"{best_frac_observed:.3f}"
-    else:
-        fo_str = "NA"
+    fe_str = f"{best_frac_expected:.3f}" if best_frac_expected is not None else "NA"
+    fo_str = f"{best_frac_observed:.3f}" if best_frac_observed is not None else "NA"
 
     print(
         f"[INFO] Final mpileup canonical assignment: type={best_type}, "
@@ -781,8 +701,7 @@ def assign_best_canonical_for_assembly(
     """
     Canonical mapping for deletions derived from SAM CIGAR strings ("assembly").
 
-    del_spans is a list of (obs_start, obs_end, obs_len) tuples on the reference
-    for a single gene/contig.
+    del_spans is a list of (obs_start, obs_end, obs_len) tuples on the reference.
 
     Scoring and overlap logic is identical to the mpileup-based assignment:
 
@@ -866,15 +785,8 @@ def assign_best_canonical_for_assembly(
         print("[INFO] No SAM/CIGAR canonical deletion passed the overlap filter.")
         return None, None, None, None, None, None, None
 
-    if best_frac_expected is not None:
-        fe_str = f"{best_frac_expected:.3f}"
-    else:
-        fe_str = "NA"
-
-    if best_frac_observed is not None:
-        fo_str = f"{best_frac_observed:.3f}"
-    else:
-        fo_str = "NA"
+    fe_str = f"{best_frac_expected:.3f}" if best_frac_expected is not None else "NA"
+    fo_str = f"{best_frac_observed:.3f}" if best_frac_observed is not None else "NA"
 
     print(
         f"[INFO] Final SAM/CIGAR canonical assignment: type={best_type}, "
@@ -904,14 +816,6 @@ def get_support_source(
     """
     Derive a human-readable support string describing which sources
     contributed to the final category.
-
-    Examples:
-      "call"
-      "call+consensus"
-      "mpileup+consensus+assembly"
-      "consensus_only"
-      "assembly_only"
-      "call+consensus+conflict"  (for Category 7)
     """
     if category is None or category == "0":
         return "-"
@@ -958,7 +862,7 @@ def run(
     bcf_path: str,
     mpileup_bcf_path: str,
     meta_path: str,
-    fasta_path: str,  # now used to compute N%
+    fasta_path: str,
     output_path: str,
     deletion_region_buffer: int = 5,
     overlap_fraction: float = 0.6,
@@ -968,14 +872,12 @@ def run(
     print(
         "\n# ========================= Step 1: load_deletion_metafile =========================\n"
     )
-
     meta_df = load_deletion_metafile(meta_path)
 
     # Step 2: Check_organism
     print(
         "\n# ========================= Step 2: Check_organism =========================\n"
     )
-
     org_meta = check_organism(meta_df, organism)
 
     if org_meta.empty:
@@ -1084,7 +986,7 @@ def run(
         consensus_chosen_N_pct: Optional[float] = None
         consensus_chosen_N_length: Optional[int] = None
 
-        # Assembly-specific canonical mapping (even if not the primary source)
+        # Assembly-specific canonical mapping (for reporting)
         assembly_deletion_start: Optional[int] = None
         assembly_deletion_end: Optional[int] = None
         assembly_deletion_length: Optional[int] = None
@@ -1257,178 +1159,195 @@ def run(
                 f"[INFO] Gene '{gene}' has no contig mapping; mpileup classification skipped."
             )
 
-        # ---------------------- Step 6: Build per-window consensus stats for this gene (N% and threshold) ----------------------
-        print(
-            "\n# ========================= Step 6: Build per-window consensus stats for this gene (N% and threshold) =========================\n"
+        # Decide whether to skip consensus + assembly entirely
+        skip_secondary = (
+            chosen_category == "1" and chosen_source == "call"
         )
 
+        # ---------------------- Step 6: Build per-window consensus stats (if not skipped) ----------------------
         window_consensus_info: Dict[Tuple[int, int, int], dict] = {}
 
-        for _, row in meta_g.iterrows():
-            expected_start = int(row["del_start"])
-            expected_end = int(row["del_end"])
-            expected_variant = int(row["del_type"])
-            consensus_threshold = float(row["consensus_N"])
+        if not skip_secondary:
+            print(
+                "\n# ========================= Step 6: Build per-window consensus stats for this gene (N% and threshold) =========================\n"
+            )
 
-            consensus_N_pct = None
-            consensus_N_length = None
+            for _, row in meta_g.iterrows():
+                expected_start = int(row["del_start"])
+                expected_end = int(row["del_end"])
+                expected_variant = int(row["del_type"])
+                consensus_threshold = float(row["consensus_N"])
 
-            if contig_name != "-" and contig_name in fasta_seqs:
-                seq = fasta_seqs[contig_name]
-                start_idx = expected_start - 1
-                end_idx = expected_end
-                if start_idx < 0 or end_idx > len(seq):
+                consensus_N_pct = None
+                consensus_N_length = None
+
+                if contig_name != "-" and contig_name in fasta_seqs:
+                    seq = fasta_seqs[contig_name]
+                    start_idx = expected_start - 1
+                    end_idx = expected_end
+                    if start_idx < 0 or end_idx > len(seq):
+                        print(
+                            f"[WARN] Expected window {gene}:{expected_start}-{expected_end} "
+                            f"out of FASTA bounds for contig '{contig_name}' (len={len(seq)}). "
+                            f"Skipping consensus N% calculation."
+                        )
+                    else:
+                        region = seq[start_idx:end_idx]
+                        if region:
+                            n_count = sum(1 for base in region if base in ("N", "n"))
+                            consensus_N_length = n_count
+                            consensus_N_pct = (n_count / len(region)) * 100.0
+                            print(
+                                f"[INFO] Consensus N% for {gene}:{expected_start}-{expected_end} on "
+                                f"{contig_name} = {consensus_N_pct:.2f}% ({n_count}/{len(region)} N), "
+                                f"threshold={consensus_threshold:.2f}%"
+                            )
+                elif contig_name == "-":
                     print(
-                        f"[WARN] Expected window {gene}:{expected_start}-{expected_end} "
-                        f"out of FASTA bounds for contig '{contig_name}' (len={len(seq)}). "
-                        f"Skipping consensus N% calculation."
+                        f"[INFO] No contig for gene '{gene}' in FASTA; consensus_N_pct left as None."
                     )
                 else:
-                    region = seq[start_idx:end_idx]
-                    if region:
-                        n_count = sum(1 for base in region if base in ("N", "n"))
-                        consensus_N_length = n_count
-                        consensus_N_pct = (n_count / len(region)) * 100.0
-                        print(
-                            f"[INFO] Consensus N% for {gene}:{expected_start}-{expected_end} on "
-                            f"{contig_name} = {consensus_N_pct:.2f}% ({n_count}/{len(region)} N), "
-                            f"threshold={consensus_threshold:.2f}%"
-                        )
-            elif contig_name == "-":
-                print(
-                    f"[INFO] No contig for gene '{gene}' in FASTA; consensus_N_pct left as None."
-                )
-            else:
-                print(
-                    f"[WARN] Contig '{contig_name}' not found in FASTA; "
-                    f"consensus_N_pct left as None."
-                )
+                    print(
+                        f"[WARN] Contig '{contig_name}' not found in FASTA; "
+                        f"consensus_N_pct left as None."
+                    )
 
-            key = (expected_start, expected_end, expected_variant)
-            window_consensus_info[key] = {
-                "consensus_N_pct": consensus_N_pct,
-                "consensus_N_length": consensus_N_length,
-                "consensus_threshold": consensus_threshold,
-            }
-
-        # ---------------------- Step 7: Consensus-based classification and category adjustment ----------------------
-        print(
-            "\n# ========================= Step 7: Consensus-based classification and category adjustment =========================\n"
-        )
-
-        consensus_candidates: List[Tuple[int, int, int, float, int]] = []
-
-        for _, row in meta_g.iterrows():
-            expected_start = int(row["del_start"])
-            expected_end = int(row["del_end"])
-            expected_variant = int(row["del_type"])
-            key = (expected_start, expected_end, expected_variant)
-            info = window_consensus_info.get(key, {})
-            c_pct = info.get("consensus_N_pct")
-            c_len = info.get("consensus_N_length")
-            c_thr = info.get("consensus_threshold", 0.0)
-
-            if c_pct is not None and c_pct >= c_thr:
-                consensus_candidates.append(
-                    (expected_variant, expected_start, expected_end, c_pct, c_len or 0)
-                )
-
-        if consensus_candidates:
-            consensus_candidates.sort(key=lambda x: x[0], reverse=True)
-            (
-                c_exp_variant,
-                c_exp_start,
-                c_exp_end,
-                c_pct,
-                c_n_len,
-            ) = consensus_candidates[0]
-            classified_consensus_variant = c_exp_variant
-            consensus_chosen_N_pct = c_pct
-            consensus_chosen_N_length = c_n_len
-            has_consensus = True
-
-            print(
-                f"[INFO] Consensus classification for gene '{gene}': "
-                f"selected expected_variant={c_exp_variant}, "
-                f"window={c_exp_start}-{c_exp_end}, "
-                f"consensus_N_pct={c_pct:.2f}%, "
-                f"consensus_N_length={c_n_len}"
-            )
+                key = (expected_start, expected_end, expected_variant)
+                window_consensus_info[key] = {
+                    "consensus_N_pct": consensus_N_pct,
+                    "consensus_N_length": consensus_N_length,
+                    "consensus_threshold": consensus_threshold,
+                }
         else:
             print(
-                f"[INFO] No consensus window for gene '{gene}' passed its consensus_N threshold; "
-                f"no consensus-based deletion classification."
+                "\n# ========================= Skipping consensus (Step 7) and assembly (Step 8) because gene is Category 1 from CALL =========================\n"
             )
 
-        # Consensus rules
-        if classified_deletion_variant is not None and chosen_category is not None:
-            if chosen_category == "1":
+        # ---------------------- Step 7: Consensus-based classification & adjustment (if not skipped) ----------------------
+        if not skip_secondary:
+            print(
+                "\n# ========================= Step 7: Consensus-based classification and category adjustment =========================\n"
+            )
+
+            consensus_candidates: List[Tuple[int, int, int, float, int]] = []
+
+            for _, row in meta_g.iterrows():
+                expected_start = int(row["del_start"])
+                expected_end = int(row["del_end"])
+                expected_variant = int(row["del_type"])
+                key = (expected_start, expected_end, expected_variant)
+                info = window_consensus_info.get(key, {})
+                c_pct = info.get("consensus_N_pct")
+                c_len = info.get("consensus_N_length")
+                c_thr = info.get("consensus_threshold", 0.0)
+
+                if c_pct is not None and c_pct >= c_thr:
+                    consensus_candidates.append(
+                        (expected_variant, expected_start, expected_end, c_pct, c_len or 0)
+                    )
+
+            if consensus_candidates:
+                consensus_candidates.sort(key=lambda x: x[0], reverse=True)
+                (
+                    c_exp_variant,
+                    c_exp_start,
+                    c_exp_end,
+                    c_pct,
+                    c_n_len,
+                ) = consensus_candidates[0]
+                classified_consensus_variant = c_exp_variant
+                consensus_chosen_N_pct = c_pct
+                consensus_chosen_N_length = c_n_len
+                has_consensus = True
+
                 print(
-                    f"[INFO] Gene '{gene}' has Category 1 from CALL; "
-                    f"consensus will NOT change this classification."
+                    f"[INFO] Consensus classification for gene '{gene}': "
+                    f"selected expected_variant={c_exp_variant}, "
+                    f"window={c_exp_start}-{c_exp_end}, "
+                    f"consensus_N_pct={c_pct:.2f}%, "
+                    f"consensus_N_length={c_n_len}"
                 )
             else:
-                if classified_consensus_variant is not None:
-                    if classified_consensus_variant == classified_deletion_variant:
-                        expected_len = classified_deletion_variant
-                        if (
-                            consensus_chosen_N_length is not None
-                            and consensus_chosen_N_length == expected_len
-                        ):
-                            boost = 2
-                            support_type = "exact"
-                        else:
-                            boost = 1
-                            support_type = "inexact"
+                print(
+                    f"[INFO] No consensus window for gene '{gene}' passed its consensus_N threshold; "
+                    f"no consensus-based deletion classification."
+                )
 
-                        original_cat_int = int(chosen_category)
-                        new_cat_int = max(1, original_cat_int - boost)
-                        if new_cat_int != original_cat_int:
-                            used_consensus_for_upgrade = True
-                        print(
-                            f"[INFO] Consensus {support_type} support for gene '{gene}' "
-                            f"(deletion_variant={classified_deletion_variant}): "
-                            f"original_category={chosen_category} → new_category={new_cat_int}"
-                        )
-                        chosen_category = str(new_cat_int)
+            # Consensus rules
+            if classified_deletion_variant is not None and chosen_category is not None:
+                if chosen_category == "1":
+                    # This case now won't happen because we skip consensus if Category 1 from CALL
+                    print(
+                        f"[INFO] Gene '{gene}' has Category 1 from CALL; "
+                        f"consensus will NOT change this classification."
+                    )
+                else:
+                    if classified_consensus_variant is not None:
+                        if classified_consensus_variant == classified_deletion_variant:
+                            expected_len = classified_deletion_variant
+                            if (
+                                consensus_chosen_N_length is not None
+                                and consensus_chosen_N_length == expected_len
+                            ):
+                                boost = 2
+                                support_type = "exact"
+                            else:
+                                boost = 1
+                                support_type = "inexact"
+
+                            original_cat_int = int(chosen_category)
+                            new_cat_int = max(1, original_cat_int - boost)
+                            if new_cat_int != original_cat_int:
+                                used_consensus_for_upgrade = True
+                            print(
+                                f"[INFO] Consensus {support_type} support for gene '{gene}' "
+                                f"(deletion_variant={classified_deletion_variant}): "
+                                f"original_category={chosen_category} → new_category={new_cat_int}"
+                            )
+                            chosen_category = str(new_cat_int)
+                        else:
+                            print(
+                                f"[INFO] Conflict for gene '{gene}': "
+                                f"deletion_variant={classified_deletion_variant} from {chosen_source}, "
+                                f"but consensus_variant={classified_consensus_variant}. "
+                                f"Setting category=7 (conflict)."
+                            )
+                            chosen_category = "7"
+                            has_conflict = True
                     else:
                         print(
-                            f"[INFO] Conflict for gene '{gene}': "
-                            f"deletion_variant={classified_deletion_variant} from {chosen_source}, "
-                            f"but consensus_variant={classified_consensus_variant}. "
-                            f"Setting category=7 (conflict)."
+                            f"[INFO] Gene '{gene}' has Category {chosen_category} from {chosen_source} "
+                            f"but consensus did not classify a deletion; category unchanged."
                         )
-                        chosen_category = "7"
-                        has_conflict = True
+            else:
+                if classified_consensus_variant is not None:
+                    chosen_category = "6"
+                    chosen_type = classified_consensus_variant
+                    chosen_source = "consensus"
+                    print(
+                        f"[INFO] Gene '{gene}' has no call/mpileup deletion but consensus "
+                        f"classifies expected_variant={classified_consensus_variant}; "
+                        f"setting category=6 (consensus-only)."
+                    )
                 else:
                     print(
-                        f"[INFO] Gene '{gene}' has Category {chosen_category} from {chosen_source} "
-                        f"but consensus did not classify a deletion; category unchanged."
+                        f"[INFO] Gene '{gene}' has no deletion classification from call/mpileup "
+                        f"and no consensus classification (all remain category 0)."
                     )
-        else:
-            if classified_consensus_variant is not None:
-                chosen_category = "6"
-                chosen_type = classified_consensus_variant
-                chosen_source = "consensus"
-                print(
-                    f"[INFO] Gene '{gene}' has no call/mpileup deletion but consensus "
-                    f"classifies expected_variant={classified_consensus_variant}; "
-                    f"setting category=6 (consensus-only)."
-                )
-            else:
-                print(
-                    f"[INFO] Gene '{gene}' has no deletion classification from call/mpileup "
-                    f"and no consensus classification (all remain category 0)."
-                )
+        elif skip_secondary:
+            print(
+                "[INFO] Gene has Category 1 from CALL; consensus classification skipped."
+            )
+        
 
-        # ---------------------- Step 8: SAM gene-substring matches and assembly-based category adjustment ----------------------
-        print(
-            "\n# ========================= Step 8: SAM gene-substring matches and assembly-based category adjustment =========================\n"
-        )
-
+        # ---------------------- Step 8: SAM / assembly-based adjustment (if not skipped) ----------------------
         sam_deletion_spans: List[Tuple[int, int, int]] = []
 
-        if sam_path is not None and contig_name != "-":
+        if not skip_secondary and sam_path is not None and contig_name != "-":
+            print(
+                "\n# ========================= Step 8: SAM gene-substring matches and assembly-based category adjustment =========================\n"
+            )
+
             print(
                 f"[INFO] Scanning SAM file for gene-substring matches (genes=1): {sam_path}"
             )
@@ -1482,70 +1401,99 @@ def run(
                 print(f"[ERROR] Failed to read SAM file '{sam_path}': {e}")
         elif sam_path is None:
             print("[INFO] No SAM file provided; skipping assembly-based classification.")
+        elif skip_secondary:
+            print(
+                "[INFO] Gene has Category 1 from CALL; assembly-based classification skipped."
+            )
         else:
             print(
                 f"[INFO] Gene '{gene}' has no contig mapping; skipping assembly-based classification."
             )
 
-        if sam_deletion_spans:
-            (
-                asm_type,
-                asm_len_diff,
-                asm_obs_start,
-                asm_obs_end,
-                asm_obs_len,
-                asm_frac_expected,
-                asm_frac_observed,
-            ) = assign_best_canonical_for_assembly(
-                del_spans=sam_deletion_spans,
-                meta_gene=meta_g,
-                min_frac=overlap_fraction,
-            )
+        if not skip_secondary and sam_deletion_spans:
+            # Two modes:
+            #  1) Support mode (we already have a canonical type from call/mpileup/consensus)
+            #  2) Fallback mode (no canonical type at all -> assembly-only Category 6)
+            expected_lengths = sorted(set(meta_g["del_type"].astype(int)))
 
-            if asm_type is not None:
-                has_assembly = True
-                classified_assembly_variant = asm_type
-                assembly_deletion_start = asm_obs_start
-                assembly_deletion_end = asm_obs_end
-                assembly_deletion_length = asm_obs_len
-                assembly_frac_expected = asm_frac_expected
-                assembly_frac_observed = asm_frac_observed
+            if chosen_type is not None and chosen_category is not None:
+                # -------- SUPPORT MODE: pure length check vs chosen_type --------
+                print(
+                    f"[INFO] Assembly support mode for gene '{gene}': "
+                    f"checking for CIGAR deletions of length {chosen_type}."
+                )
+                support_events = [
+                    (s, e, l)
+                    for (s, e, l) in sam_deletion_spans
+                    if l == chosen_type
+                ]
 
-                if chosen_category is not None and chosen_category != "0":
-                    if chosen_category == "1":
+                if support_events:
+                    # Choose leftmost event for reporting
+                    support_events.sort(key=lambda x: x[0])
+                    asm_obs_start, asm_obs_end, asm_obs_len = support_events[0]
+
+                    has_assembly = True
+                    classified_assembly_variant = chosen_type
+                    assembly_deletion_start = asm_obs_start
+                    assembly_deletion_end = asm_obs_end
+                    assembly_deletion_length = asm_obs_len
+
+                    # We treat assembly as full support; we do not use overlap_fraction here
+                    assembly_frac_expected = None
+                    assembly_frac_observed = None
+
+                    if chosen_category != "1":
+                        original_cat_int = int(chosen_category)
+                        # Exact-length assembly support: boost 2 categories closer to 1
+                        new_cat_int = max(1, original_cat_int - 2)
+                        if new_cat_int != original_cat_int:
+                            used_assembly_for_upgrade = True
                         print(
-                            f"[INFO] Gene '{gene}' has Category 1 from CALL; "
-                            f"assembly (SAM/CIGAR) support will NOT change this classification."
+                            f"[INFO] Assembly exact-length support for gene '{gene}' "
+                            f"(deletion_variant={chosen_type}): "
+                            f"original_category={chosen_category} → new_category={new_cat_int}"
                         )
+                        chosen_category = str(new_cat_int)
                     else:
-                        if chosen_type is not None and asm_type == chosen_type:
-                            if asm_len_diff is not None and asm_len_diff == 0:
-                                boost = 2
-                                support_type = "exact"
-                            else:
-                                boost = 1
-                                support_type = "inexact"
-
-                            original_cat_int = int(chosen_category)
-                            new_cat_int = max(1, original_cat_int - boost)
-                            if new_cat_int != original_cat_int:
-                                used_assembly_for_upgrade = True
-                            print(
-                                f"[INFO] Assembly ({support_type}) support for gene '{gene}' "
-                                f"(deletion_variant={asm_type}): "
-                                f"original_category={chosen_category} → new_category={new_cat_int}"
-                            )
-                            chosen_category = str(new_cat_int)
-                        else:
-                            print(
-                                f"[INFO] Assembly conflict for gene '{gene}': "
-                                f"current_canonical={chosen_type} (source={chosen_source}), "
-                                f"assembly_variant={asm_type}. Setting category=7 (conflict)."
-                            )
-                            chosen_category = "7"
-                            has_conflict = True
+                        print(
+                            f"[INFO] Gene '{gene}' is Category 1; assembly support will not change this."
+                        )
                 else:
-                    # No call/mpileup or consensus classification at all → assembly-only
+                    print(
+                        f"[INFO] Assembly found no deletions of length {chosen_type} for gene '{gene}'; "
+                        f"ignoring assembly for this gene (no conflict)."
+                    )
+
+            else:
+                # -------- FALLBACK MODE: use mpileup-like canonical scoring --------
+                print(
+                    f"[INFO] No canonical deletion for gene '{gene}' from call/mpileup/consensus; "
+                    f"using assembly-only canonical assignment (Category 6 fallback)."
+                )
+                (
+                    asm_type,
+                    asm_len_diff,
+                    asm_obs_start,
+                    asm_obs_end,
+                    asm_obs_len,
+                    asm_frac_expected,
+                    asm_frac_observed,
+                ) = assign_best_canonical_for_assembly(
+                    del_spans=sam_deletion_spans,
+                    meta_gene=meta_g,
+                    min_frac=overlap_fraction,
+                )
+
+                if asm_type is not None:
+                    has_assembly = True
+                    classified_assembly_variant = asm_type
+                    assembly_deletion_start = asm_obs_start
+                    assembly_deletion_end = asm_obs_end
+                    assembly_deletion_length = asm_obs_len
+                    assembly_frac_expected = asm_frac_expected
+                    assembly_frac_observed = asm_frac_observed
+
                     chosen_category = "6"
                     chosen_type = asm_type
                     chosen_source = "assembly"
@@ -1555,15 +1503,21 @@ def run(
                     chosen_obs_len = asm_obs_len
                     chosen_frac_expected = asm_frac_expected
                     chosen_frac_observed = asm_frac_observed
+
                     print(
-                        f"[INFO] Gene '{gene}' has no other deletion classification; "
-                        f"using assembly-only variant={asm_type}, setting category=6 (assembly-only)."
+                        f"[INFO] Gene '{gene}' has assembly-only classification: "
+                        f"variant={asm_type}, category=6 (assembly-only)."
+                    )
+                else:
+                    print(
+                        f"[INFO] No assembly canonical deletion passed overlap_fraction for gene '{gene}'."
                     )
         else:
-            print(
-                f"[INFO] No SAM/CIGAR deletions for gene '{gene}' after filtering; "
-                f"no assembly-based adjustment."
-            )
+            if not skip_secondary:
+                print(
+                    f"[INFO] No SAM/CIGAR deletions for gene '{gene}' after filtering; "
+                    f"no assembly-based adjustment."
+                )
 
         # ---------------------- support_source ----------------------
         support_source_str = get_support_source(
@@ -1576,7 +1530,7 @@ def run(
             category=chosen_category,
         )
 
-        # Compute assembly overlap percentages from assembly canonical mapping
+        # Compute assembly overlap percentages for reporting (if we had canonical assembly mapping)
         assembly_expected_overlap_pct = None
         assembly_observed_overlap_pct = None
         if assembly_frac_expected is not None:
