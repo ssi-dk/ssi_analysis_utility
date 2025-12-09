@@ -111,3 +111,27 @@ rule custom_blaster:
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
         """
+        
+rule assembly_minimap2:
+    input:
+        assembly = rules.assembly.output.output_assembly,      # {sample}, {assembler}
+        database = rules.fetch_genbank.output.fasta            # {sample}, {database}
+    params:
+        options = lambda wildcards: sample_configs[wildcards.sample]["assembly_minimap2"]["options"]
+    output:
+        results = temp(f"{output_folder}/{{sample}}/minimap2/{{assembler}}_{{database}}.sam")
+    conda:
+        "../envs/minimap2.yaml"
+    log:
+        stdout = "Logs/{sample}/minimap2/{assembler}_{database}.log"
+    message:
+        "[assembly_minimap2]: Running Minimap2 for {wildcards.database} on {wildcards.assembler} for {wildcards.sample}"
+    shell:
+        r"""
+        mkdir -p $(dirname {output.results})
+
+        cmd="minimap2 {params.options} {input.database} {input.assembly} -o {output.results}"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+        """

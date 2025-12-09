@@ -1,293 +1,391 @@
 #!/usr/bin/env python3
 
 from __future__ import annotations
+
 import argparse
-import os
-import sys
-from typing import Dict, List, Tuple
+import re
+from typing import Dict, List, Optional
 
 import pandas as pd
 import pysam
 
 
-# ========================= Helpers =========================
+# ========================= Step 1: load_metafile =========================
 
-def reverse_complement(seq: str) -> str:
-    comp = {"A": "T", "T": "A", "G": "C", "C": "G", "N": "N"}
-    return "".join(comp.get(b.upper(), b) for b in reversed(seq))
+def load_metafile(meta_path: str) -> pd.DataFrame:
+    """
+    Load the metafile describing SNPs.
 
-def load_bed6(bed6_path: str) -> Dict[str, Dict[str, object]]:
-    """Load BED6 into {gene: {contig, start, end, length, strand}}."""
-    bedfile_dict: Dict[str, Dict[str, object]] = {}
-
-    try:
-        df = pd.read_csv(
-            bed6_path,
-            sep="\t",
-            header=0,
-            names=["contig", "start", "end", "gene", "score", "strand"],
-            dtype={"contig": "string", "start": int, "end": int, "gene": "string", "score": "float", "strand": "string"},
-            )
-        for idx, row in df.iterrows():
-            bedfile_dict[str(row["gene"])]= {
-                "contig": str(row["contig"]),
-                "start": int(row["start"]),
-                "end": int(row["end"]),
-                "length": (int(row["end"]) - int(row["start"])),
-                "strand": str(row["strand"])
-            }
-        print(bedfile_dict)
-    except Exception as e:
-        print(f"Failed to load BED6 file: {e}")
-        raise
-    
-    # 'tcdC': {'contig': 'AM180355.1', 'start': 804309, 'end': 805008, 'length': 699, 'strand': '-'}, 
-    return bedfile_dict
-
-def read_meta(meta_path: str, organism: str) -> pd.DataFrame:
-    """Read and filter SNP meta TSV for the requested organism.
-
-    Expected columns: species, gene, position, reference, alternative, strand
+    Expected columns:
+      species, gene, position, reference, alternative, gt_DP
     """
     df = pd.read_csv(meta_path, sep="\t")
-    required_col = {"species", "gene", "position", "reference", "alternative", "strand"}
-    
-    missing_col = required_col - set(df.columns)
-    if missing_col:
-        raise ValueError(f"provided snp information file to (--meta) is missing required columns: {', '.join(sorted(missing_col))}")
-    
-    # Normalize column types
-    df["gene"] = df["gene"].astype(str)
+    required_cols = {
+        "species",
+        "gene",
+        "position",
+        "reference",
+        "alternative",
+        "gt_DP",
+    }
+
+    missing_cols = required_cols - set(df.columns)
+    if missing_cols:
+        raise ValueError(
+            f"Metafile is missing required columns: {', '.join(sorted(missing_cols))}"
+        )
+
+    # Normalize types
     df["species"] = df["species"].astype(str)
+    df["gene"] = df["gene"].astype(str)
     df["position"] = df["position"].astype(int)
     df["reference"] = df["reference"].astype(str)
     df["alternative"] = df["alternative"].astype(str)
-    df["strand"] = df["strand"].astype(str)
+    df["gt_DP"] = df["gt_DP"].astype(int)
 
-    return df[df["species"] == organism].copy()
+    return df
 
-def process_res_file(res_file_path: str) -> pd.DataFrame:
-    # i need these excepts if the .res file if later changed to temp() or somehow altered during the snakemake pipeline
-    try:
-        res_df = pd.read_csv(res_file_path, sep="\t")
-    except FileNotFoundError:
-        raise FileNotFoundError(f"File not found: {res_file_path}")
-    except pd.errors.EmptyDataError:
-        raise ValueError(f"File is empty or not properly formatted: {res_file_path}")
 
-    required_columns = {"#Template", "Template_length","Template_Coverage", "Template_Identity", "Depth"}
-    if not required_columns.issubset(res_df.columns):
-        raise ValueError(f"Missing expected columns in {res_file_path}. Found: {', '.join(res_df.columns)}")
+# ========================= Step 2: Check_organism =========================
 
-    return res_df
 
-def find_contig_for_gene(res_df: pd.DataFrame, gene: str) -> str:
-    hits = res_df[res_df["#Template"].str.contains(gene, case=False, na=False)]
-    if hits.empty:
-        raise ValueError(f"No contig matching gene '{gene}' in .res")
-    return str(hits.iloc[0]["#Template"])  # first match
+def check_organism(meta_df: pd.DataFrame, organism: str) -> pd.DataFrame:
+    """
+    Filter metafile rows to the requested organism. In case of metafile containing multiple species sharing loci name
 
-def gene_pos_to_contig_pos(gene: str, pos_in_gene: int, bed_info: Dict[str, Dict[str, object]]) -> int:
-    if gene not in bed_info:
-        raise ValueError(f"Gene '{gene}' not present in BED6")
-    info = bed_info[gene]
-    strand = info["strand"]
-    length = int(info["length"])  # gene length
-    if strand == "+":
-        return pos_in_gene
-    elif strand == "-":
-        return length - (pos_in_gene - 1)
-    else:
-        raise ValueError(f"Invalid strand '{strand}' for gene '{gene}'")
+    Returns a new DataFrame containing only rows where species == organism.
+    """
+    organism = str(organism).strip()
+    filtered_metadf = meta_df[meta_df["species"].str.strip() == organism].copy()
+    return filtered_metadf
 
-def check_snp_variant(
-    bcf_path: str,
+
+# ========================= Step 3: Match_gene_bcf =========================
+
+
+def match_gene_bcf(
+    bcf: pysam.VariantFile,
+    genes: List[str],
+) -> Dict[str, str]:
+    """
+    For each gene, find a contig in the BCF header whose name contains the gene
+    as a substring (regex, case-insensitive).
+
+    Returns a dict: {gene -> contig_name}.
+
+    If multiple contigs match a gene, the first match is used.
+    Genes with no contig match are omitted from the dictionary.
+    """
+    contig_names = list(bcf.header.contigs)
+    gene_to_contig: Dict[str, str] = {}
+
+    for gene in genes:
+        pattern = re.compile(re.escape(gene), flags=re.IGNORECASE)
+        matched_contig: Optional[str] = None
+        for contig in contig_names:
+            if pattern.search(contig):
+                matched_contig = contig
+                print(f"gene from metafile {re.escape(gene)} was matched with contig names from bcf header {contig}")
+                break
+
+        if matched_contig is None:
+            print(f"[WARN] No contig in BCF matches gene '{gene}' (substring regex).")
+            continue
+
+        gene_to_contig[gene] = matched_contig
+
+    return gene_to_contig
+
+
+# ========================= Step 4: Extract_pos_variants =========================
+
+def extract_pos_variants(
+    bcf: pysam.VariantFile,
     contig: str,
-    pos: int,
+    position: int,
+    snp_region_buffer: int,
+) -> List[pysam.VariantRecord]:
+    """
+    Extract all variant records from `bcf` on `contig` within
+    [position - buffer, position + buffer] (1-based, inclusive).
+    """
+    # Convert 1-based desired window to 0-based half-open coordinates for pysam
+    start_1based = max(1, position - snp_region_buffer)
+    end_1based = position + snp_region_buffer
+    start0 = start_1based - 1  # inclusive
+    end0 = end_1based          # pysam end is exclusive, still in 1-based
+
+    records: List[pysam.VariantRecord] = []
+    try:
+        for rec in bcf.fetch(contig, start0, end0):
+            print(f"Could fetch the bcf records {rec.pos} searching around {position} ± {snp_region_buffer}")
+            records.append(rec)
+    except ValueError as e:
+        # E.g. contig not found in index
+        print(f"[ERROR] Could not fetch {contig}:{start_1based}-{end_1based} from BCF: {e}")
+
+    return records
+
+
+# =========== Extract DP value for filtering between Step 4 and Steps 5/6 ===========
+
+def get_dp_from_record(rec: pysam.VariantRecord) -> int:
+    """
+    Extract DP from a VariantRecord's INFO field.
+
+    Handles DP being stored as a single int or as a tuple/list.
+    Returns 0 if DP is missing or malformed.
+    """
+    dp = rec.info.get("DP")
+    if isinstance(dp, int):
+        return dp
+    if isinstance(dp, (list, tuple)):
+        if not dp:
+            return 0
+        # some BCFs store as a 1-element tuple
+        val = dp[0]
+        return int(val) if isinstance(val, int) else 0
+    return 0
+
+
+# ========================= Step 5: Filter positions by DP =========================
+
+
+def filter_variants_by_dp(
+    variants: List[pysam.VariantRecord],
+    min_dp: int,
+) -> List[pysam.VariantRecord]:
+    """
+    Filter variants to only those with INFO/DP >= min_dp.
+    """
+    filtered: List[pysam.VariantRecord] = []
+    for rec in variants:
+        dp_val = get_dp_from_record(rec)
+        print(f"Fetch the bcf records {rec.pos} with reference {rec.ref} and alternative {rec.alts[0]} and DP value {dp_val}")
+        if dp_val >= min_dp:
+            filtered.append(rec)
+    return filtered
+
+
+# ========================= Step 6: Check deletions spanning position =========================
+
+
+def check_pos_deletions(
+    variants: List[pysam.VariantRecord],
+    position: int,
+) -> Optional[str]:
+    """
+    Check whether any variant in `variants` represents a deletion that spans
+    `position` (1-based).
+
+    A deletion is defined as an ALT allele shorter than REF. If any such
+    deletion covers `position` (rec.pos <= position <= rec.pos + len(REF) - 1),
+    returns a string like 'Δ117'. Otherwise returns None.
+    """
+    for rec in variants:
+        ref = rec.ref
+        if not rec.alts:
+            continue
+
+        # Check if any ALT is shorter than REF → deletion
+        has_deletion_alt = any(
+            alt is not None and len(alt) < len(ref) for alt in rec.alts
+        )
+        if not has_deletion_alt:
+            continue
+
+        deletion_start = rec.pos  # 1-based
+        deletion_end = rec.pos + len(ref) - 1  # inclusive
+
+        if deletion_start <= position <= deletion_end:
+            print(f"The bcf records {rec.pos} with reference {rec.ref} and alternative {rec.alts[0]} is determined as a deletion")
+            return f"Δ{position}"
+
+    return None
+
+
+# ========================= Step 7: Check SNP at position =========================
+
+
+def check_pos_snp(
+    variants: List[pysam.VariantRecord],
+    position: int,
     expected_ref: str,
     expected_alt: str,
-    strand: str,
-    flank: int = 20,
-) -> Tuple[str, str]:
-    """Return (label, detail) where label in {snp, wt, del, other, -}.
-
-    - If a variant at exactly `pos` matches expected_ref>expected_alt → "snp".
-    - If a different SNP at exactly `pos` → ("other", "pos_ref_alt").
-    - If a deletion spans `pos` → "del".
-    - If nothing in the window → "wt".
-    - On error → ("-", "").
+) -> Optional[str]:
     """
-    try:
-        bcf = pysam.VariantFile(bcf_path)
-        start = max(0, pos - flank)
-        end = pos + flank
-        
-        for rec in bcf.fetch(contig, start, end):
+    Check whether there is a SNP exactly at `position` (1-based) in `variants`.
 
-            ref = rec.ref
-            alt = rec.alts[0] if rec.alts else None
-            
-            ref_to_use = ref
-            alt_to_use = alt
+    Logic:
+      - Look for simple SNPs (len(REF) == 1 and len(ALT) == 1) at that position.
+      - If any SNP matches expected_ref/expected_alt from metafile:
+            return '{ref}{pos}{alt}'  (e.g. 'A117T')
+      - Else if there is a SNP at that position but with different alleles:
+            return 'other'
+      - If there is no SNP at that position at all: return None
+        (caller will interpret as 'wt').
+    """
+    expected_ref = expected_ref.upper()
+    expected_alt = expected_alt.upper()
+    saw_nonmatching_snp = False
 
-            if strand == "-":
-                ref_to_use = reverse_complement(ref)
-                alt_to_use = reverse_complement(alt)
+    for rec in variants:
+        if rec.pos != position:
+            continue
+        if not rec.alts:
+            continue
 
-            if rec.pos == pos:
-                # Case 1: variation fitting the A>T
-                if ref == expected_ref and alt == expected_alt:
-                    print(f"\tCase 1: {ref}>{expected_ref} and {alt}>{expected_alt} SNP present at 117")
-                    return f"snp", ""
-            
-                # Case 2: different variation
-                else:
-                    print("\tCase 2: Different SNP present at 117")
-                    return "other", f"{rec.pos}_{ref_to_use}_{alt_to_use}"
-            
-            # Case 3: Deletion spanning the position
-            elif rec.pos < pos:
-                deletion_end = rec.pos + len(ref) - 1
-                if deletion_end >= pos and any(len(a) < len(ref) for a in rec.alts if a is not None):
-                    print(f"\tCase 3: A deletion spans the position at {pos} from {rec.pos} to {deletion_end}")
-                    return f"del", ""
+        ref = rec.ref.upper()
+        for alt in rec.alts:
+            if alt is None:
+                continue
+            alt = alt.upper()
 
-        return ("wt", "")
-    except Exception as e:
-        print(f"[ERROR] BCF read failed at {contig}:{pos}: {e}")
-        return ("-", "")
+            # Only treat pure SNPs
+            if len(ref) != 1 or len(alt) != 1:
+                continue
+
+            if ref == expected_ref and alt == expected_alt:
+                # Exact match to metafile definition
+                print(f"The bcf records {rec.pos} with reference {rec.ref} and alternative {alt} matches expected {expected_ref}>{expected_alt}")
+                return f"{ref}{position}{alt}"
+            else:
+                saw_nonmatching_snp = True
+
+    if saw_nonmatching_snp:
+        # There was a SNP at this position, but not the expected one
+        print(f"A SNP was found at position {position} but did not match expected {expected_ref}>{expected_alt}")
+        return "other"
+
+    # No SNP at that position
+    return None
 
 
 # ========================= Main routine =========================
 
-def run(organism: str,
-        res_path: str,
-        bcf_path: str,
-        bed_path: str,
-        meta_path: str,
-        output_path: str) -> None:
+def run(
+    organism: str,
+    bcf_path: str,
+    meta_path: str,
+    output_path: str,
+    snp_region_buffer: int = 1,
+) -> None:
+    # Step 1: load_metafile
+    meta_df = load_metafile(meta_path)
 
-    # Inputs
-    res_df = process_res_file(res_path)
-    bed_info = load_bed6(bed_path)
-    meta_df = read_meta(meta_path, organism)
+    # Step 2: Check_organism
+    org_meta = check_organism(meta_df, organism)
 
-    if meta_df.empty:
-        # No SNPs defined for this organism - create empty file '-'
-        out = pd.DataFrame([{"organism": organism, "snp_info": "-"}])
-        out.to_csv(output_path, sep="\t", index=False)
-        return None
+    if org_meta.empty:
+        print(f"[WARN] No rows for organism '{organism}' in metafile. Writing empty output.")
+        out_df = pd.DataFrame(columns=["species", "contig_name", "gene", "position", "variant"])
+        out_df.to_csv(output_path, sep="\t", index=False)
+        return
 
-    # Group by gene
-    snp_calls: List[str] = []
-    contig_cache: Dict[str, str] = {}
+    # Open BCF once
+    try:
+        bcf = pysam.VariantFile(bcf_path)
+    except Exception as e:
+        raise RuntimeError(f"Failed to open BCF file '{bcf_path}': {e}")
 
-    for idx, row in meta_df.iterrows():
-        gene = str(row["gene"])  # e.g., tcdC
-        pos = int(row["position"])  # 1-based in gene
-        ref = str(row["reference"]).upper()
-        alt = str(row["alternative"]).upper()
-        strand = str(row["strand"]).strip()
+    # Step 3: Match_gene_bcf
+    genes = sorted(org_meta["gene"].astype(str).unique())
+    gene_to_contig = match_gene_bcf(bcf, genes)
 
-        # Locate contig for this gene (from .res)
-        try:
-            if gene not in contig_cache:
-                contig_cache[gene] = find_contig_for_gene(res_df, gene)
-            contig = contig_cache[gene]
-        except Exception as e:
-            print(f"[WARN] {gene}: contig not found in .res → marking as '-' ({e})")
-            snp_calls.append(f"{pos}_-")
-            continue
+    results = []
 
-        # Map gene pos → contig pos (gene-sized contigs)
-        try:
-            contig_pos = gene_pos_to_contig_pos(gene, pos, bed_info)
-        except Exception as e:
-            print(f"[WARN] {gene}: coordinate transform failed → '-' ({e})")
-            snp_calls.append(f"{pos}_-")
-            continue
+    for _, row in org_meta.iterrows():
+        species = str(row["species"])
+        gene = str(row["gene"])
+        position = int(row["position"])
+        gt_dp = int(row["gt_DP"])
+        expected_ref = str(row["reference"])
+        expected_alt = str(row["alternative"])
 
-        # For '-' strand, compare against reverse-complement expectations
-        ref_cmp, alt_cmp = (ref, alt) if strand == "+" else (reverse_complement(ref), reverse_complement(alt))
+        if gene not in gene_to_contig:
+            print(f"[WARN] Skipping {gene}:{position} - no contig mapping found in BCF.")
+            variant = "wt"
+            contig_name = "-"
+        else:
+            contig_name = gene_to_contig[gene]
 
-        label, detail = check_snp_variant(
-            bcf_path=bcf_path,
-            contig=contig,
-            pos=contig_pos,
-            expected_ref=ref_cmp,
-            expected_alt=alt_cmp,
-            strand=strand,
+            # Step 4: Extract_pos_variants
+            variants = extract_pos_variants(
+                bcf=bcf,
+                contig=contig_name,
+                position=position,
+                snp_region_buffer=snp_region_buffer,
+            )
+
+            # Step 5: DP filtering step
+            variants = filter_variants_by_dp(variants, min_dp=gt_dp)
+
+            # Step 6: Check_pos_Deletions
+            variant = check_pos_deletions(variants, position)
+
+            # Step 7: Check_pos_SNP (only if no deletion)
+            if variant is None:
+                variant = check_pos_snp(
+                    variants=variants,
+                    position=position,
+                    expected_ref=expected_ref,
+                    expected_alt=expected_alt,
+                )
+
+            # If neither deletion nor SNP was found (or no variant after DP filter)
+            if variant is None:
+                variant = "wt"
+
+        results.append(
+            {
+                "species": species,
+                "contig_name": contig_name,
+                "gene": gene,
+                "position": position,
+                "variant": variant,
+            }
         )
 
-        if label == "snp":
-            snp_calls.append(f"{pos}_{ref}>{alt}")
-        elif label == "wt":
-            snp_calls.append(f"{pos}_wt")
-        elif label == "del":
-            snp_calls.append(f"{pos}_del")
-        elif label == "other":
-            snp_calls.append(f"{pos}_other:{detail}")
-        else:
-            snp_calls.append(f"-")
-
-    row = {
-        "organism": organism,
-        "snp_info": ";".join(snp_calls) if snp_calls else "-",
-    }
-
-    pd.DataFrame([row]).to_csv(output_path, sep="\t", index=False)
+    out_df = pd.DataFrame(
+        results,
+        columns=["species", "contig_name", "gene", "position", "variant"],
+    )
+    out_df.to_csv(output_path, sep="\t", index=False)
 
 
-def main():
-    ap = argparse.ArgumentParser(description="Identify configured SNPs from BCF using meta TSV.")
-    ap.add_argument("--organism", required=True)
-    ap.add_argument("--res", required=True, help="KMA .res file for contig lookup")
-    ap.add_argument("--call", required=True, help="Main genotype BCF")
-    ap.add_argument("--bed", required=True, help="BED6 with gene coordinates/strand")
-    ap.add_argument("--metafile", required=True, help="TSV: species gene position reference alternative strand")
-    ap.add_argument("-o", "--output", required=True, help="Output TSV path")
-    args = ap.parse_args()
+def main() -> None:
+    arg = argparse.ArgumentParser(
+        description="Identify SNPs and deletions at configured positions from a BCF and metafile (no KMA/BED)."
+    )
+    arg.add_argument("--organism", required=True, help="Organism name to filter metafile by.")
+    arg.add_argument("--call", required=True, help="BCF file with genotype calls.")
+    arg.add_argument(
+        "--metafile",
+        required=True,
+        help="TSV metafile with columns: species, gene, position, reference, alternative, gt_DP.",
+    )
+    arg.add_argument(
+        "-o",
+        "--output",
+        required=True,
+        help="Output TSV path (species, contig_name, gene, position, variant).",
+    )
+    arg.add_argument(
+        "--snp_region_buffer",
+        type=int,
+        default=1,
+        help="bp to pad each expected position on each side (default 1).",
+    )
 
+    args = arg.parse_args()
     run(
         organism=args.organism,
-        res_path=args.res,
         bcf_path=args.call,
-        bed_path=args.bed,
         meta_path=args.metafile,
         output_path=args.output,
+        snp_region_buffer=args.snp_region_buffer,
     )
 
 
 if __name__ == "__main__":
     main()
-
-"""
-SNP_identifier.py
-
-Extracts SNP status per sample from a meta TSV describing expected SNPs.
-
-Input files (per sample):
-  --res     : KMA .res file (tab-separated) used to locate contig(s) per gene
-  --call    : main genotype BCF (SNPs/indels)
-  --bed     : BED6 for genes (contig, start, end, gene, score, strand)
-  --meta    : TSV with columns: species, gene, position, reference, alternative, strand
-
-CLI example:
-  python SNP_identifier.py \
-    --organism "Clostridioides difficile" \
-    --res examples/Results/SRR2915763/Cdiff_KMA_Toxin/SRR2915763.res \
-    --call examples/Results/SRR2915763/GenotypeCalls/SRR2915763.Cdiff_KMA_Toxin.calls.bcf \
-    --bed refs/toxin_genes.bed6 \
-    --meta configs/snp_meta.tsv \
-    -o snp_summary.tsv
-
-Output (TSV):
-  organism\tsnp_info
-  SRR2915763\tClostridioides difficile\t117_del;184_wt
-
-Notes:
-- Assumes per-gene contigs in the BCF match names present in the .res file (#Template contains gene name).
-- Coordinates are gene-relative on those contigs: for plus strand, pos stays pos; for minus, pos' = gene_len - (pos-1).
-- If a deletion spans the SNP position, the label is "<pos>_del" (1bp deletions treated as SNP-like events).
-- If a different SNP is present at the exact position, label "<pos>_other:<pos_ref_alt>"; if none, "<pos>_wt".
-"""

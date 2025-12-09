@@ -75,8 +75,8 @@ rule bcftools_pileup:
         bam_sort = rules.samtools_sort.output.bam_sort,
         reference = "%s/samtools/{database}.fasta" %database_path
     output:
-        pileup = temp("%s/{sample}/bcftools/{database}.bcf" %output_folder),
-        index = temp("%s/{sample}/bcftools/{database}.bcf.csi" %output_folder)
+        pileup = temp("%s/{sample}/bcftools/{database}_pileup.bcf" %output_folder),
+        index = temp("%s/{sample}/bcftools/{database}_pileup.bcf.csi" %output_folder)
     conda:
         "../envs/htslib.yaml"
     log:
@@ -104,8 +104,8 @@ rule bcftools_filter_indels:
     params:
         options = lambda wildcards: sample_configs[wildcards.sample]["bcftools"]["view_options"]
     output:
-        indels = temp("%s/{sample}/bcftools/{database}_indels.bcf" %output_folder),
-        index = temp("%s/{sample}/bcftools/{database}_indels.bcf.csi" %output_folder)
+        indels = temp("%s/{sample}/bcftools/{database}_pileup_indels.bcf" %output_folder),
+        index = temp("%s/{sample}/bcftools/{database}_pileup_indels.bcf.csi" %output_folder)
     conda:
         "../envs/htslib.yaml"
     log:
@@ -131,8 +131,8 @@ rule bcftools_variant_call:
         pileup = rules.bcftools_pileup.output.pileup,
         pileup_index = rules.bcftools_pileup.output.index,
     output: 
-        variants = temp("%s/{sample}/bcftools/{database}_variants.bcf" %output_folder),
-        index = temp("%s/{sample}/bcftools/{database}_variants.bcf.csi" %output_folder)
+        variants = temp("%s/{sample}/bcftools/{database}_call_variants.bcf" %output_folder),
+        index = temp("%s/{sample}/bcftools/{database}_call_variants.bcf.csi" %output_folder)
     conda:
         "../envs/htslib.yaml"
     log:
@@ -148,6 +148,6 @@ rule bcftools_variant_call:
 
         cmd="bcftools index -f {output.variants} -o {output.index}"
 
-        echo "\nIndexing Pileup:\n$cmd\n" > {log.stdout} 2>&1
+        echo "\nIndexing Call:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
         """
