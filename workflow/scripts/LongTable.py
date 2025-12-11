@@ -232,7 +232,15 @@ def long_table_creation(df: pd.DataFrame,
                             tool: str,
                             sample_id_fallback: str,
                             organism_fallback: Optional[str]) -> pd.DataFrame:
-    df = df.copy().astype(str)
+    # Work on a copy
+    df = df.copy()
+
+    # 1-based row index from the ORIGINAL table
+    # (row 0 -> 1, row 1 -> 2, ...)
+    df.insert(0, "row_index", df.index + 1)
+
+    # Make all non-index columns strings for consistency
+    df = df.astype(str)
 
     # Case-insensitive lookup of existing id columns
     colmap = {c.lower(): c for c in df.columns}
@@ -253,16 +261,21 @@ def long_table_creation(df: pd.DataFrame,
     sid_col = colmap.get("sample_name", "sample_name")
     org_col = colmap.get("organism", "organism")
 
-    id_vars = [sid_col, org_col]
+    # Include row_index as an ID variable so it's preserved
+    id_vars = [sid_col, org_col, "row_index"]
     value_vars = [c for c in df.columns if c not in id_vars]
 
-    long = df.melt(id_vars=id_vars, value_vars=value_vars,
-                   var_name="field", value_name="value")
+    long = df.melt(
+        id_vars=id_vars,
+        value_vars=value_vars,
+        var_name="field",
+        value_name="value"
+    )
 
     long = (
         long.rename(columns={sid_col: "sample_name", org_col: "organism"})
             .assign(tool=tool, filename="")
-            [["sample_name", "tool", "filename", "organism", "field", "value"]]
+            [["sample_name", "tool", "filename", "organism", "row_index", "field", "value"]]
     )
     return long
 
@@ -370,7 +383,7 @@ def save_long_table(
         if sample_frames:
             out_df = pd.concat(sample_frames, ignore_index=True)
         else:
-            out_df = pd.DataFrame(columns=["sample_name", "tool", "filename", "organism", "field", "value"])
+            out_df = pd.DataFrame(columns=["sample_name", "tool", "filename", "organism", "row_index", "field", "value"])
 
         if na_filter and not out_df.empty:
             before = len(out_df)
@@ -391,7 +404,7 @@ def save_long_table(
     if extend:
         # Write/append the single combined file
         combined = pd.concat(combined_frames, ignore_index=True) if combined_frames else \
-                   pd.DataFrame(columns=["sample_name", "tool", "filename", "organism", "field", "value"])
+                   pd.DataFrame(columns=["sample_name", "tool", "filename", "organism", "row_index", "field", "value"])
         out_path = os.path.join(output_folder, "all_results.tsv")
         exists_before = os.path.exists(out_path)
 
