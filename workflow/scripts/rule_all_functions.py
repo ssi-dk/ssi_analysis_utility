@@ -12,22 +12,23 @@ def resolve_env(envs_path,
     If it doesn't exist, fall back to the workflow/envs/<tool_name>.yaml.
     """
     # Get path
-    pipeline_dir = os.getcwd() 
+    pipeline_dir = os.getcwd()
+    print_path = False
     
     # Build path to env
     full_path = os.path.join(envs_path, tool_name)
     if os.path.exists(full_path):
-        print(full_path)
-        return full_path
+        return tool_name
     else:
         # Revert to yaml if the env is not available
         yaml_path = "%s/workflow/envs/%s.yaml" % (pipeline_dir, tool_name)
-        print(yaml_path)
         if os.path.exists(yaml_path):
-            return yaml_path
+            print(f"{tool_name}: Environment not found. Reverting to Snakemake installation. Disable this warning by setting envs_location to None.")
         else:
             # No yaml for the tool
             raise ValueError(f"No valid conda environment or YAML found for '{tool_name}'.")
+
+    return yaml_path
 
 
 
