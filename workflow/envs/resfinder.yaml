@@ -1,3 +1,4 @@
+name: resfinder
 channels:
   - conda-forge
   - bioconda

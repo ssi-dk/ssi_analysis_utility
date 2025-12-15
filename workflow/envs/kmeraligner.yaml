@@ -1,3 +1,4 @@
+name: kmeraligner
 channels:
   - conda-forge
   - bioconda

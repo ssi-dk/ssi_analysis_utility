@@ -1,3 +1,4 @@
+name: htslib
 channels:
   - bioconda
   - conda-forge

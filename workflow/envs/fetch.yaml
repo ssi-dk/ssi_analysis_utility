@@ -1,3 +1,4 @@
+name: fetch
 channels:
  - conda-forge
 dependencies:
