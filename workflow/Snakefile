@@ -6,14 +6,18 @@ from scripts import rule_all_functions
 configfile: "config/config.yaml"
 
 # --- Inputs & paths from config file------------------------------------------------
-samplesheet_path = config['input_manager']['samplesheet']
-output_folder    = config['input_manager']['output_folder']
-metadata_path    = config['input_manager']['metadata_path']   # used by finder rules
-database_path    = config['input_manager']['database_path']   # used by setup rules
-species_config_path = config['input_manager']['config_species'] # Path to species specific configuration files
-temp_storage_path = config['input_manager']['temp_storage']
+samplesheet_path = config['samplesheet']
+output_folder    = config['output_folder']
+metadata_path    = config['metadata_path']   # used by finder rules
+database_path    = config['database_path']   # used by setup rules
+species_config_path = config['config_species'] # Path to species specific configuration files
+temp_storage_path = config['temp_storage']
 species_name_map =  config['species_map'] # Load species_name_map from config file
-conda_path = config['input_manager']['envs_location']
+
+conda_path = None
+if "envs_location" in config.keys():
+    conda_path = config['envs_location']
+
 samplesheet = pd.read_csv(samplesheet_path, sep='\t')
 
 

@@ -5,7 +5,7 @@ from typing import Dict, Tuple, Set, List
 import warnings
 
 
-def resolve_env(envs_path,
+def resolve_env(envs_location,
                 tool_name):
     """
     Return the conda environment path.
@@ -13,22 +13,22 @@ def resolve_env(envs_path,
     """
     # Get path
     pipeline_dir = os.getcwd()
-    print_path = False
-    
-    # Build path to env
-    full_path = os.path.join(envs_path, tool_name)
-    if os.path.exists(full_path):
-        return tool_name
-    else:
-        # Revert to yaml if the env is not available
-        yaml_path = "%s/workflow/envs/%s.yaml" % (pipeline_dir, tool_name)
-        if os.path.exists(yaml_path):
-            print(f"{tool_name}: Environment not found. Reverting to Snakemake installation. Disable this warning by setting envs_location to None.")
-        else:
-            # No yaml for the tool
-            raise ValueError(f"No valid conda environment or YAML found for '{tool_name}'.")
+    environment = "%s/workflow/envs/%s.yaml" % (pipeline_dir, tool_name)
 
-    return yaml_path
+    if envs_location is not None:
+
+        # Build path to env
+        full_path = os.path.join(envs_location, tool_name)
+        if os.path.exists(full_path):
+            environment = tool_name
+        else:            
+            if os.path.exists(environment):
+                print(f"{tool_name}: Environment not found in {full_path}. Reverting to Snakemake installation. Disable this warning by either installing the environment with conda OR by removing envs_location from the config.")
+            else:
+                # No yaml for the tool
+                raise ValueError(f"No valid conda environment or YAML found for '{tool_name}'.")
+
+    return environment
 
 
 
