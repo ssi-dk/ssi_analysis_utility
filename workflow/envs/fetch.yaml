@@ -1,9 +1,8 @@
 name: fetch
 channels:
- - conda-forge
+  - conda-forge
+channel_priority: strict
 dependencies:
- - curl
- - python=3.9
- - biopython
- - pandas
- - curl
+  - conda-forge::curl
+  - conda-forge::biopython
+  - conda-forge::pandas

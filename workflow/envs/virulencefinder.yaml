@@ -1,9 +1,7 @@
 name: virulencefinder
 channels:
   - conda-forge
-  - bioconda
+channel_priority: strict
 dependencies:
-  - python=3.9
-  - virulencefinder
-  - kma 
-  - blast 
+  - bioconda::virulencefinder=2.0.4 #Later doesn't export virulencefinder.py command
+  - conda-forge::python<=3.11 # distutils module removed from 3.12 (https://docs.python.org/3/library/distutils.html)

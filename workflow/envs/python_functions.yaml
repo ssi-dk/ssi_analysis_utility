@@ -1,14 +1,9 @@
 name: python_functions
 channels:
   - conda-forge
-  - bioconda
-  - defaults
+channel_priority: strict
 dependencies:
-  - python=3.10
-  - pandas
-  - pyyaml
-  - biopython
-  - pysam
-  - pip
-  - pip:
-      - typer  # optional if you later switch to it
+  - conda-forge::pandas
+  - conda-forge::pyyaml
+  - conda-forge::biopython
+  - bioconda::pysam

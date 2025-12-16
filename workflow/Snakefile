@@ -14,9 +14,11 @@ species_config_path = config['config_species'] # Path to species specific config
 temp_storage_path = config['temp_storage']
 species_name_map =  config['species_map'] # Load species_name_map from config file
 
-conda_path = None
+envs_location = None
 if "envs_location" in config.keys():
-    conda_path = config['envs_location']
+    envs_location = config['envs_location']
+else:
+    print(f"`envs_location` not specified in configs, will run on snakemakes own prebuild environments.")
 
 samplesheet = pd.read_csv(samplesheet_path, sep='\t')
 

@@ -1,6 +1,6 @@
 name: blast
 channels:
   - conda-forge
-  - bioconda
+channel_priority: strict
 dependencies:
-  - blast
+  - bioconda::blast
