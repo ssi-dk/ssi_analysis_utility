@@ -11,7 +11,7 @@ rule custom_kmeralignment:
         sam = temp("%s/{sample}/samtools/{database}.sam" %output_folder),
         matrix = temp("%s/{sample}/kmeraligner/{database}.mat.gz" %output_folder)
     conda:
-        "../envs/kmeraligner.yaml"
+        helper_functions.resolve_env(envs_location, "kmeraligner")
     log:
         stdout = "Logs/{sample}/custom_kmeralignment_{database}.log"
     message:
@@ -41,7 +41,7 @@ rule custom_kmerconsensus:
         seq = temp("%s/{sample}/kmerconsensus/{database}.fsa" %output_folder),
         aln = temp("%s/{sample}/kmerconsensus/{database}.aln" %output_folder)
     conda:
-        "../envs/kmeraligner.yaml"
+        helper_functions.resolve_env(envs_location, "kmeraligner")
     log:
         stdout = "Logs/{sample}/custom_kmerconsensus_{database}.log"
     message:
@@ -69,7 +69,7 @@ rule custom_bowtie2alignment:
         max(1, workflow.cores * 0.3333333)
     priority: 2
     conda:
-        "../envs/bowtie2.yaml"
+        helper_functions.resolve_env(envs_location, "bowtie2")
     log:
         stdout = "Logs/{sample}/custom_bowtie2_{database}.log"
     message:
@@ -97,7 +97,7 @@ rule custom_blaster:
     output:
         results = "%s/{sample}/custom_blaster/blast_{assembler}_{database}.tsv" %output_folder
     conda:
-        "../envs/blast.yaml"
+        helper_functions.resolve_env(envs_location, "blast")
     log:
         stdout = "Logs/{sample}/custom_blaster_{assembler}_{database}.log"
     message:
@@ -121,7 +121,7 @@ rule assembly_minimap2:
     output:
         results = temp(f"{output_folder}/{{sample}}/minimap2/{{assembler}}_{{database}}.sam")
     conda:
-        "../envs/minimap2.yaml"
+        helper_functions.resolve_env(envs_location, "../envs/minimap2.yaml")
     log:
         stdout = "Logs/{sample}/minimap2/{assembler}_{database}.log"
     message:

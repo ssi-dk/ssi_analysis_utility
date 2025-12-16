@@ -1,8 +1,7 @@
+name: serotypefinder
 channels:
   - conda-forge
-  - bioconda
+channel_priority: strict
 dependencies:
-  - python=3.9
-  - serotypefinder
-  - kma 
-  - blast
+  - bioconda::serotypefinder
+  - conda-forge::python<=3.11 # distutils module removed from 3.12 (https://docs.python.org/3/library/distutils.html)

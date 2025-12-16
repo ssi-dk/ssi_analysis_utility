@@ -7,6 +7,31 @@ import sys
 import itertools
 from copy import deepcopy
 
+def resolve_env(envs_location,
+                tool_name):
+    """
+    Return the conda environment path.
+    If it doesn't exist, fall back to the workflow/envs/<tool_name>.yaml.
+    """
+    # Get path
+    pipeline_dir = os.getcwd()
+    environment = "%s/workflow/envs/%s.yaml" % (pipeline_dir, tool_name)
+
+    if envs_location is not None:
+
+        # Build path to env
+        full_path = os.path.join(envs_location, tool_name)
+        if os.path.exists(full_path):
+            environment = tool_name
+        else:            
+            if os.path.exists(environment):
+                print(f"{tool_name}: Environment not found in {full_path}. Reverting to Snakemake installation. Disable this warning by either installing the environment with conda OR by setting envs_location to None in the config.")
+            else:
+                # No yaml for the tool
+                raise ValueError(f"No valid conda environment or YAML found for '{tool_name}'.")
+
+    return environment
+
 
 def read_results_catalogue(results_catalogue_path):
     with open(results_catalogue_path, "r") as catalgoue_file:

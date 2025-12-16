@@ -8,3 +8,4 @@ assembly_path: examples/Dataset/assembly_path
 output_folder: examples/Results  # Folder where the analysis results will be saved
 temp_storage: examples/Dataset/databases
 result_catalogue: config/results_catalogue.yaml
+envs_location: None

@@ -6,7 +6,7 @@ rule samtools_sam_filtration:
     output:
         bam = temp("%s/{sample}/samtools/{database}_filtered.bam" %output_folder)
     conda:
-        "../envs/htslib.yaml"
+        helper_functions.resolve_env(envs_location, "htslib")
     log:
         stdout = "Logs/{sample}/custom_kmeralignment_samtools_filtration_{database}.log"
     message:
@@ -28,7 +28,7 @@ rule samtools_bam_filtration:
     output:
         bam = temp("%s/{sample}/samtools/{database}_filtered.bam" %output_folder)
     conda:
-        "../envs/htslib.yaml"
+        helper_functions.resolve_env(envs_location, "htslib")
     log:
         stdout = "Logs/{sample}/custom_kmeralignment_samtools_filtration_{database}.log"
     message:
@@ -51,7 +51,7 @@ rule samtools_sort:
         bam_sort = temp("%s/{sample}/samtools/{database}_sorted.bam" %output_folder),
         index = temp("%s/{sample}/samtools/{database}_sorted.bam.bai" %output_folder)
     conda:
-        "../envs/htslib.yaml"
+        helper_functions.resolve_env(envs_location, "htslib")
     log:
         stdout = "Logs/{sample}/samtools_sort_{database}.log"
     message:
@@ -78,7 +78,7 @@ rule bcftools_pileup:
         pileup = temp("%s/{sample}/bcftools/{database}_pileup.bcf" %output_folder),
         index = temp("%s/{sample}/bcftools/{database}_pileup.bcf.csi" %output_folder)
     conda:
-        "../envs/htslib.yaml"
+        helper_functions.resolve_env(envs_location, "htslib")
     log:
         stdout = "Logs/{sample}/bcftools_pileup_{database}.log"
     message:
@@ -107,7 +107,7 @@ rule bcftools_filter_indels:
         indels = temp("%s/{sample}/bcftools/{database}_pileup_indels.bcf" %output_folder),
         index = temp("%s/{sample}/bcftools/{database}_pileup_indels.bcf.csi" %output_folder)
     conda:
-        "../envs/htslib.yaml"
+        helper_functions.resolve_env(envs_location, "htslib")
     log:
         stdout = "Logs/{sample}/bcftools_filter_indels_{database}.log"
     message:
@@ -134,7 +134,7 @@ rule bcftools_variant_call:
         variants = temp("%s/{sample}/bcftools/{database}_call_variants.bcf" %output_folder),
         index = temp("%s/{sample}/bcftools/{database}_call_variants.bcf.csi" %output_folder)
     conda:
-        "../envs/htslib.yaml"
+        helper_functions.resolve_env(envs_location, "htslib")
     log:
         stdout = "Logs/{sample}/bcftools_variant_call_{database}.log"
     message:

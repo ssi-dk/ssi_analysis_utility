@@ -1,5 +1,6 @@
+name: sistr
 channels:
   - conda-forge
-  - bioconda
+channel_priority: strict
 dependencies:
   - bioconda::sistr_cmd

@@ -1,8 +1,8 @@
+name: kmeraligner
 channels:
   - conda-forge
-  - bioconda
+channel_priority: strict
 dependencies:
-  - python=3.9
-  - kma
-  - curl
+  - bioconda::kma
+  - conda-forge::curl
  

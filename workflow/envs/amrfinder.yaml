@@ -1,6 +1,7 @@
+name: amrfinder
 channels:
   - conda-forge
-  - bioconda
+channel_priority: strict
 dependencies:
-  - ncbi-amrfinderplus
-  - curl
+  - bioconda::ncbi-amrfinderplus
+  - conda-forge::curl

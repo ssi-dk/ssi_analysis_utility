@@ -1,8 +1,7 @@
+name: meningotype
 channels:
   - conda-forge
-  - bioconda
+channel_priority: strict
 dependencies:
-  - python=3.10
-  - meningotype
-  - biopython=1.83
-  - blast
+  - bioconda::meningotype
+  - conda-forge::biopython<=1.85 # Bio.Blast.Applications module removed from 1.86 (https://github.com/biopython/biopython/blob/fb2f3f0d3729c4a1d86a8a4a04509781d6ab178e/DEPRECATED.rst#bioblastapplications)

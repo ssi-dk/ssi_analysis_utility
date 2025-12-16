@@ -1,7 +1,8 @@
+name: htslib
 channels:
-  - bioconda
   - conda-forge
+channel_priority: strict
 dependencies:
-  - htslib
-  - samtools
-  - bcftools
+  - bioconda::htslib
+  - bioconda::samtools
+  - bioconda::bcftools

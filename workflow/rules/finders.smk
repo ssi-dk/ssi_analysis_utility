@@ -8,7 +8,7 @@ rule plasmidfinder:
         # Output directory for plasmidfinder results.
         replicons = "%s/{sample}/plasmidfinder/results_tab.tsv" %output_folder
     conda:
-        "../envs/plasmidfinder.yaml"
+        helper_functions.resolve_env(envs_location, "plasmidfinder")
     log:
         stdout = 'Logs/{sample}/plasmidfinder.log'
     message:
@@ -36,7 +36,7 @@ rule resfinder:
     output:
         resistance = "%s/{sample}/resfinder/ResFinder_results_tab.txt" %output_folder
     conda:
-        "../envs/resfinder.yaml"
+        helper_functions.resolve_env(envs_location, "resfinder")
     log:
         stdout = 'Logs/{sample}/resfinder.log'
     message:
@@ -59,7 +59,7 @@ rule virulencefinder:
     output:
         virulence = "%s/{sample}/virulencefinder/results_tab.tsv" %output_folder
     conda:
-        "../envs/virulencefinder.yaml"
+        helper_functions.resolve_env(envs_location, "virulencefinder")
     log:
         stdout = 'Logs/{sample}/virulencefinder.log'
     message:
@@ -82,7 +82,7 @@ rule serotypefinder:
     output:
         serotype = "%s/{sample}/serotypefinder/results_tab.tsv" %output_folder
     conda:
-        "../envs/serotypefinder.yaml"
+        helper_functions.resolve_env(envs_location, "serotypefinder")
     log:
         stdout = 'Logs/{sample}/serotypefinder.log'
     message:
@@ -106,7 +106,7 @@ rule amrfinder:
     output:
         result = "%s/{sample}/amrfinder/{assembler}.tsv" %output_folder
     conda:
-        "../envs/amrfinder.yaml"
+        helper_functions.resolve_env(envs_location, "amrfinder")
     log:
         stdout = 'Logs/{sample}/amrfinder_{assembler}.log'
     message:
@@ -159,7 +159,7 @@ rule snp_identifier:
     output:
         indentified_variants = "%s/{sample}/snp_identifier/{database}.tsv" %output_folder
     conda:
-        "../envs/python_functions.yaml"
+        helper_functions.resolve_env(envs_location, "python_functions")
     log:
         stdout = "Logs/{sample}/snp_identifier_{database}.log"
     message:
@@ -186,7 +186,7 @@ rule deletion_identifier:
     output:
         identified_variants = f"{output_folder}/{{sample}}/deletion_identifier/{{assembler,[^_]+}}_{{database}}.tsv" #added regex expression to ensure assemblies cannot contain '_' which our database also does
     conda:
-        "../envs/python_functions.yaml"
+        helper_functions.resolve_env(envs_location, "python_functions")
     log:
         stdout = "Logs/{sample}/deletion_identifier_{assembler}_{database}.log"
     message:
@@ -211,7 +211,7 @@ rule cdiff_repeat_identifier:
     output:
         repeat_types = "%s/{sample}/cdiff_repeat_identifier/{assembler}_repeat_types.tsv" %output_folder
     conda:
-        "../envs/python_functions.yaml"
+        helper_functions.resolve_env(envs_location, "python_functions")
     log:
         stdout = "Logs/{sample}/cdiff_repeat_identifier_{assembler}_repeat_types.log"
     message:

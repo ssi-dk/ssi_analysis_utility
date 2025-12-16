@@ -6,7 +6,7 @@ rule fetch_genbank:
         fasta = "%s/custom/{database,[^/]+}.fasta" % database_path,
         bed = "%s/custom/{database,[^/]+}.bed6" % database_path,
     conda:
-        "../envs/fetch.yaml"
+        helper_functions.resolve_env(envs_location, "fetch")
     log:
         stdout = 'Logs/Databases/fetch_genbank_{database}.log'
     message:
@@ -27,7 +27,7 @@ rule fetch_type_repeat_sequence:
     output:
         seq = "%s/custom/type_repeats/{TR}.fasta" %database_path
     conda:
-        "../envs/fetch.yaml"
+        helper_functions.resolve_env(envs_location, "fetch")
     log:
         stdout = "Logs/Databases/fetch_type_repeat_sequences_{TR}.log"
     message:
@@ -47,7 +47,7 @@ rule fetch_type_repeat_metadata:
     output:
         meta = "%s/custom/type_repeats/{TR}.txt" %database_path
     conda:
-        "../envs/fetch.yaml"
+        helper_functions.resolve_env(envs_location, "fetch")
     log:
         stdout = "Logs/Databases/fetch_type_repeat_metadata_{TR}.log"
     message:
@@ -67,7 +67,7 @@ rule fetch_ecoligenes:
     output:
         source = "%s/custom/ecoligenes.fasta" %database_path
     conda:
-        "../envs/fetch.yaml"
+        helper_functions.resolve_env(envs_location, "fetch")
     log:
         stdout = "Logs/Databases/setup_ecoligenes_ecoligenes.log"
     message:
@@ -84,47 +84,47 @@ rule fetch_ecoligenes:
 
 
 rule fetch_Senterica_Scheme:
-  output:
-    source = "%s/custom/SalmonellaAchtman7GeneMLST.fasta" %database_path,
-    profile = "%s/custom/SalmonellaAchtman7GeneMLST.txt" %database_path
-  conda:
-    "../envs/fetch.yaml"
-  log:
-    stdout = "Logs/Databases/setup_senterica.log"
-  message:
-    "[fetch_Senterica_Scheme]: Downloading Achtman 7 Gene MLST scheme for Salmonella Enterica"
-  shell:
-    """
-    mkdir -p $(dirname {output.source})
-    cmd="curl https://enterobase.warwick.ac.uk/schemes/Salmonella.Achtman7GeneMLST/MLST_Achtman_ref.fasta -o {output.source}"
+    output:
+        source = "%s/custom/SalmonellaAchtman7GeneMLST.fasta" %database_path,
+        profile = "%s/custom/SalmonellaAchtman7GeneMLST.txt" %database_path
+    conda:
+        helper_functions.resolve_env(envs_location, "fetch")
+    log:
+        stdout = "Logs/Databases/setup_senterica.log"
+    message:
+        "[fetch_Senterica_Scheme]: Downloading Achtman 7 Gene MLST scheme for Salmonella Enterica"
+    shell:
+        """
+        mkdir -p $(dirname {output.source})
+        cmd="curl https://enterobase.warwick.ac.uk/schemes/Salmonella.Achtman7GeneMLST/MLST_Achtman_ref.fasta -o {output.source}"
 
-    echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-    eval $cmd >> {log.stdout} 2>&1
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
 
-    cmd="curl https://enterobase.warwick.ac.uk/schemes/Salmonella.Achtman7GeneMLST/profiles.list.gz | gunzip -c > {output.profile}"
+        cmd="curl https://enterobase.warwick.ac.uk/schemes/Salmonella.Achtman7GeneMLST/profiles.list.gz | gunzip -c > {output.profile}"
 
-    echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-    eval $cmd >> {log.stdout} 2>&1
-    """
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+        """
 
 
 rule fetch_Senterica_Serovar:
-  output:
-    source = "%s/custom/Senterica_serovar.txt" %database_path
-  conda:
-    "../envs/fetch.yaml"
-  log:
-    stdout = "Logs/Databases/setup_senterica.log"
-  message:
-    "[fetch_Senterica_Scheme]: Downloading Achtman 7 Gene MLST scheme for Salmonella Enterica"
-  shell:
-    """
-    mkdir -p $(dirname {output.source})
-    cmd="curl -fSL https://raw.githubusercontent.com/phac-nml/sistr_cmd/master/sistr/data/serovar-list.txt -o {output.source}"
+    output:
+        source = "%s/custom/Senterica_serovar.txt" %database_path
+    conda:
+        helper_functions.resolve_env(envs_location, "fetch")
+    log:
+        stdout = "Logs/Databases/setup_senterica.log"
+    message:
+        "[fetch_Senterica_Scheme]: Downloading Achtman 7 Gene MLST scheme for Salmonella Enterica"
+    shell:
+        """
+        mkdir -p $(dirname {output.source})
+        cmd="curl -fSL https://raw.githubusercontent.com/phac-nml/sistr_cmd/master/sistr/data/serovar-list.txt -o {output.source}"
 
-    echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-    eval $cmd >> {log.stdout} 2>&1
-    """
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+        """
 
 rule setup_LREfinder:
     conda:
@@ -150,7 +150,7 @@ rule fetch_chtyper_db:
     output:
         source = "%s/custom/fumCH_db.fasta" %database_path
     conda:
-        "../envs/fetch.yaml"
+        helper_functions.resolve_env(envs_location, "fetch")
     log:
         stdout = "Logs/Databases/setup_chtyper_database.log"
     message:
@@ -176,7 +176,7 @@ rule fetch_chtyper_db:
 # We store momentarily in Dataset/databases
 rule fetch_blast_database:
     conda:
-        "../envs/blast.yaml"
+        helper_functions.resolve_env(envs_location, "blast")
     input: 
         source = "%s/{database}.fasta" %temp_storage_path
     output:

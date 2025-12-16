@@ -1,7 +1,7 @@
 
 rule setup_PlasmidFinder:
     conda:
-        "../envs/plasmidfinder.yaml"
+        helper_functions.resolve_env(envs_location, "plasmidfinder")
     output: 
         database = directory("%s/plasmidfinder_db" %database_path)
     log:
@@ -30,7 +30,7 @@ rule setup_PlasmidFinder:
 
 rule setup_ResFinder:
     conda:
-        "../envs/resfinder.yaml"
+        helper_functions.resolve_env(envs_location, "resfinder")
     output:
         database = directory("%s/resfinder_db" %database_path)
     log:
@@ -59,7 +59,7 @@ rule setup_ResFinder:
 
 rule setup_PointFinder:
     conda:
-        "../envs/resfinder.yaml"
+        helper_functions.resolve_env(envs_location, "resfinder")
     output:
         database = directory("%s/pointfinder_db" %database_path)
     log:
@@ -89,7 +89,7 @@ rule setup_PointFinder:
 
 rule setup_DisinFinder:
     conda:
-        "../envs/resfinder.yaml"
+        helper_functions.resolve_env(envs_location, "resfinder")
     output:
         database = directory("%s/disinfinder_db" %database_path)
     log:
@@ -118,7 +118,7 @@ rule setup_DisinFinder:
 
 rule setup_VirulenceFinder:
     conda:
-        "../envs/virulencefinder.yaml"
+        helper_functions.resolve_env(envs_location, "virulencefinder")
     output:
         database = directory("%s/virulencefinder_db" %database_path)
     log:
@@ -147,7 +147,7 @@ rule setup_VirulenceFinder:
 
 rule setup_SerotypeFinder:
     conda:
-        "../envs/serotypefinder.yaml"
+        helper_functions.resolve_env(envs_location, "serotypefinder")
     output:
         database = directory("%s/serotypefinder_db" %database_path)
     log:
@@ -176,7 +176,7 @@ rule setup_SerotypeFinder:
 
 rule setup_AMRFinder:
     conda:
-        "../envs/amrfinder.yaml"
+        helper_functions.resolve_env(envs_location, "amrfinder")
     output:
         database = directory("%s/amrfinderplus/latest" %database_path)
     log:
@@ -196,7 +196,7 @@ rule setup_AMRFinder:
 
 rule update_MLST:
     conda:
-        "../envs/mlst.yaml"
+        helper_functions.resolve_env(envs_location, "mlst")
     output:
         datefile = "%s/mlst/creation.date" % database_path
     log:
@@ -222,91 +222,91 @@ rule update_MLST:
 
 
 rule setup_custom_kmeraligner_index:
-  input:
-    source = "%s/custom/{database}.fasta" %database_path
-  params:
-    prefix = "%s/kmeraligner/{database}" %database_path
-  output:
-    combined_size = "%s/kmeraligner/{database}.comp.b" %database_path,
-    lengths = "%s/kmeraligner/{database}.length.b" %database_path,
-    names = "%s/kmeraligner/{database}.name" %database_path,
-    seqs = "%s/kmeraligner/{database}.seq.b" %database_path,
-  conda:
-    "../envs/kmeraligner.yaml"
-  log:
-    stdout = "Logs/Databases/setup_custom_kmeraligner_index_{database}.log"
-  message:
-    "[setup_custom_kmeraligner_index]: Setting up {wildcards.database} database with kmeraligner"
-  shell:
-    """
-    mkdir -p $(dirname {params.prefix})
+    input:
+        source = "%s/custom/{database}.fasta" %database_path
+    params:
+        prefix = "%s/kmeraligner/{database}" %database_path
+    output:
+        combined_size = "%s/kmeraligner/{database}.comp.b" %database_path,
+        lengths = "%s/kmeraligner/{database}.length.b" %database_path,
+        names = "%s/kmeraligner/{database}.name" %database_path,
+        seqs = "%s/kmeraligner/{database}.seq.b" %database_path,
+    conda:
+        helper_functions.resolve_env(envs_location, "kmeraligner")
+    log:
+        stdout = "Logs/Databases/setup_custom_kmeraligner_index_{database}.log"
+    message:
+        "[setup_custom_kmeraligner_index]: Setting up {wildcards.database} database with kmeraligner"
+    shell:
+        """
+        mkdir -p $(dirname {params.prefix})
 
-    cmd="kma index -i {input.source} -o {params.prefix}"
+        cmd="kma index -i {input.source} -o {params.prefix}"
 
-    echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-    eval $cmd >> {log.stdout} 2>&1
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
 
 
-    date -I > {params.prefix}_creation.date
-    """
+        date -I > {params.prefix}_creation.date
+        """
 
 
 rule setup_custom_bowtie2_index:
-  input:
-    source = "%s/custom/{database}.fasta" %database_path
-  params:
-    prefix = "%s/bowtie2/{database}" %database_path
-  output:
-    bt2_1 = "%s/bowtie2/{database}.1.bt2" %database_path,
-    bt2_2 = "%s/bowtie2/{database}.2.bt2" %database_path,
-    bt2_3 = "%s/bowtie2/{database}.3.bt2" %database_path,
-    bt2_4 = "%s/bowtie2/{database}.4.bt2" %database_path,
-    bt2_1_rev = "%s/bowtie2/{database}.rev.1.bt2" %database_path,
-    bt2_2_rev = "%s/bowtie2/{database}.rev.2.bt2" %database_path
-  conda:
-    "../envs/bowtie2.yaml"
-  log:
-    stdout = "Logs/Databases/setup_custom_bowtie2index_{database}.log"
-  message:
-    "[setup_custom_bowtie2_index]: Setting up {wildcards.database} database with bowtie2"
-  shell:
-    """
-    mkdir -p $(dirname {params.prefix})
-    cmd="bowtie2-build {input.source} {params.prefix}"
+    input:
+        source = "%s/custom/{database}.fasta" %database_path
+    params:
+        prefix = "%s/bowtie2/{database}" %database_path
+    output:
+        bt2_1 = "%s/bowtie2/{database}.1.bt2" %database_path,
+        bt2_2 = "%s/bowtie2/{database}.2.bt2" %database_path,
+        bt2_3 = "%s/bowtie2/{database}.3.bt2" %database_path,
+        bt2_4 = "%s/bowtie2/{database}.4.bt2" %database_path,
+        bt2_1_rev = "%s/bowtie2/{database}.rev.1.bt2" %database_path,
+        bt2_2_rev = "%s/bowtie2/{database}.rev.2.bt2" %database_path
+    conda:
+            helper_functions.resolve_env(envs_location, "bowtie2")
+    log:
+        stdout = "Logs/Databases/setup_custom_bowtie2index_{database}.log"
+    message:
+        "[setup_custom_bowtie2_index]: Setting up {wildcards.database} database with bowtie2"
+    shell:
+        """
+        mkdir -p $(dirname {params.prefix})
+        cmd="bowtie2-build {input.source} {params.prefix}"
 
-    echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-    eval $cmd >> {log.stdout} 2>&1
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
 
-    date -I > {params.prefix}_creation.date
-    """
+        date -I > {params.prefix}_creation.date
+        """
 
 
 rule setup_custom_samtool_index:
-  input:
-    source = "%s/custom/{database}.fasta" %database_path
-  output:
-    source = "%s/samtools/{database}.fasta" %database_path, 
-    index = "%s/samtools/{database}.fasta.fai" %database_path
-  conda:
-    "../envs/htslib.yaml"
-  log:
-    stdout = "Logs/Databases/setup_custom_samtool_index_{database}.log"
-  message:
-    "[setup_custom_samtool_index]: Setting up {wildcards.database} database with samtools"
-  shell:
-    """
-    outdir=$(dirname {output.source})
-    mkdir -p $outdir
+    input:
+        source = "%s/custom/{database}.fasta" %database_path
+    output:
+        source = "%s/samtools/{database}.fasta" %database_path, 
+        index = "%s/samtools/{database}.fasta.fai" %database_path
+    conda:
+        helper_functions.resolve_env(envs_location, "htslib")
+    log:
+        stdout = "Logs/Databases/setup_custom_samtool_index_{database}.log"
+    message:
+        "[setup_custom_samtool_index]: Setting up {wildcards.database} database with samtools"
+    shell:
+        """
+        outdir=$(dirname {output.source})
+        mkdir -p $outdir
 
-    cmd="cp {input.source} {output.source}"
+        cmd="cp {input.source} {output.source}"
 
-    echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-    eval $cmd >> {log.stdout} 2>&1
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
 
-    cmd="samtools faidx {output.source} -o {output.index}"
+        cmd="samtools faidx {output.source} -o {output.index}"
 
-    echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
-    eval $cmd >> {log.stdout} 2>&1
+        echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
 
-    date -I > $outdir/creation.date
-    """
+        date -I > $outdir/creation.date
+        """

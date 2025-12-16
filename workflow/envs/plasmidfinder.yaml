@@ -1,7 +1,6 @@
+name: plasmidfinder
 channels:
   - conda-forge
-  - bioconda
+channel_priority: strict
 dependencies:
-  - python=3.9
-  - plasmidfinder
-  - kma
+  - bioconda::plasmidfinder

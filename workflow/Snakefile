@@ -17,6 +17,12 @@ output_folder = config['output_folder']
 temp_storage_path = config['temp_storage']
 results_catalogue_path = config['result_catalogue']
 
+envs_location = None
+if "envs_location" in config.keys():
+    envs_location = config['envs_location']
+else:
+    print(f"`envs_location` not specified in configs, will run on snakemakes own prebuild environments.")
+
 samplesheet = pd.read_csv(samplesheet_path, sep='\t')
 
 sample_configs = helper_functions.determine_sample_configs(samplesheet, "workflow/configs_species", True)
@@ -40,6 +46,11 @@ Samples = list(Sample_dict.keys())
 #define the long table output files to activate rule all
 Longtable_samples_output = [f"{output_folder}/{sample}/{sample}_longtable.tsv" for sample in Samples]
 Longtable_all = f"{output_folder}/all_results.tsv"
+
+
+
+
+
 
 ##############################################################################
 #
