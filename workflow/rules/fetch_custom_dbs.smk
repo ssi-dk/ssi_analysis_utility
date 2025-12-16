@@ -5,6 +5,7 @@ rule fetch_genbank:
     output:
         fasta = "%s/custom/{database,[^/]+}.fasta" % database_path,
         bed = "%s/custom/{database,[^/]+}.bed6" % database_path,
+        version_db = "%s/custom/{database,[^/]+}_version.txt" %database_path
     conda:
         "../envs/fetch.yaml"
     log:
@@ -16,16 +17,31 @@ rule fetch_genbank:
         set -euo pipefail
         mkdir -p $(dirname {output.fasta})
 
+        # 1) Run the genbank fetcher
         cmd="python workflow/scripts/genbank_fetcher.py --metafile {params.metafile} --bed {output.bed} --fasta {output.fasta} --merge {params.merge} --append"
 
         echo "Executing command:\n$cmd\n" > {log.stdout}
         eval $cmd >> {log.stdout} 2>&1
+
+        # 2) Make version file with one '_'-separated line of unique accessions and starting with genbank_db_
+        
+        version_cmd="tail -n +2 {params.metafile} | cut -f1 | sort -u | paste -sd '_' - | sed 's/^/genbank_db_/'"
+        date_cmd="date -I"
+
+        echo -e "Executing command:\n$version_cmd\n$date_cmd\n" >> {log.stdout}
+
+        version_str="$(eval "$version_cmd" 2>> {log.stdout})"
+        date_str="$(eval "$date_cmd" 2>> {log.stdout})"
+
+        # Write "<accessions>\t<date>" to the version file
+        printf '%s\t%s\n' "$version_str" "$date_str" > {output.version_db}
         """
 
 
 rule fetch_type_repeat_sequence:
     output:
-        seq = "%s/custom/type_repeats/{TR}.fasta" %database_path
+        seq = "%s/custom/type_repeats/{TR}.fasta" %database_path,
+        version_db = "%s/custom/type_repeats/{TR}_version.txt" % database_path
     conda:
         "../envs/fetch.yaml"
     log:
@@ -34,12 +50,21 @@ rule fetch_type_repeat_sequence:
         "[fetch_type_repeat_sequences]: Downloading Type Repeat Sequence Type sequences"
     shell:
         """
+        set -euo pipefail
         mkdir -p $(dirname {output.seq})
 
-        cmd="curl -fSL https://raw.githubusercontent.com/RAHenriksen/ssi_analysis_utility_db/refs/heads/main/clostridioides_difficile/type_repeats/{wildcards.TR}.fasta -o {output.seq}"
+        rel_path="clostridioides_difficile/type_repeats/{wildcards.TR}.fasta"
+        rel_ver="clostridioides_difficile/type_repeats/{wildcards.TR}_version.txt"
 
-        echo "Executing command:\n$cmd\n" > {log.stdout}
-        eval $cmd >> {log.stdout} 2>&1
+        fasta_url="https://raw.githubusercontent.com/RAHenriksen/ssi_analysis_utility_db/main/$rel_path"
+        ver_url="https://raw.githubusercontent.com/RAHenriksen/ssi_analysis_utility_db/main/$rel_ver"
+
+        cmd_fasta="curl -fSL $fasta_url -o {output.seq}"
+        cmd_ver="curl -fSL $ver_url -o {output.version_db}"
+
+        echo "Executing command:\n$cmd_fasta\n$cmd_ver\n" > {log.stdout}
+        eval "$cmd_fasta" >> {log.stdout} 2>&1
+        eval "$cmd_ver"   >> {log.stdout} 2>&1
         """
 
 
@@ -65,7 +90,8 @@ rule fetch_type_repeat_metadata:
 
 rule fetch_ecoligenes:
     output:
-        source = "%s/custom/ecoligenes.fasta" %database_path
+        source = "%s/custom/ecoligenes.fasta" %database_path,
+        version_db = "%s/custom/ecoligenes_version.txt" % database_path
     conda:
         "../envs/fetch.yaml"
     log:
@@ -74,14 +100,22 @@ rule fetch_ecoligenes:
         "[fetch_ecoligenes]: Downloading custom database ecoligenes"
     shell:
         """
+        set -euo pipefail
         mkdir -p $(dirname {output.source})
         
-        cmd="curl https://raw.githubusercontent.com/RAHenriksen/ssi_analysis_utility_db/refs/heads/main/escherichia_coli/ecoligenes.fasta -o {output.source}"
+        rel_path="escherichia_coli/ecoligenes.fasta"
+        rel_ver="escherichia_coli/ecoligenes_version.txt"
+        
+        fasta_url="https://raw.githubusercontent.com/RAHenriksen/ssi_analysis_utility_db/main/$rel_path"
+        ver_url="https://raw.githubusercontent.com/RAHenriksen/ssi_analysis_utility_db/main/$rel_ver"
 
-        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-        eval $cmd >> {log.stdout} 2>&1
+        cmd_fasta="curl -fSL $fasta_url -o {output.source}"
+        cmd_ver="curl -fSL $ver_url -o {output.version_db}"
+
+        echo "Executing command:\n$cmd_fasta\n$cmd_ver\n" > {log.stdout}
+        eval "$cmd_fasta" >> {log.stdout} 2>&1
+        eval "$cmd_ver"   >> {log.stdout} 2>&1
         """
-
 
 rule fetch_Senterica_Scheme:
   output:
