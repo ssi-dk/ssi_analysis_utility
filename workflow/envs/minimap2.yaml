@@ -1,5 +1,6 @@
 name: minimap2
 channels:
   - conda-forge
+channel_priority: strict
 dependencies:
   - bioconda::minimap2
