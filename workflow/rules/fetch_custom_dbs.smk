@@ -87,7 +87,6 @@ rule fetch_type_repeat_metadata:
         eval $cmd >> {log.stdout} 2>&1
         """
 
-
 rule fetch_ecoligenes:
     output:
         source = "%s/custom/ecoligenes.fasta" %database_path,
@@ -118,47 +117,76 @@ rule fetch_ecoligenes:
         """
 
 rule fetch_Senterica_Scheme:
-  output:
-    source = "%s/custom/SalmonellaAchtman7GeneMLST.fasta" %database_path,
-    profile = "%s/custom/SalmonellaAchtman7GeneMLST.txt" %database_path
-  conda:
-    "../envs/fetch.yaml"
-  log:
-    stdout = "Logs/Databases/setup_senterica.log"
-  message:
-    "[fetch_Senterica_Scheme]: Downloading Achtman 7 Gene MLST scheme for Salmonella Enterica"
-  shell:
-    """
-    mkdir -p $(dirname {output.source})
-    cmd="curl https://enterobase.warwick.ac.uk/schemes/Salmonella.Achtman7GeneMLST/MLST_Achtman_ref.fasta -o {output.source}"
+    output:
+        source = "%s/custom/SalmonellaAchtman7GeneMLST.fasta" %database_path,
+        profile = "%s/custom/SalmonellaAchtman7GeneMLST.txt" %database_path
+    conda:
+        "../envs/fetch.yaml"
+    log:
+        stdout = "Logs/Databases/setup_senterica_mlst_scheme.log"
+    message:
+        "[fetch_Senterica_Scheme]: Downloading Achtman 7 Gene MLST scheme for Salmonella Enterica"
+    shell:
+        """
+        mkdir -p $(dirname {output.source})
+        cmd="curl https://enterobase.warwick.ac.uk/schemes/Salmonella.Achtman7GeneMLST/MLST_Achtman_ref.fasta -o {output.source}"
 
-    echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-    eval $cmd >> {log.stdout} 2>&1
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
 
-    cmd="curl https://enterobase.warwick.ac.uk/schemes/Salmonella.Achtman7GeneMLST/profiles.list.gz | gunzip -c > {output.profile}"
+        cmd="curl https://enterobase.warwick.ac.uk/schemes/Salmonella.Achtman7GeneMLST/profiles.list.gz | gunzip -c > {output.profile}"
 
-    echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-    eval $cmd >> {log.stdout} 2>&1
-    """
-
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+        
+        """
 
 rule fetch_Senterica_Serovar:
-  output:
-    source = "%s/custom/Senterica_serovar.txt" %database_path
-  conda:
-    "../envs/fetch.yaml"
-  log:
-    stdout = "Logs/Databases/setup_senterica.log"
-  message:
-    "[fetch_Senterica_Scheme]: Downloading Achtman 7 Gene MLST scheme for Salmonella Enterica"
-  shell:
-    """
-    mkdir -p $(dirname {output.source})
-    cmd="curl -fSL https://raw.githubusercontent.com/phac-nml/sistr_cmd/master/sistr/data/serovar-list.txt -o {output.source}"
+    output:
+        source = "%s/custom/Senterica_serovar.txt" % database_path,
+        version_db = "%s/custom/Senterica_serovar_version.txt" % database_path
+    conda:
+        "../envs/fetch.yaml"
+    log:
+        stdout = "Logs/Databases/setup_senterica_sistr.log"
+    message:
+        "[fetch_Senterica_Serovar]: Downloading SISTR serovar list"
+    shell:
+        """
+        set -euo pipefail
+        mkdir -p $(dirname {output.source})
 
-    echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-    eval $cmd >> {log.stdout} 2>&1
-    """
+        list_url="https://raw.githubusercontent.com/phac-nml/sistr_cmd/master/sistr/data/serovar-list.txt"
+
+        # 1) Download the serovar list
+        cmd_fasta="curl -fSL $list_url -o {output.source}"
+
+        echo "Executing command:\n$cmd_fasta\n" > {log.stdout}
+        eval "$cmd_fasta" >> {log.stdout} 2>&1
+
+        # 2) Get ETag (as a clean value) and make version file
+        # sed -n 's/^etag: //Ip' greps case insensitive etag and replace with nothing
+        # tr -d \\r deletes the characters since some HTTP headers end lines with \r\n
+        # tr -d 042 deletes the octal character for double quotes
+        etag_cmd="curl -sI $list_url | sed -n 's/^etag: //Ip' | tr -d '\\r' | tr -d '\\042'"
+        date_cmd="date -I"
+
+        echo -e "Executing command:\n$etag_cmd\n$date_cmd\n" >> {log.stdout}
+
+        etag_str="$(eval "$etag_cmd" 2>> {log.stdout})"
+        date_str="$(eval "$date_cmd" 2>> {log.stdout})"
+
+        # Fallback if no ETag is present for some reason
+        if [ -z "$etag_str" ]; then
+            etag_str="no_etag"
+        fi
+
+        # Build version ID. If you DON'T want the ETag at all, set version_str="sistr_serovar_list"
+        version_str="sistr_serovar_list_$etag_str"
+
+        # Write "<id>\t<download_date>" to the version file
+        printf '%s\t%s\n' "$version_str" "$date_str" > {output.version_db}
+        """
 
 rule setup_LREfinder:
     conda:
@@ -178,7 +206,6 @@ rule setup_LREfinder:
         mv elmDB/elm.fsa {output.database}
         rm -r elmDB/ elmDB.tar.gz
         """
-
 
 rule fetch_chtyper_db:
     output:
