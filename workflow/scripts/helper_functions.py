@@ -17,7 +17,7 @@ def resolve_env(envs_location,
     pipeline_dir = os.getcwd()
     environment = "%s/workflow/envs/%s.yaml" % (pipeline_dir, tool_name)
 
-    if envs_location is not None:
+    if str(envs_location).lower() != "none":
 
         # Build path to env
         full_path = os.path.join(envs_location, tool_name)
