@@ -1,0 +1,18 @@
+
+plasmidfinder: true
+
+virulencefinder: true
+
+serotypefinder: true
+
+amrfinder:
+    options: --organism 'Enterococcus_faecium'
+    assemblers: [shovill]  
+
+mlst:
+    assemblers: [shovill]  
+
+LREfinder:
+    database : [elmDB]
+
+

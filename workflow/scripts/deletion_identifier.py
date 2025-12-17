@@ -1,687 +1,1831 @@
 #!/usr/bin/env python3
+
 from __future__ import annotations
 
 import argparse
-from typing import Dict, List, Tuple
+import re
+from typing import Dict, List, Optional, Tuple
+
 import pandas as pd
 import pysam
 
-# -------------------------- Helpers --------------------------
 
-def reverse_complement(seq: str) -> str:
-    comp = {"A": "T", "T": "A", "G": "C", "C": "G", "N": "N"}
-    return "".join(comp.get(b.upper(), b) for b in reversed(seq))
+# ========================= FASTA helpers =========================
 
-def load_bed6(bed6_path: str) -> Dict[str, Dict[str, object]]:
-    """Load BED6 into {gene: {contig, start, end, length, strand}}."""
-    bedfile_dict: Dict[str, Dict[str, object]] = {}
 
-    try:
-        df = pd.read_csv(
-            bed6_path,
-            sep="\t",
-            header=0,
-            names=["contig", "start", "end", "gene", "score", "strand"],
-            dtype={"contig": "string", "start": int, "end": int, "gene": "string", "score": "float", "strand": "string"},
-            )
-        for idx, row in df.iterrows():
-            bedfile_dict[str(row["gene"])]= {
-                "contig": str(row["contig"]),
-                "start": int(row["start"]),
-                "end": int(row["end"]),
-                "length": (int(row["end"]) - int(row["start"])),
-                "strand": str(row["strand"])
-            }
-        print(bedfile_dict)
-    except Exception as e:
-        print(f"Failed to load BED6 file: {e}")
-        raise
-    
-    # 'tcdC': {'contig': 'AM180355.1', 'start': 804309, 'end': 805008, 'length': 699, 'strand': '-'}, 
-    return bedfile_dict
+def load_fasta_sequences(fasta_path: str) -> Dict[str, str]:
+    """
+    Load a (possibly multi-)FASTA file into a dict: {header: sequence}.
 
-def process_res_file(res_file_path: str) -> pd.DataFrame:
-    # i need these excepts if the .res file if later changed to temp() or somehow altered during the snakemake pipeline
-    try:
-        res_df = pd.read_csv(res_file_path, sep="\t")
-    except FileNotFoundError:
-        raise FileNotFoundError(f"File not found: {res_file_path}")
-    except pd.errors.EmptyDataError:
-        raise ValueError(f"File is empty or not properly formatted: {res_file_path}")
+    The header is taken as the first whitespace-separated token after '>'.
+    Sequences are uppercased.
+    """
+    seqs: Dict[str, str] = {}
+    header: Optional[str] = None
+    chunks: List[str] = []
 
-    required_columns = {"#Template", "Template_length","Template_Coverage", "Template_Identity", "Depth"}
-    if not required_columns.issubset(res_df.columns):
-        raise ValueError(f"Missing expected columns in {res_file_path}. Found: {', '.join(res_df.columns)}")
+    print(f"[INFO] Loading FASTA sequences from: {fasta_path}")
+    with open(fasta_path, "r") as fh:
+        for line in fh:
+            line = line.strip()
+            if not line:
+                continue
+            if line.startswith(">"):
+                # flush previous
+                if header is not None:
+                    seqs[header] = "".join(chunks).upper()
+                header = line[1:].split()[0]
+                chunks = []
+            else:
+                chunks.append(line)
+        # flush last
+        if header is not None:
+            seqs[header] = "".join(chunks).upper()
 
-    return res_df
+    print(f"[INFO] Loaded {len(seqs)} sequences from FASTA.")
+    return seqs
 
-def find_contig_for_gene(res_df: pd.DataFrame, gene: str) -> str:
-    hits = res_df[res_df["#Template"].str.contains(gene, case=False, na=False)]
-    if hits.empty:
-        raise ValueError(f"No contig with gene '{gene}' in .res")
-    return str(hits.iloc[0]["#Template"])
 
-def read_meta(meta_path: str, organism: str) -> pd.DataFrame:
-    """Read deletion meta TSV and filter by species."""
+# ========================= Step 1: load_metafile =========================
+
+
+def load_deletion_metafile(meta_path: str) -> pd.DataFrame:
+    """
+    Load the deletion metafile.
+
+    Expected columns:
+      species, gene, del_start, del_end, del_type, gt_IMF, gt_IDV, gt_DP, consensus_N
+    """
     df = pd.read_csv(meta_path, sep="\t")
-    
-    required_col = {"species", "gene", "del_start", "del_end", "gt_IMF", "gt_IDV", "gt_DP", "consensus_N"}
-    
-    missing_col = required_col - set(df.columns)
-    if missing_col:
-        raise ValueError(f"provided snp information file to (--meta) is missing required columns: {', '.join(sorted(missing_col))}")
-    
-    # normalize dtypes
+    required_cols = {
+        "species",
+        "gene",
+        "del_start",
+        "del_end",
+        "del_type",
+        "gt_IMF",
+        "gt_IDV",
+        "gt_DP",
+        "consensus_N",
+    }
+
+    missing = required_cols - set(df.columns)
+    if missing:
+        raise ValueError(
+            f"Metafile is missing required columns: {', '.join(sorted(missing))}"
+        )
+
+    # Normalize types
     df["species"] = df["species"].astype(str)
-    df = df[df["species"] == organism].copy()
-    if df.empty:
-        return df
-
     df["gene"] = df["gene"].astype(str)
-    for pos in ("del_start", "del_end"):
-        df[pos] = df[pos].astype(int)
-    for threshold in ("gt_IMF", "gt_IDV", "gt_DP", "consensus_N"):
-        df[threshold] = pd.to_numeric(df[threshold])
+    df["del_start"] = df["del_start"].astype(int)
+    df["del_end"] = df["del_end"].astype(int)
+    df["del_type"] = df["del_type"].astype(int)
+    df["gt_IMF"] = pd.to_numeric(df["gt_IMF"])
+    df["gt_IDV"] = pd.to_numeric(df["gt_IDV"])
+    df["gt_DP"] = pd.to_numeric(df["gt_DP"])
+    df["consensus_N"] = pd.to_numeric(df["consensus_N"])
 
-    # add length and a key like del330_347_17
-    df["del_len"] = (df["del_end"] - df["del_start"] + 1).astype(int)
-    print(f"the length {df['del_len']}")
-    df["del_key"] = df.apply(
-        lambda r: f"del{r.del_start}_{r.del_end}_{r.del_len}", axis=1
-    )
-    print(f"key is {df['del_key']}")
     return df
 
-def convert_reverse_strand_regions(
-    regions: Dict[int, Tuple[int, int]], gene_length: int
-) -> Dict[int, Tuple[int, int]]:
-    """Convert reverse-strand gene-relative coords to forward contig coords."""
-    converted: Dict[int, Tuple[int, int]] = {}
-    for length_key, (start, end) in regions.items():
-        converted_start = gene_length - (end - 1)
-        converted_end = gene_length - (start - 1)
-        converted[length_key] = (min(converted_start, converted_end), max(converted_start, converted_end))
-    return converted
 
-def is_in_any_region(pos: int, spans: List[Tuple[int, int]]) -> bool:
-    return any(a <= pos <= b for a, b in spans)
+# ========================= Step 2: Check_organism =========================
 
-def filter_deletion_details(detail_str: str) -> str:
+
+def check_organism(meta_df: pd.DataFrame, organism: str) -> pd.DataFrame:
     """
-    Filters a deletion detail string by removing entries with 0-length deletions.
+    Filter deletion metafile rows to the requested organism.
 
-    Args:
-        detail_str (str): A string of the format "pos1_REF_ALT_len+pos2_REF_ALT_len+..."
-
-    Returns:
-        str: Filtered string with only actual deletions (len > 0), or '-' if none remain.
+    Returns a new DataFrame containing only rows where species == organism.
     """
-    if not detail_str:
-        return "-"
+    organism = str(organism).strip()
+    filtered_metadf = meta_df[meta_df["species"].str.strip() == organism].copy()
+    print(
+        f"[INFO] Filtered metafile for organism '{organism}', "
+        f"found {len(filtered_metadf)} rows."
+    )
+    return filtered_metadf
 
-    parts = detail_str.split("+")
-    valid_parts = []
 
-    for part in parts:
-        fields = part.split("_")
-        if len(fields) == 4:
-            try:
-                if int(fields[3]) > 0:
-                    valid_parts.append(part)
-            except ValueError:
-                continue  # skip malformed entries
-        else:
-            continue  # skip incomplete entries
+# ========================= Step 3: Match_gene_bcf =========================
 
-    return "+".join(valid_parts) if valid_parts else "-"
 
-def merge_overlapping_deletions_sliced(deletions: List[tuple[int, int, str]]) -> tuple[int, str, int]:
+def match_gene_bcf(
+    bcf: pysam.VariantFile,
+    genes: List[str],
+) -> Dict[str, str]:
     """
-    Merge overlapping deletions by slicing sequences based on genomic overlap.
+    For each gene, find a contig in the BCF header whose name contains the gene
+    as a substring (regex, case-insensitive).
 
-    Args:
-        deletions (List[Tuple[int, int, str]]): Each entry is (start, end, ref_sequence).
+    Returns a dict: {gene -> contig_name}.
 
-    Returns:
-        Tuple[int, str, int]: Merged start position, merged sequence, merged length.
+    If multiple contigs match a gene, the first match is used.
+    Genes with no contig match are omitted from the dictionary.
     """
-    if not deletions:
-        return -1, "", 0
 
-    deletions.sort(key=lambda x: x[0])
-    merged_start, merged_end, merged_seq = deletions[0]
-    for start, end, seq in deletions[1:]:
-        overlap = merged_end - start + 1
-        if overlap > 0:
-            merged_seq += seq[overlap:]
-        else:
-            merged_seq += seq
-        merged_end = max(merged_end, end)
+    contig_names = list(bcf.header.contigs)
+    gene_to_contig: Dict[str, str] = {}
 
-    merged_len = merged_end - merged_start + 1
-    return merged_start, merged_seq, merged_len
+    print(
+        f"[INFO] Matching {len(genes)} genes to {len(contig_names)} contigs in BCF header."
+    )
+    for gene in genes:
+        pattern = re.compile(re.escape(gene), flags=re.IGNORECASE)
+        matched_contig: Optional[str] = None
+        for contig in contig_names:
+            if pattern.search(contig):
+                matched_contig = contig
+                print(
+                    f"[DEBUG] gene from metafile '{gene}' matched contig "
+                    f"'{contig}' in BCF header."
+                )
+                break
 
-def get_consensus_threshold_for_length(meta_subset: pd.DataFrame, del_len: int) -> float:
-    """
-    Return consensus_N threshold for a given deletion length.
-    - If exactly one row for this length: use it.
-    - If multiple rows: return the MAX consensus_N (conservative).
-    - If none: return 100.0 (effectively disables auto-upgrade).
-    """
-    rows = meta_subset[meta_subset["del_len"] == del_len]
-    if rows.empty:
-        return 100.0
-    return float(rows["consensus_N"].max())
+        if matched_contig is None:
+            print(f"[WARN] No contig in BCF matches gene '{gene}' (substring regex).")
+            continue
 
-# -------------------- Core BCF scanning ----------------------
-def get_thresholds_for_deletion(
-    meta_subset: pd.DataFrame,
-    pos: int,
-    del_len: int,
-) -> Tuple[float, float, float, float, str]:
-    """
-    Returns (IMF_thr, IDV_thr, DP_thr, consensus_N, deletion_key).
+        gene_to_contig[gene] = matched_contig
 
-    Tries exact window first: start=pos, end=pos+del_len-1.
-    Falls back to per-length iff there is exactly one row for that length.
-    Raises KeyError if ambiguous or not found.
-    """
-    start = pos
-    end = pos + del_len - 1
+    return gene_to_contig
 
-    row = meta_subset[(meta_subset["del_start"] == start) & (meta_subset["del_end"] == end)]
-    if not row.empty:
-        r = row.iloc[0]
-        key = f"del{int(r.del_start)}_{int(r.del_end)}_{del_len}"
-        return float(r.gt_IMF), float(r.gt_IDV), float(r.gt_DP), float(r.consensus_N), key
 
-    by_len = meta_subset[meta_subset["del_len"] == del_len]
-    if len(by_len) == 1:
-        r = by_len.iloc[0]
-        key = f"del{int(r.del_start)}_{int(r.del_end)}_{del_len}"
-        return float(r.gt_IMF), float(r.gt_IDV), float(r.gt_DP), float(r.consensus_N), key
+# ========================= Step 4: Extract deletion variants in region =========================
 
-    raise KeyError(f"No unambiguous thresholds for pos={pos}, len={del_len}")
 
-def check_deletions_in_region(
-    bcf_path: str,
+def extract_deletion_variants_in_region(
+    bcf: pysam.VariantFile,
     contig: str,
-    target_regions: Dict[int, Tuple[int, int]],
-    meta_subset: pd.DataFrame,
-    region_buffer: int = 5,
-    length_tolerance: int = 1,
-    min_overlap_fraction: float = 0.3,
-    use_indels_thresholds: bool = False,
-) -> Tuple[str, str, int]:
+    start: int,
+    end: int,
+    region_buffer: int,
+) -> List[pysam.VariantRecord]:
     """
-    Scan BCF and try to match deletions to expected regions (by length + position).
-    Returns: (label(s) ';'-joined or '-', detail(s) ';'-joined or '-', best_matched_length)
-    """
-    try:
-        bcf = pysam.VariantFile(bcf_path)
-    except Exception as e:
-        print(f"[ERROR] Cannot open BCF {bcf_path}: {e}")
-        return "-", "-", 0
+    Extract all deletion variant records from `bcf` on `contig` that overlap
+    [start - buffer, end + buffer] (1-based, inclusive).
 
-    # Step 0: Compute buffered scan regions for quick filtering of indels
-    print("[STEP 0] Computed desired regions to examine")
-    padded_regions = {
-        expected_len: (
-            max(1, region_start - region_buffer),
-            region_end + region_buffer
+    A deletion is defined as having at least one ALT shorter than REF.
+    """
+
+    # Build padded window
+    padded_start_1based = max(1, start - region_buffer)
+    padded_end_1based = end + region_buffer
+
+    # Convert to 0-based half-open for pysam.fetch
+    fetch_start0 = padded_start_1based - 1
+    fetch_end0 = padded_end_1based  # pysam end is exclusive
+
+    print(
+        f"[INFO] Extracting deletion variants from contig '{contig}' "
+        f"in padded region {padded_start_1based}-{padded_end_1based} "
+        f"(original region {start}-{end}, buffer {region_buffer})."
+    )
+
+    records: List[pysam.VariantRecord] = []
+    try:
+        for rec in bcf.fetch(contig, fetch_start0, fetch_end0):
+            ref = rec.ref
+            alts = rec.alts
+            print(
+                f"[DEBUG] record on {contig} in padded region: "
+                f"pos={rec.pos}, search_window={fetch_start0}-{fetch_end0}, "
+                f"ref={ref}, alts={alts}"
+            )
+            if not alts:
+                continue
+
+            # keep only deletion records
+            if any(alt is not None and len(alt) < len(ref) for alt in alts):
+                # compute deletion span for the primary alt (first shorter alt)
+                pos = rec.pos  # 1-based
+                for alt in alts:
+                    if alt is not None and len(alt) < len(ref):
+                        raw_del_len = len(ref) - len(alt)
+                        del_start = pos
+                        del_end = pos + raw_del_len - 1
+                        # require overlap with padded region
+                        if (
+                            del_end >= padded_start_1based
+                            and del_start <= padded_end_1based
+                        ):
+                            print(
+                                f"[DEBUG] Found deletion at {contig}:{del_start}-{del_end} "
+                                f"(len={raw_del_len}) overlapping {start}-{end} ± {region_buffer}"
+                            )
+                            records.append(rec)
+                        else:
+                            print(
+                                f"[DEBUG] Deletion at {contig}:{del_start}-{del_end} "
+                                f"(len={raw_del_len}) did NOT overlap region {start}-{end} "
+                                f"± {region_buffer}"
+                            )
+                        break  # only consider first deletion alt per record
+    except ValueError as e:
+        print(
+            f"[ERROR] Could not fetch {contig}:{padded_start_1based}-"
+            f"{padded_end_1based} from BCF: {e}"
         )
-        for expected_len, (region_start, region_end) in target_regions.items()
+
+    print(f"[INFO] Total deletion-like records found in region: {len(records)}")
+    return records
+
+
+# ========================= Step 5: INFO helpers =========================
+
+
+def _get_info_float(rec: pysam.VariantRecord, key: str) -> float:
+    """
+    Safely extract a float-like INFO value from a VariantRecord.
+
+    Handles single values and 1-element tuples/lists. Returns 0.0 on failure.
+    """
+    val = rec.info.get(key)
+    if isinstance(val, (int, float)):
+        return float(val)
+    if isinstance(val, (list, tuple)) and val:
+        inner = val[0]
+        if isinstance(inner, (int, float)):
+            return float(inner)
+    return 0.0
+
+
+def _get_info_int(rec: pysam.VariantRecord, key: str) -> int:
+    """
+    Safely extract an int-like INFO value from a VariantRecord.
+
+    Handles single values and 1-element tuples/lists. Returns 0 on failure.
+    """
+    val = rec.info.get(key)
+    if isinstance(val, int):
+        return val
+    if isinstance(val, (list, tuple)) and val:
+        inner = val[0]
+        if isinstance(inner, int):
+            return inner
+    return 0
+
+
+# ========================= Deletion span helper =========================
+
+
+def get_deletion_span(rec: pysam.VariantRecord) -> Optional[Tuple[int, int, int]]:
+    """
+    From a deletion-like VariantRecord, return (start, end, length) for
+    the first ALT that is shorter than REF. Returns None if no deletion ALT.
+    """
+    ref = rec.ref
+    alts = rec.alts or []
+    for alt in alts:
+        if alt is not None and len(alt) < len(ref):
+            del_len = len(ref) - len(alt)
+            del_start = rec.pos
+            del_end = rec.pos + del_len - 1
+            return del_start, del_end, del_len
+    return None
+
+
+# ========================= Call-based canonical assignment (categories 1–3) =========================
+
+
+def assign_best_canonical_for_call(
+    variants: List[pysam.VariantRecord],
+    meta_gene: pd.DataFrame,
+    min_frac: float = 0.6,
+) -> Tuple[
+    Optional[int],
+    Optional[int],
+    Optional[int],
+    Optional[int],
+    Optional[int],
+    Optional[float],
+    Optional[float],
+    Optional[bool],
+]:
+    """
+    Given 'call' deletion variants for a single gene and that gene's
+    metafile subset (with del_start, del_end, del_type, gt_IMF, gt_IDV, gt_DP),
+    pick the best canonical deletion type and annotate whether it passes
+    IMF/IDV/DP thresholds.
+
+    Scoring rules (canonical matching):
+
+      1) We first filter on the expected-side fraction:
+         frac_expected = overlap / expected_len
+         and require frac_expected >= min_frac.
+
+      2) For all remaining candidates, we build a score tuple:
+
+           score_tuple = (
+               frac_expected,
+               frac_observed,
+               -len_diff,
+               -exp_type,
+           )
+
+         Meaning:
+
+           - Prefer higher frac_expected
+               → more of the canonical region is deleted.
+
+           - If tie, prefer higher frac_observed
+               → more of the observed deletion lies inside the canonical region.
+
+           - If tie, prefer smaller absolute length difference
+               (len_diff = |obs_len - exp_len|).
+
+           - If still tie, prefer smaller canonical length (exp_type)
+               → e.g. 39 over 54.
+
+    We maintain two "best" candidates:
+      - best_pass: passes IMF/IDV/DP thresholds
+      - best_fail: fails at least one of IMF/IDV/DP
+
+    Categories (decided in `run`) are:
+
+      Category 1 (high confidence):
+        - best_pass exists AND len_diff <= 1
+
+      Category 2 (good confidence):
+        - best_pass exists AND len_diff > 1
+
+      Category 3 (lower confidence):
+        - no best_pass, but best_fail exists (any len_diff)
+
+    This function itself does not assign category numbers; it just returns:
+
+      (best_del_type,
+       best_len_diff,
+       best_obs_start,
+       best_obs_end,
+       best_obs_len,
+       best_frac_expected,
+       best_frac_observed,
+       best_passes_thresholds)
+    """
+
+    if not variants:
+        print("[INFO] No call variants provided for canonical assignment.")
+        return None, None, None, None, None, None, None, None
+
+    # Best candidates among threshold-passing and threshold-failing
+    best_pass_score: Optional[Tuple[float, float, int, int]] = None
+    best_fail_score: Optional[Tuple[float, float, int, int]] = None
+
+    best_pass_data = {
+        "type": None,
+        "len_diff": None,
+        "obs_start": None,
+        "obs_end": None,
+        "obs_len": None,
+        "frac_expected": None,
+        "frac_observed": None,
     }
-    region_spans = list(padded_regions.values())
-    print(f"{padded_regions}")
-    print(f"[INFO] Will scan BCF only within {len(region_spans)} buffered target regions")
+    best_fail_data = {
+        "type": None,
+        "len_diff": None,
+        "obs_start": None,
+        "obs_end": None,
+        "obs_len": None,
+        "frac_expected": None,
+        "frac_observed": None,
+    }
 
-    # Step 1: Filter on variant entries.
-    print("\n[STEP 1] Filtering deletions based on thresholds for QUAL == 0, thresholds and the spanning region")
+    print(
+        f"[INFO] Assigning best canonical deletion from {len(variants)} call variants "
+        f"and {len(meta_gene)} canonical windows with min_frac={min_frac}."
+    )
 
-    # Collect candidate records inside any region span, with length + thresholds
-    candidates: List[Tuple[int, str, str, int]] = []  # (pos, ref, alt, del_len)
-
-    for rec in bcf.fetch(contig):
-        if not is_in_any_region(rec.pos, region_spans):
+    for rec in variants:
+        span = get_deletion_span(rec)
+        if span is None:
             continue
+        obs_start, obs_end, obs_len = span
 
-        ref = rec.ref
-        alt = rec.alts[0] if rec.alts else None
-        pos = rec.pos
-        qual = float(rec.qual) if rec.qual is not None else 0.0
+        IMF = _get_info_float(rec, "IMF")
+        IDV = _get_info_float(rec, "IDV")
+        DP = _get_info_int(rec, "DP")
 
-        # deletions only
-        if alt is None or len(ref) <= len(alt):
-            continue
+        print(
+            f"[DEBUG] Considering call deletion {obs_start}-{obs_end} (len={obs_len}) "
+            f"with IMF={IMF}, IDV={IDV}, DP={DP}"
+        )
 
-        del_len = len(ref) - len(alt)
+        for _, r in meta_gene.iterrows():
+            exp_start = int(r["del_start"])
+            exp_end = int(r["del_end"])
+            exp_type = int(r["del_type"])
+            exp_len = exp_end - exp_start + 1
+            gt_IMF = float(r["gt_IMF"])
+            gt_IDV = float(r["gt_IDV"])
+            gt_DP = int(r["gt_DP"])
 
-        # only consider expected lengths
-        if del_len not in target_regions:
-            continue
-
-        if qual > 0.0:
-            if not use_indels_thresholds:
-                # High-quality deletion passes without IMF/IDV/DP checks
-                candidates.append((rec.pos, ref, alt, del_len))
-                print(f"variant at pos:{rec.pos} ref:{ref} alt:{alt} passed QUAL>{qual}")
-            # When use_indels_thresholds=True we SKIP high-QUAL records (parity with original)
-            continue
-        
-        # QUAL == 0 → evaluate IMF/IDV/DP if using thresholds
-        if use_indels_thresholds:
-
-            try:
-                IMF_thr, IDV_thr, DP_thr, _, deletion_key = get_thresholds_for_deletion(meta_subset, pos, del_len)
-            except KeyError:
-                # ambiguous/missing thresholds → skip (same spirit as old code)
-                continue
-
-            IMF = float(rec.info.get("IMF", 0.0))
-            IDV = float(rec.info.get("IDV", 0.0))
-            DP  = float(rec.info.get("DP", 0.0))
-            print(f"variant: pos:{pos} ref:{ref} alt:{alt} qual:{qual} IMF:{IMF} IDV:{IDV} DP:{DP}")
-
-            if IMF >= IMF_thr and IDV >= IDV_thr and DP >= DP_thr:
-                candidates.append((pos, ref, alt, del_len))
-                print(f"  [PASS] {deletion_key} IMF/IDV/DP >= {IMF_thr}/{IDV_thr}/{DP_thr}")
-            else:
-                print(f"  [FAIL] {deletion_key} IMF/IDV/DP <  {IMF_thr}/{IDV_thr}/{DP_thr}")
-        else:
-            # Not using thresholds & QUAL==0 → accept (matches original else-branch)
-            candidates.append((pos, ref, alt, del_len))
-            print(f"  [NO FILTER] accepted QUAL==0 {deletion_key} at pos:{pos}")
-
-    if not candidates:
-        print("[INFO] No deletions passed filters.")
-        return "-", "-", 0
-
-    # Step 2: sort/merge adjacent-or-overlapping candidates
-    print("[STEP 2] Merging overlapping deletions")
-    candidates.sort()
-    merged: List[Tuple[int, int, int, str]] = []  # (start, end, total_len, details_str)
-    current = None
-    for pos, ref, alt, dlen in candidates:
-        start = pos
-        end = pos + dlen - 1
-        detail_str = f"{pos}_{ref}_{alt}_{dlen}"
-        if current is None:
-            current = [start, end, dlen, detail_str]
-        else:
-            if start <= current[1] + 1:
-                # merge
-                current[1] = max(current[1], end)
-                current[2] += dlen
-                current[3] += f"+{detail_str}"
-            else:
-                merged.append(tuple(current))
-                current = [start, end, dlen, detail_str]
-    if current is not None:
-        merged.append(tuple(current))
-
-    # Step 3: match (exact → partial → ambiguous)
-    labels: List[str] = []
-    details: List[str] = []
-    best_len = 0
-
-    for match_start, match_end, match_len, det in merged:
-        actual_len = match_end - match_start + 1
-        matched = False
-
-        # (1) exact: same length and fully within padded window
-        print("[STEP 3] Checking for exact matches")
-        for L, (window_start, window_end) in padded_regions.items():
-            if actual_len == L and window_start <= match_start and match_end <= window_end:
-                labels.append(str(L))
-                details.append(det)
-                best_len = max(best_len, L)
-                matched = True
-                break
-        if matched:
-            continue
-
-        # (2) partial: near length and overlap fraction satisfied
-        print(f"[STEP 4] Checking partial overlaps with overlap percentage {min_overlap_fraction*100}%")
-        for expected_len, (window_start, window_end) in padded_regions.items():
-            if abs(actual_len - expected_len) > length_tolerance:
-                if actual_len > 0:
-                    print(f"Skipped {actual_len}bp vs {expected_len}bp: outside length tolerance")
-                continue
-        
-            overlap_start = max(match_start, window_start)
-            overlap_end = min(match_end, window_end)
+            overlap_start = max(obs_start, exp_start)
+            overlap_end = min(obs_end, exp_end)
             overlap = max(0, overlap_end - overlap_start + 1)
-            target_len = window_end - window_start + 1
-            overlap_fraction = overlap / target_len
+            if overlap <= 0:
+                continue
 
-            if target_len > 0 and overlap_fraction >= min_overlap_fraction:
-                labels.append(f"partial_{expected_len}")
-                details.append(det)
-                best_len = max(best_len, expected_len)
-                matched = True
-                break
-        if matched:
+            frac_expected = overlap / exp_len
+            if frac_expected < min_frac:
+                print(
+                    f"[DEBUG] Overlap between obs {obs_start}-{obs_end} and "
+                    f"exp {exp_start}-{exp_end} (type={exp_type}) has frac_expected="
+                    f"{frac_expected:.2f} < {min_frac}, skipping."
+                )
+                continue
+
+            frac_observed = overlap / obs_len
+            len_diff = abs(obs_len - exp_len)
+
+            passes_thresholds = IMF >= gt_IMF and IDV >= gt_IDV and DP >= gt_DP
+
+            score_tuple = (frac_expected, frac_observed, -len_diff, -exp_type)
+
+            print(
+                f"[DEBUG] Call candidate: obs {obs_start}-{obs_end} len={obs_len} "
+                f"-> canonical {exp_start}-{exp_end} len={exp_len} (type={exp_type}), "
+                f"overlap={overlap}, frac_expected={frac_expected:.3f}, "
+                f"frac_observed={frac_observed:.3f}, len_diff={len_diff}, "
+                f"passes_thresholds={passes_thresholds}, score_tuple={score_tuple}"
+            )
+
+            if passes_thresholds:
+                # Compete for best_pass
+                if best_pass_score is None or score_tuple > best_pass_score:
+                    best_pass_score = score_tuple
+                    best_pass_data = {
+                        "type": exp_type,
+                        "len_diff": len_diff,
+                        "obs_start": obs_start,
+                        "obs_end": obs_end,
+                        "obs_len": obs_len,
+                        "frac_expected": frac_expected,
+                        "frac_observed": frac_observed,
+                    }
+                    print(
+                        f"[INFO] New best PASS candidate (call): type={exp_type}, "
+                        f"len_diff={len_diff}, score_tuple={score_tuple}"
+                    )
+            else:
+                # Compete for best_fail
+                if best_fail_score is None or score_tuple > best_fail_score:
+                    best_fail_score = score_tuple
+                    best_fail_data = {
+                        "type": exp_type,
+                        "len_diff": len_diff,
+                        "obs_start": obs_start,
+                        "obs_end": obs_end,
+                        "obs_len": obs_len,
+                        "frac_expected": frac_expected,
+                        "frac_observed": frac_observed,
+                    }
+                    print(
+                        f"[INFO] New best FAIL candidate (call): type={exp_type}, "
+                        f"len_diff={len_diff}, score_tuple={score_tuple}"
+                    )
+
+    # Decide which candidate wins
+    if best_pass_score is not None:
+        t = best_pass_data["type"]
+        ld = best_pass_data["len_diff"]
+        os = best_pass_data["obs_start"]
+        oe = best_pass_data["obs_end"]
+        ol = best_pass_data["obs_len"]
+        fe = best_pass_data["frac_expected"]
+        fo = best_pass_data["frac_observed"]
+
+        fe_str = f"{fe:.3f}" if fe is not None else "NA"
+        fo_str = f"{fo:.3f}" if fo is not None else "NA"
+
+        print(
+            f"[INFO] Final CALL canonical assignment (threshold-passing): "
+            f"type={t}, len_diff={ld}, obs={os}-{oe}, "
+            f"frac_expected={fe_str}, frac_observed={fo_str}"
+        )
+        return t, ld, os, oe, ol, fe, fo, True
+
+    if best_fail_score is not None:
+        t = best_fail_data["type"]
+        ld = best_fail_data["len_diff"]
+        os = best_fail_data["obs_start"]
+        oe = best_fail_data["obs_end"]
+        ol = best_fail_data["obs_len"]
+        fe = best_fail_data["frac_expected"]
+        fo = best_fail_data["frac_observed"]
+
+        fe_str = f"{fe:.3f}" if fe is not None else "NA"
+        fo_str = f"{fo:.3f}" if fo is not None else "NA"
+
+        print(
+            f"[INFO] Final CALL canonical assignment (threshold-failing): "
+            f"type={t}, len_diff={ld}, obs={os}-{oe}, "
+            f"frac_expected={fe_str}, frac_observed={fo_str}"
+        )
+        return t, ld, os, oe, ol, fe, fo, False
+
+    print("[INFO] No call canonical deletion passed the overlap filter.")
+    return None, None, None, None, None, None, None, None
+
+
+# ========================= Mpileup canonical assignment (categories 4–5) =========================
+
+
+def assign_best_canonical_for_mpileup(
+    variants: List[pysam.VariantRecord],
+    meta_gene: pd.DataFrame,
+    min_frac: float = 0.6,
+) -> Tuple[
+    Optional[int],
+    Optional[int],
+    Optional[int],
+    Optional[int],
+    Optional[int],
+    Optional[float],
+    Optional[float],
+]:
+    """
+    Given mpileup deletion variants for a single gene and that gene's
+    metafile subset (with del_start, del_end, del_type), pick the best
+    canonical deletion type using the same scoring as call
+    (without IMF/IDV/DP thresholds).
+    """
+
+    if not variants:
+        print("[INFO] No mpileup variants provided for canonical assignment.")
+        return None, None, None, None, None, None, None
+
+    best_type: Optional[int] = None
+    best_len_diff: Optional[int] = None
+    best_obs_start: Optional[int] = None
+    best_obs_end: Optional[int] = None
+    best_obs_len: Optional[int] = None
+    best_frac_expected: Optional[float] = None
+    best_frac_observed: Optional[float] = None
+
+    best_score_tuple: Optional[Tuple[float, float, int, int]] = None
+
+    print(
+        f"[INFO] Assigning best canonical deletion from {len(variants)} mpileup variants "
+        f"and {len(meta_gene)} canonical windows with min_frac={min_frac}."
+    )
+
+    for rec in variants:
+        span = get_deletion_span(rec)
+        if span is None:
             continue
+        obs_start, obs_end, obs_len = span
+        print(
+            f"[DEBUG] Considering mpileup deletion {obs_start}-{obs_end} (len={obs_len})"
+        )
 
-        print("[STEP 5] Checking for rescued match based on early alignment")
-        for expected_len, (window_start, window_end) in padded_regions.items():
+        for _, r in meta_gene.iterrows():
+            exp_start = int(r["del_start"])
+            exp_end = int(r["del_end"])
+            exp_type = int(r["del_type"])
+            exp_len = exp_end - exp_start + 1
 
-            if actual_len == expected_len and abs(match_start - window_start) <= region_buffer:
-                print(f"[MATCH] Rescued early match for {expected_len}bp deletion at {match_start}-{window_start}")
-                labels.append(f"rescued_{expected_len}")
-                details.append(det)
-                best_len = max(best_len, expected_len)
-                matched = True
-                break
-        if matched:
-            continue
+            overlap_start = max(obs_start, exp_start)
+            overlap_end = min(obs_end, exp_end)
+            overlap = max(0, overlap_end - overlap_start + 1)
+            if overlap <= 0:
+                continue
 
-        # (3) ambiguous: any overlap with any window
-        print("[STEP 6] Checking for ambiguous overlaps")
-        overlapped = [L for L, (window_start, window_end) in padded_regions.items()
-                      if not (match_end < window_start or match_start > window_end)]
-        if overlapped:
-            # synthesize compact detail using merged ref sequence
-            parts = []
-            for part in det.split("+"):
-                p = part.split("_")
-                if len(p) >= 3:
-                    s = int(p[0])
-                    ref = p[1]
-                    parts.append((s, s + len(ref) - 1, ref))
-            ms, mseq, mlen = merge_overlapping_deletions_sliced(parts)
-            # choose window whose expected length is closest
-            L = min(overlapped, key=lambda x: abs(x - actual_len))
-            labels.append(f"ambiguous_{L}")
-            details.append(f"{ms}_{mseq}_{mseq[:1] if mseq else ''}_{max(0, mlen-1)}")
-            best_len = max(best_len, L)
+            frac_expected = overlap / exp_len
+            if frac_expected < min_frac:
+                print(
+                    f"[DEBUG] Overlap between obs {obs_start}-{obs_end} and "
+                    f"exp {exp_start}-{exp_end} (type={exp_type}) has frac_expected="
+                    f"{frac_expected:.2f} < {min_frac}, skipping."
+                )
+                continue
+
+            # Reciprocal: fraction of observed deletion inside canonical window
+            frac_observed = overlap / obs_len
+
+            len_diff = abs(obs_len - exp_len)
+
+            score_tuple = (frac_expected, frac_observed, -len_diff, -exp_type)
+
+            print(
+                f"[DEBUG] Candidate mapping: obs {obs_start}-{obs_end} len={obs_len} "
+                f"-> canonical {exp_start}-{exp_end} len={exp_len} (type={exp_type}), "
+                f"overlap={overlap}, frac_expected={frac_expected:.3f}, "
+                f"frac_observed={frac_observed:.3f}, len_diff={len_diff}, "
+                f"score_tuple={score_tuple}"
+            )
+
+            if best_score_tuple is None or score_tuple > best_score_tuple:
+                best_score_tuple = score_tuple
+                best_type = exp_type
+                best_len_diff = len_diff
+                best_obs_start = obs_start
+                best_obs_end = obs_end
+                best_obs_len = obs_len
+                best_frac_expected = frac_expected
+                best_frac_observed = frac_observed
+                print(
+                    f"[INFO] New best canonical candidate (mpileup): type={best_type}, "
+                    f"len_diff={best_len_diff}, score_tuple={best_score_tuple}"
+                )
+
+    if best_type is None:
+        print("[INFO] No mpileup canonical deletion passed the overlap filter.")
+        return None, None, None, None, None, None, None
+
+    fe_str = f"{best_frac_expected:.3f}" if best_frac_expected is not None else "NA"
+    fo_str = f"{best_frac_observed:.3f}" if best_frac_observed is not None else "NA"
+
+    print(
+        f"[INFO] Final mpileup canonical assignment: type={best_type}, "
+        f"len_diff={best_len_diff}, obs={best_obs_start}-{best_obs_end}, "
+        f"frac_expected={fe_str}, frac_observed={fo_str}"
+    )
+    return (
+        best_type,
+        best_len_diff,
+        best_obs_start,
+        best_obs_end,
+        best_obs_len,
+        best_frac_expected,
+        best_frac_observed,
+    )
+
+
+# ========================= SAM / assembly helpers =========================
+
+
+def parse_cigar_deletions(cigar: str, pos: int) -> List[Tuple[int, int, int]]:
+    """
+    Parse a CIGAR string and return a list of deletion events on the reference.
+
+    Each deletion is returned as (del_start, del_end, del_len), all 1-based
+    on the reference coordinate system.
+
+    POS is the 1-based leftmost mapping position of the read on the reference.
+    """
+    deletions: List[Tuple[int, int, int]] = []
+    ref_pos = pos  # 1-based reference position
+
+    for length_str, op in re.findall(r"(\d+)([MIDNSHP=X])", cigar):
+        length = int(length_str)
+
+        if op == "D":
+            del_start = ref_pos
+            del_end = ref_pos + length - 1
+            deletions.append((del_start, del_end, length))
+            ref_pos += length  # deletion consumes reference
+        elif op in ("M", "=", "X", "N"):
+            # Aligned match/mismatch or ref skip consumes reference
+            ref_pos += length
         else:
-            # no overlap with expectations; still carry raw details
-            details.append(det)
+            # I, S, H, P do not consume reference
+            pass
 
-    if not labels:
-        return "-", ";".join(d[3] for d in merged), best_len
+    return deletions
 
-    return ";".join(labels), ";".join(details), best_len
 
-def extract_consensus_window(
-    fasta_path: str,
-    contig: str,
-    del_len_key: int,
-    converted_regions: Dict[int, Tuple[int, int]],
-    consensus_threshold_N: float
+def assign_best_canonical_for_assembly(
+    del_spans: List[Tuple[int, int, int]],
+    meta_gene: pd.DataFrame,
+    min_frac: float = 0.6,
+) -> Tuple[
+    Optional[int],
+    Optional[int],
+    Optional[int],
+    Optional[int],
+    Optional[int],
+    Optional[float],
+    Optional[float],
+]:
+    """
+    Canonical mapping for deletions derived from SAM CIGAR strings ("assembly").
+
+    del_spans is a list of (obs_start, obs_end, obs_len) tuples on the reference.
+
+    Scoring and overlap logic is identical to the mpileup-based assignment:
+
+      1) Require frac_expected = overlap/expected_len >= min_frac.
+      2) Among passing candidates, maximise:
+
+           (frac_expected, frac_observed, -len_diff, -exp_type)
+    """
+    if not del_spans:
+        print("[INFO] No SAM/CIGAR deletions provided for canonical assignment.")
+        return None, None, None, None, None, None, None
+
+    best_type: Optional[int] = None
+    best_len_diff: Optional[int] = None
+    best_obs_start: Optional[int] = None
+    best_obs_end: Optional[int] = None
+    best_obs_len: Optional[int] = None
+    best_frac_expected: Optional[float] = None
+    best_frac_observed: Optional[float] = None
+    best_score_tuple: Optional[Tuple[float, float, int, int]] = None
+
+    print(
+        f"[INFO] Assigning best canonical deletion from {len(del_spans)} SAM/CIGAR deletions "
+        f"and {len(meta_gene)} canonical windows with min_frac={min_frac}."
+    )
+
+    for obs_start, obs_end, obs_len in del_spans:
+        print(
+            f"[DEBUG] Considering SAM/CIGAR deletion {obs_start}-{obs_end} (len={obs_len})"
+        )
+
+        for _, r in meta_gene.iterrows():
+            exp_start = int(r["del_start"])
+            exp_end = int(r["del_end"])
+            exp_type = int(r["del_type"])
+            exp_len = exp_end - exp_start + 1
+
+            overlap_start = max(obs_start, exp_start)
+            overlap_end = min(obs_end, exp_end)
+            overlap = max(0, overlap_end - overlap_start + 1)
+            if overlap <= 0:
+                continue
+
+            frac_expected = overlap / exp_len
+            if frac_expected < min_frac:
+                print(
+                    f"[DEBUG] Overlap between SAM obs {obs_start}-{obs_end} and "
+                    f"exp {exp_start}-{exp_end} (type={exp_type}) has frac_expected="
+                    f"{frac_expected:.2f} < {min_frac}, skipping."
+                )
+                continue
+
+            frac_observed = overlap / obs_len
+            len_diff = abs(obs_len - exp_len)
+
+            score_tuple = (frac_expected, frac_observed, -len_diff, -exp_type)
+
+            print(
+                f"[DEBUG] SAM candidate: obs {obs_start}-{obs_end} len={obs_len} "
+                f"-> canonical {exp_start}-{exp_end} len={exp_len} (type={exp_type}), "
+                f"overlap={overlap}, frac_expected={frac_expected:.3f}, "
+                f"frac_observed={frac_observed:.3f}, len_diff={len_diff}, "
+                f"score_tuple={score_tuple}"
+            )
+
+            if best_score_tuple is None or score_tuple > best_score_tuple:
+                best_score_tuple = score_tuple
+                best_type = exp_type
+                best_len_diff = len_diff
+                best_obs_start = obs_start
+                best_obs_end = obs_end
+                best_obs_len = obs_len
+                best_frac_expected = frac_expected
+                best_frac_observed = frac_observed
+                print(
+                    f"[INFO] New best canonical candidate (SAM): type={best_type}, "
+                    f"len_diff={best_len_diff}, score_tuple={best_score_tuple}"
+                )
+
+    if best_type is None:
+        print("[INFO] No SAM/CIGAR canonical deletion passed the overlap filter.")
+        return None, None, None, None, None, None, None
+
+    fe_str = f"{best_frac_expected:.3f}" if best_frac_expected is not None else "NA"
+    fo_str = f"{best_frac_observed:.3f}" if best_frac_observed is not None else "NA"
+
+    print(
+        f"[INFO] Final SAM/CIGAR canonical assignment: type={best_type}, "
+        f"len_diff={best_len_diff}, obs={best_obs_start}-{best_obs_end}, "
+        f"frac_expected={fe_str}, frac_observed={fo_str}"
+    )
+    return (
+        best_type,
+        best_len_diff,
+        best_obs_start,
+        best_obs_end,
+        best_obs_len,
+        best_frac_expected,
+        best_frac_observed,
+    )
+
+
+def get_support_source(
+    has_call: bool,
+    has_mpileup: bool,
+    has_consensus: bool,
+    has_assembly: bool,
+    used_consensus_for_upgrade: bool,
+    used_assembly_for_upgrade: bool,
+    category: Optional[str],
 ) -> str:
-    """Extract region by deletion length and annotate %N. Returns '-' if below threshold."""
-    try:
-        if del_len_key not in converted_regions:
-            return "-"
-        s, e = converted_regions[del_len_key]
-        fa = pysam.FastaFile(fasta_path)
-        seq = fa.fetch(contig, s, e)
-        n_pct = (seq.upper().count("N") / max(1, len(seq))) * 100.0
-        if n_pct >= consensus_threshold_N:
-            return f"{s}-{e}_{seq}_{n_pct:.2f}"
-        return "-"
-    except Exception as e:
-        print(f"[WARN] consensus extraction failed: {e}")
+    """
+    Derive a human-readable support string describing which sources
+    contributed to the final category.
+    """
+    if category is None or category == "0":
         return "-"
 
-def extract_best_ambiguous_consensus(
-    fasta_path: str,
-    contig: str,
-    converted_regions: Dict[int, Tuple[int, int]],
-    meta_subset: pd.DataFrame
-) -> str:
-    """
-    Scan all expected regions and return ONLY a threshold-passing region:
-      - return "start-end_SEQUENCE_%N" for the region above its length-specific threshold
-        with the highest %N (ties naturally broken by iteration order)
-      - return "-" if NO region meets its threshold
-    """
-    try:
-        fasta = pysam.FastaFile(fasta_path)
-    except Exception as e:
-        print(f"[WARN] cannot open FASTA {fasta_path}: {e}")
-        return "-"
+    parts: List[str] = []
 
-    best = ("-", -1.0, None, "-")  # (region_str, n_pct, L, seq)
+    # Base sources
+    if has_call:
+        parts.append("call")
+    if has_mpileup:
+        parts.append("mpileup")
 
-    for L, (s, e) in converted_regions.items():
-        try:
-            seq = fasta.fetch(contig, s, e)
-        except Exception:
-            continue
+    # Consensus contribution
+    if has_consensus:
+        if not has_call and not has_mpileup and not has_assembly and category == "6":
+            parts.append("consensus_only")
+        else:
+            parts.append("consensus")
 
-        """
-        # scoring the region with the highest %N (only checking it passes the threshold), ignoring length.
-        n_pct = (seq.upper().count("N") / max(1, len(seq))) * 100.0
-        consN = get_consensus_threshold_for_length(meta_subset, L)
+    # Assembly (SAM/CIGAR) contribution
+    if has_assembly:
+        if not has_call and not has_mpileup and not has_consensus and category == "6":
+            parts.append("assembly_only")
+        else:
+            parts.append("assembly")
 
-        # Only consider regions that meet their threshold
-        if n_pct >= consN and n_pct > best[1]:
-            best = (f"{s}-{e}", n_pct, L, seq)
-        """
+    support = "+".join(parts) if parts else "unknown"
 
-        """
-        scored candidates by score = %N * region_len and picked the highest score among those above threshold considering the length.
+    # Conflict flag for Category 7
+    if category == "7":
+        if support != "unknown":
+            support = support + "+conflict"
+        else:
+            support = "conflict"
 
-        39 bp at ~71.79% (score ≈ 2800) beats 18 bp at 100% (score = 1800).
-        """
-        region_len = max(1, e - s + 1)
-        n_pct = (seq.upper().count("N") / region_len) * 100.0
-        consN = get_consensus_threshold_for_length(meta_subset, L)
+    return support
 
-        if n_pct >= consN:
-            score = n_pct * region_len  # length-aware like the old code
-            if score > best[1]:
-                best = (f"{s}-{e}", n_pct, L, seq, score)
 
-    if best[2] is not None:
-        return f"{best[0]}_{best[3]}_{best[1]:.2f}"
-    return "-"
+# ========================= Main routine =========================
 
-def evaluate_ambiguous_consensus(label: str, consensus_str: str, meta_subset: pd.DataFrame) -> str:
-    """
-    If label is 'ambiguous_L' and the consensus %N ≥ threshold_N for length L,
-    upgrade to 'likely_L'.
-    """
-    if not label.startswith("ambiguous_"):
-        return label
-    try:
-        n_pct = float(consensus_str.strip().split("_")[-1])
-    except Exception:
-        return label
-    try:
-        L = int(label.split("_")[1])
-        consN = get_consensus_threshold_for_length(meta_subset, L)
-        if n_pct >= consN:
-            return f"likely_{L}"
-    except Exception:
-        pass
-    return label
-
-# --------------------------- Identifying deletions ---------------------------
 
 def run(
     organism: str,
-    res_path: str,
-    call_bcf: str,
-    indels_bcf: str,
-    fasta_path: str,
-    bed_path: str,
+    bcf_path: str,
+    mpileup_bcf_path: str,
     meta_path: str,
+    fasta_path: str,
     output_path: str,
-    region_buffer: int,
-    length_tolerance: int,
-    partial_overlap: float,
+    deletion_region_buffer: int = 5,
+    overlap_fraction: float = 0.6,
+    sam_path: Optional[str] = None,
 ) -> None:
+    # Step 1: load_deletion_metafile
+    print(
+        "\n# ========================= Step 1: load_deletion_metafile =========================\n"
+    )
+    meta_df = load_deletion_metafile(meta_path)
 
-    res_df = process_res_file(res_path)
-    bed = load_bed6(bed_path)
-    meta = read_meta(meta_path, organism)
+    # Step 2: Check_organism
+    print(
+        "\n# ========================= Step 2: Check_organism =========================\n"
+    )
+    org_meta = check_organism(meta_df, organism)
 
-    # If no rows for this organism → emit dashes
-    if meta.empty:
-        pd.DataFrame([{
-            "organism": organism,
-            # emit no gene-specific columns; downstream joiners can fill if needed
-        }]).to_csv(output_path, sep="\t", index=False)
+    if org_meta.empty:
+        print(
+            f"[WARN] No rows for organism '{organism}' in deletion metafile. Writing empty output."
+        )
+        out_df = pd.DataFrame(
+            columns=[
+                "species",
+                "contig_name",
+                "gene",
+                "expected_start",
+                "expected_end",
+                "expected_variant",
+                "deletion_start",
+                "deletion_end",
+                "deletion_length",
+                "assembly_deletion_start",
+                "assembly_deletion_end",
+                "assembly_deletion_length",
+                "expected_overlap_pct",
+                "observed_overlap_pct",
+                "assembly_expected_overlap_pct",
+                "assembly_observed_overlap_pct",
+                "consensus_N_pct",
+                "consensus_N_length",
+                "classified_deletion_variant",
+                "classified_consensus_variant",
+                "classified_assembly_variant",
+                "category",
+                "support_source",
+            ]
+        )
+        out_df.to_csv(output_path, sep="\t", index=False)
         return
 
-    # Group meta by gene
-    genes = list(dict.fromkeys(meta["gene"]))  # stable unique order
-    row: Dict[str, str] = {"organism": organism}
+    print(
+        f"[INFO] Using overlap_fraction={overlap_fraction} for canonical assignments."
+    )
 
+    # Load FASTA
+    print("\n# ========================= Load FASTA =========================\n")
+    try:
+        fasta_seqs = load_fasta_sequences(fasta_path)
+    except Exception as e:
+        raise RuntimeError(f"Failed to open consensus FASTA '{fasta_path}': {e}")
+
+    print("\n# ========================= Check BCF files =========================\n")
+
+    # Open call BCF once
+    try:
+        bcf = pysam.VariantFile(bcf_path)
+        print(f"[INFO] Successfully opened call BCF: {bcf_path}")
+    except Exception as e:
+        raise RuntimeError(f"Failed to open call BCF file '{bcf_path}': {e}")
+
+    # Open mpileup BCF once
+    try:
+        mpileup_bcf = pysam.VariantFile(mpileup_bcf_path)
+        print(f"[INFO] Successfully opened mpileup BCF: {mpileup_bcf_path}")
+    except Exception as e:
+        raise RuntimeError(f"Failed to open mpileup BCF file '{mpileup_bcf_path}': {e}")
+
+    print(
+        "\n# ========================= Step 3: Match_gene_bcf using the call BCF header =========================\n"
+    )
+
+    # Step 3: Match_gene_bcf using the call BCF header
+    genes = sorted(org_meta["gene"].astype(str).unique())
+    gene_to_contig = match_gene_bcf(bcf, genes)
+
+    results: List[dict] = []
+
+    # Process per gene
     for gene in genes:
-        meta_g = meta[meta["gene"] == gene].copy()
-
-        # find contig and strand/length from BED
-        try:
-            contig = find_contig_for_gene(res_df, gene)
-        except Exception as e:
-            print(f"[WARN] {gene}: contig not found in .res → '-' ({e})")
-            row[f"{gene}del"] = "-"
-            row[f"{gene}_deletion_details"] = "-"
-            row[f"{gene}_deletion_consensus"] = "-"
-            continue
-
-        if gene not in bed:
-            print(f"[WARN] {gene}: not in BED6 → '-'")
-            row[f"{gene}del"] = "-"
-            row[f"{gene}_deletion_details"] = "-"
-            row[f"{gene}_deletion_consensus"] = "-"
-            continue
-
-        strand = str(bed[gene]["strand"])
-        gene_len = int(bed[gene]["length"])
-
-        # Build expected regions dicts keyed by length
-        # gene-relative (meta file is gene coordinates)
-        orig_regions: Dict[int, Tuple[int, int]] = {}
-        for _, r in meta_g.iterrows():
-            L = int(r["del_len"])
-            s, e = int(r["del_start"]), int(r["del_end"])
-            # Keep max span per length if duplicates
-            if L in orig_regions:
-                s0, e0 = orig_regions[L]
-                orig_regions[L] = (min(s0, s), max(e0, e))
-            else:
-                orig_regions[L] = (s, e)
-
-        # If minus strand, convert to forward (contig) coords
-        if strand == "-":
-            converted = convert_reverse_strand_regions(orig_regions, gene_len)
-        elif strand == "+":
-            # plus-strand contigs are 1..gene_len; meta is already gene-relative → shift to 1..gene_len
-            converted = orig_regions.copy()
-        else:
-            print(f"[WARN] {gene}: invalid strand '{strand}' → '-'")
-            row[f"{gene}del"] = "-"
-            row[f"{gene}_deletion_details"] = "-"
-            row[f"{gene}_deletion_consensus"] = "-"
-            continue
-
-        # 1) Main BCF
-        label, detail, best_len = check_deletions_in_region(
-            bcf_path=call_bcf,
-            contig=contig,
-            target_regions=converted,
-            meta_subset=meta_g,
-            region_buffer=region_buffer,
-            length_tolerance=length_tolerance,
-            min_overlap_fraction=partial_overlap,
-            use_indels_thresholds=True
+        meta_g = org_meta[org_meta["gene"] == gene].copy()
+        print(
+            f"[INFO] ----- Processing gene '{gene}' with {len(meta_g)} deletion windows -----"
         )
 
-        # 2) If ambiguous or none, try indels BCF
-        if label.startswith("ambiguous") or label in ("-", "", None):
-            label2, detail2, best_len2 = check_deletions_in_region(
-                bcf_path=indels_bcf,
-                contig=contig,
-                target_regions=converted,
-                meta_subset=meta_g,
-                region_buffer=region_buffer,
-                length_tolerance=length_tolerance,
-                min_overlap_fraction=partial_overlap,
-                use_indels_thresholds=True
+        if gene not in gene_to_contig:
+            print(
+                f"[WARN] No contig mapping found in call BCF for gene '{gene}', "
+                f"all windows will be wt/category=0 (and may be fully filtered later)."
             )
-            if label2 not in ("-", "", None):
-                label, detail, best_len = label2, detail2, best_len2
-
-        # 3) Consensus extraction
-        #    - if we have a confident (or at least length-bearing) label, use that length
-        #    - else scan all and pick best ambiguous region
-        if isinstance(best_len, int) and best_len in converted:
-            # consensus threshold from meta
-            try:
-                consN = get_consensus_threshold_for_length(meta_g, best_len)
-            except KeyError:
-                consN = 100.0
-            consensus = extract_consensus_window(
-                fasta_path=fasta_path,
-                contig=contig,
-                del_len_key=best_len,
-                converted_regions=converted,
-                consensus_threshold_N=consN,
-            )
-            # optional upgrade ambiguous→likely if consensus supports
-            if label.startswith("ambiguous") and consensus != "-":
-                label = evaluate_ambiguous_consensus(label, consensus, meta_g)
+            contig_name = "-"
         else:
-            consensus = extract_best_ambiguous_consensus(
-                fasta_path=fasta_path,
-                contig=contig,
-                converted_regions=converted,
-                meta_subset=meta_g,
+            contig_name = gene_to_contig[gene]
+            print(f"[INFO] Using contig '{contig_name}' for gene '{gene}'.")
+
+        # Per-gene state
+        chosen_type: Optional[int] = None
+        chosen_len_diff: Optional[int] = None
+        chosen_obs_start: Optional[int] = None
+        chosen_obs_end: Optional[int] = None
+        chosen_obs_len: Optional[int] = None
+        chosen_frac_expected: Optional[float] = None
+        chosen_frac_observed: Optional[float] = None
+        chosen_category: Optional[str] = None  # "1".."7"
+        chosen_source: Optional[str] = None  # "call", "mpileup", "consensus", "assembly"
+
+        classified_deletion_variant: Optional[int] = None   # from call/mpileup
+        classified_consensus_variant: Optional[int] = None  # from consensus N%
+        classified_assembly_variant: Optional[int] = None   # from SAM/CIGAR
+
+        consensus_chosen_N_pct: Optional[float] = None
+        consensus_chosen_N_length: Optional[int] = None
+
+        # Assembly-specific canonical mapping (for reporting)
+        assembly_deletion_start: Optional[int] = None
+        assembly_deletion_end: Optional[int] = None
+        assembly_deletion_length: Optional[int] = None
+        assembly_frac_expected: Optional[float] = None
+        assembly_frac_observed: Optional[float] = None
+
+        # Support flags
+        has_call = False
+        has_mpileup = False
+        has_consensus = False
+        has_assembly = False
+        used_consensus_for_upgrade = False
+        used_assembly_for_upgrade = False
+        has_conflict = False  # not used directly, but kept for clarity
+
+        # ---------------------- CALL BCF (categories 1–3) ----------------------
+        print(
+            "\n# ========================= Step 4: CALL BCF – canonical classification (categories 1–3) =========================\n"
+        )
+
+        if contig_name != "-":
+            gene_min_start = int(meta_g["del_start"].min())
+            gene_max_end = int(meta_g["del_end"].max())
+
+            print(
+                f"[INFO] Call BCF: extracting candidate deletions spanning all windows for gene '{gene}' "
+                f"({gene_min_start}-{gene_max_end})"
             )
-            # If we had no call but consensus suggests a specific region, emit a "likely_<len>"
-            if label in ("-", "", None) and consensus not in ("-", "", None):
-                try:
-                    reg = consensus.split("_")[0]
-                    s, e = map(int, reg.split("-"))
-                    L = e - s + 1
-                    label = f"likely_{L}"
-                except Exception:
-                    pass
 
-        row[f"{gene}del"] = label if label else "-"
-        row[f"{gene}_deletion_details"] = filter_deletion_details(detail) if detail else "-"
-        row[f"{gene}_deletion_consensus"] = consensus if consensus else "-"
+            call_deletion_variants = extract_deletion_variants_in_region(
+                bcf=bcf,
+                contig=contig_name,
+                start=gene_min_start,
+                end=gene_max_end,
+                region_buffer=deletion_region_buffer,
+            )
 
-    pd.DataFrame([row]).to_csv(output_path, sep="\t", index=False)
+            (
+                call_type,
+                call_len_diff,
+                call_obs_start,
+                call_obs_end,
+                call_obs_len,
+                call_frac_expected,
+                call_frac_observed,
+                call_passes_thresholds,
+            ) = assign_best_canonical_for_call(
+                variants=call_deletion_variants,
+                meta_gene=meta_g,
+                min_frac=overlap_fraction,
+            )
 
-# ----------------------------- CLI -----------------------------
+            if call_type is not None:
+                has_call = True
+                if call_passes_thresholds:
+                    if call_len_diff is not None and call_len_diff <= 1:
+                        chosen_category = "1"
+                        print(
+                            f"[INFO] Call-based classification for gene '{gene}': "
+                            f"Category 1 (high confidence; len_diff={call_len_diff})"
+                        )
+                    else:
+                        chosen_category = "2"
+                        print(
+                            f"[INFO] Call-based classification for gene '{gene}': "
+                            f"Category 2 (good confidence; len_diff={call_len_diff})"
+                        )
+                else:
+                    chosen_category = "3"
+                    print(
+                        f"[INFO] Call-based classification for gene '{gene}': "
+                        f"Category 3 (thresholds not met; len_diff={call_len_diff})"
+                    )
 
-def main():
-    ap = argparse.ArgumentParser(description="Identify configured deletions using a meta TSV (no YAML configs).")
-    ap.add_argument("--organism", required=True)
-    ap.add_argument("--res", required=True, help="KMA .res file (for contig lookup)")
-    ap.add_argument("--call", required=True, help="Main genotype BCF")
-    ap.add_argument("--indels", required=True, help="Indels BCF")
-    ap.add_argument("--fsa", required=True, help="Consensus FASTA (kmer consensus)")
-    ap.add_argument("--bed", required=True, help="BED6 with gene coordinates/strand")
-    ap.add_argument("--metafile", required=True, help="TSV with expected deletion windows and thresholds")
-    ap.add_argument("-o", "--output", required=True, help="Output TSV path")
-    # matching/scan parameters
-    ap.add_argument("--partial_overlap", type=float, default=0.3, help="Overlap fraction for partial matches (default 0.3)")
-    ap.add_argument("--partial_match_length_tolerance", type=int, default=1, help="±bp tolerance for partial length matches (default 1)")
-    ap.add_argument("--deletion_region_buffer", type=int, default=5, help="bp to pad each expected region (default 5)")
-    args = ap.parse_args()
+                chosen_type = call_type
+                chosen_len_diff = call_len_diff
+                chosen_obs_start = call_obs_start
+                chosen_obs_end = call_obs_end
+                chosen_obs_len = call_obs_len
+                chosen_frac_expected = call_frac_expected
+                chosen_frac_observed = call_frac_observed
+                chosen_source = "call"
+                classified_deletion_variant = call_type
+            else:
+                print(
+                    f"[INFO] Call BCF: no canonical deletion found for gene '{gene}' "
+                    f"(no Category 1–3)."
+                )
+        else:
+            print(
+                f"[INFO] Gene '{gene}' has no contig in call BCF, skipping call-based classification."
+            )
 
+        # ---------------------- MPILEUP (categories 4–5, fallback) ----------------------
+        print(
+            "\n# ========================= Step 5: MPILEUP BCF – canonical classification (categories 4–5) =========================\n"
+        )
+
+        if chosen_category is None and contig_name != "-":
+            print(
+                f"[INFO] No call-based Category 1–3 for gene '{gene}', "
+                f"checking mpileup BCF for canonical assignment (Category 4–5)."
+            )
+
+            gene_min_start = int(meta_g["del_start"].min())
+            gene_max_end = int(meta_g["del_end"].max())
+
+            print(
+                f"[INFO] Mpileup BCF: extracting candidate deletions spanning all windows for gene '{gene}' "
+                f"({gene_min_start}-{gene_max_end})"
+            )
+
+            mpileup_deletion_variants = extract_deletion_variants_in_region(
+                bcf=mpileup_bcf,
+                contig=contig_name,
+                start=gene_min_start,
+                end=gene_max_end,
+                region_buffer=deletion_region_buffer,
+            )
+
+            (
+                mp_type,
+                mp_len_diff,
+                mp_obs_start,
+                mp_obs_end,
+                mp_obs_len,
+                mp_frac_expected,
+                mp_frac_observed,
+            ) = assign_best_canonical_for_mpileup(
+                variants=mpileup_deletion_variants,
+                meta_gene=meta_g,
+                min_frac=overlap_fraction,
+            )
+
+            if mp_type is not None:
+                has_mpileup = True
+                if mp_len_diff is not None and mp_len_diff == 0:
+                    chosen_category = "4"
+                    print(
+                        f"[INFO] Mpileup-based classification for gene '{gene}': "
+                        f"Category 4 (exact canonical length; len_diff={mp_len_diff})"
+                    )
+                else:
+                    chosen_category = "5"
+                    print(
+                        f"[INFO] Mpileup-based classification for gene '{gene}': "
+                        f"Category 5 (inexact canonical length; len_diff={mp_len_diff})"
+                    )
+
+                chosen_type = mp_type
+                chosen_len_diff = mp_len_diff
+                chosen_obs_start = mp_obs_start
+                chosen_obs_end = mp_obs_end
+                chosen_obs_len = mp_obs_len
+                chosen_frac_expected = mp_frac_expected
+                chosen_frac_observed = mp_frac_observed
+                chosen_source = "mpileup"
+                classified_deletion_variant = mp_type
+            else:
+                print(
+                    f"[INFO] Mpileup BCF: no canonical deletion assigned for gene '{gene}'."
+                )
+        elif chosen_category is not None:
+            print(
+                f"[INFO] Gene '{gene}' already has call-based category {chosen_category}; "
+                f"mpileup canonical mapping skipped."
+            )
+        else:
+            print(
+                f"[INFO] Gene '{gene}' has no contig mapping; mpileup classification skipped."
+            )
+
+        # Decide whether to skip consensus + assembly entirely
+        skip_secondary = (
+            chosen_category == "1" and chosen_source == "call"
+        )
+
+        # ---------------------- Step 6: Build per-window consensus stats (if not skipped) ----------------------
+        window_consensus_info: Dict[Tuple[int, int, int], dict] = {}
+
+        if not skip_secondary:
+            print(
+                "\n# ========================= Step 6: Build per-window consensus stats for this gene (N% and threshold) =========================\n"
+            )
+
+            for _, row in meta_g.iterrows():
+                expected_start = int(row["del_start"])
+                expected_end = int(row["del_end"])
+                expected_variant = int(row["del_type"])
+                consensus_threshold = float(row["consensus_N"])
+
+                consensus_N_pct = None
+                consensus_N_length = None
+
+                if contig_name != "-" and contig_name in fasta_seqs:
+                    seq = fasta_seqs[contig_name]
+                    start_idx = expected_start - 1
+                    end_idx = expected_end
+                    if start_idx < 0 or end_idx > len(seq):
+                        print(
+                            f"[WARN] Expected window {gene}:{expected_start}-{expected_end} "
+                            f"out of FASTA bounds for contig '{contig_name}' (len={len(seq)}). "
+                            f"Skipping consensus N% calculation."
+                        )
+                    else:
+                        region = seq[start_idx:end_idx]
+                        if region:
+                            n_count = sum(1 for base in region if base in ("N", "n"))
+                            consensus_N_length = n_count
+                            consensus_N_pct = (n_count / len(region)) * 100.0
+                            print(
+                                f"[INFO] Consensus N% for {gene}:{expected_start}-{expected_end} on "
+                                f"{contig_name} = {consensus_N_pct:.2f}% ({n_count}/{len(region)} N), "
+                                f"threshold={consensus_threshold:.2f}%"
+                            )
+                elif contig_name == "-":
+                    print(
+                        f"[INFO] No contig for gene '{gene}' in FASTA; consensus_N_pct left as None."
+                    )
+                else:
+                    print(
+                        f"[WARN] Contig '{contig_name}' not found in FASTA; "
+                        f"consensus_N_pct left as None."
+                    )
+
+                key = (expected_start, expected_end, expected_variant)
+                window_consensus_info[key] = {
+                    "consensus_N_pct": consensus_N_pct,
+                    "consensus_N_length": consensus_N_length,
+                    "consensus_threshold": consensus_threshold,
+                }
+        else:
+            print(
+                "\n# ========================= Skipping consensus (Step 7) and assembly (Step 8) because gene is Category 1 from CALL =========================\n"
+            )
+
+        # ---------------------- Step 7: Consensus-based classification & adjustment (if not skipped) ----------------------
+        if not skip_secondary:
+            print(
+                "\n# ========================= Step 7: Consensus-based classification and category adjustment =========================\n"
+            )
+
+            consensus_candidates: List[Tuple[int, int, int, float, int]] = []
+
+            for _, row in meta_g.iterrows():
+                expected_start = int(row["del_start"])
+                expected_end = int(row["del_end"])
+                expected_variant = int(row["del_type"])
+                key = (expected_start, expected_end, expected_variant)
+                info = window_consensus_info.get(key, {})
+                c_pct = info.get("consensus_N_pct")
+                c_len = info.get("consensus_N_length")
+                c_thr = info.get("consensus_threshold", 0.0)
+
+                if c_pct is not None and c_pct >= c_thr:
+                    consensus_candidates.append(
+                        (expected_variant, expected_start, expected_end, c_pct, c_len or 0)
+                    )
+
+            if consensus_candidates:
+                consensus_candidates.sort(key=lambda x: x[0], reverse=True)
+                (
+                    c_exp_variant,
+                    c_exp_start,
+                    c_exp_end,
+                    c_pct,
+                    c_n_len,
+                ) = consensus_candidates[0]
+                classified_consensus_variant = c_exp_variant
+                consensus_chosen_N_pct = c_pct
+                consensus_chosen_N_length = c_n_len
+                has_consensus = True
+
+                print(
+                    f"[INFO] Consensus classification for gene '{gene}': "
+                    f"selected expected_variant={c_exp_variant}, "
+                    f"window={c_exp_start}-{c_exp_end}, "
+                    f"consensus_N_pct={c_pct:.2f}%, "
+                    f"consensus_N_length={c_n_len}"
+                )
+            else:
+                print(
+                    f"[INFO] No consensus window for gene '{gene}' passed its consensus_N threshold; "
+                    f"no consensus-based deletion classification."
+                )
+
+            # Consensus rules
+            if classified_deletion_variant is not None and chosen_category is not None:
+                if chosen_category == "1":
+                    # This case now won't happen because we skip consensus if Category 1 from CALL
+                    print(
+                        f"[INFO] Gene '{gene}' has Category 1 from CALL; "
+                        f"consensus will NOT change this classification."
+                    )
+                else:
+                    if classified_consensus_variant is not None:
+                        if classified_consensus_variant == classified_deletion_variant:
+                            expected_len = classified_deletion_variant
+                            if (
+                                consensus_chosen_N_length is not None
+                                and consensus_chosen_N_length == expected_len
+                            ):
+                                boost = 2
+                                support_type = "exact"
+                            else:
+                                boost = 1
+                                support_type = "inexact"
+
+                            original_cat_int = int(chosen_category)
+                            new_cat_int = max(1, original_cat_int - boost)
+                            if new_cat_int != original_cat_int:
+                                used_consensus_for_upgrade = True
+                            print(
+                                f"[INFO] Consensus {support_type} support for gene '{gene}' "
+                                f"(deletion_variant={classified_deletion_variant}): "
+                                f"original_category={chosen_category} → new_category={new_cat_int}"
+                            )
+                            chosen_category = str(new_cat_int)
+                        else:
+                            print(
+                                f"[INFO] Conflict for gene '{gene}': "
+                                f"deletion_variant={classified_deletion_variant} from {chosen_source}, "
+                                f"but consensus_variant={classified_consensus_variant}. "
+                                f"Setting category=7 (conflict)."
+                            )
+                            chosen_category = "7"
+                            has_conflict = True
+                    else:
+                        print(
+                            f"[INFO] Gene '{gene}' has Category {chosen_category} from {chosen_source} "
+                            f"but consensus did not classify a deletion; category unchanged."
+                        )
+            else:
+                if classified_consensus_variant is not None:
+                    chosen_category = "6"
+                    chosen_type = classified_consensus_variant
+                    chosen_source = "consensus"
+                    print(
+                        f"[INFO] Gene '{gene}' has no call/mpileup deletion but consensus "
+                        f"classifies expected_variant={classified_consensus_variant}; "
+                        f"setting category=6 (consensus-only)."
+                    )
+                else:
+                    print(
+                        f"[INFO] Gene '{gene}' has no deletion classification from call/mpileup "
+                        f"and no consensus classification (all remain category 0)."
+                    )
+        elif skip_secondary:
+            print(
+                "[INFO] Gene has Category 1 from CALL; consensus classification skipped."
+            )
+        
+
+        # ---------------------- Step 8: SAM / assembly-based adjustment (if not skipped) ----------------------
+        sam_deletion_spans: List[Tuple[int, int, int]] = []
+
+        if not skip_secondary and sam_path is not None and contig_name != "-":
+            print(
+                "\n# ========================= Step 8: SAM gene-substring matches and assembly-based category adjustment =========================\n"
+            )
+
+            print(
+                f"[INFO] Scanning SAM file for gene-substring matches (genes=1): {sam_path}"
+            )
+            try:
+                with open(sam_path, "r") as sam_fh:
+                    for line in sam_fh:
+                        line = line.rstrip("\n")
+                        if not line or line.startswith("@"):
+                            continue
+                        fields = line.split("\t")
+                        if len(fields) < 11:
+                            continue
+                        qname = fields[0]
+                        flag = int(fields[1])
+                        rname = fields[2]
+                        pos = int(fields[3])
+                        mapq = int(fields[4])
+                        cigar = fields[5]
+
+                        if rname != contig_name:
+                            continue
+                        if re.search(
+                            re.escape(gene), rname, flags=re.IGNORECASE
+                        ) is None:
+                            continue
+
+                        cs_tag = ""
+                        for f in fields[11:]:
+                            if f.startswith("cs:Z:"):
+                                cs_tag = f
+                                break
+
+                        print(
+                            f"[SAM_MATCH] gene='{gene}' RNAME='{rname}' FLAG={flag} POS={pos} "
+                            f"MAPQ={mapq} CIGAR='{cigar}' CS='{cs_tag}'"
+                        )
+
+                        del_events = parse_cigar_deletions(cigar, pos)
+                        for del_start, del_end, del_len in del_events:
+                            print(
+                                f"[SAM_DEL] gene='{gene}' RNAME='{rname}' "
+                                f"DEL_START={del_start} DEL_LEN={del_len}"
+                            )
+                            sam_deletion_spans.append((del_start, del_end, del_len))
+
+                print(
+                    f"[INFO] Finished scanning SAM. Total matching alignments: "
+                    f"{len(sam_deletion_spans)} deletions (events, across all hits)."
+                )
+            except Exception as e:
+                print(f"[ERROR] Failed to read SAM file '{sam_path}': {e}")
+        elif sam_path is None:
+            print("[INFO] No SAM file provided; skipping assembly-based classification.")
+        elif skip_secondary:
+            print(
+                "[INFO] Gene has Category 1 from CALL; assembly-based classification skipped."
+            )
+        else:
+            print(
+                f"[INFO] Gene '{gene}' has no contig mapping; skipping assembly-based classification."
+            )
+
+        if not skip_secondary and sam_deletion_spans:
+            # Two modes:
+            #  1) Support mode (we already have a canonical type from call/mpileup/consensus)
+            #  2) Fallback mode (no canonical type at all -> assembly-only Category 6)
+            expected_lengths = sorted(set(meta_g["del_type"].astype(int)))
+
+            if chosen_type is not None and chosen_category is not None:
+                # -------- SUPPORT MODE: pure length check vs chosen_type --------
+                print(
+                    f"[INFO] Assembly support mode for gene '{gene}': "
+                    f"checking for CIGAR deletions of length {chosen_type}."
+                )
+                support_events = [
+                    (s, e, l)
+                    for (s, e, l) in sam_deletion_spans
+                    if l == chosen_type
+                ]
+
+                if support_events:
+                    # Choose leftmost event for reporting
+                    support_events.sort(key=lambda x: x[0])
+                    asm_obs_start, asm_obs_end, asm_obs_len = support_events[0]
+
+                    has_assembly = True
+                    classified_assembly_variant = chosen_type
+                    assembly_deletion_start = asm_obs_start
+                    assembly_deletion_end = asm_obs_end
+                    assembly_deletion_length = asm_obs_len
+
+                    # We treat assembly as full support; we do not use overlap_fraction here
+                    assembly_frac_expected = None
+                    assembly_frac_observed = None
+
+                    if chosen_category != "1":
+                        original_cat_int = int(chosen_category)
+                        # Exact-length assembly support: boost 2 categories closer to 1
+                        new_cat_int = max(1, original_cat_int - 2)
+                        if new_cat_int != original_cat_int:
+                            used_assembly_for_upgrade = True
+                        print(
+                            f"[INFO] Assembly exact-length support for gene '{gene}' "
+                            f"(deletion_variant={chosen_type}): "
+                            f"original_category={chosen_category} → new_category={new_cat_int}"
+                        )
+                        chosen_category = str(new_cat_int)
+                    else:
+                        print(
+                            f"[INFO] Gene '{gene}' is Category 1; assembly support will not change this."
+                        )
+                else:
+                    print(
+                        f"[INFO] Assembly found no deletions of length {chosen_type} for gene '{gene}'; "
+                        f"ignoring assembly for this gene (no conflict)."
+                    )
+
+            else:
+                # -------- FALLBACK MODE: use mpileup-like canonical scoring --------
+                print(
+                    f"[INFO] No canonical deletion for gene '{gene}' from call/mpileup/consensus; "
+                    f"using assembly-only canonical assignment (Category 6 fallback)."
+                )
+                (
+                    asm_type,
+                    asm_len_diff,
+                    asm_obs_start,
+                    asm_obs_end,
+                    asm_obs_len,
+                    asm_frac_expected,
+                    asm_frac_observed,
+                ) = assign_best_canonical_for_assembly(
+                    del_spans=sam_deletion_spans,
+                    meta_gene=meta_g,
+                    min_frac=overlap_fraction,
+                )
+
+                if asm_type is not None:
+                    has_assembly = True
+                    classified_assembly_variant = asm_type
+                    assembly_deletion_start = asm_obs_start
+                    assembly_deletion_end = asm_obs_end
+                    assembly_deletion_length = asm_obs_len
+                    assembly_frac_expected = asm_frac_expected
+                    assembly_frac_observed = asm_frac_observed
+
+                    chosen_category = "6"
+                    chosen_type = asm_type
+                    chosen_source = "assembly"
+                    chosen_len_diff = asm_len_diff
+                    chosen_obs_start = asm_obs_start
+                    chosen_obs_end = asm_obs_end
+                    chosen_obs_len = asm_obs_len
+                    chosen_frac_expected = asm_frac_expected
+                    chosen_frac_observed = asm_frac_observed
+
+                    print(
+                        f"[INFO] Gene '{gene}' has assembly-only classification: "
+                        f"variant={asm_type}, category=6 (assembly-only)."
+                    )
+                else:
+                    print(
+                        f"[INFO] No assembly canonical deletion passed overlap_fraction for gene '{gene}'."
+                    )
+        else:
+            if not skip_secondary:
+                print(
+                    f"[INFO] No SAM/CIGAR deletions for gene '{gene}' after filtering; "
+                    f"no assembly-based adjustment."
+                )
+
+        # ---------------------- support_source ----------------------
+        support_source_str = get_support_source(
+            has_call=has_call,
+            has_mpileup=has_mpileup,
+            has_consensus=has_consensus,
+            has_assembly=has_assembly,
+            used_consensus_for_upgrade=used_consensus_for_upgrade,
+            used_assembly_for_upgrade=used_assembly_for_upgrade,
+            category=chosen_category,
+        )
+
+        # Compute assembly overlap percentages for reporting (if we had canonical assembly mapping)
+        assembly_expected_overlap_pct = None
+        assembly_observed_overlap_pct = None
+        if assembly_frac_expected is not None:
+            assembly_expected_overlap_pct = assembly_frac_expected * 100.0
+        if assembly_frac_observed is not None:
+            assembly_observed_overlap_pct = assembly_frac_observed * 100.0
+
+        # ---------------------- Step 9: Build per-window rows for this gene ----------------------
+        print(
+            "\n# ========================= Step 9: Build per-window rows for this gene =========================\n"
+        )
+
+        assigned_for_gene = False
+        for _, row in meta_g.iterrows():
+            species = str(row["species"])
+            expected_start = int(row["del_start"])
+            expected_end = int(row["del_end"])
+            expected_variant = int(row["del_type"])
+
+            deletion_start = None
+            deletion_end = None
+            deletion_length = None
+            expected_overlap_pct = None
+            observed_overlap_pct = None
+            consensus_N_pct = None
+            consensus_N_length = None
+            category = "0"
+
+            key = (expected_start, expected_end, expected_variant)
+            c_info = window_consensus_info.get(key, {})
+            if c_info:
+                consensus_N_pct = c_info.get("consensus_N_pct")
+                consensus_N_length = c_info.get("consensus_N_length")
+
+            if (
+                not assigned_for_gene
+                and chosen_category is not None
+                and chosen_type is not None
+                and expected_variant == chosen_type
+            ):
+                category = chosen_category
+                if (
+                    chosen_obs_start is not None
+                    and chosen_obs_end is not None
+                    and chosen_obs_len is not None
+                    and chosen_source in ("call", "mpileup", "assembly")
+                ):
+                    deletion_start = int(chosen_obs_start)
+                    deletion_end = int(chosen_obs_end)
+                    deletion_length = int(chosen_obs_len)
+
+                if (
+                    chosen_frac_expected is not None
+                    and chosen_frac_observed is not None
+                ):
+                    expected_overlap_pct = chosen_frac_expected * 100.0
+                    observed_overlap_pct = chosen_frac_observed * 100.0
+
+                assigned_for_gene = True
+
+                print(
+                    f"[INFO] For gene '{gene}', assigning "
+                    f"{(chosen_source or 'UNKNOWN').upper()} "
+                    f"canonical type={chosen_type} to window {expected_start}-{expected_end}, "
+                    f"category={category}, expected_overlap_pct={expected_overlap_pct}, "
+                    f"observed_overlap_pct={observed_overlap_pct}"
+                )
+
+            results.append(
+                {
+                    "species": species,
+                    "contig_name": contig_name,
+                    "gene": gene,
+                    "expected_start": expected_start,
+                    "expected_end": expected_end,
+                    "expected_variant": expected_variant,
+                    "deletion_start": deletion_start,
+                    "deletion_end": deletion_end,
+                    "deletion_length": deletion_length,
+                    "assembly_deletion_start": assembly_deletion_start,
+                    "assembly_deletion_end": assembly_deletion_end,
+                    "assembly_deletion_length": assembly_deletion_length,
+                    "expected_overlap_pct": expected_overlap_pct,
+                    "observed_overlap_pct": observed_overlap_pct,
+                    "assembly_expected_overlap_pct": assembly_expected_overlap_pct,
+                    "assembly_observed_overlap_pct": assembly_observed_overlap_pct,
+                    "consensus_N_pct": consensus_N_pct,
+                    "consensus_N_length": consensus_N_length,
+                    "classified_deletion_variant": classified_deletion_variant,
+                    "classified_consensus_variant": classified_consensus_variant,
+                    "classified_assembly_variant": classified_assembly_variant,
+                    "category": category,
+                    "support_source": support_source_str,
+                }
+            )
+
+    # Build final DataFrame
+    out_df = pd.DataFrame(results)
+
+    # Only keep rows where category != "0"
+    nonzero_df = out_df[out_df["category"] != "0"].copy()
+
+    if nonzero_df.empty:
+        print("[INFO] No deletions detected (all category 0). Writing single dash row.")
+        first_row = org_meta.iloc[0]
+        species = str(first_row["species"])
+        gene = str(first_row["gene"])
+        contig_name = "-"
+        if gene in gene_to_contig:
+            contig_name = gene_to_contig[gene]
+
+        fallback = pd.DataFrame(
+            [
+                {
+                    "species": species,
+                    "contig_name": contig_name,
+                    "gene": gene,
+                    "expected_start": "-",
+                    "expected_end": "-",
+                    "expected_variant": "-",
+                    "deletion_start": "-",
+                    "deletion_end": "-",
+                    "deletion_length": "-",
+                    "assembly_deletion_start": "-",
+                    "assembly_deletion_end": "-",
+                    "assembly_deletion_length": "-",
+                    "expected_overlap_pct": "-",
+                    "observed_overlap_pct": "-",
+                    "assembly_expected_overlap_pct": "-",
+                    "assembly_observed_overlap_pct": "-",
+                    "consensus_N_pct": "-",
+                    "consensus_N_length": "-",
+                    "classified_deletion_variant": "-",
+                    "classified_consensus_variant": "-",
+                    "classified_assembly_variant": "-",
+                    "category": "-",
+                    "support_source": "-",
+                }
+            ]
+        )
+        fallback.to_csv(output_path, sep="\t", index=False)
+    else:
+        int_cols = [
+            "expected_start",
+            "expected_end",
+            "expected_variant",
+            "deletion_start",
+            "deletion_end",
+            "deletion_length",
+            "assembly_deletion_start",
+            "assembly_deletion_end",
+            "assembly_deletion_length",
+            "consensus_N_length",
+            "classified_deletion_variant",
+            "classified_consensus_variant",
+            "classified_assembly_variant",
+        ]
+        for col in int_cols:
+            if col in nonzero_df.columns:
+                nonzero_df[col] = nonzero_df[col].astype("Int64")
+
+        pct_cols = [
+            "expected_overlap_pct",
+            "observed_overlap_pct",
+            "assembly_expected_overlap_pct",
+            "assembly_observed_overlap_pct",
+            "consensus_N_pct",
+        ]
+        for col in pct_cols:
+            if col in nonzero_df.columns:
+                nonzero_df[col] = nonzero_df[col].map(
+                    lambda x: f"{x:.2f}" if isinstance(x, (float, int)) else x
+                )
+
+        nonzero_df = nonzero_df[
+            [
+                "species",
+                "contig_name",
+                "gene",
+                "expected_start",
+                "expected_end",
+                "expected_variant",
+                "deletion_start",
+                "deletion_end",
+                "deletion_length",
+                "assembly_deletion_start",
+                "assembly_deletion_end",
+                "assembly_deletion_length",
+                "expected_overlap_pct",
+                "observed_overlap_pct",
+                "assembly_expected_overlap_pct",
+                "assembly_observed_overlap_pct",
+                "consensus_N_pct",
+                "consensus_N_length",
+                "classified_deletion_variant",
+                "classified_consensus_variant",
+                "classified_assembly_variant",
+                "category",
+                "support_source",
+            ]
+        ]
+        nonzero_df.to_csv(output_path, sep="\t", index=False)
+
+    print(f"[INFO] Deletion summary written to: {output_path}")
+
+
+def main() -> None:
+    arg = argparse.ArgumentParser(
+        description=(
+            "Identify configured deletions from a call BCF and a mpileup BCF "
+            "using a deletion metafile (no KMA/BED), and report %N in the "
+            "consensus FASTA for each expected deletion window, with "
+            "consensus- and assembly-supported category adjustments."
+        )
+    )
+    arg.add_argument(
+        "--organism", required=True, help="Organism name to filter metafile by."
+    )
+    arg.add_argument(
+        "--call", required=True, help="BCF file with genotype calls (deletions)."
+    )
+    arg.add_argument(
+        "--mpileup",
+        required=True,
+        help="BCF file with mpileup indel calls (fallback).",
+    )
+    arg.add_argument(
+        "--metafile",
+        required=True,
+        help=(
+            "TSV deletion metafile with columns: species, gene, del_start, "
+            "del_end, del_type, gt_IMF, gt_IDV, gt_DP, consensus_N."
+        ),
+    )
+    arg.add_argument(
+        "--fsa",
+        required=True,
+        help=(
+            "Consensus FASTA; used to compute %N for each expected deletion "
+            "window defined in the metafile."
+        ),
+    )
+    arg.add_argument(
+        "--sam",
+        required=False,
+        help=(
+            "Optional SAM alignment file; used to extract CIGAR-based deletions "
+            "for additional assembly support and classification."
+        ),
+    )
+    arg.add_argument(
+        "-o",
+        "--output",
+        required=True,
+        help=(
+            "Output TSV path "
+            "(species, contig_name, gene, expected_start, expected_end, "
+            "expected_variant, deletion_start, deletion_end, deletion_length, "
+            "assembly_deletion_start, assembly_deletion_end, assembly_deletion_length, "
+            "expected_overlap_pct, observed_overlap_pct, "
+            "assembly_expected_overlap_pct, assembly_observed_overlap_pct, "
+            "consensus_N_pct, consensus_N_length, classified_deletion_variant, "
+            "classified_consensus_variant, classified_assembly_variant, "
+            "category, support_source)."
+        ),
+    )
+    arg.add_argument(
+        "--deletion_region_buffer",
+        type=int,
+        default=5,
+        help="bp to pad each expected deletion region on each side (default 5).",
+    )
+    arg.add_argument(
+        "--overlap_fraction",
+        type=float,
+        default=0.6,
+        help=(
+            "Minimum fraction of expected deletion covered to consider mapping "
+            "from call/mpileup/SAM (default 0.6)."
+        ),
+    )
+
+    args = arg.parse_args()
     run(
         organism=args.organism,
-        res_path=args.res,
-        call_bcf=args.call,
-        indels_bcf=args.indels,
-        fasta_path=args.fsa,
-        bed_path=args.bed,
+        bcf_path=args.call,
+        mpileup_bcf_path=args.mpileup,
         meta_path=args.metafile,
+        fasta_path=args.fsa,
         output_path=args.output,
-        region_buffer=args.deletion_region_buffer,
-        length_tolerance=args.partial_match_length_tolerance,
-        partial_overlap=args.partial_overlap,
+        deletion_region_buffer=args.deletion_region_buffer,
+        overlap_fraction=args.overlap_fraction,
+        sam_path=args.sam,
     )
+
 
 if __name__ == "__main__":
     main()

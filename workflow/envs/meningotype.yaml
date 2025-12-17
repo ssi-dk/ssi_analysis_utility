@@ -5,4 +5,4 @@ dependencies:
   - python=3.10
   - meningotype
   - biopython=1.83
-  - blast     
+  - blast

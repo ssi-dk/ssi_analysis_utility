@@ -121,13 +121,38 @@ rule amrfinder:
         eval $cmd >> {log.stdout} 2>&1
         """
 
+rule LREfinder:
+    input:
+        # A complete access to the wildcard is needed, if we try to call the output of different rule we have the blending of wildcards 
+        res = rules.custom_kmeralignment.output.results,
+        matrix = rules.custom_kmeralignment.output.matrix
+    # params:
+    #     options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["custom_blaster"]["options"],    
+    output:
+        results = "%s/{sample}/LREfinder/{database}.tsv" %output_folder,
+    conda:
+        "../envs/python_functions.yaml"
+    log:
+        stdout = "Logs/{sample}/LRE-finder_{database}.log"
+    message:
+        "[LRE-finder]: Identify genes and mutations leading to linezolid resistance in E. faecalis and E. faecium"
+    shell:
+        """
+        mkdir -p $(dirname {output.results})
+    
+        cmd="python workflow/scripts/LRE-Typer.py -ires {input.res} -imat {input.matrix} -o {output.results}"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+
+        echo "LRE-finder successfully executed" > {log.stdout}
+        """
+
 
 rule snp_identifier:
     input:
-        kma_results = rules.custom_kmeralignment.output.results,
         variants = rules.bcftools_variant_call.output.variants,
         variants_index = rules.bcftools_variant_call.output.index,
-        ref_bed = rules.fetch_genbank.output.bed,
     params:
         options = lambda wildcards: sample_configs[wildcards.sample]["snp_identifier"]["options"],
         metafile = "%s/SNP_metafile.tsv" %metadata_path
@@ -141,41 +166,39 @@ rule snp_identifier:
         "[SNP Identifier]: Identifying SNPs of {wildcards.database} on {wildcards.sample}"
     shell:
         """
-        cmd="python workflow/scripts/SNP_identifier.py --res {input.kma_results} --call {input.variants} --bed {input.ref_bed} --metafile {params.metafile} -o {output.indentified_variants} {params.options}"
+        cmd="python workflow/scripts/SNP_identifier.py {params.options} --call {input.variants} --metafile {params.metafile} --output {output.indentified_variants}"
     
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
         """
 
-
 rule deletion_identifier:
     input:
-        kma_results = rules.custom_kmeralignment.output.results,
         kma_seq = rules.custom_kmerconsensus.output.seq,
         indels = rules.bcftools_filter_indels.output.indels,
         indels_index = rules.bcftools_filter_indels.output.index,
         variants = rules.bcftools_variant_call.output.variants,
         variants_index = rules.bcftools_variant_call.output.index,
-        ref_bed = rules.fetch_genbank.output.bed,
+        asm_aln = rules.assembly_minimap2.output.results
     params:
-        options = lambda wildcards: sample_configs[wildcards.sample]["deletion_identifier"]["options"],
-        metafile = "%s/deletion_metafiles.tsv" %metadata_path
+        options  = lambda wildcards: sample_configs[wildcards.sample]["deletion_identifier"]["options"],
+        metafile = f"{metadata_path}/deletion_metafiles.tsv"
     output:
-        indentified_variants = "%s/{sample}/deletion_identifier/{database}.tsv" %output_folder
+        identified_variants = f"{output_folder}/{{sample}}/deletion_identifier/{{assembler,[^_]+}}_{{database}}.tsv" #added regex expression to ensure assemblies cannot contain '_' which our database also does
     conda:
         "../envs/python_functions.yaml"
     log:
-        stdout = "Logs/{sample}/deletion_identifier_{database}.log"
+        stdout = "Logs/{sample}/deletion_identifier_{assembler}_{database}.log"
     message:
-        "[Deletion Identifier]: Identifying deletions of {wildcards.database} on {wildcards.sample}"
+        "[Deletion Identifier]: Identifying deletions of {wildcards.database} on {wildcards.sample} ({wildcards.assembler})"
     shell:
-        """
-        cmd="python workflow/scripts/deletion_identifier.py --res {input.kma_results} --fsa {input.kma_seq} --call {input.variants} --indels {input.indels} --bed {input.ref_bed} --metafile {params.metafile} -o {output.indentified_variants} {params.options}"
+        r"""
+        cmd="python workflow/scripts/deletion_identifier.py {params.options} --fsa {input.kma_seq} --call {input.variants} --mpileup {input.indels} --metafile {params.metafile} --sam {input.asm_aln} --output {output.identified_variants}"
+
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
         """
-
 
 rule cdiff_repeat_identifier:
     input:
