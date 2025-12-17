@@ -121,7 +121,7 @@ rule assembly_minimap2:
     output:
         results = temp(f"{output_folder}/{{sample}}/minimap2/{{assembler}}_{{database}}.sam")
     conda:
-        helper_functions.resolve_env(envs_location, "../envs/minimap2.yaml")
+        helper_functions.resolve_env(envs_location, "minimap2")
     log:
         stdout = "Logs/{sample}/minimap2/{assembler}_{database}.log"
     message:
