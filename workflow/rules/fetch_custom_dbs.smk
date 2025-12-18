@@ -119,7 +119,8 @@ rule fetch_ecoligenes:
 rule fetch_Senterica_Scheme:
     output:
         source = "%s/custom/SalmonellaAchtman7GeneMLST.fasta" %database_path,
-        profile = "%s/custom/SalmonellaAchtman7GeneMLST.txt" %database_path
+        profile = "%s/custom/SalmonellaAchtman7GeneMLST.txt" %database_path,
+        version_db = "%s/custom/SalmonellaAchtman7GeneMLST_version.txt" % database_path
     conda:
         "../envs/fetch.yaml"
     log:
@@ -128,17 +129,40 @@ rule fetch_Senterica_Scheme:
         "[fetch_Senterica_Scheme]: Downloading Achtman 7 Gene MLST scheme for Salmonella Enterica"
     shell:
         """
+        set -euo pipefail
         mkdir -p $(dirname {output.source})
-        cmd="curl https://enterobase.warwick.ac.uk/schemes/Salmonella.Achtman7GeneMLST/MLST_Achtman_ref.fasta -o {output.source}"
+                
+        fasta_url="https://enterobase.warwick.ac.uk/schemes/Salmonella.Achtman7GeneMLST/MLST_Achtman_ref.fasta"
+        profile_url="https://enterobase.warwick.ac.uk/schemes/Salmonella.Achtman7GeneMLST/profiles.list.gz"
 
-        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-        eval $cmd >> {log.stdout} 2>&1
+        fasta_cmd="curl -fSL $fasta_url -o {output.source}"
+        profile_cmd="curl -fSL $profile_url -o {output.profile}"
 
-        cmd="curl https://enterobase.warwick.ac.uk/schemes/Salmonella.Achtman7GeneMLST/profiles.list.gz | gunzip -c > {output.profile}"
+        echo "Executing command:\n$fasta_cmd\n" > {log.stdout} 2>&1
+        eval $fasta_cmd >> {log.stdout} 2>&1
 
-        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-        eval $cmd >> {log.stdout} 2>&1
+        echo "Executing command:\n$profile_cmd\n" > {log.stdout} 2>&1
+        eval $profile_cmd >> {log.stdout} 2>&1
         
+        # 2) Get ETag (as a clean value) and make version file
+        etag_cmd="curl -sI $fasta_url | sed -n 's/^etag: //Ip' | tr -d '\\r' | tr -d '\\042'"
+        date_cmd="date -I"
+
+        echo -e "Executing command:\n$etag_cmd\n$date_cmd\n" >> {log.stdout}
+
+        etag_str="$(eval "$etag_cmd" 2>> {log.stdout})"
+        date_str="$(eval "$date_cmd" 2>> {log.stdout})"
+
+        # Fallback if no ETag is present for some reason
+        if [ -z "$etag_str" ]; then
+            etag_str="no_etag"
+        fi
+
+        # Build version ID. If you DON'T want the ETag at all, set version_str="SalmonellaAchtman7GeneMLST"
+        version_str="SalmonellaAchtman7GeneMLST_$etag_str"
+
+        # Write "<id>\t<download_date>" to the version file
+        printf '%s\t%s\n' "$version_str" "$date_str" > {output.version_db}
         """
 
 rule fetch_Senterica_Serovar:
@@ -191,20 +215,47 @@ rule fetch_Senterica_Serovar:
 rule setup_LREfinder:
     conda:
         "../envs/kmeraligner.yaml"
+    params:
+        prefix = "%s/custom/" %database_path,
+        dbdir = "%s/custom/elmDB/" %database_path,
     output:
-        database = "%s/custom/elmDB.fasta" %database_path
+        source = "%s/custom/elmDB.fasta" %database_path,
+        version_db = "%s/custom/elmDB_version.txt" % database_path
     log:
         stdout = 'Logs/Databases/LREfinder_db.log'
     message:
         "[setup_LREfinder]: Setting up LREfinder database"
     shell:
         """
-        outdir=$(dirname {output.database})
-        mkdir -p $outdir
-        curl -fSL https://bitbucket.org/genomicepidemiology/lre-finder/raw/fac445d190853cc90c1aed392a55102fe9df4376/elmDB.tar.gz --output elmDB.tar.gz 
-        tar -xvf elmDB.tar.gz
-        mv elmDB/elm.fsa {output.database}
-        rm -r elmDB/ elmDB.tar.gz
+        set -euo pipefail
+        mkdir -p $(dirname {output.source})
+
+        sequence_url="https://bitbucket.org/genomicepidemiology/lre-finder/raw/fac445d190853cc90c1aed392a55102fe9df4376/elmDB.tar.gz"
+
+        # 1) download raw sequence
+        curl -fSL $sequence_url --output - | tar -xvf - -C {params.prefix}
+        mv {params.dbdir}elm.fsa {output.source}
+        rm -rf {params.dbdir}
+
+        # 2) download version from etag
+        etag_cmd="curl -sI $sequence_url | sed -n 's/^etag: //Ip' | tr -d '\\r' | tr -d '\\042'"
+        date_cmd="date -I"
+
+        echo -e "Executing command:\n$etag_cmd\n$date_cmd\n" >> {log.stdout}
+
+        etag_str="$(eval "$etag_cmd" 2>> {log.stdout})"
+        date_str="$(eval "$date_cmd" 2>> {log.stdout})"
+
+        # Fallback if no ETag is present for some reason
+        if [ -z "$etag_str" ]; then
+            etag_str="no_etag"
+        fi
+        
+        # Build version ID. If you DON'T want the ETag at all, set version_str="sistr_serovar_list"
+        version_str="LREfinder_elmDB_$etag_str"
+
+        # Write "<id>\t<download_date>" to the version file
+        printf '%s\t%s\n' "$version_str" "$date_str" > {output.version_db}
         """
 
 rule fetch_chtyper_db:
