@@ -91,7 +91,7 @@ rule custom_blaster:
     input:
         # A complete access to the wildcard is needed, if we try to call the output of different rule we have the blending of wildcards 
         assembly = rules.assembly.output.output_assembly,
-        database = rules.fetch_blast_database.output.source
+        database = rules.fetch_custom_blast_database.output.source
     params:
         options = lambda wildcards: sample_configs[wildcards.sample]["custom_blaster"]["options"]
     output:

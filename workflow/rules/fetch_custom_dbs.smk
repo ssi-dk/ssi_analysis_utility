@@ -56,8 +56,8 @@ rule fetch_type_repeat_sequence:
         rel_path="clostridioides_difficile/type_repeats/{wildcards.TR}.fasta"
         rel_ver="clostridioides_difficile/type_repeats/{wildcards.TR}_version.txt"
 
-        fasta_url="https://raw.githubusercontent.com/RAHenriksen/ssi_analysis_utility_db/main/$rel_path"
-        ver_url="https://raw.githubusercontent.com/RAHenriksen/ssi_analysis_utility_db/main/$rel_ver"
+        fasta_url="https://raw.githubusercontent.com/ssi-dk/ssi_analysis_utility_db/main/$rel_path"
+        ver_url="https://raw.githubusercontent.com/ssi-dk/ssi_analysis_utility_db/main/$rel_ver"
 
         cmd_fasta="curl -fSL $fasta_url -o {output.seq}"
         cmd_ver="curl -fSL $ver_url -o {output.version_db}"
@@ -81,7 +81,7 @@ rule fetch_type_repeat_metadata:
         """
         mkdir -p $(dirname {output.meta})
 
-        cmd="curl -fSL https://raw.githubusercontent.com/RAHenriksen/ssi_analysis_utility_db/refs/heads/main/clostridioides_difficile/type_repeats/{wildcards.TR}.txt -o {output.meta}"
+        cmd="curl -fSL https://raw.githubusercontent.com/ssi-dk/ssi_analysis_utility_db/refs/heads/main/clostridioides_difficile/type_repeats/{wildcards.TR}.txt -o {output.meta}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout}
         eval $cmd >> {log.stdout} 2>&1
@@ -105,8 +105,8 @@ rule fetch_ecoligenes:
         rel_path="escherichia_coli/ecoligenes.fasta"
         rel_ver="escherichia_coli/ecoligenes_version.txt"
         
-        fasta_url="https://raw.githubusercontent.com/RAHenriksen/ssi_analysis_utility_db/main/$rel_path"
-        ver_url="https://raw.githubusercontent.com/RAHenriksen/ssi_analysis_utility_db/main/$rel_ver"
+        fasta_url="https://raw.githubusercontent.com/ssi-dk/ssi_analysis_utility_db/main/$rel_path"
+        ver_url="https://raw.githubusercontent.com/ssi-dk/ssi_analysis_utility_db/main/$rel_ver"
 
         cmd_fasta="curl -fSL $fasta_url -o {output.source}"
         cmd_ver="curl -fSL $ver_url -o {output.version_db}"
@@ -260,7 +260,8 @@ rule setup_LREfinder:
 
 rule fetch_chtyper_db:
     output:
-        source = "%s/custom/fumCH_db.fasta" %database_path
+        source = "%s/custom/fumCH_db.fasta" %database_path,
+        version_db = "%s/custom/fumCH_db_version.txt" % database_path
     conda:
         "../envs/fetch.yaml"
     log:
@@ -269,38 +270,70 @@ rule fetch_chtyper_db:
         "[fetch_chtyper_db]: Downloading custom database for CHtyper"
     shell:
         """
+        set -euo pipefail
         outdir=$(dirname {output.source})
         mkdir -p $outdir
-    
-        cmd="curl https://bitbucket.org/genomicepidemiology/chtyper_db/raw/654ca48d250e0a69c6c06b4be5a96d807b23f806/fimH.fsa -o $outdir/fimH.fsa"
+        
+        fimH_url="https://bitbucket.org/genomicepidemiology/chtyper_db/raw/654ca48d250e0a69c6c06b4be5a96d807b23f806/fimH.fsa"
+        fumC_url="https://bitbucket.org/genomicepidemiology/chtyper_db/raw/654ca48d250e0a69c6c06b4be5a96d807b23f806/fumC.fsa"
 
-        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-        eval $cmd >> {log.stdout} 2>&1
-    
-        cmd="curl https://bitbucket.org/genomicepidemiology/chtyper_db/raw/654ca48d250e0a69c6c06b4be5a96d807b23f806/fumC.fsa -o $outdir/fumC.fsa"
-        eval $cmd >> {log.stdout} 2>&1 
+        # 1) Download the serovar list
+        cmd_fimH="curl -fSL $fimH_url -o $outdir/fimH.fsa"
+        cmd_fumC="curl -fSL $fumC_url -o $outdir/fumC.fsa"
 
+        echo "Executing command:\n$cmd_fimH\n" > {log.stdout}
+        eval "$cmd_fimH" >> {log.stdout} 2>&1
+        echo "Executing command:\n$cmd_fumC\n" >> {log.stdout}
+        eval "$cmd_fumC" >> {log.stdout} 2>&1
+
+        # 2) Get the etag versions
+        etag_fimH_cmd="curl -sI $fimH_url | sed -n 's/^etag: //Ip' | tr -d '\\r' | tr -d '\\042'"
+        etag_fumC_cmd="curl -sI $fumC_url | sed -n 's/^etag: //Ip' | tr -d '\\r' | tr -d '\\042'"
+        date_cmd="date -I"
+
+        echo -e "Executing command:\n$etag_fimH_cmd\n$etag_fumC_cmd\n$date_cmd\n" >> {log.stdout}
+
+        etag_str1="$(eval "$etag_fimH_cmd" 2>> {log.stdout})"
+        etag_str2="$(eval "$etag_fumC_cmd" 2>> {log.stdout})"
+        date_str="$(eval "$date_cmd" 2>> {log.stdout})"
+        
+        version_str="chtyper_fimH_${etag_str1}_fumC_${etag_str2}"
+
+        # 3) create final database
         cmd="cat $outdir/fimH.fsa $outdir/fumC.fsa > {output.source}"
         eval $cmd >> {log.stdout} 2>&1
+
+        # Write "<accessions>\t<date>" to the version file
+        printf '%s\t%s\n' "$version_str" "$date_str" > {output.version_db}
         """
 
 # Place holder rule until we have an online repo for all dbs
 # We store momentarily in Dataset/databases
-rule fetch_blast_database:
+rule fetch_custom_blast_database:
     conda:
         "../envs/blast.yaml"
-    input: 
-        source = "%s/{database}.fasta" %temp_storage_path
     output:
-        source = "%s/custom/blast/{database}.fasta" %database_path
+        source = "%s/custom/blast/OXAndm.fasta" %database_path,
+        version_db = "%s/custom/blast/OXAndm_version.txt" % database_path
     log:
-        stdout = 'Logs/Databases/setup_{database}.log'
+        stdout = 'Logs/Databases/setup_OXAndm.log'
     message:
         "[Fetch {wildcards.database} Blast database]: Setting up the {wildcards.database} database from the temporary storage folder"
     shell:
         """
-        cmd="cp {input.source} {output.source}"
-            
-        echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
-        eval $cmd >> {log.stdout} 2>&1
+        set -euo pipefail
+        mkdir -p $(dirname {output.source})
+        
+        rel_path="escherichia_coli/OXAndm.fasta"
+        rel_ver="escherichia_coli/OXAndm.txt"
+        
+        fasta_url="https://raw.githubusercontent.com/ssi-dk/ssi_analysis_utility_db/main/$rel_path"
+        ver_url="https://raw.githubusercontent.com/ssi-dk/ssi_analysis_utility_db/main/$rel_ver"
+
+        cmd_fasta="curl -fSL $fasta_url -o {output.source}"
+        cmd_ver="curl -fSL $ver_url -o {output.version_db}"
+
+        echo "Executing command:\n$cmd_fasta\n$cmd_ver\n" > {log.stdout}
+        eval "$cmd_fasta" >> {log.stdout} 2>&1
+        eval "$cmd_ver"   >> {log.stdout} 2>&1
         """
