@@ -287,24 +287,20 @@ rule fetch_chtyper_db:
         eval "$cmd_fumC" >> {log.stdout} 2>&1
 
         # 2) Get the etag versions
-        etag_fimH_cmd="curl -sI $fimH_url | sed -n 's/^etag: //Ip' | tr -d '\\r' | tr -d '\\042'"
-        etag_fumC_cmd="curl -sI $fumC_url | sed -n 's/^etag: //Ip' | tr -d '\\r' | tr -d '\\042'"
+        etag_cmd="curl -sI $fimH_url | sed -n 's/^etag: //Ip' | tr -d '\\r' | tr -d '\\042'"
         date_cmd="date -I"
 
-        echo -e "Executing command:\n$etag_fimH_cmd\n$etag_fumC_cmd\n$date_cmd\n" >> {log.stdout}
+        echo -e "Executing command:\n$etag_cmd\n$date_cmd\n" >> {log.stdout}
 
-        etag_str1="$(eval "$etag_fimH_cmd" 2>> {log.stdout})"
-        etag_str2="$(eval "$etag_fumC_cmd" 2>> {log.stdout})"
+        etag_str1="$(eval "$etag_cmd" 2>> {log.stdout})"
         date_str="$(eval "$date_cmd" 2>> {log.stdout})"
-        
-        version_str="chtyper_fimH_${etag_str1}_fumC_${etag_str2}"
 
         # 3) create final database
         cmd="cat $outdir/fimH.fsa $outdir/fumC.fsa > {output.source}"
         eval $cmd >> {log.stdout} 2>&1
 
         # Write "<accessions>\t<date>" to the version file
-        printf '%s\t%s\n' "$version_str" "$date_str" > {output.version_db}
+        printf '%s%s\t%s\n' "chtyper_" "$etag_str1" "$date_str" > {output.version_db}
         """
 
 # Place holder rule until we have an online repo for all dbs
