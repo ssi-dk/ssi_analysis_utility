@@ -314,14 +314,14 @@ rule fetch_custom_blast_database:
     log:
         stdout = 'Logs/Databases/setup_OXAndm.log'
     message:
-        "[Fetch {wildcards.database} Blast database]: Setting up the {wildcards.database} database from the temporary storage folder"
+        "[fetch_custom_blast_database]: Downloading custom database OXAndm"
     shell:
         """
         set -euo pipefail
         mkdir -p $(dirname {output.source})
         
         rel_path="escherichia_coli/OXAndm.fasta"
-        rel_ver="escherichia_coli/OXAndm.txt"
+        rel_ver="escherichia_coli/OXAndm_version.txt"
         
         fasta_url="https://raw.githubusercontent.com/ssi-dk/ssi_analysis_utility_db/main/$rel_path"
         ver_url="https://raw.githubusercontent.com/ssi-dk/ssi_analysis_utility_db/main/$rel_ver"
