@@ -9,7 +9,8 @@ rule custom_kmeralignment:
     output:
         results = "%s/{sample}/kmeraligner/{database}.res" %output_folder,
         sam = temp("%s/{sample}/samtools/{database}.sam" %output_folder),
-        matrix = temp("%s/{sample}/kmeraligner/{database}.mat.gz" %output_folder)
+        matrix = temp("%s/{sample}/kmeraligner/{database}.mat.gz" %output_folder),
+        tool_version = "%s/{sample}/kmeraligner/{database}_version.txt" %output_folder,
     conda:
         "../envs/kmeraligner.yaml"
     log:
@@ -25,8 +26,18 @@ rule custom_kmeralignment:
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
-        """
 
+        # 2) create version file with date
+        version_cmd="kma -v"
+        date_cmd="date -I"
+            
+        echo -e "Executing command:\n$version_cmd\n$date_cmd\n" >> {log.stdout}
+
+        version_str="$(eval "$version_cmd" 2>> {log.stdout})"
+        date_str="$(eval "$date_cmd" 2>> {log.stdout})"
+
+        printf '%s\t%s\n' "$version_str" "$date_str" > {output.tool_version}
+        """
 
 rule custom_kmerconsensus:
     input:
@@ -35,7 +46,8 @@ rule custom_kmerconsensus:
         database = rules.setup_custom_kmeraligner_index.output.names
     params:
         prefix_out = "%s/{sample}/kmerconsensus/{database}" %output_folder,
-        prefix_db = rules.setup_custom_kmeraligner_index.params.prefix
+        prefix_db = rules.setup_custom_kmeraligner_index.params.prefix,
+        tool_version = "%s/{sample}/kmerconsensus/{database}_version.txt" %output_folder,
     output:
         results = temp("%s/{sample}/kmerconsensus/{database}.res" %output_folder),
         seq = temp("%s/{sample}/kmerconsensus/{database}.fsa" %output_folder),
@@ -53,8 +65,18 @@ rule custom_kmerconsensus:
         cmd="kma -ipe {input.R1} {input.R2} -o {params.prefix_out} -t_db {params.prefix_db} -nf -ref_fsa"
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
-        """
 
+        # 2) create version file with date
+        version_cmd="kma -v"
+        date_cmd="date -I"
+            
+        echo -e "Executing command:\n$version_cmd\n$date_cmd\n" >> {log.stdout}
+
+        version_str="$(eval "$version_cmd" 2>> {log.stdout})"
+        date_str="$(eval "$date_cmd" 2>> {log.stdout})"
+
+        printf '%s\t%s\n' "$version_str" "$date_str" > {output.tool_version}
+        """
 
 rule custom_bowtie2alignment:
     input:
@@ -86,7 +108,6 @@ rule custom_bowtie2alignment:
         eval $cmd >> {log.stdout} 2>&1
         """
 
-
 rule custom_blaster:
     input:
         # A complete access to the wildcard is needed, if we try to call the output of different rule we have the blending of wildcards 
@@ -95,7 +116,8 @@ rule custom_blaster:
     params:
         options = lambda wildcards: sample_configs[wildcards.sample]["custom_blaster"]["options"]
     output:
-        results = "%s/{sample}/custom_blaster/blast_{assembler}_{database}.tsv" %output_folder
+        results = "%s/{sample}/custom_blaster/blast_{assembler}_{database}.tsv" %output_folder,
+        tool_version = "%s/{sample}/custom_blaster/blast_{assembler}_{database}_version.txt" %output_folder,
     conda:
         "../envs/blast.yaml"
     log:
@@ -110,6 +132,17 @@ rule custom_blaster:
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
+    
+        # 2) create version file with date
+        version_cmd=" blastn -version|head -1"
+        date_cmd="date -I"
+            
+        echo -e "Executing command:\n$version_cmd\n$date_cmd\n" >> {log.stdout}
+
+        version_str="$(eval "$version_cmd" 2>> {log.stdout})"
+        date_str="$(eval "$date_cmd" 2>> {log.stdout})"
+
+        printf '%s\t%s\n' "$version_str" "$date_str" > {output.tool_version}
         """
         
 rule assembly_minimap2:
