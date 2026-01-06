@@ -292,7 +292,7 @@ rule update_MLST:
     conda:
         "../envs/mlst.yaml"
     output:
-        datefile = "%s/mlst/creation.date" % database_path
+        version_db = "%s/mlst/mlst_version.txt" %database_path
     log:
         stdout = 'Logs/Databases/update_MLST.log'
     message:
@@ -302,7 +302,7 @@ rule update_MLST:
         DIR=$(which mlst)
         MLSTDIR="$DIR/../../db/pubmlst"
 
-        mkdir -p $(dirname {output.datefile})
+        mkdir -p $(dirname {output.version_db})
 
         cmd="mlst-download_pub_mlst -d $MLSTDIR"
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
@@ -311,7 +311,18 @@ rule update_MLST:
 
         cmd="mlst-make_blast_db"
         echo "###\nExecuting command:\n$cmd\n" >> {log.stdout} 2>&1
-        mlst-make_blast_db >> {log.stdout} 2>&1 && date -I > {output.datefile}
+        mlst-make_blast_db >> {log.stdout} 2>&1
+
+        # 2) create version file with date
+        version_cmd="mlst --version"
+        date_cmd="date -I"
+            
+        echo -e "Executing command:\n$version_cmd\n$date_cmd\n" >> {log.stdout}
+
+        version_str="$(eval "$version_cmd" 2>> {log.stdout})"
+        date_str="$(eval "$date_cmd" 2>> {log.stdout})"
+
+        printf '%s\t%s\n' "$version_str" "$date_str" > {output.version_db}
         """
 
 
@@ -325,6 +336,7 @@ rule setup_custom_kmeraligner_index:
     lengths = "%s/kmeraligner/{database}.length.b" %database_path,
     names = "%s/kmeraligner/{database}.name" %database_path,
     seqs = "%s/kmeraligner/{database}.seq.b" %database_path,
+    version_db = "%s/kmeraligner/{database}_kmaindex_version.txt" %database_path
   conda:
     "../envs/kmeraligner.yaml"
   log:
@@ -340,10 +352,17 @@ rule setup_custom_kmeraligner_index:
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
 
+    # 2) create version file with date
+    version_cmd="kma index -v"
+    date_cmd="date -I"
+        
+    echo -e "Executing command:\n$version_cmd\n$date_cmd\n" >> {log.stdout}
 
-    date -I > {params.prefix}_creation.date
+    version_str="$(eval "$version_cmd" 2>> {log.stdout})"
+    date_str="$(eval "$date_cmd" 2>> {log.stdout})"
+
+    printf '%s\t%s\n' "$version_str" "$date_str" > {output.version_db}
     """
-
 
 rule setup_custom_bowtie2_index:
   input:
@@ -356,7 +375,8 @@ rule setup_custom_bowtie2_index:
     bt2_3 = "%s/bowtie2/{database}.3.bt2" %database_path,
     bt2_4 = "%s/bowtie2/{database}.4.bt2" %database_path,
     bt2_1_rev = "%s/bowtie2/{database}.rev.1.bt2" %database_path,
-    bt2_2_rev = "%s/bowtie2/{database}.rev.2.bt2" %database_path
+    bt2_2_rev = "%s/bowtie2/{database}.rev.2.bt2" %database_path,
+    version_db = "%s/bowtie2/{database}_bowtie2index_version.txt" %database_path
   conda:
     "../envs/bowtie2.yaml"
   log:
@@ -371,7 +391,16 @@ rule setup_custom_bowtie2_index:
     echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
     eval $cmd >> {log.stdout} 2>&1
 
-    date -I > {params.prefix}_creation.date
+    # 2) create version file with date
+    version_cmd="bowtie2-build --version | head -n1 | grep -oE '[0-9]+([.][0-9]+)+'"
+    date_cmd="date -I"
+        
+    echo -e "Executing command:\n$version_cmd\n$date_cmd\n" >> {log.stdout}
+
+    version_str="$(eval "$version_cmd" 2>> {log.stdout})"
+    date_str="$(eval "$date_cmd" 2>> {log.stdout})"
+
+    printf '%s\t%s\n' "$version_str" "$date_str" > {output.version_db}
     """
 
 
