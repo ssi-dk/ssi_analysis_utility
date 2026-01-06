@@ -3,10 +3,10 @@
 rule mlst:
     input:
         assembly = rules.assembly.output.output_assembly,
-        datefile = rules.update_MLST.output.datefile
+        version_db = rules.update_MLST.output.version_db
     output:
-        # "%s/{sample}/MLST/{sample}.tsv" %output_folder
-        mlst_file = "%s/{sample}/mlst/{assembler}_mlst.tsv" %output_folder
+        mlst_file = "%s/{sample}/mlst/{assembler}_mlst.tsv" %output_folder,
+        tool_version = "%s/{sample}/mlst/{assembler}_mlst_version.txt" %output_folder,
     conda:
         "../envs/mlst.yaml"
     log:
@@ -21,8 +21,18 @@ rule mlst:
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
-    	"""
 
+        # 2) create version file with date
+        version_cmd="mlst --version"
+        date_cmd="date -I"
+            
+        echo -e "Executing command:\n$version_cmd\n$date_cmd\n" >> {log.stdout}
+
+        version_str="$(eval "$version_cmd" 2>> {log.stdout})"
+        date_str="$(eval "$date_cmd" 2>> {log.stdout})"
+
+        printf '%s\t%s\n' "$version_str" "$date_str" > {output.tool_version}
+    	"""
 
 # Rule Kleborate:
 # Runs Kleborate characterising virulence and resistance in pathogen assemblies
@@ -31,7 +41,8 @@ rule kleborate:
         assembly = rules.assembly.output.output_assembly,
     output:
         kleborate = "%s/{sample}/kleborate/{assembler}/klebsiella_pneumo_complex_output.txt" %output_folder,
-        kleborate_hAMRonization = "%s/{sample}/kleborate/{assembler}/klebsiella_pneumo_complex_hAMRonization_output.txt" %output_folder
+        kleborate_hAMRonization = "%s/{sample}/kleborate/{assembler}/klebsiella_pneumo_complex_hAMRonization_output.txt" %output_folder,
+        tool_version = "%s/{sample}/kleborate/{assembler}/klebsiella_pneumo_version.txt" %output_folder,
     params:
         options = lambda wildcards: sample_configs[wildcards.sample]["kleborate"]["options"]
     conda:
@@ -50,7 +61,18 @@ rule kleborate:
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
-    	"""
+    	
+        # 2) create version file with date
+        version_cmd="kleborate --version 2>/dev/null"
+        date_cmd="date -I"
+            
+        echo -e "Executing command:\n$version_cmd\n$date_cmd\n" >> {log.stdout}
+
+        version_str="$(eval "$version_cmd" 2>> {log.stdout})"
+        date_str="$(eval "$date_cmd" 2>> {log.stdout})"
+
+        printf '%s%s\t%s\n' "Kleborate_" "$version_str" "$date_str" > {output.tool_version}
+        """
 
 rule chtyper:
     input:
@@ -80,7 +102,8 @@ rule meningotype:
     input:
         assembly = rules.assembly.output.output_assembly,
     output:
-        meningotype = "%s/{sample}/meningotype/{assembler}_meningotype.tsv" %output_folder
+        meningotype = "%s/{sample}/meningotype/{assembler}_meningotype.tsv" %output_folder,
+        tool_version = "%s/{sample}/meningotype/{assembler}_version.txt" %output_folder,
     conda:
         "../envs/meningotype.yaml"
     log:
@@ -95,6 +118,17 @@ rule meningotype:
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
+
+        # 2) create version file with date
+        version_cmd="meningotype --version"
+        date_cmd="date -I"
+            
+        echo -e "Executing command:\n$version_cmd\n$date_cmd\n" >> {log.stdout}
+
+        version_str="$(eval "$version_cmd" 2>> {log.stdout})"
+        date_str="$(eval "$date_cmd" 2>> {log.stdout})"
+
+        printf '%s\t%s\n' "$version_str" "$date_str" > {output.tool_version}
     	"""
 
 
@@ -103,7 +137,8 @@ rule seqsero2:
         R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
         R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
     output:
-        seqsero = "%s/{sample}/seqsero2/SeqSero_result.tsv" %output_folder
+        seqsero = "%s/{sample}/seqsero2/SeqSero_result.tsv" %output_folder,
+        tool_version = "%s/{sample}/seqsero2/SeqSero_version.txt" %output_folder,
     threads:
         max(1, workflow.cores * 0.3333333)
     priority: 1
@@ -122,8 +157,18 @@ rule seqsero2:
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
-        """
 
+        # 2) create version file with date
+        version_cmd="SeqSero2_package.py -v"
+        date_cmd="date -I"
+            
+        echo -e "Executing command:\n$version_cmd\n$date_cmd\n" >> {log.stdout}
+
+        version_str="$(eval "$version_cmd" 2>> {log.stdout})"
+        date_str="$(eval "$date_cmd" 2>> {log.stdout})"
+
+        printf '%s\t%s\n' "$version_str" "$date_str" > {output.tool_version}
+        """
 
 rule sistr:
     input:
@@ -132,7 +177,8 @@ rule sistr:
     output:
         sistr_tab = "%s/{sample}/sistr/{assembler}_sistr.tab" %output_folder,
         gmlst_profile = "%s/{sample}/sistr/{assembler}_cgmlst_profiles.csv" %output_folder,
-        allele_results = "%s/{sample}/sistr/{assembler}_allele-results.json" %output_folder
+        allele_results = "%s/{sample}/sistr/{assembler}_allele-results.json" %output_folder,
+        tool_version = "%s/{sample}/sistr/{assembler}_version.txt" %output_folder,
     threads:
         max(1, workflow.cores * 0.3333333)
     priority: 2
@@ -150,4 +196,15 @@ rule sistr:
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
+        
+        # 2) create version file with date
+        version_cmd="sistr --version 2>/dev/null"
+        date_cmd="date -I"
+            
+        echo -e "Executing command:\n$version_cmd\n$date_cmd\n" >> {log.stdout}
+
+        version_str="$(eval "$version_cmd" 2>> {log.stdout})"
+        date_str="$(eval "$date_cmd" 2>> {log.stdout})"
+
+        printf '%s\t%s\n' "$version_str" "$date_str" > {output.tool_version}
         """
