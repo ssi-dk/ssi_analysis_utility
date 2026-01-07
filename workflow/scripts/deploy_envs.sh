@@ -1,4 +1,5 @@
 SCRPTDIR=$(dirname $0)
-ENVSDIR="$SCRPTDIR"/../envs
+YAMLDIR="$SCRPTDIR"/../envs
 
-find "$ENVSDIR" -type f -iname "*yaml" -exec conda env create -f {} --yes \;
+# Find all yaml files in the envs/ dir and create environments from conda
+find "$YAMLDIR" -type f -iname "*yaml" -exec conda env create -f {} \;
