@@ -1,3 +1,4 @@
+
 rule setup_PlasmidFinder:
     conda:
         "../envs/plasmidfinder.yaml"
@@ -84,6 +85,7 @@ rule setup_PointFinder:
         
         date -I > {output.database}/creation.date
         """
+
 
 rule setup_DisinFinder:
     conda:
@@ -203,11 +205,12 @@ rule setup_AMRFinder:
         """
         cmd="amrfinder_update --database $(dirname {output.database}) --force_update"
             
-        echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
 
         date -I > {output.database}/creation.date
         """
+
 
 rule update_MLST:
     conda:
@@ -225,7 +228,13 @@ rule update_MLST:
 
         mkdir -p $(dirname {output.datefile})
 
-        mlst-download_pub_mlst -d $MLSTDIR  > {log.stdout} 2>&1
+        cmd="mlst-download_pub_mlst -d $MLSTDIR"
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+
+        mlst-download_pub_mlst -d $MLSTDIR  >> {log.stdout} 2>&1
+
+        cmd="mlst-make_blast_db"
+        echo "###\nExecuting command:\n$cmd\n" >> {log.stdout} 2>&1
         mlst-make_blast_db >> {log.stdout} 2>&1 && date -I > {output.datefile}
         """
 
@@ -259,6 +268,7 @@ rule setup_custom_kmeraligner_index:
     date -I > {params.prefix}_creation.date
     """
 
+
 rule setup_custom_bowtie2_index:
   input:
     source = "%s/custom/{database}.fasta" %database_path
@@ -287,6 +297,7 @@ rule setup_custom_bowtie2_index:
 
     date -I > {params.prefix}_creation.date
     """
+
 
 rule setup_custom_samtool_index:
   input:
@@ -317,4 +328,3 @@ rule setup_custom_samtool_index:
 
     date -I > $outdir/creation.date
     """
-

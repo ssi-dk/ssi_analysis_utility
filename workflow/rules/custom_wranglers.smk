@@ -3,11 +3,10 @@ rule kma_filter:
         results = rules.custom_kmeralignment.output.results,
         database = rules.setup_custom_kmeraligner_index.output.names
     params:
-        options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["kma_filter"]["options"],
+        options = lambda wildcards: sample_configs[wildcards.sample]["kma_filter"]["options"],
         metafile = "%s/kma_filter.tsv" %metadata_path
     output:
-        filtered_tsv = "%s/{sample}/kma_filter/{database}.tsv" % output_folder,
-        done = temp("%s/{sample}/kma_filter/{database}.done" %output_folder)  # note folder name; pick one casing and keep it everywhere
+        filtered_tsv = "%s/{sample}/kma_filter/{database}.tsv" % output_folder
     conda:
         "../envs/python_functions.yaml"
     log:
@@ -22,6 +21,4 @@ rule kma_filter:
 
         echo "Executing command:\n$cmd\n" > {log.stdout}
         eval $cmd >> {log.stdout} 2>&1
-    
-        echo "KMA results succesfully wrangled for {wildcards.sample} on {wildcards.database}" > {output.done}
         """
