@@ -41,6 +41,10 @@ Samples = list(Sample_dict.keys())
 Longtable_samples_output = [f"{output_folder}/{sample}/{sample}_longtable.tsv" for sample in Samples]
 Longtable_all = f"{output_folder}/all_results.tsv"
 
+# define the version files
+DB_versions_all = "Logs/Versions/all_db_versions.tsv"
+Tool_versions_all = "Logs/Versions/all_tool_versions.tsv"
+
 ##############################################################################
 #
 #                              Snakefile 
@@ -51,7 +55,9 @@ Longtable_all = f"{output_folder}/all_results.tsv"
 rule all:
     input:
         Longtable_samples_output,
-        Longtable_all
+        Longtable_all,
+        DB_versions_all,
+        Tool_versions_all
 
 rule longtable_samples:
     input:
@@ -89,6 +95,62 @@ rule longtable_all:
 
         echo "Executing command:\n$cmd\n" > {log}
         eval $cmd >> {log} 2>&1
+        """
+
+rule database_versions_all:
+    input:
+        Longtable_all
+    output:
+        DB_versions_all
+    params:
+        db_root = database_path
+    log:
+        "Logs/Databases/DatabaseVersionAll.log"
+    message:
+        "[DB versions]: Collecting all database *_version.txt into one file"
+    shell:
+        r"""
+        set -euo pipefail
+        mkdir -p $(dirname {output})
+
+        # find the files, then read them and print the lines if they have two columns (how they are created), while adding a first column being file name "file"
+        cmd="find {params.db_root} -type f -iname '*_version.txt' -print0 \
+          | while IFS= read -r -d '' f; do \
+              awk -F'\t' -v file=\"\$(basename \"\$f\")\" 'NF==2 && length(\$1) && length(\$2) {{print file \"\t\" \$1 \"\t\" \$2}}' \"\$f\"; \
+            done \
+          > {output}"
+
+        echo -e "Executing command:\n$cmd\n" > {log}
+        eval "$cmd" >> {log} 2>&1
+        echo "Wrote database versions into: {output}" >> {log}
+        """
+
+rule tool_versions_all:
+    input:
+        Longtable_all
+    output:
+        Tool_versions_all
+    params:
+        results_root = output_folder
+    log:
+        "Logs/Versions/ToolVersionAll.log"
+    message:
+        "[Tool versions]: Collecting all *_version.txt from results into one file"
+    shell:
+        r"""
+        set -euo pipefail
+        mkdir -p $(dirname {output})
+    
+        cmd="find {params.results_root} -type f -iname '*_version.txt' -print0 \
+          | while IFS= read -r -d '' f; do \
+              rel=\$(realpath --relative-to=\"{params.results_root}\" \"\$f\"); \
+              awk -F'\t' -v p=\"\$rel\" '{{gsub(/\r/,\"\",\$0)}} NF==2 && length(\$1) && length(\$2) {{print p \"\t\" \$1 \"\t\" \$2}}' \"\$f\"; \
+            done \
+          > {output}"
+
+        echo -e "Executing command:\n$cmd\n" > {log}
+        eval "$cmd" >> {log} 2>&1
+        echo "Wrote tool versions into: {output}" >> {log}
         """
     
 include : "rules/assemblers.smk"

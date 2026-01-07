@@ -34,7 +34,8 @@ rule resfinder:
     params:
         options = lambda wildcards: sample_configs[wildcards.sample]["resfinder"]["options"]
     output:
-        resistance = "%s/{sample}/resfinder/ResFinder_results_tab.txt" %output_folder
+        resistance = "%s/{sample}/resfinder/ResFinder_results_tab.txt" %output_folder,
+        tool_version = "%s/{sample}/resfinder/ResFinder_version.txt" %output_folder,
     conda:
         "../envs/resfinder.yaml"
     log:
@@ -48,6 +49,21 @@ rule resfinder:
     
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
+
+        cmd1="run_resfinder.py --version"
+        echo "Executing command:\n$cmd1\n" > {log.stdout} 2>&1
+        eval $cmd1 >> {log.stdout} 2>&1
+
+        # 2) create version file with date
+        version_cmd="run_resfinder.py --version"
+        date_cmd="date -I"
+            
+        echo -e "Executing command:\n$version_cmd\n$date_cmd\n" >> {log.stdout}
+
+        version_str="$(eval "$version_cmd" 2>> {log.stdout})"
+        date_str="$(eval "$date_cmd" 2>> {log.stdout})"
+
+        printf '%s%s\t%s\n' "ResFinder_" "$version_str" "$date_str" > {output.tool_version}
         """
 
 
@@ -57,7 +73,7 @@ rule virulencefinder:
         R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
         database = rules.setup_VirulenceFinder.output.database
     output:
-        virulence = "%s/{sample}/virulencefinder/results_tab.tsv" %output_folder
+        virulence = "%s/{sample}/virulencefinder/results_tab.tsv" %output_folder,
     conda:
         "../envs/virulencefinder.yaml"
     log:
@@ -80,7 +96,7 @@ rule serotypefinder:
         R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
         database = rules.setup_SerotypeFinder.output.database
     output:
-        serotype = "%s/{sample}/serotypefinder/results_tab.tsv" %output_folder
+        serotype = "%s/{sample}/serotypefinder/results_tab.tsv" %output_folder,
     conda:
         "../envs/serotypefinder.yaml"
     log:
@@ -96,7 +112,6 @@ rule serotypefinder:
         eval $cmd >> {log.stdout} 2>&1
         """
 
-
 rule amrfinder:
     input:
         assembly = rules.assembly.output.output_assembly,
@@ -104,7 +119,8 @@ rule amrfinder:
     params:
         options = lambda wildcards: sample_configs[wildcards.sample]["amrfinder"]["options"]
     output:
-        result = "%s/{sample}/amrfinder/{assembler}.tsv" %output_folder
+        result = "%s/{sample}/amrfinder/{assembler}.tsv" %output_folder,
+        tool_version = "%s/{sample}/amrfinder/{assembler}_amrfinder_version.txt" %output_folder,
     conda:
         "../envs/amrfinder.yaml"
     log:
@@ -119,6 +135,17 @@ rule amrfinder:
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
+
+        # 2) create version file with date
+        version_cmd="amrfinder --version"
+        date_cmd="date -I"
+            
+        echo -e "Executing command:\n$version_cmd\n$date_cmd\n" >> {log.stdout}
+
+        version_str="$(eval "$version_cmd" 2>> {log.stdout})"
+        date_str="$(eval "$date_cmd" 2>> {log.stdout})"
+
+        printf '%s%s\t%s\n' "amrfinder_" "$version_str" "$date_str" > {output.tool_version}
         """
 
 rule LREfinder:
