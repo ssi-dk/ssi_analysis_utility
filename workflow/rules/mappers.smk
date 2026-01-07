@@ -10,7 +10,7 @@ rule custom_kmeralignment:
         results = "%s/{sample}/kmeraligner/{database}.res" %output_folder,
         sam = temp("%s/{sample}/samtools/{database}.sam" %output_folder),
         matrix = temp("%s/{sample}/kmeraligner/{database}.mat.gz" %output_folder),
-        tool_version = "%s/{sample}/kmeraligner/{database}_version.txt" %output_folder,
+        tool_version = "%s/{sample}/kmeraligner/{database}_kmaalign_version.txt" %output_folder,
     conda:
         "../envs/kmeraligner.yaml"
     log:
@@ -47,11 +47,11 @@ rule custom_kmerconsensus:
     params:
         prefix_out = "%s/{sample}/kmerconsensus/{database}" %output_folder,
         prefix_db = rules.setup_custom_kmeraligner_index.params.prefix,
-        tool_version = "%s/{sample}/kmerconsensus/{database}_version.txt" %output_folder,
     output:
         results = temp("%s/{sample}/kmerconsensus/{database}.res" %output_folder),
-        seq = temp("%s/{sample}/kmerconsensus/{database}.fsa" %output_folder),
-        aln = temp("%s/{sample}/kmerconsensus/{database}.aln" %output_folder)
+        seq = "%s/{sample}/kmerconsensus/{database}.fsa" %output_folder,
+        aln = temp("%s/{sample}/kmerconsensus/{database}.aln" %output_folder),
+        tool_version = "%s/{sample}/kmerconsensus/{database}_kmaconsensus_version.txt" %output_folder,
     conda:
         "../envs/kmeraligner.yaml"
     log:

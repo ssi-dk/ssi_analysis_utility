@@ -120,7 +120,7 @@ rule amrfinder:
         options = lambda wildcards: sample_configs[wildcards.sample]["amrfinder"]["options"]
     output:
         result = "%s/{sample}/amrfinder/{assembler}.tsv" %output_folder,
-        tool_version = "%s/{sample}/amrfinder/{assembler}_version.txt" %output_folder,
+        tool_version = "%s/{sample}/amrfinder/{assembler}_amrfinder_version.txt" %output_folder,
     conda:
         "../envs/amrfinder.yaml"
     log:

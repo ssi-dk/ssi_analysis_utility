@@ -103,7 +103,7 @@ rule meningotype:
         assembly = rules.assembly.output.output_assembly,
     output:
         meningotype = "%s/{sample}/meningotype/{assembler}_meningotype.tsv" %output_folder,
-        tool_version = "%s/{sample}/meningotype/{assembler}_version.txt" %output_folder,
+        tool_version = "%s/{sample}/meningotype/{assembler}_meningotype_version.txt" %output_folder,
     conda:
         "../envs/meningotype.yaml"
     log:
@@ -178,7 +178,7 @@ rule sistr:
         sistr_tab = "%s/{sample}/sistr/{assembler}_sistr.tab" %output_folder,
         gmlst_profile = "%s/{sample}/sistr/{assembler}_cgmlst_profiles.csv" %output_folder,
         allele_results = "%s/{sample}/sistr/{assembler}_allele-results.json" %output_folder,
-        tool_version = "%s/{sample}/sistr/{assembler}_version.txt" %output_folder,
+        tool_version = "%s/{sample}/sistr/{assembler}_sistr_version.txt" %output_folder,
     threads:
         max(1, workflow.cores * 0.3333333)
     priority: 2

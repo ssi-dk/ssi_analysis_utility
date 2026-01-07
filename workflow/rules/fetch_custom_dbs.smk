@@ -109,7 +109,7 @@ rule fetch_ecoligenes:
         ver_url="https://raw.githubusercontent.com/ssi-dk/ssi_analysis_utility_db/main/$rel_ver"
 
         cmd_fasta="curl -fSL $fasta_url -o {output.source}"
-        cmd_ver="curl -fSL $ver_url -o {output.version_db}"
+        cmd_ver="curl -fSL $ver_url | awk '1' > {output.version_db}"
 
         echo "Executing command:\n$cmd_fasta\n$cmd_ver\n" > {log.stdout}
         eval "$cmd_fasta" >> {log.stdout} 2>&1
@@ -327,7 +327,7 @@ rule fetch_custom_blast_database:
         ver_url="https://raw.githubusercontent.com/ssi-dk/ssi_analysis_utility_db/main/$rel_ver"
 
         cmd_fasta="curl -fSL $fasta_url -o {output.source}"
-        cmd_ver="curl -fSL $ver_url -o {output.version_db}"
+        cmd_ver="curl -fSL $ver_url  | awk '1' > {output.version_db}"
 
         echo "Executing command:\n$cmd_fasta\n$cmd_ver\n" > {log.stdout}
         eval "$cmd_fasta" >> {log.stdout} 2>&1
