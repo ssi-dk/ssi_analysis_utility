@@ -2,5 +2,11 @@ name: spatyper
 channels:
  - conda-forge
 dependencies:
- - genomicepidemiology::spatyper
  - bioconda::blast
+ - pip
+ - pip:
+   - biopython
+   - pandas
+   - GitPython
+
+

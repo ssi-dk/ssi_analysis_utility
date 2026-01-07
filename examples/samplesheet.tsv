@@ -6,4 +6,4 @@ SRR25448586	SRR25448586_1.fastq.gz,SRR25448586_2.fastq.gz	Na	Na	N_meningitidis.y
 SRR26205262	SRR26205262_1.fastq.gz,SRR26205262_2.fastq.gz	Na	Na	S_enterica.yaml
 ERR2929615	ERR2929615_1.fastq.gz,ERR2929615_2.fastq.gz	Na	Na	E_Faecalis.yaml
 ERR2929578	ERR2929578_1.fastq.gz,ERR2929578_2.fastq.gz	Na	Na	E_Faecium.yaml
-SRR404118	examples/Dataset/reads/SRR404118_1.fastq.gz,examples/Dataset/reads/SRR404118_2.fastq.gz	Na	Na	S.aureus	Na
+SRR404118	SRR404118_1.fastq.gz,SRR404118_2.fastq.gz	Na	Na	S_aureus.yaml

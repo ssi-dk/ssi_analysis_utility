@@ -103,7 +103,7 @@ rule spa_typing:
         assembly = rules.assembly.output.output_assembly,
         database = rules.setup_Spatyper.output.database
     output:
-        done = temp("%s/{sample}/spa_typing/{assembler}.done" %output_folder)
+        spatyper = "%s/{sample}/spatyper/{assembler}_spatype_results.tsv" %output_folder
     conda:
         "../envs/spatyper.yaml"
     log:
@@ -112,13 +112,13 @@ rule spa_typing:
         "[Spatyping]: Running Spatyper for {wildcards.sample} using ({wildcards.assembler}) contigs"
     shell:
         """
-        outdir=$(dirname {output.done})
-        cmd="spatyper.py -i {input.assembly} -db {input.database}/ -o $outdir"
+        outdir=$(dirname {output.spatyper})
+        cmd="python workflow/scripts/SPATyper_V2.py -a {input.assembly} -d {input.database} -o {output.spatyper} -b $outdir/seq_db -l $outdir/spatyper.log "
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
 
-        echo "Spatyping completed successfully for {wildcards.sample} with {wildcards.assembler} assembly" > {output.done}
+        echo "Spatyping completed successfully for {wildcards.sample} with {wildcards.assembler} assembly" 
         """
 
 

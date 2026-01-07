@@ -1,3 +1,0 @@
-analyses_to_run:
-  spa_typing:
-    assemblers: [spades]
