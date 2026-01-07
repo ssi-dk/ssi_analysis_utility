@@ -5,6 +5,7 @@ rule fetch_genbank:
     output:
         fasta = "%s/custom/{database,[^/]+}.fasta" % database_path,
         bed = "%s/custom/{database,[^/]+}.bed6" % database_path,
+        version_db = "%s/custom/{database,[^/]+}_version.txt" %database_path
     conda:
         "../envs/fetch.yaml"
     log:
@@ -16,16 +17,31 @@ rule fetch_genbank:
         set -euo pipefail
         mkdir -p $(dirname {output.fasta})
 
+        # 1) Run the genbank fetcher
         cmd="python workflow/scripts/genbank_fetcher.py --metafile {params.metafile} --bed {output.bed} --fasta {output.fasta} --merge {params.merge} --append"
 
         echo "Executing command:\n$cmd\n" > {log.stdout}
         eval $cmd >> {log.stdout} 2>&1
+
+        # 2) Make version file with one '_'-separated line of unique accessions and starting with genbank_db_
+        
+        version_cmd="tail -n +2 {params.metafile} | cut -f1 | sort -u | paste -sd '_' - | sed 's/^/genbank_db_/'"
+        date_cmd="date -I"
+
+        echo -e "Executing command:\n$version_cmd\n$date_cmd\n" >> {log.stdout}
+
+        version_str="$(eval "$version_cmd" 2>> {log.stdout})"
+        date_str="$(eval "$date_cmd" 2>> {log.stdout})"
+
+        # Write "<accessions>\t<date>" to the version file
+        printf '%s\t%s\n' "$version_str" "$date_str" > {output.version_db}
         """
 
 
 rule fetch_type_repeat_sequence:
     output:
-        seq = "%s/custom/type_repeats/{TR}.fasta" %database_path
+        seq = "%s/custom/type_repeats/{TR}.fasta" %database_path,
+        version_db = "%s/custom/type_repeats/{TR}_version.txt" % database_path
     conda:
         "../envs/fetch.yaml"
     log:
@@ -34,12 +50,21 @@ rule fetch_type_repeat_sequence:
         "[fetch_type_repeat_sequences]: Downloading Type Repeat Sequence Type sequences"
     shell:
         """
+        set -euo pipefail
         mkdir -p $(dirname {output.seq})
 
-        cmd="curl -fSL https://raw.githubusercontent.com/RAHenriksen/ssi_analysis_utility_db/refs/heads/main/clostridioides_difficile/type_repeats/{wildcards.TR}.fasta -o {output.seq}"
+        rel_path="clostridioides_difficile/type_repeats/{wildcards.TR}.fasta"
+        rel_ver="clostridioides_difficile/type_repeats/{wildcards.TR}_version.txt"
 
-        echo "Executing command:\n$cmd\n" > {log.stdout}
-        eval $cmd >> {log.stdout} 2>&1
+        fasta_url="https://raw.githubusercontent.com/ssi-dk/ssi_analysis_utility_db/main/$rel_path"
+        ver_url="https://raw.githubusercontent.com/ssi-dk/ssi_analysis_utility_db/main/$rel_ver"
+
+        cmd_fasta="curl -fSL $fasta_url -o {output.seq}"
+        cmd_ver="curl -fSL $ver_url -o {output.version_db}"
+
+        echo "Executing command:\n$cmd_fasta\n$cmd_ver\n" > {log.stdout}
+        eval "$cmd_fasta" >> {log.stdout} 2>&1
+        eval "$cmd_ver"   >> {log.stdout} 2>&1
         """
 
 
@@ -56,16 +81,16 @@ rule fetch_type_repeat_metadata:
         """
         mkdir -p $(dirname {output.meta})
 
-        cmd="curl -fSL https://raw.githubusercontent.com/RAHenriksen/ssi_analysis_utility_db/refs/heads/main/clostridioides_difficile/type_repeats/{wildcards.TR}.txt -o {output.meta}"
+        cmd="curl -fSL https://raw.githubusercontent.com/ssi-dk/ssi_analysis_utility_db/refs/heads/main/clostridioides_difficile/type_repeats/{wildcards.TR}.txt -o {output.meta}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout}
         eval $cmd >> {log.stdout} 2>&1
         """
 
-
 rule fetch_ecoligenes:
     output:
-        source = "%s/custom/ecoligenes.fasta" %database_path
+        source = "%s/custom/ecoligenes.fasta" %database_path,
+        version_db = "%s/custom/ecoligenes_version.txt" % database_path
     conda:
         "../envs/fetch.yaml"
     log:
@@ -74,81 +99,169 @@ rule fetch_ecoligenes:
         "[fetch_ecoligenes]: Downloading custom database ecoligenes"
     shell:
         """
+        set -euo pipefail
         mkdir -p $(dirname {output.source})
         
-        cmd="curl https://raw.githubusercontent.com/RAHenriksen/ssi_analysis_utility_db/refs/heads/main/escherichia_coli/ecoligenes.fasta -o {output.source}"
+        rel_path="escherichia_coli/ecoligenes.fasta"
+        rel_ver="escherichia_coli/ecoligenes_version.txt"
+        
+        fasta_url="https://raw.githubusercontent.com/ssi-dk/ssi_analysis_utility_db/main/$rel_path"
+        ver_url="https://raw.githubusercontent.com/ssi-dk/ssi_analysis_utility_db/main/$rel_ver"
 
-        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-        eval $cmd >> {log.stdout} 2>&1
+        cmd_fasta="curl -fSL $fasta_url -o {output.source}"
+        cmd_ver="curl -fSL $ver_url | awk '1' > {output.version_db}"
+
+        echo "Executing command:\n$cmd_fasta\n$cmd_ver\n" > {log.stdout}
+        eval "$cmd_fasta" >> {log.stdout} 2>&1
+        eval "$cmd_ver"   >> {log.stdout} 2>&1
         """
 
-
 rule fetch_Senterica_Scheme:
-  output:
-    source = "%s/custom/SalmonellaAchtman7GeneMLST.fasta" %database_path,
-    profile = "%s/custom/SalmonellaAchtman7GeneMLST.txt" %database_path
-  conda:
-    "../envs/fetch.yaml"
-  log:
-    stdout = "Logs/Databases/setup_senterica.log"
-  message:
-    "[fetch_Senterica_Scheme]: Downloading Achtman 7 Gene MLST scheme for Salmonella Enterica"
-  shell:
-    """
-    mkdir -p $(dirname {output.source})
-    cmd="curl https://enterobase.warwick.ac.uk/schemes/Salmonella.Achtman7GeneMLST/MLST_Achtman_ref.fasta -o {output.source}"
+    output:
+        source = "%s/custom/SalmonellaAchtman7GeneMLST.fasta" %database_path,
+        profile = "%s/custom/SalmonellaAchtman7GeneMLST.txt" %database_path,
+        version_db = "%s/custom/SalmonellaAchtman7GeneMLST_version.txt" % database_path
+    conda:
+        "../envs/fetch.yaml"
+    log:
+        stdout = "Logs/Databases/setup_senterica_mlst_scheme.log"
+    message:
+        "[fetch_Senterica_Scheme]: Downloading Achtman 7 Gene MLST scheme for Salmonella Enterica"
+    shell:
+        """
+        set -euo pipefail
+        mkdir -p $(dirname {output.source})
+                
+        fasta_url="https://enterobase.warwick.ac.uk/schemes/Salmonella.Achtman7GeneMLST/MLST_Achtman_ref.fasta"
+        profile_url="https://enterobase.warwick.ac.uk/schemes/Salmonella.Achtman7GeneMLST/profiles.list.gz"
 
-    echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-    eval $cmd >> {log.stdout} 2>&1
+        fasta_cmd="curl -fSL $fasta_url -o {output.source}"
+        profile_cmd="curl -fSL $profile_url -o {output.profile}"
 
-    cmd="curl https://enterobase.warwick.ac.uk/schemes/Salmonella.Achtman7GeneMLST/profiles.list.gz | gunzip -c > {output.profile}"
+        echo "Executing command:\n$fasta_cmd\n" > {log.stdout} 2>&1
+        eval $fasta_cmd >> {log.stdout} 2>&1
 
-    echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-    eval $cmd >> {log.stdout} 2>&1
-    """
+        echo "Executing command:\n$profile_cmd\n" > {log.stdout} 2>&1
+        eval $profile_cmd >> {log.stdout} 2>&1
+        
+        # 2) Get ETag (as a clean value) and make version file
+        etag_cmd="curl -sI $fasta_url | sed -n 's/^etag: //Ip' | tr -d '\\r' | tr -d '\\042'"
+        date_cmd="date -I"
 
+        echo -e "Executing command:\n$etag_cmd\n$date_cmd\n" >> {log.stdout}
+
+        etag_str="$(eval "$etag_cmd" 2>> {log.stdout})"
+        date_str="$(eval "$date_cmd" 2>> {log.stdout})"
+
+        # Fallback if no ETag is present for some reason
+        if [ -z "$etag_str" ]; then
+            etag_str="no_etag"
+        fi
+
+        # Build version ID. If you DON'T want the ETag at all, set version_str="SalmonellaAchtman7GeneMLST"
+        version_str="SalmonellaAchtman7GeneMLST_$etag_str"
+
+        # Write "<id>\t<download_date>" to the version file
+        printf '%s\t%s\n' "$version_str" "$date_str" > {output.version_db}
+        """
 
 rule fetch_Senterica_Serovar:
-  output:
-    source = "%s/custom/Senterica_serovar.txt" %database_path
-  conda:
-    "../envs/fetch.yaml"
-  log:
-    stdout = "Logs/Databases/setup_senterica.log"
-  message:
-    "[fetch_Senterica_Scheme]: Downloading Achtman 7 Gene MLST scheme for Salmonella Enterica"
-  shell:
-    """
-    mkdir -p $(dirname {output.source})
-    cmd="curl -fSL https://raw.githubusercontent.com/phac-nml/sistr_cmd/master/sistr/data/serovar-list.txt -o {output.source}"
+    output:
+        source = "%s/custom/Senterica_serovar.txt" % database_path,
+        version_db = "%s/custom/Senterica_serovar_version.txt" % database_path
+    conda:
+        "../envs/fetch.yaml"
+    log:
+        stdout = "Logs/Databases/setup_senterica_sistr.log"
+    message:
+        "[fetch_Senterica_Serovar]: Downloading SISTR serovar list"
+    shell:
+        """
+        set -euo pipefail
+        mkdir -p $(dirname {output.source})
 
-    echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-    eval $cmd >> {log.stdout} 2>&1
-    """
+        list_url="https://raw.githubusercontent.com/phac-nml/sistr_cmd/master/sistr/data/serovar-list.txt"
+
+        # 1) Download the serovar list
+        cmd_fasta="curl -fSL $list_url -o {output.source}"
+
+        echo "Executing command:\n$cmd_fasta\n" > {log.stdout}
+        eval "$cmd_fasta" >> {log.stdout} 2>&1
+
+        # 2) Get ETag (as a clean value) and make version file
+        # sed -n 's/^etag: //Ip' greps case insensitive etag and replace with nothing
+        # tr -d \\r deletes the characters since some HTTP headers end lines with \r\n
+        # tr -d 042 deletes the octal character for double quotes
+        etag_cmd="curl -sI $list_url | sed -n 's/^etag: //Ip' | tr -d '\\r' | tr -d '\\042'"
+        date_cmd="date -I"
+
+        echo -e "Executing command:\n$etag_cmd\n$date_cmd\n" >> {log.stdout}
+
+        etag_str="$(eval "$etag_cmd" 2>> {log.stdout})"
+        date_str="$(eval "$date_cmd" 2>> {log.stdout})"
+
+        # Fallback if no ETag is present for some reason
+        if [ -z "$etag_str" ]; then
+            etag_str="no_etag"
+        fi
+
+        # Build version ID. If you DON'T want the ETag at all, set version_str="sistr_serovar_list"
+        version_str="sistr_serovar_list_$etag_str"
+
+        # Write "<id>\t<download_date>" to the version file
+        printf '%s\t%s\n' "$version_str" "$date_str" > {output.version_db}
+        """
 
 rule setup_LREfinder:
     conda:
         "../envs/kmeraligner.yaml"
+    params:
+        prefix = "%s/custom/" %database_path,
+        dbdir = "%s/custom/elmDB/" %database_path,
     output:
-        database = "%s/custom/elmDB.fasta" %database_path
+        source = "%s/custom/elmDB.fasta" %database_path,
+        version_db = "%s/custom/elmDB_version.txt" % database_path
     log:
         stdout = 'Logs/Databases/LREfinder_db.log'
     message:
         "[setup_LREfinder]: Setting up LREfinder database"
     shell:
         """
-        outdir=$(dirname {output.database})
-        mkdir -p $outdir
-        curl -fSL https://bitbucket.org/genomicepidemiology/lre-finder/raw/fac445d190853cc90c1aed392a55102fe9df4376/elmDB.tar.gz --output elmDB.tar.gz 
-        tar -xvf elmDB.tar.gz
-        mv elmDB/elm.fsa {output.database}
-        rm -r elmDB/ elmDB.tar.gz
-        """
+        set -euo pipefail
+        mkdir -p $(dirname {output.source})
 
+        sequence_url="https://bitbucket.org/genomicepidemiology/lre-finder/raw/fac445d190853cc90c1aed392a55102fe9df4376/elmDB.tar.gz"
+
+        # 1) download raw sequence
+        curl -fSL $sequence_url --output - | tar -xvf - -C {params.prefix}
+        mv {params.dbdir}elm.fsa {output.source}
+        rm -rf {params.dbdir}
+
+        # 2) download version from etag
+        etag_cmd="curl -sI $sequence_url | sed -n 's/^etag: //Ip' | tr -d '\\r' | tr -d '\\042'"
+        date_cmd="date -I"
+
+        echo -e "Executing command:\n$etag_cmd\n$date_cmd\n" >> {log.stdout}
+
+        etag_str="$(eval "$etag_cmd" 2>> {log.stdout})"
+        date_str="$(eval "$date_cmd" 2>> {log.stdout})"
+
+        # Fallback if no ETag is present for some reason
+        if [ -z "$etag_str" ]; then
+            etag_str="no_etag"
+        fi
+        
+        # Build version ID. If you DON'T want the ETag at all, set version_str="sistr_serovar_list"
+        version_str="LREfinder_elmDB_$etag_str"
+
+        # Write "<id>\t<download_date>" to the version file
+        printf '%s\t%s\n' "$version_str" "$date_str" > {output.version_db}
+        """
 
 rule fetch_chtyper_db:
     output:
-        source = "%s/custom/fumCH_db.fasta" %database_path
+        source = "%s/custom/fumCH_db.fasta" %database_path,
+        version_db = "%s/custom/fumCH_db_version.txt" % database_path
     conda:
         "../envs/fetch.yaml"
     log:
@@ -157,38 +270,66 @@ rule fetch_chtyper_db:
         "[fetch_chtyper_db]: Downloading custom database for CHtyper"
     shell:
         """
+        set -euo pipefail
         outdir=$(dirname {output.source})
         mkdir -p $outdir
-    
-        cmd="curl https://bitbucket.org/genomicepidemiology/chtyper_db/raw/654ca48d250e0a69c6c06b4be5a96d807b23f806/fimH.fsa -o $outdir/fimH.fsa"
+        
+        fimH_url="https://bitbucket.org/genomicepidemiology/chtyper_db/raw/654ca48d250e0a69c6c06b4be5a96d807b23f806/fimH.fsa"
+        fumC_url="https://bitbucket.org/genomicepidemiology/chtyper_db/raw/654ca48d250e0a69c6c06b4be5a96d807b23f806/fumC.fsa"
 
-        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-        eval $cmd >> {log.stdout} 2>&1
-    
-        cmd="curl https://bitbucket.org/genomicepidemiology/chtyper_db/raw/654ca48d250e0a69c6c06b4be5a96d807b23f806/fumC.fsa -o $outdir/fumC.fsa"
-        eval $cmd >> {log.stdout} 2>&1 
+        # 1) Download the serovar list
+        cmd_fimH="curl -fSL $fimH_url -o $outdir/fimH.fsa"
+        cmd_fumC="curl -fSL $fumC_url -o $outdir/fumC.fsa"
 
+        echo "Executing command:\n$cmd_fimH\n" > {log.stdout}
+        eval "$cmd_fimH" >> {log.stdout} 2>&1
+        echo "Executing command:\n$cmd_fumC\n" >> {log.stdout}
+        eval "$cmd_fumC" >> {log.stdout} 2>&1
+
+        # 2) Get the etag versions
+        etag_cmd="curl -sI $fimH_url | sed -n 's/^etag: //Ip' | tr -d '\\r' | tr -d '\\042'"
+        date_cmd="date -I"
+
+        echo -e "Executing command:\n$etag_cmd\n$date_cmd\n" >> {log.stdout}
+
+        etag_str1="$(eval "$etag_cmd" 2>> {log.stdout})"
+        date_str="$(eval "$date_cmd" 2>> {log.stdout})"
+
+        # 3) create final database
         cmd="cat $outdir/fimH.fsa $outdir/fumC.fsa > {output.source}"
         eval $cmd >> {log.stdout} 2>&1
+
+        # Write "<accessions>\t<date>" to the version file
+        printf '%s%s\t%s\n' "chtyper_" "$etag_str1" "$date_str" > {output.version_db}
         """
 
 # Place holder rule until we have an online repo for all dbs
 # We store momentarily in Dataset/databases
-rule fetch_blast_database:
+rule fetch_custom_blast_database:
     conda:
         "../envs/blast.yaml"
-    input: 
-        source = "%s/{database}.fasta" %temp_storage_path
     output:
-        source = "%s/custom/blast/{database}.fasta" %database_path
+        source = "%s/custom/blast/OXAndm.fasta" %database_path,
+        version_db = "%s/custom/blast/OXAndm_version.txt" % database_path
     log:
-        stdout = 'Logs/Databases/setup_{database}.log'
+        stdout = 'Logs/Databases/setup_OXAndm.log'
     message:
-        "[Fetch {wildcards.database} Blast database]: Setting up the {wildcards.database} database from the temporary storage folder"
+        "[fetch_custom_blast_database]: Downloading custom database OXAndm"
     shell:
         """
-        cmd="cp {input.source} {output.source}"
-            
-        echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
-        eval $cmd >> {log.stdout} 2>&1
+        set -euo pipefail
+        mkdir -p $(dirname {output.source})
+        
+        rel_path="escherichia_coli/OXAndm.fasta"
+        rel_ver="escherichia_coli/OXAndm_version.txt"
+        
+        fasta_url="https://raw.githubusercontent.com/ssi-dk/ssi_analysis_utility_db/main/$rel_path"
+        ver_url="https://raw.githubusercontent.com/ssi-dk/ssi_analysis_utility_db/main/$rel_ver"
+
+        cmd_fasta="curl -fSL $fasta_url -o {output.source}"
+        cmd_ver="curl -fSL $ver_url  | awk '1' > {output.version_db}"
+
+        echo "Executing command:\n$cmd_fasta\n$cmd_ver\n" > {log.stdout}
+        eval "$cmd_fasta" >> {log.stdout} 2>&1
+        eval "$cmd_ver"   >> {log.stdout} 2>&1
         """
