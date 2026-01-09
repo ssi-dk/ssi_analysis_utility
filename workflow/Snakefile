@@ -3,23 +3,29 @@ import yaml
 import warnings
 from scripts import helper_functions
 
-configfile: "config/config.yaml"
+config_dir = "config"
+results_catalogue_path = f"{config_dir}/results_catalogue.yaml"
+
+configfile: f"{config_dir}/config.yaml"
+
 
 # --- Inputs & paths from config file------------------------------------------------
 samplesheet_path = config['samplesheet']
-database_path = config['database_path']   # used by setup rules
-species_config_path = config['config_species'] # Path to species specific configuration files
-metadata_path = config['metadata_path']   # used by finder rules
+deployment_dir = config['deployment_dir']   # used by setup rules
+output_folder = config['output_folder']
 illumina_read_path_base = config['illumina_read_path']
 nanopore_read_path_base = config['nanopore_read_path']
 assembly_path_base = config['assembly_path']
-output_folder = config['output_folder']
-temp_storage_path = config['temp_storage']
-results_catalogue_path = config['result_catalogue']
+
+analysis_dir = f"{config_dir}/analysis"
+target_screening_path = f"{analysis_dir}/target_screening"
+species_configs_path = f"{analysis_dir}/species_configs"
+
+database_path = f"{deployment_dir}/Databases"
 
 samplesheet = pd.read_csv(samplesheet_path, sep='\t')
 
-sample_configs = helper_functions.determine_sample_configs(samplesheet, "workflow/configs_species", True)
+sample_configs = helper_functions.determine_sample_configs(samplesheet, species_configs_path, True)
 
 results_catalogue = helper_functions.read_results_catalogue(results_catalogue_path)
 
@@ -72,11 +78,11 @@ rule longtable_samples:
         "[LongTable]: Collapsing all module outputs into a sample specific long table"
     shell:
         r"""
-        cmd="python workflow/scripts/LongTable.py --config config/config.yaml --na"
+        cmd="python workflow/scripts/LongTable.py --samplesheet %s --catalogue %s --species_configs_dir %s --output_folder %s --na"
 
         echo "Executing command:\n$cmd\n" > {log}
         eval $cmd >> {log} 2>&1
-        """
+        """%(samplesheet_path, results_catalogue_path, species_configs_path, output_folder)
 
 rule longtable_all:
     input:
@@ -90,12 +96,12 @@ rule longtable_all:
     message:
         "[LongTable]: Collapsing all module outputs into a long table"
     shell:
-        r"""
-        cmd="python workflow/scripts/LongTable.py --config config/config.yaml --na --extend"
+        """
+        cmd="python workflow/scripts/LongTable.py --samplesheet %s --catalogue %s --species_configs_dir %s --output_folder %s --na --extend"
 
         echo "Executing command:\n$cmd\n" > {log}
         eval $cmd >> {log} 2>&1
-        """
+        """%(samplesheet_path, results_catalogue_path, species_configs_path, output_folder)
 
 rule database_versions_all:
     input:

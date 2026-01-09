@@ -1,6 +1,6 @@
 rule fetch_genbank:
     params:
-        metafile = "%s/{database}_genbank_metafile.tsv" %metadata_path,
+        metafile = "%s/{database}_genbank_metafile.tsv" %target_screening_path,
         merge = 500
     output:
         fasta = "%s/custom/{database,[^/]+}.fasta" % database_path,

@@ -2,8 +2,7 @@
 # Runs Multi Locus Sequence Type to determine the ST profile of isolate
 rule mlst:
     input:
-        assembly = rules.assembly.output.output_assembly,
-        version_db = rules.update_MLST.output.version_db
+        assembly = rules.assembly.output.output_assembly
     output:
         mlst_file = "%s/{sample}/mlst/{assembler}_mlst.tsv" %output_folder,
         tool_version = "%s/{sample}/mlst/{assembler}_mlst_version.txt" %output_folder,

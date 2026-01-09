@@ -268,14 +268,14 @@ def long_table_creation(df: pd.DataFrame,
     long = df.melt(
         id_vars=id_vars,
         value_vars=value_vars,
-        var_name="field",
+        var_name="row",
         value_name="value"
     )
 
     long = (
         long.rename(columns={sid_col: "sample_name", org_col: "organism"})
             .assign(tool=tool, filename="")
-            [["sample_name", "tool", "filename", "organism", "row_index", "field", "value"]]
+            [["sample_name", "tool", "filename", "organism", "row_index", "row", "value"]]
     )
     return long
 
@@ -283,7 +283,7 @@ def long_table_creation(df: pd.DataFrame,
 def save_long_table(
     samplesheet_path: str,
     catalogue_path: str,
-    config_species_root: str,
+    species_configs_dir: str,
     output_folder: str,
     na_filter: bool,
     extend: bool,
@@ -312,7 +312,7 @@ def save_long_table(
     for _, row in samplesheet.iterrows():
         sample = str(row["sample_name"])
         species_cfg_file = str(row["config"])
-        species_cfg_path = os.path.join(config_species_root, species_cfg_file)
+        species_cfg_path = os.path.join(species_configs_dir, species_cfg_file)
         if not os.path.exists(species_cfg_path):
             raise FileNotFoundError(f"Species config not found for sample {sample}: {species_cfg_path}")
 
@@ -383,7 +383,7 @@ def save_long_table(
         if sample_frames:
             out_df = pd.concat(sample_frames, ignore_index=True)
         else:
-            out_df = pd.DataFrame(columns=["sample_name", "tool", "filename", "organism", "row_index", "field", "value"])
+            out_df = pd.DataFrame(columns=["sample_name", "tool", "filename", "organism", "row_index", "row", "value"])
 
         if na_filter and not out_df.empty:
             before = len(out_df)
@@ -404,7 +404,7 @@ def save_long_table(
     if extend:
         # Write/append the single combined file
         combined = pd.concat(combined_frames, ignore_index=True) if combined_frames else \
-                   pd.DataFrame(columns=["sample_name", "tool", "filename", "organism", "row_index", "field", "value"])
+                   pd.DataFrame(columns=["sample_name", "tool", "filename", "organism", "row_index", "row", "value"])
         out_path = os.path.join(output_folder, "all_results.tsv")
         exists_before = os.path.exists(out_path)
 
@@ -430,9 +430,10 @@ def main():
     parser = argparse.ArgumentParser(
         description="Resolve outputs per sample and emit per-sample or combined long-table TSVs."
     )
-    parser.add_argument("--config", required=True, help="Path to main config YAML")
-    parser.add_argument("--sample_sheet", help="Optional path to samplesheet (TSV)")
-    parser.add_argument("--catalogue", help="Optional path to results catalogue YAML")
+    parser.add_argument("--samplesheet", help="Path to samplesheet (TSV)")
+    parser.add_argument("--catalogue", help="Path to results catalogue YAML")
+    parser.add_argument("--species_configs_dir", help="Path to species configuration files")
+    parser.add_argument("--output_folder", help="Path to output files")
     parser.add_argument(
         "-n", "--na",
         action="store_true",
@@ -445,22 +446,15 @@ def main():
     )
     args = parser.parse_args()
 
-    # Read config
-    if not os.path.exists(args.config):
-        raise FileNotFoundError(f"Config file not found: {args.config}")
-    with open(args.config, "r") as f:
-        config = yaml.safe_load(f)
-    print(f"Successfully read config file: {args.config}\n")
-
-    samplesheet_path = args.sample_sheet or config["samplesheet"]
-    catalogue_path = args.catalogue or config["result_catalogue"]
-    config_species_root = config["config_species"]
-    output_folder = config["output_folder"]
+    samplesheet_path = args.samplesheet
+    catalogue_path = args.catalogue
+    species_configs_dir = args.species_configs_dir
+    output_folder = args.output_folder
 
     save_long_table(
         samplesheet_path=samplesheet_path,
         catalogue_path=catalogue_path,
-        config_species_root=config_species_root,
+        species_configs_dir=species_configs_dir,
         output_folder=output_folder,
         na_filter=args.na,
         extend=args.extend,

@@ -3,7 +3,9 @@ Logs
 __pycache__**
 examples/Results/
 examples/results/
-examples/Dataset/reads/*gz
+data/reads/*gz
 resources/
 *DS_store
 .gitignore
+Deploy/
+Test/

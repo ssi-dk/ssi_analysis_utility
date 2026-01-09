@@ -288,44 +288,6 @@ rule setup_AMRFinder:
         """
 
 
-rule update_MLST:
-    conda:
-        "../envs/mlst.yaml"
-    output:
-        version_db = "%s/mlst/mlst_version.txt" %database_path
-    log:
-        stdout = 'Logs/Databases/update_MLST.log'
-    message:
-        "[update_MLST]: Updating MLST databases."
-    shell:
-        """
-        DIR=$(which mlst)
-        MLSTDIR="$DIR/../../db/pubmlst"
-
-        mkdir -p $(dirname {output.version_db})
-
-        cmd="mlst-download_pub_mlst -d $MLSTDIR"
-        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-
-        mlst-download_pub_mlst -d $MLSTDIR  >> {log.stdout} 2>&1
-
-        cmd="mlst-make_blast_db"
-        echo "###\nExecuting command:\n$cmd\n" >> {log.stdout} 2>&1
-        mlst-make_blast_db >> {log.stdout} 2>&1
-
-        # 2) create version file with date
-        version_cmd="mlst --version"
-        date_cmd="date -I"
-            
-        echo -e "Executing command:\n$version_cmd\n$date_cmd\n" >> {log.stdout}
-
-        version_str="$(eval "$version_cmd" 2>> {log.stdout})"
-        date_str="$(eval "$date_cmd" 2>> {log.stdout})"
-
-        printf '%s\t%s\n' "$version_str" "$date_str" > {output.version_db}
-        """
-
-
 rule setup_custom_kmeraligner_index:
   input:
     source = "%s/custom/{database}.fasta" %database_path

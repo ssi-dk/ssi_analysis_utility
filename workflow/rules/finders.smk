@@ -182,7 +182,7 @@ rule snp_identifier:
         variants_index = rules.bcftools_variant_call.output.index,
     params:
         options = lambda wildcards: sample_configs[wildcards.sample]["snp_identifier"]["options"],
-        metafile = "%s/SNP_metafile.tsv" %metadata_path
+        metafile = "%s/SNP_metafile.tsv" %target_screening_path
     output:
         indentified_variants = "%s/{sample}/snp_identifier/{database}.tsv" %output_folder
     conda:
@@ -209,7 +209,7 @@ rule deletion_identifier:
         asm_aln = rules.assembly_minimap2.output.results
     params:
         options  = lambda wildcards: sample_configs[wildcards.sample]["deletion_identifier"]["options"],
-        metafile = f"{metadata_path}/deletion_metafiles.tsv"
+        metafile = "%s/deletion_metafile.tsv" %target_screening_path
     output:
         identified_variants = f"{output_folder}/{{sample}}/deletion_identifier/{{assembler,[^_]+}}_{{database}}.tsv" #added regex expression to ensure assemblies cannot contain '_' which our database also does
     conda:
