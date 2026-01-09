@@ -1,7 +1,7 @@
 rule custom_kmeralignment:
     input:
-        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
-        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
+        R1 = lambda wc: samplesheet.loc[wc.sample, "Illumina_mate1"],
+        R2 = lambda wc: samplesheet.loc[wc.sample, "Illumina_mate2"],
         database = rules.setup_custom_kmeraligner_index.output.names
     params:
         prefix_out = "%s/{sample}/kmeraligner/{database}" %output_folder,
@@ -41,8 +41,8 @@ rule custom_kmeralignment:
 
 rule custom_kmerconsensus:
     input:
-        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
-        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
+        R1 = lambda wc: samplesheet.loc[wc.sample, "Illumina_mate1"],
+        R2 = lambda wc: samplesheet.loc[wc.sample, "Illumina_mate2"],
         database = rules.setup_custom_kmeraligner_index.output.names
     params:
         prefix_out = "%s/{sample}/kmerconsensus/{database}" %output_folder,
@@ -80,11 +80,11 @@ rule custom_kmerconsensus:
 
 rule custom_bowtie2alignment:
     input:
-        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
-        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
+        R1 = lambda wc: samplesheet.loc[wc.sample, "Illumina_mate1"],
+        R2 = lambda wc: samplesheet.loc[wc.sample, "Illumina_mate2"],
         database = rules.setup_custom_bowtie2_index.output.bt2_1 # just locate one of the bt2 files to activate the db_setup
     params:
-       options = lambda wildcards: sample_configs[wildcards.sample]["custom_bowtie2alignment"]["options"]
+       options = lambda wc: sample_configs[wc.sample]["custom_bowtie2alignment"]["options"]
     output:
         sam = temp("%s/{sample}/bowtie2/{database}.sam" %output_folder)
     threads:
@@ -114,7 +114,7 @@ rule custom_blaster:
         assembly = rules.assembly.output.output_assembly,
         database = rules.fetch_custom_blast_database.output.source
     params:
-        options = lambda wildcards: sample_configs[wildcards.sample]["custom_blaster"]["options"]
+        options = lambda wc: sample_configs[wc.sample]["custom_blaster"]["options"]
     output:
         results = "%s/{sample}/custom_blaster/blast_{assembler}_{database}.tsv" %output_folder,
         tool_version = "%s/{sample}/custom_blaster/blast_{assembler}_{database}_version.txt" %output_folder,
@@ -150,7 +150,7 @@ rule assembly_minimap2:
         assembly = rules.assembly.output.output_assembly,      # {sample}, {assembler}
         database = rules.fetch_genbank.output.fasta            # {sample}, {database}
     params:
-        options = lambda wildcards: sample_configs[wildcards.sample]["assembly_minimap2"]["options"]
+        options = lambda wc: sample_configs[wc.sample]["assembly_minimap2"]["options"]
     output:
         results = temp(f"{output_folder}/{{sample}}/minimap2/{{assembler}}_{{database}}.sam")
     conda:

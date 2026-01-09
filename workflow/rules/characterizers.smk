@@ -133,8 +133,8 @@ rule meningotype:
 
 rule seqsero2:
     input:
-        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
-        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
+        R1 = lambda wc: samplesheet.loc[wc.sample, "Illumina_mate1"],
+        R2 = lambda wc: samplesheet.loc[wc.sample, "Illumina_mate2"]
     output:
         seqsero = "%s/{sample}/seqsero2/SeqSero_result.tsv" %output_folder,
         tool_version = "%s/{sample}/seqsero2/SeqSero_version.txt" %output_folder,

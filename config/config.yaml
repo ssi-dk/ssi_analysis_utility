@@ -1,6 +1,3 @@
 samplesheet: data/samplesheet.tsv
-illumina_read_path: data/reads
-nanopore_read_path: data/reads
-assembly_path: data/assembly_path
-deployment_dir: Deploy # Fixed in code and specified with deployment dir
+deployment_dir: Deploy
 output_folder: Test/Results

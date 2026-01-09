@@ -25,7 +25,7 @@ def determine_sample_configs(samplesheet, config_dir, enable_defaults):
     sample_configs = {}
 
     # Iterate samplesheet and pair samples with configurations
-    for sample, cfg in zip(samplesheet["sample_name"], samplesheet["config"]):
+    for sample, cfg in zip(samplesheet.index, samplesheet["config"]):
 
         # Deduce configuration file from samplesheet
         cfg_path = f"{config_dir}/{cfg}"
@@ -63,53 +63,6 @@ def determine_sample_configs(samplesheet, config_dir, enable_defaults):
 
     #print(f"Returning sample_configs with length {len(sample_configs)} as {type(sample_configs)}") # As log_debug
     return(sample_configs)
-
-
-def sample_read_map(
-    samplesheet: pd.DataFrame,
-    sample_col: str = "sample_name",
-    read_col: str = "Illumina_read_files",
-    nanopore_col: str = "Nanopore_read_file",
-    assembly_col: str = "assembly_file",
-    illumina_read_base: str = "",
-    nanopore_read_base: str = "",
-    assembly_base: str = "",
-) -> Tuple[Dict[str, str], Dict[str, List[str]], Dict[str, str], Dict[str, str]]:
-    """
-    read_base and assembly_base are the paths defined in the config files for the input data
-
-    read_path: examples/Dataset/reads
-    assembly_path: examples/Dataset/assembly_path
-
-    with the function returning 
-    #{'ERR3528110': ['examples/Dataset/reads/ERR3528110_1.fastq.gz', 'examples/Dataset/reads/ERR3528110_2.fastq.gz'],
-    """
-
-    samples = {}
-    sample_to_illumina = {} 
-    sample_to_nanopore = {}
-    sample_to_assembly = {}
-
-    for idx, row in samplesheet.iterrows():
-        sample = row[sample_col] #the key -> 'ERR3528110'
-
-        samples[sample] = sample 
-        # --- Illumina ---
-        illumina_reads = str(row[read_col]).split(',')
-        illumina_full = [os.path.join(illumina_read_base, read) for read in illumina_reads]
-        sample_to_illumina[sample] = illumina_full
-
-        # --- Nanopore ---
-        Nanopore_reads = str(row[nanopore_col])
-        Nanopore_full = os.path.join(nanopore_read_base, Nanopore_reads)
-        sample_to_nanopore[sample] = Nanopore_full
-
-        # --- Illumina ---
-        Assembly_seq = str(row[assembly_col])
-        Assembly_full = os.path.join(assembly_base, Assembly_seq)
-        sample_to_assembly[sample] = Assembly_full
-
-    return samples, sample_to_illumina, sample_to_nanopore, sample_to_assembly
 
 
 def map_configs_to_results(configs, results_dir, results_file):

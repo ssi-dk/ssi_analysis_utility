@@ -13,9 +13,6 @@ configfile: f"{config_dir}/config.yaml"
 samplesheet_path = config['samplesheet']
 deployment_dir = config['deployment_dir']   # used by setup rules
 output_folder = config['output_folder']
-illumina_read_path_base = config['illumina_read_path']
-nanopore_read_path_base = config['nanopore_read_path']
-assembly_path_base = config['assembly_path']
 
 analysis_dir = f"{config_dir}/analysis"
 target_screening_path = f"{analysis_dir}/target_screening"
@@ -23,7 +20,7 @@ species_configs_path = f"{analysis_dir}/species_configs"
 
 database_path = f"{deployment_dir}/Databases"
 
-samplesheet = pd.read_csv(samplesheet_path, sep='\t')
+samplesheet = pd.read_csv(samplesheet_path, sep='\t').set_index("sample_name")
 
 sample_configs = helper_functions.determine_sample_configs(samplesheet, species_configs_path, True)
 
@@ -32,19 +29,12 @@ results_catalogue = helper_functions.read_results_catalogue(results_catalogue_pa
 all_results_files = helper_functions.list_results(sample_configs, results_catalogue, output_folder)
 
 # --- Samples & read locations -------------------------------------------------
-Sample_dict, sample_to_illumina, sample_to_nanopore, sample_to_assembly = helper_functions.sample_read_map(
-    samplesheet,
-    illumina_read_base=illumina_read_path_base,
-    nanopore_read_base=nanopore_read_path_base,
-    assembly_base=assembly_path_base
-)
 
 # The sample_dicts contains a identicial sample string as key and value, 
 # This is simply to have a list similar to the other dicts if we want sample specific longtables further down  
-Samples = list(Sample_dict.keys()) 
 
 #define the long table output files to activate rule all
-Longtable_samples_output = [f"{output_folder}/{sample}/{sample}_longtable.tsv" for sample in Samples]
+Longtable_samples_output = [f"{output_folder}/{sample}/{sample}_longtable.tsv" for sample in samplesheet.index]
 Longtable_all = f"{output_folder}/all_results.tsv"
 
 # define the version files
