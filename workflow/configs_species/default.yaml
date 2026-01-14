@@ -1,0 +1,25 @@
+mlst:
+    assemblers: shovill  
+    
+resfinder:
+    options: --species 'Other'
+
+plasmidfinder:
+    options: ""
+
+virulencefinder:
+    options: ""
+
+serotypefinder:
+    options: ""
+          
+amrfinder:
+    assemblers: shovill
+    options: ""
+    
+meningotype:
+    assemblers: shovill
+
+kmeraligner:
+    database: elmDB
+    options : -ID 80 -1t1 -cge
