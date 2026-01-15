@@ -1,1 +1,2 @@
-# The future is [almost] here!
+def main():
+    print("You've got yourself an executable!")

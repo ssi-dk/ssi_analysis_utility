@@ -10,5 +10,13 @@ readme = "README.md"
 requires-python = ">3.9"
 dependencies = ["snakemake", "conda", "pandas"]
 
+[tool.hatch.build]
+exclude = ["/*"]
+indlude = ["/src"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/microbemapper"]
+
+[project.scripts]
+microbemapper = "microbemapper.wrapper:main"
+
