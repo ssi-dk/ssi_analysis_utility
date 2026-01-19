@@ -6,4 +6,4 @@ SRR25448586	SRR25448586_1.fastq.gz,SRR25448586_2.fastq.gz	Na	Na	N_meningitidis.y
 SRR26205262	SRR26205262_1.fastq.gz,SRR26205262_2.fastq.gz	Na	Na	S_enterica.yaml
 ERR2929578	ERR2929578_1.fastq.gz,ERR2929578_2.fastq.gz	Na	Na	E_Faecium.yaml
 ERR2929615	ERR2929615_1.fastq.gz,ERR2929615_2.fastq.gz	Na	Na	E_Faecalis.yaml
-SRR4046826	SRR4046826_1.fastq.gz,SRR4046826_2.fastq.gz	Na	SRR4046826.fasta	K_pneumoniae.yaml
+SRR404118	SRR404118_1.fastq.gz,SRR404118_2.fastq.gz	Na	Na	S_aureus.yaml
