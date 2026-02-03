@@ -2,7 +2,6 @@
 site_name: SSI Analysis Utility Documentation
 site_url: https://ssiutility.dk
 theme:
-  
   name: readthedocs #material 
   font:
     text: Merriweather Sans
@@ -17,8 +16,6 @@ theme:
     - navigation.footer
     - toc.integrate 
   annotation: material/information
-  plugins:
-    - search
   palette:
     # Dark Mode
     - scheme: slate
@@ -27,15 +24,17 @@ theme:
         name: Dark mode
       primary: green
       accent: deep purple
+plugins:
+  - search
 
 # Order of the pages
 nav:
-  - index.md
-  - installation.md
-  - tools_databases.md
-  - supported_species.md
-  - tutorials.md
-  - references.md
+  - Home: index.md
+  - Installation: installation.md
+  - Tools & Databases: tools_databases.md
+  - Supported Species: supported_species.md
+  - Tutorials: tutorials.md
+  - References: references.md
 
 # Markdown Extension for our each page in the documentation 
 markdown_extensions: 
