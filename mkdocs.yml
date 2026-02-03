@@ -30,7 +30,7 @@ theme:
 
 # Order of the pages
 nav:
-  - home.md
+  - index.md
   - installation.md
   - tools_databases.md
   - supported_species.md
