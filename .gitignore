@@ -1,11 +1,11 @@
 .snakemake/
 Logs
 __pycache__**
-examples/Results/
-examples/results/
 data/reads/*gz
 resources/
 *DS_store
 .gitignore
 Deploy/
 Test/
+config/*yaml
+!config/results_catalogue.yaml

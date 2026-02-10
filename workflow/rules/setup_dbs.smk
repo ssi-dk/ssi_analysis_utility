@@ -1,4 +1,3 @@
-
 rule setup_PlasmidFinder:
     conda:
         "../envs/plasmidfinder.yaml"
@@ -395,3 +394,16 @@ rule setup_custom_samtool_index:
 
     date -I > $outdir/creation.date
     """
+
+# rule update_databases:
+#     input:
+#         rules.setup_AMRFinder.output,
+#         rules.setup_custom_bowtie2_index.output,
+#         rules.setup_custom_kmeraligner_index.output,
+#         rules.setup_custom_samtool_index.output,
+#         rules.setup_DisinFinder.output,
+#         rules.setup_PlasmidFinder.output,
+#         rules.setup_PointFinder.output,
+#         rules.setup_ResFinder.output,
+#         rules.setup_SerotypeFinder.output,
+#         rules.setup_VirulenceFinder.output

@@ -6,7 +6,7 @@ rule kma_filter:
         options = lambda wildcards: sample_configs[wildcards.sample]["kma_filter"]["options"],
         metafile = "%s/kma_filter.tsv" %target_screening_path
     output:
-        filtered_tsv = "%s/{sample}/kma_filter/{database}.tsv" % output_folder
+        filtered_tsv = "%s/{sample}/kma_filter/{database}.tsv" % outdir
     conda:
         "../envs/python_functions.yaml"
     log:

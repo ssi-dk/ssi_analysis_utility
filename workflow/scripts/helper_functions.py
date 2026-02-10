@@ -114,7 +114,7 @@ def map_configs_to_results(configs, results_dir, results_file):
     return results
 
 
-def list_results(sample_configs, results_catalogue, output_folder):
+def list_results(sample_configs, results_catalogue, outdir):
     """
     Construct a full list of output file paths for each sample by:
       - iterating over all sample modules
@@ -137,7 +137,7 @@ def list_results(sample_configs, results_catalogue, output_folder):
                 continue
 
             # Construct the directory where results for this module live
-            results_dir = f"{output_folder}/{sample}/{sample_module}"
+            results_dir = f"{outdir}/{sample}/{sample_module}"
 
             # Normalise results definitions into a list for uniform iteration
             module_results = results_catalogue.get(sample_module)

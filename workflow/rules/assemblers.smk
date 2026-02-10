@@ -3,14 +3,14 @@ rule spades:
         R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
         R2 = lambda wc: samplesheet.loc[wc.sample, "read2"]
     output:
-        assembly = "%s/{sample}/spades/{sample}.fasta" %output_folder,
-        tool_version = "%s/{sample}/spades/spades_version.txt" %output_folder,
+        assembly = "%s/{sample}/spades/{sample}.fasta" %outdir,
+        tool_version = "%s/{sample}/spades/spades_version.txt" %outdir,
     conda:
         "../envs/shovill.yaml"
     log:
         stdout = "Logs/Assemblies/{sample}_spades.log"
     threads:
-        max(1, workflow.cores * 0.66667)
+        max(1, workflow.cores * 2 / 3)
     priority: 2
     message:
         "[SPAdes]: Assemblying {wildcards.sample} using SPAdes with {threads} thread(s). This may take some time!\nInspect {log.stdout} for more details!"
@@ -42,14 +42,14 @@ rule skesa:
         R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
         R2 = lambda wc: samplesheet.loc[wc.sample, "read2"]
     output:
-        assembly = "%s/{sample}/skesa/{sample}.fasta" %output_folder,
-        tool_version = "%s/{sample}/skesa/skesa_version.txt" %output_folder,
+        assembly = "%s/{sample}/skesa/{sample}.fasta" %outdir,
+        tool_version = "%s/{sample}/skesa/skesa_version.txt" %outdir,
     conda:
         "../envs/shovill.yaml"
     log:
         stdout = "Logs/Assemblies/{sample}_Skesa.log"
     threads:
-        max(1, workflow.cores * 0.66667)
+        max(1, workflow.cores * 2 / 3)
     priority: 2
     message:
         "[Skesa]: Assemblying {wildcards.sample} using Skesa with {threads} core(s). This may take some time!\nInspect {log.stdout} for more details!"
@@ -76,14 +76,14 @@ rule shovill:
         R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
         R2 = lambda wc: samplesheet.loc[wc.sample, "read2"]
     output:
-        assembly = "%s/{sample}/shovill/{sample}.fasta" %output_folder,
-        tool_version = "%s/{sample}/shovill/shovill_version.txt" %output_folder,
+        assembly = "%s/{sample}/shovill/{sample}.fasta" %outdir,
+        tool_version = "%s/{sample}/shovill/shovill_version.txt" %outdir,
     conda:
         "../envs/shovill.yaml"
     log:
         stdout = "Logs/Assemblies/{sample}_Shovill.log"
     threads:
-        max(1, workflow.cores * 0.66667)
+        max(1, workflow.cores * 2  / 3)
     priority: 2
     message:
         "[Shovill]: Assemblying {wildcards.sample} using Shovill with {threads} CPU(s). This may take some time!\nInspect {log.stdout} for more details!"
@@ -115,11 +115,11 @@ rule shovill:
 
 rule assembly:
     input:
-        input_assembly = "%s/{sample}/{assembler}/{sample}.fasta" %output_folder,
-        input_assembly_version = "%s/{sample}/{assembler}/{assembler}_version.txt" %output_folder,
+        input_assembly = "%s/{sample}/{assembler}/{sample}.fasta" %outdir,
+        input_assembly_version = "%s/{sample}/{assembler}/{assembler}_version.txt" %outdir,
     output:
-        output_assembly = "%s/{sample}/Assemblies/{sample}_{assembler}.fasta" %output_folder,
-        output_assembly_version = "%s/{sample}/Assemblies/{sample}_{assembler}_version.txt" %output_folder,
+        output_assembly = "%s/{sample}/Assemblies/{sample}_{assembler}.fasta" %outdir,
+        output_assembly_version = "%s/{sample}/Assemblies/{sample}_{assembler}_version.txt" %outdir,
     log:
         stdout = "Logs/Assemblies/{sample}_{assembler}_assembly.log"
     shell:

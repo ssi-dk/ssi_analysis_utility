@@ -6,19 +6,19 @@ from scripts import helper_functions
 config_dir = "config"
 results_catalogue_path = f"{config_dir}/results_catalogue.yaml"
 
-configfile: f"{config_dir}/config.yaml"
+#configfile: f"{config_dir}/config.yaml"
 
 
 # --- Inputs & paths from config file------------------------------------------------
 samplesheet_path = config['samplesheet']
-deployment_dir = config['deployment_dir']   # used by setup rules
-output_folder = config['output_folder']
+deploy_dir = config['deploy_dir']   # used by setup rules
+outdir = config['outdir']
 
 analysis_dir = f"{config_dir}/analysis"
 target_screening_path = f"{analysis_dir}/target_screening"
 species_configs_path = f"{analysis_dir}/species_configs"
 
-database_path = f"{deployment_dir}/Databases"
+database_path = f"{deploy_dir}/Databases"
 
 samplesheet = pd.read_csv(samplesheet_path, sep='\t').set_index("sample_name")
 
@@ -26,7 +26,7 @@ sample_configs = helper_functions.determine_sample_configs(samplesheet, species_
 
 results_catalogue = helper_functions.read_results_catalogue(results_catalogue_path)
 
-all_results_files = helper_functions.list_results(sample_configs, results_catalogue, output_folder)
+all_results_files = helper_functions.list_results(sample_configs, results_catalogue, outdir)
 
 # --- Samples & read locations -------------------------------------------------
 
@@ -34,8 +34,8 @@ all_results_files = helper_functions.list_results(sample_configs, results_catalo
 # This is simply to have a list similar to the other dicts if we want sample specific longtables further down  
 
 #define the long table output files to activate rule all
-Longtable_samples_output = [f"{output_folder}/{sample}/{sample}_longtable.tsv" for sample in samplesheet.index]
-Longtable_all = f"{output_folder}/all_results.tsv"
+Longtable_samples_output = [f"{outdir}/{sample}/{sample}_longtable.tsv" for sample in samplesheet.index]
+Longtable_all = f"{outdir}/all_results.tsv"
 
 # define the version files
 DB_versions_all = "Logs/Versions/all_db_versions.tsv"
@@ -68,11 +68,11 @@ rule longtable_samples:
         "[LongTable]: Collapsing all module outputs into a sample specific long table"
     shell:
         r"""
-        cmd="python workflow/scripts/LongTable.py --samplesheet %s --catalogue %s --species_configs_dir %s --output_folder %s --na"
+        cmd="python workflow/scripts/LongTable.py --samplesheet %s --catalogue %s --species_configs_dir %s --outdir %s --na"
 
         echo "Executing command:\n$cmd\n" > {log}
         eval $cmd >> {log} 2>&1
-        """%(samplesheet_path, results_catalogue_path, species_configs_path, output_folder)
+        """%(samplesheet_path, results_catalogue_path, species_configs_path, outdir)
 
 rule longtable_all:
     input:
@@ -87,11 +87,11 @@ rule longtable_all:
         "[LongTable]: Collapsing all module outputs into a long table"
     shell:
         """
-        cmd="python workflow/scripts/LongTable.py --samplesheet %s --catalogue %s --species_configs_dir %s --output_folder %s --na --extend"
+        cmd="python workflow/scripts/LongTable.py --samplesheet %s --catalogue %s --species_configs_dir %s --outdir %s --na --extend"
 
         echo "Executing command:\n$cmd\n" > {log}
         eval $cmd >> {log} 2>&1
-        """%(samplesheet_path, results_catalogue_path, species_configs_path, output_folder)
+        """%(samplesheet_path, results_catalogue_path, species_configs_path, outdir)
 
 rule database_versions_all:
     input:
@@ -127,7 +127,7 @@ rule tool_versions_all:
     output:
         Tool_versions_all
     params:
-        results_root = output_folder
+        results_root = outdir
     log:
         "Logs/Versions/ToolVersionAll.log"
     message:

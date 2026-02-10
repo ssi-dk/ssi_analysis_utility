@@ -6,7 +6,7 @@ rule plasmidfinder:
         database = rules.setup_PlasmidFinder.output.database
     output:
         # Output directory for plasmidfinder results.
-        replicons = "%s/{sample}/plasmidfinder/results_tab.tsv" %output_folder
+        replicons = "%s/{sample}/plasmidfinder/results_tab.tsv" %outdir
     conda:
         "../envs/plasmidfinder.yaml"
     log:
@@ -34,8 +34,8 @@ rule resfinder:
     params:
         options = lambda wc: sample_configs[wc.sample]["resfinder"]["options"]
     output:
-        resistance = "%s/{sample}/resfinder/ResFinder_results_tab.txt" %output_folder,
-        tool_version = "%s/{sample}/resfinder/ResFinder_version.txt" %output_folder,
+        resistance = "%s/{sample}/resfinder/ResFinder_results_tab.txt" %outdir,
+        tool_version = "%s/{sample}/resfinder/ResFinder_version.txt" %outdir,
     conda:
         "../envs/resfinder.yaml"
     log:
@@ -73,7 +73,7 @@ rule virulencefinder:
         R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
         database = rules.setup_VirulenceFinder.output.database
     output:
-        virulence = "%s/{sample}/virulencefinder/results_tab.tsv" %output_folder,
+        virulence = "%s/{sample}/virulencefinder/results_tab.tsv" %outdir,
     conda:
         "../envs/virulencefinder.yaml"
     log:
@@ -96,7 +96,7 @@ rule serotypefinder:
         R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
         database = rules.setup_SerotypeFinder.output.database
     output:
-        serotype = "%s/{sample}/serotypefinder/results_tab.tsv" %output_folder,
+        serotype = "%s/{sample}/serotypefinder/results_tab.tsv" %outdir,
     conda:
         "../envs/serotypefinder.yaml"
     log:
@@ -119,8 +119,8 @@ rule amrfinder:
     params:
         options = lambda wc: sample_configs[wc.sample]["amrfinder"]["options"]
     output:
-        result = "%s/{sample}/amrfinder/{assembler}.tsv" %output_folder,
-        tool_version = "%s/{sample}/amrfinder/{assembler}_amrfinder_version.txt" %output_folder,
+        result = "%s/{sample}/amrfinder/{assembler}.tsv" %outdir,
+        tool_version = "%s/{sample}/amrfinder/{assembler}_amrfinder_version.txt" %outdir,
     conda:
         "../envs/amrfinder.yaml"
     log:
@@ -156,7 +156,7 @@ rule LREfinder:
     # params:
     #     options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["custom_blaster"]["options"],    
     output:
-        results = "%s/{sample}/LREfinder/{database}.tsv" %output_folder,
+        results = "%s/{sample}/LREfinder/{database}.tsv" %outdir,
     conda:
         "../envs/python_functions.yaml"
     log:
@@ -184,7 +184,7 @@ rule snp_identifier:
         options = lambda wc: sample_configs[wc.sample]["snp_identifier"]["options"],
         metafile = "%s/SNP_metafile.tsv" %target_screening_path
     output:
-        indentified_variants = "%s/{sample}/snp_identifier/{database}.tsv" %output_folder
+        indentified_variants = "%s/{sample}/snp_identifier/{database}.tsv" %outdir
     conda:
         "../envs/python_functions.yaml"
     log:
@@ -211,7 +211,7 @@ rule deletion_identifier:
         options  = lambda wc: sample_configs[wc.sample]["deletion_identifier"]["options"],
         metafile = "%s/deletion_metafile.tsv" %target_screening_path
     output:
-        identified_variants = f"{output_folder}/{{sample}}/deletion_identifier/{{assembler,[^_]+}}_{{database}}.tsv" #added regex expression to ensure assemblies cannot contain '_' which our database also does
+        identified_variants = f"{outdir}/{{sample}}/deletion_identifier/{{assembler,[^_]+}}_{{database}}.tsv" #added regex expression to ensure assemblies cannot contain '_' which our database also does
     conda:
         "../envs/python_functions.yaml"
     log:
@@ -236,7 +236,7 @@ rule cdiff_repeat_identifier:
         repeats = lambda wc: sample_configs[wc.sample]["cdiff_repeat_identifier"]["repeats"],
         combos = lambda wc: sample_configs[wc.sample]["cdiff_repeat_identifier"]["combos"]
     output:
-        repeat_types = "%s/{sample}/cdiff_repeat_identifier/{assembler}_repeat_types.tsv" %output_folder
+        repeat_types = "%s/{sample}/cdiff_repeat_identifier/{assembler}_repeat_types.tsv" %outdir
     conda:
         "../envs/python_functions.yaml"
     log:
