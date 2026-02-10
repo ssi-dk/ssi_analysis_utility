@@ -1,7 +1,7 @@
 rule spades:
     input:
-        R1 = lambda wc: samplesheet.loc[wc.sample, "Illumina_mate1"],
-        R2 = lambda wc: samplesheet.loc[wc.sample, "Illumina_mate2"]
+        R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
+        R2 = lambda wc: samplesheet.loc[wc.sample, "read2"]
     output:
         assembly = "%s/{sample}/spades/{sample}.fasta" %output_folder,
         tool_version = "%s/{sample}/spades/spades_version.txt" %output_folder,
@@ -39,8 +39,8 @@ rule spades:
 
 rule skesa:
     input:
-        R1 = lambda wc: samplesheet.loc[wc.sample, "Illumina_mate1"],
-        R2 = lambda wc: samplesheet.loc[wc.sample, "Illumina_mate2"]
+        R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
+        R2 = lambda wc: samplesheet.loc[wc.sample, "read2"]
     output:
         assembly = "%s/{sample}/skesa/{sample}.fasta" %output_folder,
         tool_version = "%s/{sample}/skesa/skesa_version.txt" %output_folder,
@@ -73,8 +73,8 @@ rule skesa:
 
 rule shovill:
     input:
-        R1 = lambda wc: samplesheet.loc[wc.sample, "Illumina_mate1"],
-        R2 = lambda wc: samplesheet.loc[wc.sample, "Illumina_mate2"]
+        R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
+        R2 = lambda wc: samplesheet.loc[wc.sample, "read2"]
     output:
         assembly = "%s/{sample}/shovill/{sample}.fasta" %output_folder,
         tool_version = "%s/{sample}/shovill/shovill_version.txt" %output_folder,

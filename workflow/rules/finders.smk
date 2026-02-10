@@ -1,8 +1,8 @@
 rule plasmidfinder:
     input:
         # Input paired-end Illumina reads.
-        R1 = lambda wc: samplesheet.loc[wc.sample, "Illumina_mate1"],
-        R2 = lambda wc: samplesheet.loc[wc.sample, "Illumina_mate2"],
+        R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
+        R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
         database = rules.setup_PlasmidFinder.output.database
     output:
         # Output directory for plasmidfinder results.
@@ -26,8 +26,8 @@ rule plasmidfinder:
 
 rule resfinder:
     input:
-        R1 = lambda wc: samplesheet.loc[wc.sample, "Illumina_mate1"],
-        R2 = lambda wc: samplesheet.loc[wc.sample, "Illumina_mate2"],
+        R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
+        R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
         res_database = rules.setup_ResFinder.output.database,
         point_database = rules.setup_PointFinder.output.database, #Pointfinder requires `species` definition
         disin_database = rules.setup_DisinFinder.output.database
@@ -69,8 +69,8 @@ rule resfinder:
 
 rule virulencefinder:
     input:
-        R1 = lambda wc: samplesheet.loc[wc.sample, "Illumina_mate1"],
-        R2 = lambda wc: samplesheet.loc[wc.sample, "Illumina_mate2"],
+        R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
+        R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
         database = rules.setup_VirulenceFinder.output.database
     output:
         virulence = "%s/{sample}/virulencefinder/results_tab.tsv" %output_folder,
@@ -92,8 +92,8 @@ rule virulencefinder:
 
 rule serotypefinder:
     input:
-        R1 = lambda wc: samplesheet.loc[wc.sample, "Illumina_mate1"],
-        R2 = lambda wc: samplesheet.loc[wc.sample, "Illumina_mate2"],
+        R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
+        R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
         database = rules.setup_SerotypeFinder.output.database
     output:
         serotype = "%s/{sample}/serotypefinder/results_tab.tsv" %output_folder,

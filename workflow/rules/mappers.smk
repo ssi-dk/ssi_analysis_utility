@@ -1,7 +1,7 @@
 rule custom_kmeralignment:
     input:
-        R1 = lambda wc: samplesheet.loc[wc.sample, "Illumina_mate1"],
-        R2 = lambda wc: samplesheet.loc[wc.sample, "Illumina_mate2"],
+        R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
+        R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
         database = rules.setup_custom_kmeraligner_index.output.names
     params:
         prefix_out = "%s/{sample}/kmeraligner/{database}" %output_folder,
@@ -41,8 +41,8 @@ rule custom_kmeralignment:
 
 rule custom_kmerconsensus:
     input:
-        R1 = lambda wc: samplesheet.loc[wc.sample, "Illumina_mate1"],
-        R2 = lambda wc: samplesheet.loc[wc.sample, "Illumina_mate2"],
+        R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
+        R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
         database = rules.setup_custom_kmeraligner_index.output.names
     params:
         prefix_out = "%s/{sample}/kmerconsensus/{database}" %output_folder,
@@ -80,8 +80,8 @@ rule custom_kmerconsensus:
 
 rule custom_bowtie2alignment:
     input:
-        R1 = lambda wc: samplesheet.loc[wc.sample, "Illumina_mate1"],
-        R2 = lambda wc: samplesheet.loc[wc.sample, "Illumina_mate2"],
+        R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
+        R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
         database = rules.setup_custom_bowtie2_index.output.bt2_1 # just locate one of the bt2 files to activate the db_setup
     params:
        options = lambda wc: sample_configs[wc.sample]["custom_bowtie2alignment"]["options"]
