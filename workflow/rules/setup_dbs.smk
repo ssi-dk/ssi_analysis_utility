@@ -251,6 +251,24 @@ rule setup_SerotypeFinder:
         printf '%s%s\t%s\n' "SerotypeFinder_" "$version_str" "$date_str" > {output.version_db}
         """
 
+rule setup_Spatyper:
+    output:
+        database = directory("%s/spatyper_db" %database_path)
+    log:
+        stdout = 'Logs/Databases/setup_Spatyper.log'
+    message:
+        "[Setup Spatyper]: Setting up SerotypeFinder database"
+    shell:
+        """
+        cmd="git clone https://bitbucket.org/genomicepidemiology/spatyper_db.git {output.database}"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+
+        date -I > {output.database}/creation.date
+        """
+
+
 rule setup_AMRFinder:
     conda:
         "../envs/amrfinder.yaml"

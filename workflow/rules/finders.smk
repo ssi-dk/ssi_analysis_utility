@@ -112,6 +112,29 @@ rule serotypefinder:
         eval $cmd >> {log.stdout} 2>&1
         """
 
+rule spa_typing:
+    input:
+        assembly = rules.assembly.output.output_assembly,
+        database = rules.setup_Spatyper.output.database
+    output:
+        spatyper = "%s/{sample}/spatyper/{assembler}_spatype_results.tsv" %output_folder
+    conda:
+        "../envs/spatyper.yaml"
+    log:
+        stdout = 'Logs/{sample}/spatyper_{assembler}.log'
+    message:
+        "[Spatyping]: Running Spatyper for {wildcards.sample} using ({wildcards.assembler}) contigs"
+    shell:
+        """
+        outdir=$(dirname {output.spatyper})
+        cmd="python workflow/scripts/SPATyper_V2.py -a {input.assembly} -d {input.database} -o {output.spatyper} -b $outdir/seq_db -l $outdir/spatyper.log "
+
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+
+        echo "Spatyping completed successfully for {wildcards.sample} with {wildcards.assembler} assembly" 
+        """
+
 rule amrfinder:
     input:
         assembly = rules.assembly.output.output_assembly,
@@ -174,6 +197,7 @@ rule LREfinder:
 
         echo "LRE-finder successfully executed" > {log.stdout}
         """
+
 
 
 rule snp_identifier:

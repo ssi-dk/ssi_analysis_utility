@@ -9,13 +9,13 @@ from copy import deepcopy
 
 
 def read_results_catalogue(results_catalogue_path):
-    with open(results_catalogue_path, "r") as catalgoue_file:
+    with open(results_catalogue_path, "r") as catalogue_file:
         try:
-            results_catalogue = yaml.safe_load(catalgoue_file)
+            results_catalogue = yaml.safe_load(catalogue_file)
         except:
             print("read_results_catalogue(results_catalogue_path): LAZY DEVELOPPERS... Fill out except!!!")
-            yaml.safe_load(results_catalogue_path)
-
+            results_catalogue = yaml.safe_load(results_catalogue_path)
+    
     return(results_catalogue)
 
 
@@ -126,7 +126,7 @@ def list_results(sample_configs, results_catalogue, outdir):
 
     # Iterate over all modules for individual samples
     for sample, modules in sample_configs.items():
-
+        
         # Iterate over all configurations for any sample specific module
         for sample_module, configs in modules.items():
 
