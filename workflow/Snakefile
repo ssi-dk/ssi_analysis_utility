@@ -14,15 +14,14 @@ samplesheet_path = config['samplesheet']
 deploy_dir = config['deploy_dir']   # used by setup rules
 outdir = config['outdir']
 
-analysis_dir = f"{config_dir}/analysis"
-target_screening_path = f"{analysis_dir}/target_screening"
-species_configs_path = f"{analysis_dir}/species_configs"
+target_screening_path = f"{config_dir}/target_screening"
+species_configs_path = f"{config_dir}/species_configs"
 
 database_path = f"{deploy_dir}/Databases"
 
 samplesheet = pd.read_csv(samplesheet_path, sep='\t').set_index("sample_name")
 
-sample_configs = helper_functions.determine_sample_configs(samplesheet, species_configs_path, True)
+sample_configs = helper_functions.determine_sample_configs(samplesheet = samplesheet, config_dir = species_configs_path)
 
 results_catalogue = helper_functions.read_results_catalogue(results_catalogue_path)
 

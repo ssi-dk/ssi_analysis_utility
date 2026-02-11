@@ -8,6 +8,7 @@ import re
 import os
 from datetime import datetime
 import yaml
+from workflow.scripts.helper_functions import determine_sample_configs 
 import subprocess
 import shutil
 import sys
@@ -20,7 +21,7 @@ def parse_arguments():
 
     parser.add_argument(
         "--samplesheet",
-        dest = "samplesheet",
+        dest = "samplesheet_file",
         default = None,
         help = """
         Path to samplesheet TSV used by the pipeline. (Mandatory)
@@ -78,15 +79,6 @@ def parse_arguments():
             If not specified, the config file will be overwritten during subsequent executions.
         """
     )
-
-    # parser.add_argument(
-    #     "--update",
-    #     dest = "update",
-    #     action = "store_true",
-    #     help = """
-    #         Run pipeline database creation rules and exit.
-    #     """
-    # )
 
     parser.add_argument(
         "--test",
@@ -160,7 +152,7 @@ def create_samplesheet(samplesheet_file, input_dir):
     return None
 
 
-def create_config(samplesheet, outdir, deploy_dir, config_file, force):
+def create_config(samplesheet_file, outdir, deploy_dir, config_file, force):
     """
     Creates configuration file for snakemake.
     """    
@@ -182,7 +174,7 @@ def create_config(samplesheet, outdir, deploy_dir, config_file, force):
     # Cleanup outdir
     outdir = os.path.abspath(outdir).rstrip("/")
     
-    config = {"samplesheet": samplesheet, "deploy_dir": deploy_dir, "outdir": outdir}
+    config = {"samplesheet": samplesheet_file, "deploy_dir": deploy_dir, "outdir": outdir}
 
     with open(config_file, 'w') as config_yaml:
         yaml.dump(config, config_yaml)
@@ -190,14 +182,66 @@ def create_config(samplesheet, outdir, deploy_dir, config_file, force):
     return config_file
 
 
-def link_assemblies(x,y,z):
-    """
-    Checks config[samplesheet] assembly variable and config variable to determine preexisting assemblies.
-    If the files exists, assemblies will be artificially created using symbolic links, to circumvent the pipeline to perform assembly itself.
-    The samplesheet config variable will be used to extract the assembly keywords of the config/analysis/species_configs/*yaml files,
-    and a symbolic link will be created to the rules assembly: output location for the given samples.
-    """
-    pass
+def link_assemblies(samplesheet_file, config_dir, outdir):
+    logger.debug("Reading samplesheet")
+    samplesheet = pandas.read_csv(samplesheet_file, sep='\t').set_index("sample_name")
+
+    logger.debug("Importing sample configs")
+    sample_configs = determine_sample_configs(samplesheet, config_dir)
+
+    logger.debug("Initiating symlink generation")
+    # Iterate through sample specific configs
+    for sample, configs in sample_configs.items():
+        
+        # Extract assembly column from samplesheet
+        assembly_sheet = samplesheet.at[sample, "assembly"]
+        assembly_source = os.path.abspath(assembly_sheet)
+
+        # Ensure that assembly file exists
+        if os.path.isfile(assembly_source):
+            
+            # Iterate through each module
+            for module, options in configs.items():
+
+                # Ignore modules without extra settings
+                if type(options) == dict:
+
+                    # Ensure that assembly type is specified in settings
+                    if "assemblers" in options.keys():
+                        assemblers = options.get("assemblers")
+
+                        # Handle multiple assembly types
+                        if isinstance(assemblers, str):
+                            assemblers = [assemblers]
+
+                        # Iterate through assembly types
+                        for assembly_type in assemblers:
+
+                            # Handle symlink directory
+                            assembly_dir = f"{outdir}/{sample}/{assembly_type}"
+
+                            # Ensure target directory exists
+                            if not os.path.isdir(assembly_dir):
+                                os.makedirs(assembly_dir)
+
+                            # Handle assembly symlink
+                            assembly_destination = f"{assembly_dir}/{sample}.fasta"    
+
+                            # Remove preexisting links
+                            if os.path.islink(assembly_destination):
+                                logger.debug("Symlink already exists. Removing old link!")
+                                os.unlink(assembly_destination)
+                            
+                            # Generate links if nothing exists at destination
+                            if not os.path.isfile(assembly_destination):
+                                logger.debug(f"Creating symlink:\n - {assembly_source} -> {assembly_destination}")
+                                os.symlink(assembly_source, assembly_destination)
+                            else:
+                                logger.warning(f"File exists and is not a symbolic link:\n - {assembly_destination}")
+
+        elif assembly_sheet.lower() not in ["na", ""]:
+            logger.warning(f"Assembly file specified in samplesheet could not be found:\n - {assembly_source}")
+    return None
 
 
 def create_command(threads, config, conda_dir, arguments = None, rules = None):
@@ -235,7 +279,7 @@ def execute_snakemake(command):
 
 def seqanddestroy(args):
 
-    samplesheet = args.samplesheet
+    samplesheet_file = args.samplesheet_file
     input_dir = args.input_dir
     deploy_dir = args.deploy_dir
     outdir = args.outdir
@@ -246,7 +290,7 @@ def seqanddestroy(args):
     debug = args.debug
 
     logger.debug(
-        f"User variables:\n - samplesheet: {samplesheet}\n - input_dir: {input_dir}\n - deploy_dir: {deploy_dir}\n - "+
+        f"User variables:\n - samplesheet: {samplesheet_file}\n - input_dir: {input_dir}\n - deploy_dir: {deploy_dir}\n - "+
         f"outdir: {outdir}\n - threads: {threads}\n - config: {config}\n - test_active: {test}\n - debug_active: {debug}"
     )
 
@@ -263,27 +307,29 @@ def seqanddestroy(args):
     arguments = []
     rules = []
 
-    # if update:
-    #     logger.info("Database update mode detected. will update databases and then quit!")
-    #     rules.append("update_databases")
-    #     arguments.append("--force")
-
     if test:
         logger.info("Test run initiated. Will ignore irrelevant user arguments!")
         config = "config/Test.yaml"
-        samplesheet = "data/samplesheet.tsv"
+
+        samplesheet_file = "data/samplesheet.tsv"
         outdir = "Test/Results"
 
         rules.append("all")
 
         logger.debug(f"Variables before pipeline:\n - config: {config}\n - deploy_dir: {deploy_dir}\n - conda_dir: {conda_dir}\n - force: {force}")
 
-        config = create_config(samplesheet = samplesheet, outdir = outdir, deploy_dir = deploy_dir, config_file = config, force = True)
+        config = create_config(samplesheet_file = samplesheet_file, outdir = outdir, deploy_dir = deploy_dir, config_file = config, force = True)
+
+        logger.info("Investigating preexisting assemblies")
+        config_dir = os.path.dirname(config)
+        species_configs_path = f"{config_dir}/species_configs"
+        link_assemblies(samplesheet_file = samplesheet_file, config_dir = species_configs_path, outdir = outdir)
+
         
         command = create_command(threads, config, conda_dir, arguments = arguments, rules = rules)
 
     else:
-        if samplesheet is None:
+        if samplesheet_file is None:
             logger.error("Samplesheet file user argument missing. Aborting!")
             sys.exit(1)
 
@@ -291,19 +337,26 @@ def seqanddestroy(args):
             logger.error("Output directory must be specified. Aborting!")
             sys.exit(1)
 
-        if not os.path.isfile(samplesheet) and input_dir is not None:
-            logger.info(f"Samplesheet not found, attempting to create at: {samplesheet}")
-            create_samplesheet(samplesheet_file = samplesheet, input_dir = input_dir)
+        if not os.path.isfile(samplesheet_file) and input_dir is not None:
+            logger.info(f"Samplesheet not found, attempting to create at: {samplesheet_file}")
+            create_samplesheet(samplesheet_file = samplesheet_file, input_dir = input_dir)
             arguments.append("--dry-run")
 
-        elif not os.path.isfile(samplesheet):
+        elif not os.path.isfile(samplesheet_file):
             logger.error(f"Samplesheet not found, and input_dir not provided, can't continue. Aborting!")
             sys.exit(1)
 
         else:
             logger.warning("Samplesheet file exists, but input_dir is also specified. Will ignore input_dir and continue!")
 
-        config = create_config(samplesheet = samplesheet, outdir = outdir, deploy_dir = deploy_dir, config_file = config, force = force)
+        logger.info("Processing pipeline configurations")
+        config = create_config(samplesheet_file = samplesheet_file, outdir = outdir, deploy_dir = deploy_dir, config_file = config, force = force)
+
+        logger.info("Investigating preexisting assemblies")
+        config_dir = os.path.dirname(config)
+        species_configs_path = f"{config_dir}/species_configs"
+
+        link_assemblies(outdir = outdir, samplesheet_file = samplesheet_file, config_dir = species_configs_path)
 
         # Communicate defined variables
         logger.debug(f"Variables before pipeline:\n - config: {config}\n - deploy_dir: {deploy_dir}\n - conda_dir: {conda_dir}\n - force: {force}")

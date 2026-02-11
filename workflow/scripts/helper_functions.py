@@ -19,7 +19,7 @@ def read_results_catalogue(results_catalogue_path):
     return(results_catalogue)
 
 
-def determine_sample_configs(samplesheet, config_dir, enable_defaults):
+def determine_sample_configs(samplesheet, config_dir):
     #print("Determining sample configurations") #DEBUG msg
     # Create a dict for sample names and dict files
     sample_configs = {}
@@ -35,16 +35,14 @@ def determine_sample_configs(samplesheet, config_dir, enable_defaults):
             print(f"Warning: Config file specified in samplesheet {cfg} does not exist in {config_dir}!")
             cfg_path = None
 
-            # Check whether to deploy default configurations
-            if enable_defaults:
-                default_path = f"{config_dir}/default.yaml"
+            default_path = f"{config_dir}/default.yaml"
 
-                # Ensure that default file exists and use it
-                if os.path.exists(default_path):
-                        print("Using default.yaml instead")
-                        cfg_path = default_path
-                else:
-                    print(f"Warning: Default configuration file is missing, please recreate it to enable default analysis: {default_path}")
+            # Ensure that default file exists and use it
+            if os.path.exists(default_path):
+                    print("Using default.yaml instead")
+                    cfg_path = default_path
+            else:
+                print(f"Warning: Default configuration file is missing, please recreate it to enable default analysis: {default_path}")
 
 
         # Read sample configrations
