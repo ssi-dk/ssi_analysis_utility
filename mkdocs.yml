@@ -29,7 +29,7 @@ plugins:
 
 # Order of the pages
 nav:
-  - Home: home.md
+  - Home: index.md
   - Description: description.md
   - Deployment: deployment.md
   - Tools & Databases: tools_databases.md
