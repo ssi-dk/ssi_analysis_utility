@@ -14,7 +14,7 @@ rule custom_kmeralignment:
     conda:
         "../envs/kmeraligner.yaml"
     log:
-        stdout = "Logs/{sample}/custom_kmeralignment_{database}.log"
+        stdout = "%s/{sample}/custom_kmeralignment_{database}.log" %logdir
     message:
         "[kmeraligner]: Running KMA for {wildcards.database} on {wildcards.sample}"
     shell:
@@ -55,7 +55,7 @@ rule custom_kmerconsensus:
     conda:
         "../envs/kmeraligner.yaml"
     log:
-        stdout = "Logs/{sample}/custom_kmerconsensus_{database}.log"
+        stdout = "%s/{sample}/custom_kmerconsensus_{database}.log" %logdir
     message:
         "[kmerconsensus]: Running KMA for {wildcards.database} on {wildcards.sample}"
     shell:
@@ -93,7 +93,7 @@ rule custom_bowtie2alignment:
     conda:
         "../envs/bowtie2.yaml"
     log:
-        stdout = "Logs/{sample}/custom_bowtie2_{database}.log"
+        stdout = "%s/{sample}/custom_bowtie2_{database}.log" %logdir
     message:
         "[bowtie2aligner]: Running Bowtie2 for {wildcards.database} on {wildcards.sample} using {threads} thread(s)"
     shell:
@@ -121,7 +121,7 @@ rule custom_blaster:
     conda:
         "../envs/blast.yaml"
     log:
-        stdout = "Logs/{sample}/custom_blaster_{assembler}_{database}.log"
+        stdout = "%s/{sample}/custom_blaster_{assembler}_{database}.log" %logdir
     message:
         "[setup_{wildcards.database}]: Setting up the {wildcards.database} database from the temporary storage folder"
     shell:
@@ -156,7 +156,7 @@ rule assembly_minimap2:
     conda:
         "../envs/minimap2.yaml"
     log:
-        stdout = "Logs/{sample}/minimap2/{assembler}_{database}.log"
+        stdout = "%s/{sample}/minimap2/{assembler}_{database}.log" %logdir
     message:
         "[assembly_minimap2]: Running Minimap2 for {wildcards.database} on {wildcards.assembler} for {wildcards.sample}"
     shell:

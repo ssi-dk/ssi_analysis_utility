@@ -9,7 +9,7 @@ rule mlst:
     conda:
         "../envs/mlst.yaml"
     log:
-    	stdout = "Logs/{sample}/{assembler}_mlst.log"
+    	stdout = "%s/{sample}/{assembler}_mlst.log" %logdir
     message:
     	"[MLST]: Running MLST on {wildcards.assembler} assembly from {wildcards.sample}"
     shell:
@@ -47,7 +47,7 @@ rule kleborate:
     conda:
         "../envs/kleborate.yaml"
     log:
-    	stdout = "Logs/{sample}/Kleborate_{assembler}.log"
+    	stdout = "%s/{sample}/Kleborate_{assembler}.log" %logdir
     message:
     	"[Kleborate]: Running Kleborate on {wildcards.assembler} assembly from {wildcards.sample}"
     shell:
@@ -82,7 +82,7 @@ rule chtyper:
     output:
         filtered_tsv = "%s/{sample}/chtyper/{database}_chtyper.tsv" % outdir
     log:
-        stdout = "Logs/{sample}/{database}_chtyper.log"
+        stdout = "%s/{sample}/{database}_chtyper.log" %logdir
     message:
     	"[CH Typer]: Running Chtyper on {wildcards.database} assembly for {wildcards.sample}"
     shell:
@@ -106,7 +106,7 @@ rule meningotype:
     conda:
         "../envs/meningotype.yaml"
     log:
-        stdout = "Logs/{sample}/{assembler}_meningotype.log"
+        stdout = "%s/{sample}/{assembler}_meningotype.log" %logdir
     message:
     	"[Meningotype]: Running Meningotype on {wildcards.assembler} assembly for {wildcards.sample}"
     shell:
@@ -144,7 +144,7 @@ rule seqsero2:
     conda:
         "../envs/seqsero2.yaml"
     log:
-        stdout = 'Logs/{sample}/seqsero2.log'
+        stdout = "%s/{sample}/seqsero2.log" %logdir
     message:
         "[seqsero2]: Running seqsero2 on {wildcards.sample}"
     shell:
@@ -184,7 +184,7 @@ rule sistr:
     conda:
         "../envs/sistr.yaml"
     log:
-        stdout = 'Logs/{sample}/{assembler}_SISTR_serovar.log'
+        stdout = "%s/{sample}/{assembler}_SISTR_serovar.log" %logdir
     message:
         "[Salmonella_serovar]: Predict Salmonella serovar with SISTR"
     shell:

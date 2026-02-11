@@ -9,7 +9,7 @@ rule fetch_genbank:
     conda:
         "../envs/fetch.yaml"
     log:
-        stdout = 'Logs/Databases/fetch_genbank_{database}.log'
+        stdout = "%s/Databases/fetch_genbank_{database}.log" %logdir
     message:
         "[fetch_genbank]: Fetching {wildcards.database} from Genbank"
     shell:
@@ -45,7 +45,7 @@ rule fetch_type_repeat_sequence:
     conda:
         "../envs/fetch.yaml"
     log:
-        stdout = "Logs/Databases/fetch_type_repeat_sequences_{TR}.log"
+        stdout = "%s/Databases/fetch_type_repeat_sequences_{TR}.log" %logdir
     message:
         "[fetch_type_repeat_sequences]: Downloading Type Repeat Sequence Type sequences"
     shell:
@@ -74,7 +74,7 @@ rule fetch_type_repeat_metadata:
     conda:
         "../envs/fetch.yaml"
     log:
-        stdout = "Logs/Databases/fetch_type_repeat_metadata_{TR}.log"
+        stdout = "%s/Databases/fetch_type_repeat_metadata_{TR}.log" %logdir
     message:
         "[fetch_type_repeat_metadata]: Downloading Type Repeat Sequence Type metadata"
     shell:
@@ -94,7 +94,7 @@ rule fetch_ecoligenes:
     conda:
         "../envs/fetch.yaml"
     log:
-        stdout = "Logs/Databases/setup_ecoligenes_ecoligenes.log"
+        stdout = "%s/Databases/setup_ecoligenes_ecoligenes.log" %logdir
     message:
         "[fetch_ecoligenes]: Downloading custom database ecoligenes"
     shell:
@@ -124,7 +124,7 @@ rule fetch_Senterica_Scheme:
     conda:
         "../envs/fetch.yaml"
     log:
-        stdout = "Logs/Databases/setup_senterica_mlst_scheme.log"
+        stdout = "%s/Databases/setup_senterica_mlst_scheme.log" %logdir
     message:
         "[fetch_Senterica_Scheme]: Downloading Achtman 7 Gene MLST scheme for Salmonella Enterica"
     shell:
@@ -172,7 +172,7 @@ rule fetch_Senterica_Serovar:
     conda:
         "../envs/fetch.yaml"
     log:
-        stdout = "Logs/Databases/setup_senterica_sistr.log"
+        stdout = "%s/Databases/setup_senterica_sistr.log" %logdir
     message:
         "[fetch_Senterica_Serovar]: Downloading SISTR serovar list"
     shell:
@@ -222,7 +222,7 @@ rule setup_LREfinder:
         source = "%s/custom/elmDB.fasta" %database_path,
         version_db = "%s/custom/elmDB_version.txt" % database_path
     log:
-        stdout = 'Logs/Databases/LREfinder_db.log'
+        stdout = "%s/Databases/LREfinder_db.log" %logdir
     message:
         "[setup_LREfinder]: Setting up LREfinder database"
     shell:
@@ -265,7 +265,7 @@ rule fetch_chtyper_db:
     conda:
         "../envs/fetch.yaml"
     log:
-        stdout = "Logs/Databases/setup_chtyper_database.log"
+        stdout = "%s/Databases/setup_chtyper_database.log" %logdir
     message:
         "[fetch_chtyper_db]: Downloading custom database for CHtyper"
     shell:
@@ -312,7 +312,7 @@ rule fetch_custom_blast_database:
         source = "%s/custom/blast/OXAndm.fasta" %database_path,
         version_db = "%s/custom/blast/OXAndm_version.txt" % database_path
     log:
-        stdout = 'Logs/Databases/setup_OXAndm.log'
+        stdout = "%s/Databases/setup_OXAndm.log" %logdir
     message:
         "[fetch_custom_blast_database]: Downloading custom database OXAndm"
     shell:

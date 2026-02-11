@@ -8,7 +8,7 @@ rule samtools_sam_filtration:
     conda:
         "../envs/htslib.yaml"
     log:
-        stdout = "Logs/{sample}/custom_kmeralignment_samtools_filtration_{database}.log"
+        stdout = "%s/{sample}/custom_kmeralignment_samtools_filtration_{database}.log" %logdir
     message:
         "[custom_kmeralignment_samtools_filtration]: Filtering kmeralignment output for {wildcards.database} on {wildcards.sample}"
     shell:
@@ -30,7 +30,7 @@ rule samtools_bam_filtration:
     conda:
         "../envs/htslib.yaml"
     log:
-        stdout = "Logs/{sample}/custom_kmeralignment_samtools_filtration_{database}.log"
+        stdout = "%s/{sample}/custom_kmeralignment_samtools_filtration_{database}.log" %logdir
     message:
         "[custom_kmeralignment_samtools_filtration]: Filtering kmeralignment output for {wildcards.database} on {wildcards.sample}"
     shell:
@@ -53,7 +53,7 @@ rule samtools_sort:
     conda:
         "../envs/htslib.yaml"
     log:
-        stdout = "Logs/{sample}/samtools_sort_{database}.log"
+        stdout = "%s/{sample}/samtools_sort_{database}.log" %logdir
     message:
         "[samtools_sort]: Sorting filtered bam for {wildcards.database} on {wildcards.sample}"
     shell:
@@ -80,7 +80,7 @@ rule bcftools_pileup:
     conda:
         "../envs/htslib.yaml"
     log:
-        stdout = "Logs/{sample}/bcftools_pileup_{database}.log"
+        stdout = "%s/{sample}/bcftools_pileup_{database}.log" %logdir
     message:
         "[bcftools_pileup]: Generating mpileup for {wildcards.database} on {wildcards.sample}"
     shell:
@@ -109,7 +109,7 @@ rule bcftools_filter_indels:
     conda:
         "../envs/htslib.yaml"
     log:
-        stdout = "Logs/{sample}/bcftools_filter_indels_{database}.log"
+        stdout = "%s/{sample}/bcftools_filter_indels_{database}.log" %logdir
     message:
         "[bcftools_filter_indels]: Filtering indels of {wildcards.database} on {wildcards.sample}"
     shell:
@@ -136,7 +136,7 @@ rule bcftools_variant_call:
     conda:
         "../envs/htslib.yaml"
     log:
-        stdout = "Logs/{sample}/bcftools_variant_call_{database}.log"
+        stdout = "%s/{sample}/bcftools_variant_call_{database}.log" %logdir
     message:
         "[bcftools_variant_call]: Calling variant of {wildcards.database} on {wildcards.sample}"
     shell:

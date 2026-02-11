@@ -7,7 +7,7 @@ rule spades:
     conda:
         "../envs/shovill.yaml"
     log:
-        stdout = "Logs/Assemblies/{sample}_spades.log"
+        stdout = "%s/Assemblies/{sample}_spades.log" %logdir
     threads:
         max(1, workflow.cores * 2 / 3)
     priority: 2
@@ -35,7 +35,7 @@ rule skesa:
     conda:
         "../envs/shovill.yaml"
     log:
-        stdout = "Logs/Assemblies/{sample}_Skesa.log"
+        stdout = "%s/Assemblies/{sample}_Skesa.log" %logdir
     threads:
         max(1, workflow.cores * 2 / 3)
     priority: 2
@@ -58,7 +58,7 @@ rule shovill:
     conda:
         "../envs/shovill.yaml"
     log:
-        stdout = "Logs/Assemblies/{sample}_Shovill.log"
+        stdout = "%s/Assemblies/{sample}_Shovill.log" %logdir
     threads:
         max(1, workflow.cores * 2  / 3)
     priority: 2
@@ -86,7 +86,7 @@ rule assembly:
     output:
         output_assembly = "%s/{sample}/Assemblies/{sample}_{assembler}.fasta" %outdir
     log:
-        stdout = "Logs/Assemblies/{sample}_{assembler}_assembly.log"
+        stdout = "%s/Assemblies/{sample}_{assembler}_assembly.log" %logdir
     shell:
         """
         mkdir -p $(dirname {output.output_assembly})

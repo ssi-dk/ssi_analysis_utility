@@ -10,7 +10,7 @@ rule plasmidfinder:
     conda:
         "../envs/plasmidfinder.yaml"
     log:
-        stdout = 'Logs/{sample}/plasmidfinder.log'
+        stdout = "%s/{sample}/plasmidfinder.log" %logdir
     message:
         "[PlasmidFinder]: Running PlasmidFinder on {wildcards.sample}"
     shell:
@@ -39,7 +39,7 @@ rule resfinder:
     conda:
         "../envs/resfinder.yaml"
     log:
-        stdout = 'Logs/{sample}/resfinder.log'
+        stdout = "%s/{sample}/resfinder.log" %logdir
     message:
         "[ResFinder]: Running ResFinder, PointFinder, and DisinFinder on {wildcards.sample}"
     shell:
@@ -77,7 +77,7 @@ rule virulencefinder:
     conda:
         "../envs/virulencefinder.yaml"
     log:
-        stdout = 'Logs/{sample}/virulencefinder.log'
+        stdout = "%s/{sample}/virulencefinder.log" %logdir
     message:
         "[VirulenceFinder]: Running VirulenceFinder on {wildcards.sample}"
     shell:
@@ -100,7 +100,7 @@ rule serotypefinder:
     conda:
         "../envs/serotypefinder.yaml"
     log:
-        stdout = 'Logs/{sample}/serotypefinder.log'
+        stdout = "%s/{sample}/serotypefinder.log" %logdir
     message:
         "[SerotypeFinder]: Running SerotypeFinder on {wildcards.sample}"
     shell:
@@ -117,11 +117,11 @@ rule spa_typing:
         assembly = rules.assembly.output.output_assembly,
         database = rules.setup_Spatyper.output.database
     output:
-        spatyper = "%s/{sample}/spatyper/{assembler}_spatype_results.tsv" %output_folder
+        spatyper = "%s/{sample}/spatyper/{assembler}_spatype_results.tsv" %outdir
     conda:
         "../envs/spatyper.yaml"
     log:
-        stdout = 'Logs/{sample}/spatyper_{assembler}.log'
+        stdout = "%s/{sample}/spatyper_{assembler}.log" %logdir
     message:
         "[Spatyping]: Running Spatyper for {wildcards.sample} using ({wildcards.assembler}) contigs"
     shell:
@@ -147,7 +147,7 @@ rule amrfinder:
     conda:
         "../envs/amrfinder.yaml"
     log:
-        stdout = 'Logs/{sample}/amrfinder_{assembler}.log'
+        stdout = "%s/{sample}/amrfinder_{assembler}.log" %logdir
     message:
         "[AMRFinderPlus]: Running AMRFinderPlus for {wildcards.sample} using ({wildcards.assembler}) contigs"
     shell:
@@ -183,7 +183,7 @@ rule LREfinder:
     conda:
         "../envs/python_functions.yaml"
     log:
-        stdout = "Logs/{sample}/LRE-finder_{database}.log"
+        stdout = "%s/{sample}/LRE-finder_{database}.log" %logdir
     message:
         "[LRE-finder]: Identify genes and mutations leading to linezolid resistance in E. faecalis and E. faecium"
     shell:
@@ -212,7 +212,7 @@ rule snp_identifier:
     conda:
         "../envs/python_functions.yaml"
     log:
-        stdout = "Logs/{sample}/snp_identifier_{database}.log"
+        stdout = "%s/{sample}/snp_identifier_{database}.log" %logdir
     message:
         "[SNP Identifier]: Identifying SNPs of {wildcards.database} on {wildcards.sample}"
     shell:
@@ -239,7 +239,7 @@ rule deletion_identifier:
     conda:
         "../envs/python_functions.yaml"
     log:
-        stdout = "Logs/{sample}/deletion_identifier_{assembler}_{database}.log"
+        stdout = "%s/{sample}/deletion_identifier_{assembler}_{database}.log" %logdir
     message:
         "[Deletion Identifier]: Identifying deletions of {wildcards.database} on {wildcards.sample} ({wildcards.assembler})"
     shell:
@@ -264,7 +264,7 @@ rule cdiff_repeat_identifier:
     conda:
         "../envs/python_functions.yaml"
     log:
-        stdout = "Logs/{sample}/cdiff_repeat_identifier_{assembler}_repeat_types.log"
+        stdout = "%s/{sample}/cdiff_repeat_identifier_{assembler}_repeat_types.log" %logdir
     message:
         "[CDiff Repeat identifier]: Identifying C. Difficile repeats in {wildcards.sample} on {wildcards.assembler} assembly"
     shell:

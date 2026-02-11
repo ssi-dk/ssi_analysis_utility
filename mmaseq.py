@@ -368,7 +368,7 @@ def seqanddestroy(args):
     if status != 0:
         logger.error("Something went wrong while executing snakemake")
     else:
-        logger.info("Test run successful")
+        logger.info("Pipeline successful")
 
 
 if __name__ == "__main__":
@@ -385,6 +385,6 @@ if __name__ == "__main__":
     )
 
     # 2) Create a module‑level logger
-    logger = logging.getLogger("Seq And Destroy")
+    logger = logging.getLogger("MMAseq")
 
     seqanddestroy(args)

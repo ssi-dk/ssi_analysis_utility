@@ -10,7 +10,7 @@ rule kma_filter:
     conda:
         "../envs/python_functions.yaml"
     log:
-        stdout = "Logs/{sample}/KMA_results/{sample}_{database}.log"
+        stdout = "%s/{sample}/KMA_results/{sample}_{database}.log" %logdir
     message:
         "[KMA Filter]: Filtering KMA .res result for {wildcards.sample}"
     shell:

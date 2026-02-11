@@ -14,6 +14,8 @@ samplesheet_path = config['samplesheet']
 deploy_dir = config['deploy_dir']   # used by setup rules
 outdir = config['outdir']
 
+logdir = f"{outdir}/Logs"
+
 target_screening_path = f"{config_dir}/target_screening"
 species_configs_path = f"{config_dir}/species_configs"
 

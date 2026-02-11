@@ -5,7 +5,7 @@ rule setup_PlasmidFinder:
         database = directory("%s/plasmidfinder_db" %database_path),
         version_db = "%s/plasmidfinder_db/PlasmidFinder_version.txt" %database_path
     log:
-        stdout = 'Logs/Databases/setup_PlasmidFinder.log'
+        stdout = "%s/Databases/setup_PlasmidFinder.log" %logdir
     message:
         "[setup_PlasmidFinder]: Setting up PlasmidFinder database"
     shell:
@@ -47,7 +47,7 @@ rule setup_ResFinder:
         database = directory("%s/resfinder_db" %database_path),
         version_db = "%s/resfinder_db/ResFinder_version.txt" %database_path
     log:
-        stdout = 'Logs/Databases/setup_ResFinder.log'
+        stdout = "%s/Databases/setup_ResFinder.log" %logdir
     message:
         "[setup_ResFinder]: Setting up ResFinder database"
     shell:
@@ -89,7 +89,7 @@ rule setup_PointFinder:
         database = directory("%s/pointfinder_db" %database_path),
         version_db = "%s/pointfinder_db/PointFinder_version.txt" %database_path
     log:
-        stdout = 'Logs/Databases/setup_PointFinder.log'
+        stdout = "%s/Databases/setup_PointFinder.log" %logdir
     message:
         "[setup_PointFinder]: Setting up PointFinder database"
     shell:
@@ -132,7 +132,7 @@ rule setup_DisinFinder:
         database = directory("%s/disinfinder_db" %database_path),
         version_db = "%s/disinfinder_db/DisinFinder_version.txt" %database_path
     log:
-        stdout = 'Logs/Databases/setup_DisinFinder.log'
+        stdout = "%s/Databases/setup_DisinFinder.log" %logdir
     message:
         "[setup_DisinFinder]: Setting up DisinFinder database"
     shell:
@@ -174,7 +174,7 @@ rule setup_VirulenceFinder:
         database = directory("%s/virulencefinder_db" %database_path),
         version_db = "%s/virulencefinder_db/VirulenceFinder_version.txt" %database_path
     log:
-        stdout = 'Logs/Databases/setup_VirulenceFinder.log'
+        stdout = "%s/Databases/setup_VirulenceFinder.log" %logdir
     message:
         "[setup_VirulenceFinder]: Setting up VirulenceFinder database"
     shell:
@@ -216,7 +216,7 @@ rule setup_SerotypeFinder:
         database = directory("%s/serotypefinder_db" %database_path),
         version_db = "%s/serotypefinder_db/SerotypeFinder_version.txt" %database_path
     log:
-        stdout = 'Logs/Databases/setup_SerotypeFinder.log'
+        stdout = "%s/Databases/setup_SerotypeFinder.log" %logdir
     message:
         "[setup_SerotypeFinder]: Setting up SerotypeFinder database"
     shell:
@@ -255,7 +255,7 @@ rule setup_Spatyper:
     output:
         database = directory("%s/spatyper_db" %database_path)
     log:
-        stdout = 'Logs/Databases/setup_Spatyper.log'
+        stdout = "%s/Databases/setup_Spatyper.log" %logdir
     message:
         "[Setup Spatyper]: Setting up SerotypeFinder database"
     shell:
@@ -276,7 +276,7 @@ rule setup_AMRFinder:
         database = directory("%s/amrfinderplus/latest" %database_path),
         version_db = "%s/amrfinderplus/latest/AMRFinder_version.txt" %database_path
     log:
-        stdout = 'Logs/Databases/setup_AMRFinder.log'
+        stdout = "%s/Databases/setup_AMRFinder.log" %logdir
     message:
         "[setup_AMRFinder]: Setting up AMRFinderPlus database"
     shell:
@@ -319,7 +319,7 @@ rule setup_custom_kmeraligner_index:
   conda:
     "../envs/kmeraligner.yaml"
   log:
-    stdout = "Logs/Databases/setup_custom_kmeraligner_index_{database}.log"
+    stdout = "%s/Databases/setup_custom_kmeraligner_index_{database}.log" %logdir
   message:
     "[setup_custom_kmeraligner_index]: Setting up {wildcards.database} database with kmeraligner"
   shell:
@@ -359,7 +359,7 @@ rule setup_custom_bowtie2_index:
   conda:
     "../envs/bowtie2.yaml"
   log:
-    stdout = "Logs/Databases/setup_custom_bowtie2index_{database}.log"
+    stdout = "%s/Databases/setup_custom_bowtie2index_{database}.log" %logdir
   message:
     "[setup_custom_bowtie2_index]: Setting up {wildcards.database} database with bowtie2"
   shell:
@@ -392,7 +392,7 @@ rule setup_custom_samtool_index:
   conda:
     "../envs/htslib.yaml"
   log:
-    stdout = "Logs/Databases/setup_custom_samtool_index_{database}.log"
+    stdout = "%s/Databases/setup_custom_samtool_index_{database}.log" %logdir
   message:
     "[setup_custom_samtool_index]: Setting up {wildcards.database} database with samtools"
   shell:
