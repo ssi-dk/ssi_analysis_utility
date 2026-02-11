@@ -5,6 +5,7 @@ on:
       - master 
       - main
       - dev 
+      - docs
 permissions:
   contents: write
 jobs:
