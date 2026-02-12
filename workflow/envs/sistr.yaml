@@ -3,3 +3,4 @@ channels:
   - bioconda
 dependencies:
   - bioconda::sistr_cmd
+  - conda-forge::setuptools
