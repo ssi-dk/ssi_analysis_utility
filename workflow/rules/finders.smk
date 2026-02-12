@@ -1,16 +1,16 @@
 rule plasmidfinder:
     input:
         # Input paired-end Illumina reads.
-        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
-        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
+        R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
+        R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
         database = rules.setup_PlasmidFinder.output.database
     output:
         # Output directory for plasmidfinder results.
-        replicons = "%s/{sample}/plasmidfinder/results_tab.tsv" %output_folder
+        replicons = "%s/{sample}/plasmidfinder/results_tab.tsv" %outdir
     conda:
         "../envs/plasmidfinder.yaml"
     log:
-        stdout = 'Logs/{sample}/plasmidfinder.log'
+        stdout = "%s/{sample}/plasmidfinder.log" %logdir
     message:
         "[PlasmidFinder]: Running PlasmidFinder on {wildcards.sample}"
     shell:
@@ -26,20 +26,20 @@ rule plasmidfinder:
 
 rule resfinder:
     input:
-        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
-        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
+        R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
+        R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
         res_database = rules.setup_ResFinder.output.database,
         point_database = rules.setup_PointFinder.output.database, #Pointfinder requires `species` definition
         disin_database = rules.setup_DisinFinder.output.database
     params:
-        options = lambda wildcards: sample_configs[wildcards.sample]["resfinder"]["options"]
+        options = lambda wc: sample_configs[wc.sample]["resfinder"]["options"]
     output:
-        resistance = "%s/{sample}/resfinder/ResFinder_results_tab.txt" %output_folder,
-        tool_version = "%s/{sample}/resfinder/ResFinder_version.txt" %output_folder,
+        resistance = "%s/{sample}/resfinder/ResFinder_results_tab.txt" %outdir,
+        tool_version = "%s/{sample}/resfinder/ResFinder_version.txt" %outdir,
     conda:
         "../envs/resfinder.yaml"
     log:
-        stdout = 'Logs/{sample}/resfinder.log'
+        stdout = "%s/{sample}/resfinder.log" %logdir
     message:
         "[ResFinder]: Running ResFinder, PointFinder, and DisinFinder on {wildcards.sample}"
     shell:
@@ -69,15 +69,15 @@ rule resfinder:
 
 rule virulencefinder:
     input:
-        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
-        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
+        R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
+        R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
         database = rules.setup_VirulenceFinder.output.database
     output:
-        virulence = "%s/{sample}/virulencefinder/results_tab.tsv" %output_folder,
+        virulence = "%s/{sample}/virulencefinder/results_tab.tsv" %outdir,
     conda:
         "../envs/virulencefinder.yaml"
     log:
-        stdout = 'Logs/{sample}/virulencefinder.log'
+        stdout = "%s/{sample}/virulencefinder.log" %logdir
     message:
         "[VirulenceFinder]: Running VirulenceFinder on {wildcards.sample}"
     shell:
@@ -92,15 +92,15 @@ rule virulencefinder:
 
 rule serotypefinder:
     input:
-        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
-        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
+        R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
+        R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
         database = rules.setup_SerotypeFinder.output.database
     output:
-        serotype = "%s/{sample}/serotypefinder/results_tab.tsv" %output_folder,
+        serotype = "%s/{sample}/serotypefinder/results_tab.tsv" %outdir,
     conda:
         "../envs/serotypefinder.yaml"
     log:
-        stdout = 'Logs/{sample}/serotypefinder.log'
+        stdout = "%s/{sample}/serotypefinder.log" %logdir
     message:
         "[SerotypeFinder]: Running SerotypeFinder on {wildcards.sample}"
     shell:
@@ -112,19 +112,42 @@ rule serotypefinder:
         eval $cmd >> {log.stdout} 2>&1
         """
 
+rule spa_typing:
+    input:
+        assembly = rules.assembly.output.output_assembly,
+        database = rules.setup_Spatyper.output.database
+    output:
+        spatyper = "%s/{sample}/spatyper/{assembler}_spatype_results.tsv" %outdir
+    conda:
+        "../envs/spatyper.yaml"
+    log:
+        stdout = "%s/{sample}/spatyper_{assembler}.log" %logdir
+    message:
+        "[Spatyping]: Running Spatyper for {wildcards.sample} using ({wildcards.assembler}) contigs"
+    shell:
+        """
+        outdir=$(dirname {output.spatyper})
+        cmd="python workflow/scripts/SPATyper_V2.py -a {input.assembly} -d {input.database} -o {output.spatyper} -b $outdir/seq_db -l $outdir/spatyper.log "
+
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+
+        echo "Spatyping completed successfully for {wildcards.sample} with {wildcards.assembler} assembly" 
+        """
+
 rule amrfinder:
     input:
         assembly = rules.assembly.output.output_assembly,
         database = rules.setup_AMRFinder.output.database
     params:
-        options = lambda wildcards: sample_configs[wildcards.sample]["amrfinder"]["options"]
+        options = lambda wc: sample_configs[wc.sample]["amrfinder"]["options"]
     output:
-        result = "%s/{sample}/amrfinder/{assembler}.tsv" %output_folder,
-        tool_version = "%s/{sample}/amrfinder/{assembler}_amrfinder_version.txt" %output_folder,
+        result = "%s/{sample}/amrfinder/{assembler}.tsv" %outdir,
+        tool_version = "%s/{sample}/amrfinder/{assembler}_amrfinder_version.txt" %outdir,
     conda:
         "../envs/amrfinder.yaml"
     log:
-        stdout = 'Logs/{sample}/amrfinder_{assembler}.log'
+        stdout = "%s/{sample}/amrfinder_{assembler}.log" %logdir
     message:
         "[AMRFinderPlus]: Running AMRFinderPlus for {wildcards.sample} using ({wildcards.assembler}) contigs"
     shell:
@@ -156,11 +179,11 @@ rule LREfinder:
     # params:
     #     options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["custom_blaster"]["options"],    
     output:
-        results = "%s/{sample}/LREfinder/{database}.tsv" %output_folder,
+        results = "%s/{sample}/LREfinder/{database}.tsv" %outdir,
     conda:
         "../envs/python_functions.yaml"
     log:
-        stdout = "Logs/{sample}/LRE-finder_{database}.log"
+        stdout = "%s/{sample}/LRE-finder_{database}.log" %logdir
     message:
         "[LRE-finder]: Identify genes and mutations leading to linezolid resistance in E. faecalis and E. faecium"
     shell:
@@ -176,19 +199,20 @@ rule LREfinder:
         """
 
 
+
 rule snp_identifier:
     input:
         variants = rules.bcftools_variant_call.output.variants,
         variants_index = rules.bcftools_variant_call.output.index,
     params:
-        options = lambda wildcards: sample_configs[wildcards.sample]["snp_identifier"]["options"],
-        metafile = "%s/SNP_metafile.tsv" %metadata_path
+        options = lambda wc: sample_configs[wc.sample]["snp_identifier"]["options"],
+        metafile = "%s/SNP_metafile.tsv" %target_screening_path
     output:
-        indentified_variants = "%s/{sample}/snp_identifier/{database}.tsv" %output_folder
+        indentified_variants = "%s/{sample}/snp_identifier/{database}.tsv" %outdir
     conda:
         "../envs/python_functions.yaml"
     log:
-        stdout = "Logs/{sample}/snp_identifier_{database}.log"
+        stdout = "%s/{sample}/snp_identifier_{database}.log" %logdir
     message:
         "[SNP Identifier]: Identifying SNPs of {wildcards.database} on {wildcards.sample}"
     shell:
@@ -208,14 +232,14 @@ rule deletion_identifier:
         variants_index = rules.bcftools_variant_call.output.index,
         asm_aln = rules.assembly_minimap2.output.results
     params:
-        options  = lambda wildcards: sample_configs[wildcards.sample]["deletion_identifier"]["options"],
-        metafile = f"{metadata_path}/deletion_metafiles.tsv"
+        options  = lambda wc: sample_configs[wc.sample]["deletion_identifier"]["options"],
+        metafile = "%s/deletion_metafile.tsv" %target_screening_path
     output:
-        identified_variants = f"{output_folder}/{{sample}}/deletion_identifier/{{assembler,[^_]+}}_{{database}}.tsv" #added regex expression to ensure assemblies cannot contain '_' which our database also does
+        identified_variants = f"{outdir}/{{sample}}/deletion_identifier/{{assembler,[^_]+}}_{{database}}.tsv" #added regex expression to ensure assemblies cannot contain '_' which our database also does
     conda:
         "../envs/python_functions.yaml"
     log:
-        stdout = "Logs/{sample}/deletion_identifier_{assembler}_{database}.log"
+        stdout = "%s/{sample}/deletion_identifier_{assembler}_{database}.log" %logdir
     message:
         "[Deletion Identifier]: Identifying deletions of {wildcards.database} on {wildcards.sample} ({wildcards.assembler})"
     shell:
@@ -233,14 +257,14 @@ rule cdiff_repeat_identifier:
         metas = expand(rules.fetch_type_repeat_metadata.output.meta, TR = ["TR6", "TR10", "TRST"]),
         assembly = rules.assembly.output.output_assembly
     params:
-        repeats = lambda wildcards: sample_configs[wildcards.sample]["cdiff_repeat_identifier"]["repeats"],
-        combos = lambda wildcards: sample_configs[wildcards.sample]["cdiff_repeat_identifier"]["combos"]
+        repeats = lambda wc: sample_configs[wc.sample]["cdiff_repeat_identifier"]["repeats"],
+        combos = lambda wc: sample_configs[wc.sample]["cdiff_repeat_identifier"]["combos"]
     output:
-        repeat_types = "%s/{sample}/cdiff_repeat_identifier/{assembler}_repeat_types.tsv" %output_folder
+        repeat_types = "%s/{sample}/cdiff_repeat_identifier/{assembler}_repeat_types.tsv" %outdir
     conda:
         "../envs/python_functions.yaml"
     log:
-        stdout = "Logs/{sample}/cdiff_repeat_identifier_{assembler}_repeat_types.log"
+        stdout = "%s/{sample}/cdiff_repeat_identifier_{assembler}_repeat_types.log" %logdir
     message:
         "[CDiff Repeat identifier]: Identifying C. Difficile repeats in {wildcards.sample} on {wildcards.assembler} assembly"
     shell:

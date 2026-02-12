@@ -1,20 +1,20 @@
 rule custom_kmeralignment:
     input:
-        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
-        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
+        R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
+        R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
         database = rules.setup_custom_kmeraligner_index.output.names
     params:
-        prefix_out = "%s/{sample}/kmeraligner/{database}" %output_folder,
+        prefix_out = "%s/{sample}/kmeraligner/{database}" %outdir,
         prefix_db = rules.setup_custom_kmeraligner_index.params.prefix    
     output:
-        results = "%s/{sample}/kmeraligner/{database}.res" %output_folder,
-        sam = temp("%s/{sample}/samtools/{database}.sam" %output_folder),
-        matrix = temp("%s/{sample}/kmeraligner/{database}.mat.gz" %output_folder),
-        tool_version = "%s/{sample}/kmeraligner/{database}_kmaalign_version.txt" %output_folder,
+        results = "%s/{sample}/kmeraligner/{database}.res" %outdir,
+        sam = temp("%s/{sample}/samtools/{database}.sam" %outdir),
+        matrix = temp("%s/{sample}/kmeraligner/{database}.mat.gz" %outdir),
+        tool_version = "%s/{sample}/kmeraligner/{database}_kmaalign_version.txt" %outdir,
     conda:
         "../envs/kmeraligner.yaml"
     log:
-        stdout = "Logs/{sample}/custom_kmeralignment_{database}.log"
+        stdout = "%s/{sample}/custom_kmeralignment_{database}.log" %logdir
     message:
         "[kmeraligner]: Running KMA for {wildcards.database} on {wildcards.sample}"
     shell:
@@ -41,21 +41,21 @@ rule custom_kmeralignment:
 
 rule custom_kmerconsensus:
     input:
-        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
-        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
+        R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
+        R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
         database = rules.setup_custom_kmeraligner_index.output.names
     params:
-        prefix_out = "%s/{sample}/kmerconsensus/{database}" %output_folder,
+        prefix_out = "%s/{sample}/kmerconsensus/{database}" %outdir,
         prefix_db = rules.setup_custom_kmeraligner_index.params.prefix,
     output:
-        results = temp("%s/{sample}/kmerconsensus/{database}.res" %output_folder),
-        seq = "%s/{sample}/kmerconsensus/{database}.fsa" %output_folder,
-        aln = temp("%s/{sample}/kmerconsensus/{database}.aln" %output_folder),
-        tool_version = "%s/{sample}/kmerconsensus/{database}_kmaconsensus_version.txt" %output_folder,
+        results = temp("%s/{sample}/kmerconsensus/{database}.res" %outdir),
+        seq = "%s/{sample}/kmerconsensus/{database}.fsa" %outdir,
+        aln = temp("%s/{sample}/kmerconsensus/{database}.aln" %outdir),
+        tool_version = "%s/{sample}/kmerconsensus/{database}_kmaconsensus_version.txt" %outdir,
     conda:
         "../envs/kmeraligner.yaml"
     log:
-        stdout = "Logs/{sample}/custom_kmerconsensus_{database}.log"
+        stdout = "%s/{sample}/custom_kmerconsensus_{database}.log" %logdir
     message:
         "[kmerconsensus]: Running KMA for {wildcards.database} on {wildcards.sample}"
     shell:
@@ -80,20 +80,20 @@ rule custom_kmerconsensus:
 
 rule custom_bowtie2alignment:
     input:
-        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
-        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
+        R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
+        R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
         database = rules.setup_custom_bowtie2_index.output.bt2_1 # just locate one of the bt2 files to activate the db_setup
     params:
-       options = lambda wildcards: sample_configs[wildcards.sample]["custom_bowtie2alignment"]["options"]
+       options = lambda wc: sample_configs[wc.sample]["custom_bowtie2alignment"]["options"]
     output:
-        sam = temp("%s/{sample}/bowtie2/{database}.sam" %output_folder)
+        sam = temp("%s/{sample}/bowtie2/{database}.sam" %outdir)
     threads:
-        max(1, workflow.cores * 0.3333333)
+        max(1, workflow.cores * 1 / 3)
     priority: 2
     conda:
         "../envs/bowtie2.yaml"
     log:
-        stdout = "Logs/{sample}/custom_bowtie2_{database}.log"
+        stdout = "%s/{sample}/custom_bowtie2_{database}.log" %logdir
     message:
         "[bowtie2aligner]: Running Bowtie2 for {wildcards.database} on {wildcards.sample} using {threads} thread(s)"
     shell:
@@ -114,14 +114,14 @@ rule custom_blaster:
         assembly = rules.assembly.output.output_assembly,
         database = rules.fetch_custom_blast_database.output.source
     params:
-        options = lambda wildcards: sample_configs[wildcards.sample]["custom_blaster"]["options"]
+        options = lambda wc: sample_configs[wc.sample]["custom_blaster"]["options"]
     output:
-        results = "%s/{sample}/custom_blaster/blast_{assembler}_{database}.tsv" %output_folder,
-        tool_version = "%s/{sample}/custom_blaster/blast_{assembler}_{database}_version.txt" %output_folder,
+        results = "%s/{sample}/custom_blaster/blast_{assembler}_{database}.tsv" %outdir,
+        tool_version = "%s/{sample}/custom_blaster/blast_{assembler}_{database}_version.txt" %outdir,
     conda:
         "../envs/blast.yaml"
     log:
-        stdout = "Logs/{sample}/custom_blaster_{assembler}_{database}.log"
+        stdout = "%s/{sample}/custom_blaster_{assembler}_{database}.log" %logdir
     message:
         "[setup_{wildcards.database}]: Setting up the {wildcards.database} database from the temporary storage folder"
     shell:
@@ -150,13 +150,13 @@ rule assembly_minimap2:
         assembly = rules.assembly.output.output_assembly,      # {sample}, {assembler}
         database = rules.fetch_genbank.output.fasta            # {sample}, {database}
     params:
-        options = lambda wildcards: sample_configs[wildcards.sample]["assembly_minimap2"]["options"]
+        options = lambda wc: sample_configs[wc.sample]["assembly_minimap2"]["options"]
     output:
-        results = temp(f"{output_folder}/{{sample}}/minimap2/{{assembler}}_{{database}}.sam")
+        results = temp(f"{outdir}/{{sample}}/minimap2/{{assembler}}_{{database}}.sam")
     conda:
         "../envs/minimap2.yaml"
     log:
-        stdout = "Logs/{sample}/minimap2/{assembler}_{database}.log"
+        stdout = "%s/{sample}/minimap2/{assembler}_{database}.log" %logdir
     message:
         "[assembly_minimap2]: Running Minimap2 for {wildcards.database} on {wildcards.assembler} for {wildcards.sample}"
     shell:

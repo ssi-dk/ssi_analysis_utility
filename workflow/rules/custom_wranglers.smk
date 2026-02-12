@@ -4,13 +4,13 @@ rule kma_filter:
         database = rules.setup_custom_kmeraligner_index.output.names
     params:
         options = lambda wildcards: sample_configs[wildcards.sample]["kma_filter"]["options"],
-        metafile = "%s/kma_filter.tsv" %metadata_path
+        metafile = "%s/kma_filter.tsv" %target_screening_path
     output:
-        filtered_tsv = "%s/{sample}/kma_filter/{database}.tsv" % output_folder
+        filtered_tsv = "%s/{sample}/kma_filter/{database}.tsv" % outdir
     conda:
         "../envs/python_functions.yaml"
     log:
-        stdout = "Logs/{sample}/KMA_results/{sample}_{database}.log"
+        stdout = "%s/{sample}/KMA_results/{sample}_{database}.log" %logdir
     message:
         "[KMA Filter]: Filtering KMA .res result for {wildcards.sample}"
     shell:

@@ -268,14 +268,14 @@ def long_table_creation(df: pd.DataFrame,
     long = df.melt(
         id_vars=id_vars,
         value_vars=value_vars,
-        var_name="field",
+        var_name="row",
         value_name="value"
     )
 
     long = (
         long.rename(columns={sid_col: "sample_name", org_col: "organism"})
             .assign(tool=tool, filename="")
-            [["sample_name", "tool", "filename", "organism", "row_index", "field", "value"]]
+            [["sample_name", "tool", "filename", "organism", "row_index", "row", "value"]]
     )
     return long
 
@@ -283,8 +283,8 @@ def long_table_creation(df: pd.DataFrame,
 def save_long_table(
     samplesheet_path: str,
     catalogue_path: str,
-    config_species_root: str,
-    output_folder: str,
+    species_configs_dir: str,
+    outdir: str,
     na_filter: bool,
     extend: bool,
 ) -> None:
@@ -294,7 +294,7 @@ def save_long_table(
     if not os.path.exists(catalogue_path):
         raise FileNotFoundError(f"Catalogue not found: {catalogue_path}")
 
-    os.makedirs(output_folder, exist_ok=True)
+    os.makedirs(outdir, exist_ok=True)
 
     samplesheet = pd.read_csv(samplesheet_path, sep="\t")
     print(f"Using samplesheet: {samplesheet_path}")
@@ -312,7 +312,7 @@ def save_long_table(
     for _, row in samplesheet.iterrows():
         sample = str(row["sample_name"])
         species_cfg_file = str(row["config"])
-        species_cfg_path = os.path.join(config_species_root, species_cfg_file)
+        species_cfg_path = os.path.join(species_configs_dir, species_cfg_file)
         if not os.path.exists(species_cfg_path):
             raise FileNotFoundError(f"Species config not found for sample {sample}: {species_cfg_path}")
 
@@ -345,7 +345,7 @@ def save_long_table(
             cat_val = catalogue[tool]
             patterns = cat_val if isinstance(cat_val, list) else [cat_val]
             rels = resolve_patterns(patterns, tool_cfg, row)
-            base = os.path.join(output_folder, sample, tool)
+            base = os.path.join(outdir, sample, tool)
             files = [os.path.join(base, r) for r in rels]
 
             # Print resolved paths
@@ -383,7 +383,7 @@ def save_long_table(
         if sample_frames:
             out_df = pd.concat(sample_frames, ignore_index=True)
         else:
-            out_df = pd.DataFrame(columns=["sample_name", "tool", "filename", "organism", "row_index", "field", "value"])
+            out_df = pd.DataFrame(columns=["sample_name", "tool", "filename", "organism", "row_index", "row", "value"])
 
         if na_filter and not out_df.empty:
             before = len(out_df)
@@ -397,15 +397,15 @@ def save_long_table(
             combined_frames.append(out_df)
         else:
             # write per-sample file
-            out_path = os.path.join(output_folder, f"{sample}/{sample}_longtable.tsv")
+            out_path = os.path.join(outdir, f"{sample}/{sample}_longtable.tsv")
             out_df.to_csv(out_path, sep="\t", index=False)
             written.append(out_path)
 
     if extend:
         # Write/append the single combined file
         combined = pd.concat(combined_frames, ignore_index=True) if combined_frames else \
-                   pd.DataFrame(columns=["sample_name", "tool", "filename", "organism", "row_index", "field", "value"])
-        out_path = os.path.join(output_folder, "all_results.tsv")
+                   pd.DataFrame(columns=["sample_name", "tool", "filename", "organism", "row_index", "row", "value"])
+        out_path = os.path.join(outdir, "all_results.tsv")
         exists_before = os.path.exists(out_path)
 
         if exists_before:
@@ -430,9 +430,10 @@ def main():
     parser = argparse.ArgumentParser(
         description="Resolve outputs per sample and emit per-sample or combined long-table TSVs."
     )
-    parser.add_argument("--config", required=True, help="Path to main config YAML")
-    parser.add_argument("--sample_sheet", help="Optional path to samplesheet (TSV)")
-    parser.add_argument("--catalogue", help="Optional path to results catalogue YAML")
+    parser.add_argument("--samplesheet", help="Path to samplesheet (TSV)")
+    parser.add_argument("--catalogue", help="Path to results catalogue YAML")
+    parser.add_argument("--species_configs_dir", help="Path to species configuration files")
+    parser.add_argument("--outdir", help="Path to output files")
     parser.add_argument(
         "-n", "--na",
         action="store_true",
@@ -441,27 +442,20 @@ def main():
     parser.add_argument(
         "-e", "--extend",
         action="store_true",
-        help="If set, append all samples into {output_folder}/Longtable.txt (create if missing). Without this flag, write per-sample files."
+        help="If set, append all samples into {outdir}/Longtable.txt (create if missing). Without this flag, write per-sample files."
     )
     args = parser.parse_args()
 
-    # Read config
-    if not os.path.exists(args.config):
-        raise FileNotFoundError(f"Config file not found: {args.config}")
-    with open(args.config, "r") as f:
-        config = yaml.safe_load(f)
-    print(f"Successfully read config file: {args.config}\n")
-
-    samplesheet_path = args.sample_sheet or config["samplesheet"]
-    catalogue_path = args.catalogue or config["result_catalogue"]
-    config_species_root = config["config_species"]
-    output_folder = config["output_folder"]
+    samplesheet_path = args.samplesheet
+    catalogue_path = args.catalogue
+    species_configs_dir = args.species_configs_dir
+    outdir = args.outdir
 
     save_long_table(
         samplesheet_path=samplesheet_path,
         catalogue_path=catalogue_path,
-        config_species_root=config_species_root,
-        output_folder=output_folder,
+        species_configs_dir=species_configs_dir,
+        outdir=outdir,
         na_filter=args.na,
         extend=args.extend,
     )

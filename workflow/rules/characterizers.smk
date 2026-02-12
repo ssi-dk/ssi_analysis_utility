@@ -2,15 +2,14 @@
 # Runs Multi Locus Sequence Type to determine the ST profile of isolate
 rule mlst:
     input:
-        assembly = rules.assembly.output.output_assembly,
-        version_db = rules.update_MLST.output.version_db
+        assembly = rules.assembly.output.output_assembly
     output:
-        mlst_file = "%s/{sample}/mlst/{assembler}_mlst.tsv" %output_folder,
-        tool_version = "%s/{sample}/mlst/{assembler}_mlst_version.txt" %output_folder,
+        mlst_file = "%s/{sample}/mlst/{assembler}_mlst.tsv" %outdir,
+        tool_version = "%s/{sample}/mlst/{assembler}_mlst_version.txt" %outdir,
     conda:
         "../envs/mlst.yaml"
     log:
-    	stdout = "Logs/{sample}/{assembler}_mlst.log"
+    	stdout = "%s/{sample}/{assembler}_mlst.log" %logdir
     message:
     	"[MLST]: Running MLST on {wildcards.assembler} assembly from {wildcards.sample}"
     shell:
@@ -40,15 +39,15 @@ rule kleborate:
     input:
         assembly = rules.assembly.output.output_assembly,
     output:
-        kleborate = "%s/{sample}/kleborate/{assembler}/klebsiella_pneumo_complex_output.txt" %output_folder,
-        kleborate_hAMRonization = "%s/{sample}/kleborate/{assembler}/klebsiella_pneumo_complex_hAMRonization_output.txt" %output_folder,
-        tool_version = "%s/{sample}/kleborate/{assembler}/klebsiella_pneumo_version.txt" %output_folder,
+        kleborate = "%s/{sample}/kleborate/{assembler}/klebsiella_pneumo_complex_output.txt" %outdir,
+        kleborate_hAMRonization = "%s/{sample}/kleborate/{assembler}/klebsiella_pneumo_complex_hAMRonization_output.txt" %outdir,
+        tool_version = "%s/{sample}/kleborate/{assembler}/klebsiella_pneumo_version.txt" %outdir,
     params:
         options = lambda wildcards: sample_configs[wildcards.sample]["kleborate"]["options"]
     conda:
         "../envs/kleborate.yaml"
     log:
-    	stdout = "Logs/{sample}/Kleborate_{assembler}.log"
+    	stdout = "%s/{sample}/Kleborate_{assembler}.log" %logdir
     message:
     	"[Kleborate]: Running Kleborate on {wildcards.assembler} assembly from {wildcards.sample}"
     shell:
@@ -81,9 +80,9 @@ rule chtyper:
         id = 90,
         coverage = 60
     output:
-        filtered_tsv = "%s/{sample}/chtyper/{database}_chtyper.tsv" % output_folder
+        filtered_tsv = "%s/{sample}/chtyper/{database}_chtyper.tsv" % outdir
     log:
-        stdout = "Logs/{sample}/{database}_chtyper.log"
+        stdout = "%s/{sample}/{database}_chtyper.log" %logdir
     message:
     	"[CH Typer]: Running Chtyper on {wildcards.database} assembly for {wildcards.sample}"
     shell:
@@ -102,12 +101,12 @@ rule meningotype:
     input:
         assembly = rules.assembly.output.output_assembly,
     output:
-        meningotype = "%s/{sample}/meningotype/{assembler}_meningotype.tsv" %output_folder,
-        tool_version = "%s/{sample}/meningotype/{assembler}_meningotype_version.txt" %output_folder,
+        meningotype = "%s/{sample}/meningotype/{assembler}_meningotype.tsv" %outdir,
+        tool_version = "%s/{sample}/meningotype/{assembler}_meningotype_version.txt" %outdir,
     conda:
         "../envs/meningotype.yaml"
     log:
-        stdout = "Logs/{sample}/{assembler}_meningotype.log"
+        stdout = "%s/{sample}/{assembler}_meningotype.log" %logdir
     message:
     	"[Meningotype]: Running Meningotype on {wildcards.assembler} assembly for {wildcards.sample}"
     shell:
@@ -134,18 +133,18 @@ rule meningotype:
 
 rule seqsero2:
     input:
-        R1 = lambda wildcards: sample_to_illumina[wildcards.sample][0],
-        R2 = lambda wildcards: sample_to_illumina[wildcards.sample][1],
+        R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
+        R2 = lambda wc: samplesheet.loc[wc.sample, "read2"]
     output:
-        seqsero = "%s/{sample}/seqsero2/SeqSero_result.tsv" %output_folder,
-        tool_version = "%s/{sample}/seqsero2/SeqSero_version.txt" %output_folder,
+        seqsero = "%s/{sample}/seqsero2/SeqSero_result.tsv" %outdir,
+        tool_version = "%s/{sample}/seqsero2/SeqSero_version.txt" %outdir,
     threads:
-        max(1, workflow.cores * 0.3333333)
+        max(1, workflow.cores * 1 / 3)
     priority: 1
     conda:
         "../envs/seqsero2.yaml"
     log:
-        stdout = 'Logs/{sample}/seqsero2.log'
+        stdout = "%s/{sample}/seqsero2.log" %logdir
     message:
         "[seqsero2]: Running seqsero2 on {wildcards.sample}"
     shell:
@@ -175,17 +174,17 @@ rule sistr:
         assembly = rules.assembly.output.output_assembly,
         serovarlist = rules.fetch_Senterica_Serovar.output.source
     output:
-        sistr_tab = "%s/{sample}/sistr/{assembler}_sistr.tab" %output_folder,
-        gmlst_profile = "%s/{sample}/sistr/{assembler}_cgmlst_profiles.csv" %output_folder,
-        allele_results = "%s/{sample}/sistr/{assembler}_allele-results.json" %output_folder,
-        tool_version = "%s/{sample}/sistr/{assembler}_sistr_version.txt" %output_folder,
+        sistr_tab = "%s/{sample}/sistr/{assembler}_sistr.tab" %outdir,
+        gmlst_profile = "%s/{sample}/sistr/{assembler}_cgmlst_profiles.csv" %outdir,
+        allele_results = "%s/{sample}/sistr/{assembler}_allele-results.json" %outdir,
+        tool_version = "%s/{sample}/sistr/{assembler}_sistr_version.txt" %outdir,
     threads:
-        max(1, workflow.cores * 0.3333333)
+        max(1, workflow.cores * 1 / 3)
     priority: 2
     conda:
         "../envs/sistr.yaml"
     log:
-        stdout = 'Logs/{sample}/{assembler}_SISTR_serovar.log'
+        stdout = "%s/{sample}/{assembler}_SISTR_serovar.log" %logdir
     message:
         "[Salmonella_serovar]: Predict Salmonella serovar with SISTR"
     shell:

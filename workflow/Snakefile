@@ -3,43 +3,40 @@ import yaml
 import warnings
 from scripts import helper_functions
 
-configfile: "config/config.yaml"
+config_dir = "config"
+results_catalogue_path = f"{config_dir}/results_catalogue.yaml"
+
+#configfile: f"{config_dir}/config.yaml"
+
 
 # --- Inputs & paths from config file------------------------------------------------
 samplesheet_path = config['samplesheet']
-database_path = config['database_path']   # used by setup rules
-species_config_path = config['config_species'] # Path to species specific configuration files
-metadata_path = config['metadata_path']   # used by finder rules
-illumina_read_path_base = config['illumina_read_path']
-nanopore_read_path_base = config['nanopore_read_path']
-assembly_path_base = config['assembly_path']
-output_folder = config['output_folder']
-temp_storage_path = config['temp_storage']
-results_catalogue_path = config['result_catalogue']
+deploy_dir = config['deploy_dir']   # used by setup rules
+outdir = config['outdir']
 
-samplesheet = pd.read_csv(samplesheet_path, sep='\t')
+logdir = f"{outdir}/Logs"
 
-sample_configs = helper_functions.determine_sample_configs(samplesheet, "workflow/configs_species", True)
+target_screening_path = f"{config_dir}/target_screening"
+species_configs_path = f"{config_dir}/species_configs"
+
+database_path = f"{deploy_dir}/Databases"
+
+samplesheet = pd.read_csv(samplesheet_path, sep='\t').set_index("sample_name")
+
+sample_configs = helper_functions.determine_sample_configs(samplesheet = samplesheet, config_dir = species_configs_path)
 
 results_catalogue = helper_functions.read_results_catalogue(results_catalogue_path)
 
-all_results_files = helper_functions.list_results(sample_configs, results_catalogue, output_folder)
+all_results_files = helper_functions.list_results(sample_configs, results_catalogue, outdir)
 
 # --- Samples & read locations -------------------------------------------------
-Sample_dict, sample_to_illumina, sample_to_nanopore, sample_to_assembly = helper_functions.sample_read_map(
-    samplesheet,
-    illumina_read_base=illumina_read_path_base,
-    nanopore_read_base=nanopore_read_path_base,
-    assembly_base=assembly_path_base
-)
 
 # The sample_dicts contains a identicial sample string as key and value, 
 # This is simply to have a list similar to the other dicts if we want sample specific longtables further down  
-Samples = list(Sample_dict.keys()) 
 
 #define the long table output files to activate rule all
-Longtable_samples_output = [f"{output_folder}/{sample}/{sample}_longtable.tsv" for sample in Samples]
-Longtable_all = f"{output_folder}/all_results.tsv"
+Longtable_samples_output = [f"{outdir}/{sample}/{sample}_longtable.tsv" for sample in samplesheet.index]
+Longtable_all = f"{outdir}/all_results.tsv"
 
 # define the version files
 DB_versions_all = "Logs/Versions/all_db_versions.tsv"
@@ -72,11 +69,11 @@ rule longtable_samples:
         "[LongTable]: Collapsing all module outputs into a sample specific long table"
     shell:
         r"""
-        cmd="python workflow/scripts/LongTable.py --config config/config.yaml --na"
+        cmd="python workflow/scripts/LongTable.py --samplesheet %s --catalogue %s --species_configs_dir %s --outdir %s --na"
 
         echo "Executing command:\n$cmd\n" > {log}
         eval $cmd >> {log} 2>&1
-        """
+        """%(samplesheet_path, results_catalogue_path, species_configs_path, outdir)
 
 rule longtable_all:
     input:
@@ -90,12 +87,12 @@ rule longtable_all:
     message:
         "[LongTable]: Collapsing all module outputs into a long table"
     shell:
-        r"""
-        cmd="python workflow/scripts/LongTable.py --config config/config.yaml --na --extend"
+        """
+        cmd="python workflow/scripts/LongTable.py --samplesheet %s --catalogue %s --species_configs_dir %s --outdir %s --na --extend"
 
         echo "Executing command:\n$cmd\n" > {log}
         eval $cmd >> {log} 2>&1
-        """
+        """%(samplesheet_path, results_catalogue_path, species_configs_path, outdir)
 
 rule database_versions_all:
     input:
@@ -131,7 +128,7 @@ rule tool_versions_all:
     output:
         Tool_versions_all
     params:
-        results_root = output_folder
+        results_root = outdir
     log:
         "Logs/Versions/ToolVersionAll.log"
     message:

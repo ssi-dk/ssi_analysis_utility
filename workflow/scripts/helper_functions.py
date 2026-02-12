@@ -9,23 +9,23 @@ from copy import deepcopy
 
 
 def read_results_catalogue(results_catalogue_path):
-    with open(results_catalogue_path, "r") as catalgoue_file:
+    with open(results_catalogue_path, "r") as catalogue_file:
         try:
-            results_catalogue = yaml.safe_load(catalgoue_file)
+            results_catalogue = yaml.safe_load(catalogue_file)
         except:
             print("read_results_catalogue(results_catalogue_path): LAZY DEVELOPPERS... Fill out except!!!")
-            yaml.safe_load(results_catalogue_path)
-
+            results_catalogue = yaml.safe_load(results_catalogue_path)
+    
     return(results_catalogue)
 
 
-def determine_sample_configs(samplesheet, config_dir, enable_defaults):
+def determine_sample_configs(samplesheet, config_dir):
     #print("Determining sample configurations") #DEBUG msg
     # Create a dict for sample names and dict files
     sample_configs = {}
 
     # Iterate samplesheet and pair samples with configurations
-    for sample, cfg in zip(samplesheet["sample_name"], samplesheet["config"]):
+    for sample, cfg in zip(samplesheet.index, samplesheet["config"]):
 
         # Deduce configuration file from samplesheet
         cfg_path = f"{config_dir}/{cfg}"
@@ -35,16 +35,14 @@ def determine_sample_configs(samplesheet, config_dir, enable_defaults):
             print(f"Warning: Config file specified in samplesheet {cfg} does not exist in {config_dir}!")
             cfg_path = None
 
-            # Check whether to deploy default configurations
-            if enable_defaults:
-                default_path = f"{config_dir}/default.yaml"
+            default_path = f"{config_dir}/default.yaml"
 
-                # Ensure that default file exists and use it
-                if os.path.exists(default_path):
-                        print("Using default.yaml instead")
-                        cfg_path = default_path
-                else:
-                    print(f"Warning: Default configuration file is missing, please recreate it to enable default analysis: {default_path}")
+            # Ensure that default file exists and use it
+            if os.path.exists(default_path):
+                    print("Using default.yaml instead")
+                    cfg_path = default_path
+            else:
+                print(f"Warning: Default configuration file is missing, please recreate it to enable default analysis: {default_path}")
 
 
         # Read sample configrations
@@ -63,53 +61,6 @@ def determine_sample_configs(samplesheet, config_dir, enable_defaults):
 
     #print(f"Returning sample_configs with length {len(sample_configs)} as {type(sample_configs)}") # As log_debug
     return(sample_configs)
-
-
-def sample_read_map(
-    samplesheet: pd.DataFrame,
-    sample_col: str = "sample_name",
-    read_col: str = "Illumina_read_files",
-    nanopore_col: str = "Nanopore_read_file",
-    assembly_col: str = "assembly_file",
-    illumina_read_base: str = "",
-    nanopore_read_base: str = "",
-    assembly_base: str = "",
-) -> Tuple[Dict[str, str], Dict[str, List[str]], Dict[str, str], Dict[str, str]]:
-    """
-    read_base and assembly_base are the paths defined in the config files for the input data
-
-    read_path: examples/Dataset/reads
-    assembly_path: examples/Dataset/assembly_path
-
-    with the function returning 
-    #{'ERR3528110': ['examples/Dataset/reads/ERR3528110_1.fastq.gz', 'examples/Dataset/reads/ERR3528110_2.fastq.gz'],
-    """
-
-    samples = {}
-    sample_to_illumina = {} 
-    sample_to_nanopore = {}
-    sample_to_assembly = {}
-
-    for idx, row in samplesheet.iterrows():
-        sample = row[sample_col] #the key -> 'ERR3528110'
-
-        samples[sample] = sample 
-        # --- Illumina ---
-        illumina_reads = str(row[read_col]).split(',')
-        illumina_full = [os.path.join(illumina_read_base, read) for read in illumina_reads]
-        sample_to_illumina[sample] = illumina_full
-
-        # --- Nanopore ---
-        Nanopore_reads = str(row[nanopore_col])
-        Nanopore_full = os.path.join(nanopore_read_base, Nanopore_reads)
-        sample_to_nanopore[sample] = Nanopore_full
-
-        # --- Illumina ---
-        Assembly_seq = str(row[assembly_col])
-        Assembly_full = os.path.join(assembly_base, Assembly_seq)
-        sample_to_assembly[sample] = Assembly_full
-
-    return samples, sample_to_illumina, sample_to_nanopore, sample_to_assembly
 
 
 def map_configs_to_results(configs, results_dir, results_file):
@@ -161,7 +112,7 @@ def map_configs_to_results(configs, results_dir, results_file):
     return results
 
 
-def list_results(sample_configs, results_catalogue, output_folder):
+def list_results(sample_configs, results_catalogue, outdir):
     """
     Construct a full list of output file paths for each sample by:
       - iterating over all sample modules
@@ -175,7 +126,7 @@ def list_results(sample_configs, results_catalogue, output_folder):
 
     # Iterate over all modules for individual samples
     for sample, modules in sample_configs.items():
-
+        
         # Iterate over all configurations for any sample specific module
         for sample_module, configs in modules.items():
 
@@ -184,7 +135,7 @@ def list_results(sample_configs, results_catalogue, output_folder):
                 continue
 
             # Construct the directory where results for this module live
-            results_dir = f"{output_folder}/{sample}/{sample_module}"
+            results_dir = f"{outdir}/{sample}/{sample_module}"
 
             # Normalise results definitions into a list for uniform iteration
             module_results = results_catalogue.get(sample_module)

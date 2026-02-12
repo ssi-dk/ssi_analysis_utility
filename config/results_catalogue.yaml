@@ -19,3 +19,4 @@ kleborate:
     - "{assemblers}/klebsiella_pneumo_complex_output.txt"
 sistr: "{assemblers}_sistr.tab"
 seqsero2: "SeqSero_result.tsv"
+spatyper: "{assemblers}_spatype_results.tsv"
