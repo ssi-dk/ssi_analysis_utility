@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "MicrobeMapper"
+version = "1.0.0"
+description = "Microbial surveillance species characterisation pipeline"
+readme = "README.md"
+requires-python = ">3.9"
+dependencies = ["snakemake", "conda", "pandas"]
+
+[tool.hatch.build]
+exclude = ["/*"]
+indlude = ["/src"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/microbemapper"]
+
+[project.scripts]
+microbemapper = "microbemapper.wrapper:main"
+

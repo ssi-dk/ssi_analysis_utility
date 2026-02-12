@@ -5,6 +5,7 @@ data/reads/*gz
 resources/
 *DS_store
 .gitignore
+dist/
 Deploy/
 Test/
 config/*yaml
