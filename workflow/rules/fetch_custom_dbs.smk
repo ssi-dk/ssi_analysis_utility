@@ -233,7 +233,7 @@ rule setup_LREfinder:
         sequence_url="https://bitbucket.org/genomicepidemiology/lre-finder/raw/fac445d190853cc90c1aed392a55102fe9df4376/elmDB.tar.gz"
 
         # 1) download raw sequence
-        curl -fSL $sequence_url --output - | tar -xvf - -C {params.prefix}
+        curl -fSL $sequence_url --output - | tar -xzvf - -C {params.prefix}
         mv {params.dbdir}elm.fsa {output.source}
         rm -rf {params.dbdir}
 
