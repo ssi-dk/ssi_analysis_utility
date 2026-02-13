@@ -11,12 +11,11 @@ requires-python = ">3.9"
 dependencies = ["snakemake", "pandas"]
 
 [tool.hatch.build]
-exclude = ["/data/reads/*gz", "/Deploy", "/Test"]
-include = ["/src", "/workflow"]
+exclude = ["/data/reads/*gz", "/Deploy/*", "/Test/*"]
+include = ["/src/*", "/workflow/*", "/config/*", "/data/*"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/mmaseq"]
 
 [project.scripts]
 mmaseq = "mmaseq:launcher"
-

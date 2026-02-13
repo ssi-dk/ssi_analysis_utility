@@ -30,8 +30,10 @@ def determine_sample_configs(samplesheet, config_dir):
         # Deduce configuration file from samplesheet
         cfg_path = f"{config_dir}/{cfg}"
 
+        print("DEBUG MSG", config_dir, "EXITS:", os.path.isdir(config_dir))
+
         # Handle missing configuration file
-        if not os.path.exists(cfg_path):
+        if not os.path.isfile(cfg_path):
             print(f"Warning: Config file specified in samplesheet {cfg} does not exist in {config_dir}!")
             cfg_path = None
 

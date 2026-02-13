@@ -8,10 +8,26 @@ import re
 import os
 from datetime import datetime
 import yaml
-from helper_functions import determine_sample_configs 
+from .helper_functions import determine_sample_configs 
 import subprocess
 import shutil
 import sys
+
+# Determine installation location
+src = Path(__file__).resolve()
+root_lib = src.parents[2]  # 1 = one up, 2 = three levels up from file
+snakefile = root_lib / "workflow"/ "Snakefile"
+
+# Handle logging locally
+logger = logging.getLogger("MMAseq")
+logger.setLevel(logging.INFO)
+
+handler = logging.StreamHandler()
+formatter = logging.Formatter("%(levelname)s:%(name)s:%(message)s")
+handler.setFormatter(formatter)
+
+logger.addHandler(handler)
+logger.propagate = False
 
 
 def parse_arguments():
@@ -152,7 +168,7 @@ def create_samplesheet(samplesheet_file, input_dir):
     return None
 
 
-def create_config(samplesheet_file, outdir, deploy_dir, config_file, force):
+def create_config(samplesheet_file, outdir, deploy_dir, config_file, root, force):
     """
     Creates configuration file for snakemake.
     """    
@@ -174,7 +190,7 @@ def create_config(samplesheet_file, outdir, deploy_dir, config_file, force):
     # Cleanup outdir
     outdir = os.path.abspath(outdir).rstrip("/")
     
-    config = {"samplesheet": samplesheet_file, "deploy_dir": deploy_dir, "outdir": outdir}
+    config = {"samplesheet": samplesheet_file, "deploy_dir": deploy_dir, "outdir": outdir, "root": root}
 
     with open(config_file, 'w') as config_yaml:
         yaml.dump(config, config_yaml)
@@ -187,7 +203,7 @@ def link_assemblies(samplesheet_file, config_dir, outdir):
     samplesheet = pandas.read_csv(samplesheet_file, sep='\t').set_index("sample_name")
 
     logger.debug("Importing sample configs")
-    sample_configs = determine_sample_configs(samplesheet, config_dir)
+    sample_configs = determine_sample_configs(samplesheet = samplesheet, config_dir = config_dir)
 
     logger.debug("Initiating symlink generation")
     # Iterate through sample specific configs
@@ -260,12 +276,10 @@ def create_command(threads, config, conda_dir, arguments = None, rules = None):
         f"Creating command from arguments\n - cores: {threads}\n - configfile: {config} \n - conda-prefix: {conda_dir}\n - "+
         f"snakemake_arguments: {additionals}\n - snakemake_rules: {target_rules}"
     )
-    command = f"snakemake --use-conda --cores {threads} --keep-going --configfile {config} --conda-prefix {conda_dir} {additionals} {target_rules}"
+    command = f"snakemake --use-conda --cores {threads} --keep-going --configfile {config} --conda-prefix {conda_dir} {additionals} {target_rules} --snakefile {snakefile}"
 
 
     return command
-
-
 
 
 def execute_snakemake(command):
@@ -273,8 +287,6 @@ def execute_snakemake(command):
     status = subprocess.Popen(command, shell = True).wait()
 
     return status
-
-
     
 
 def mmaseq(args):
@@ -316,13 +328,13 @@ def mmaseq(args):
 
         rules.append("all")
 
-        logger.debug(f"Variables before pipeline:\n - config: {config}\n - deploy_dir: {deploy_dir}\n - conda_dir: {conda_dir}\n - force: {force}")
+        logger.debug(f"Variables before pipeline:\n - config: {config}\n - deploy_dir: {deploy_dir}\n - conda_dir: {conda_dir}\n - force: {force} --snakefile {snakefile}")
 
-        config = create_config(samplesheet_file = samplesheet_file, outdir = outdir, deploy_dir = deploy_dir, config_file = config, force = True)
+        config = create_config(samplesheet_file = samplesheet_file, outdir = outdir, deploy_dir = deploy_dir, config_file = config, force = True, root = root_lib)
 
         logger.info("Investigating preexisting assemblies")
         config_dir = os.path.dirname(config)
-        species_configs_path = f"{config_dir}/species_configs"
+        species_configs_path = f"{root_lib}/config/species_configs"
         link_assemblies(samplesheet_file = samplesheet_file, config_dir = species_configs_path, outdir = outdir)
 
         
@@ -350,11 +362,11 @@ def mmaseq(args):
             logger.warning("Samplesheet file exists, but input_dir is also specified. Will ignore input_dir and continue!")
 
         logger.info("Processing pipeline configurations")
-        config = create_config(samplesheet_file = samplesheet_file, outdir = outdir, deploy_dir = deploy_dir, config_file = config, force = force)
+        config = create_config(samplesheet_file = samplesheet_file, outdir = outdir, deploy_dir = deploy_dir, config_file = config, force = force, root = root_lib)
 
         logger.info("Investigating preexisting assemblies")
         config_dir = os.path.dirname(config)
-        species_configs_path = f"{config_dir}/species_configs"
+        species_configs_path =  f"{root_lib}/config/species_configs"
 
         link_assemblies(outdir = outdir, samplesheet_file = samplesheet_file, config_dir = species_configs_path)
 
@@ -374,32 +386,9 @@ def mmaseq(args):
 def launcher() -> None:
     args = parse_arguments()
 
-    if not args.debug:
-        level = logging.INFO
-        logger = logging.getLogger("MMAseq")
-
-
-    # Configuring logging
-    logging.basicConfig(
-        level=level,
-        format="%(asctime)s-%(levelname)s [%(name)s]: %(message)s"
-    )
-
-    # 2) Create a module‑level logger
-    logger = logging.getLogger("MMAseq")
+    # Determine level of logging
+    if args.debug:
+        level = logging.DEBUG
+        logger.setLevel(logging.INFO)
 
     mmaseq(args)
-
-level = logging.DEBUG
-
-# Configuring logging
-logging.basicConfig(
-    level=level,
-    format="%(asctime)s-%(levelname)s [%(name)s]: %(message)s"
-)
-
-logger = logging.getLogger("MMAseq")
-
-
-launcher()
-

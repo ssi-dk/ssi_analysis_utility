@@ -1,18 +1,17 @@
 import pandas as pd
 import yaml
 import warnings
-from .mmaseq import helper_functions
-
-config_dir = "config"
-results_catalogue_path = f"{config_dir}/results_catalogue.yaml"
-
-#configfile: f"{config_dir}/config.yaml"
+from mmaseq import helper_functions
 
 
 # --- Inputs & paths from config file------------------------------------------------
+root = config['root']
 samplesheet_path = config['samplesheet']
 deploy_dir = config['deploy_dir']   # used by setup rules
 outdir = config['outdir']
+
+config_dir = f"{root}/config"
+results_catalogue_path = f"{config_dir}/results_catalogue.yaml"
 
 logdir = f"{outdir}/Logs"
 
