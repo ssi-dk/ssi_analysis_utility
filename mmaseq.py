@@ -277,7 +277,7 @@ def execute_snakemake(command):
 
     
 
-def seqanddestroy(args):
+def mmaseq(args):
 
     samplesheet_file = args.samplesheet_file
     input_dir = args.input_dir
@@ -363,7 +363,7 @@ def seqanddestroy(args):
 
         command = create_command(threads, config, conda_dir, arguments = arguments, rules = rules)
 
-    logger.info("Executing Seq And Destroy pipeline")
+    logger.info("Executing pipeline: Mixed Microbial Analysis on Sequencing data")
     status = execute_snakemake(command)
     if status != 0:
         logger.error("Something went wrong while executing snakemake")
@@ -387,4 +387,4 @@ if __name__ == "__main__":
     # 2) Create a module‑level logger
     logger = logging.getLogger("MMAseq")
 
-    seqanddestroy(args)
+    mmaseq(args)

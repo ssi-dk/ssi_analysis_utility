@@ -5,4 +5,3 @@ dependencies:
   - meningotype
   - biopython=1.83
   - conda-forge::setuptools<82.0.0
-
