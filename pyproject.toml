@@ -3,9 +3,9 @@ requires = ["hatchling>=1.25"]
 build-backend = "hatchling.build"
 
 [project]
-name = "MicrobeMapper"
+name = "MMAseq"
 version = "1.0.0"
-description = "Microbial surveillance species characterisation pipeline"
+description = "Mixed Microbial Analysis on Sequencing data"
 readme = "README.md"
 requires-python = ">3.9"
 dependencies = ["snakemake", "conda", "pandas"]
@@ -15,8 +15,8 @@ exclude = ["/*"]
 indlude = ["/src"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/microbemapper"]
+packages = ["src/mmaseq"]
 
 [project.scripts]
-microbemapper = "microbemapper.wrapper:main"
+mmaseq = "mmaseq.launcher:main"
 
