@@ -1,7 +1,7 @@
 import pandas as pd
 import yaml
 import warnings
-from scripts import helper_functions
+from .mmaseq import helper_functions
 
 config_dir = "config"
 results_catalogue_path = f"{config_dir}/results_catalogue.yaml"
