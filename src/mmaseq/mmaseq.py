@@ -17,7 +17,6 @@ from .helper_functions import determine_sample_configs
 
 # Package location discovery
 # ---------------------------------------------------------------------
-
 SRC = Path(__file__).resolve()
 ROOT_LIB = SRC.parents[2]
 SNAKEFILE = ROOT_LIB / "workflow" / "Snakefile"
@@ -25,7 +24,6 @@ SNAKEFILE = ROOT_LIB / "workflow" / "Snakefile"
 
 # Logging configuration
 # ---------------------------------------------------------------------
-
 logger = logging.getLogger("MMAseq")
 logger.setLevel(logging.INFO)
 
@@ -41,7 +39,7 @@ logger.propagate = False
 # ---------------------------------------------------------------------
 def parse_arguments():
     parser = argparse.ArgumentParser(
-        description = "Configure and execute Seq And Destroy pipeline"
+        description = """Configure and execute Seq And Destroy pipeline"""
     )
 
     parser.add_argument(
@@ -49,9 +47,9 @@ def parse_arguments():
         dest = "samplesheet_file",
         default = None,
         help = """
-        Path to samplesheet TSV used by the pipeline. (Mandatory)
-        If the samplesheet doesn't exist, `input_dir` must be specified to create one.
-        """
+               Path to samplesheet TSV used by the pipeline (Mandatory). If the 
+               samplesheet doesn't exist, `input_dir` must be specified to create one.
+            """
     )
 
     parser.add_argument(
@@ -59,31 +57,35 @@ def parse_arguments():
         dest = "input_dir",
         default = None,
         help = """
-        Input directory MUST be specified if the samplesheet does not yet exist.
-        Input directory will be screened for `.fasta` and `fastq.gz` files,
-        sample_names will be infered from the detected files, and used to populate a samplesheet.
-        After samplesheet creation, the pipeline will be executed in dry-run mode (simulated run)
-        """
+            Input directory MUST be specified if the samplesheet does not yet exist.
+            Input directory will be screened for `.fasta` and `fastq.gz` files, 
+            sample_names will be infered from the detected files, and used to populate 
+            a samplesheet.After samplesheet creation, the pipeline will be executed in 
+            dry-run mode (simulated run)
+            """
     )
 
     parser.add_argument(
         "--deploy_dir",
         dest = "deploy_dir",
-        default = None,
+        default = ROOT_LIB / "Deploy",
         help = """
-            Directory used to deploy databases and conda environments used during peipeline execution. (Default: ./Deploy)
-            To reinstall conda environments remove the folder: {deployment_dir}/conda
+            Directory used to deploy databases and conda environments used during 
+            pipeline execution. Default is in current working directory.
+            If the directory doesn't exist, it will be created during execution.
+            To reinstall conda environments remove the folder: {deployment_dir}/conda. 
             To fetch the latest databases remove the folder: {deployment_dir}/Databases
-        """
+            """
     )
 
     parser.add_argument(
         "--outdir",
         dest = "outdir",
-        default = None,
+        default = Path.cwd() / "Results",
         help = """
-            Directory used for storing analysis results. (Mandatory)
-        """
+            Directory used for storing analysis results.
+            Default is in current working directory. 
+            """
     )
 
     parser.add_argument(
@@ -91,27 +93,32 @@ def parse_arguments():
         dest = "threads",
         default = 4,
         help = """
-            Amount of threads (cores) to dedicate for executing the pipeline. (Default 4)
-        """
+               Amount of threads (cores) to dedicate for executing the pipeline.
+            """
     )
-
+    
+    ## TOCHECK
     parser.add_argument(
         "--config",
         dest = "config",
         default = None,
         help = """
-            Configuration file location. (Default ./config/config.yaml)
-            If not specified, the config file will be overwritten during subsequent executions.
-        """
+               Configuration file location. (Default ./config/config.yaml)
+               If not specified, the config file will be overwritten during subsequent 
+               executions.
+            """
     )
 
     parser.add_argument(
         "--test",
         dest = "test",
         action = "store_true",
-        help = "Perform test run of all modules.\n" +
-        "As a side effect, all conda environments and databases will be created in the deployment directory.\n" +
-        "Results will be stored in Test/Results, and config file will be generated in config/Test.yaml "
+        help = """
+               Perform test run of all modules.\n 
+               As a side effect, all conda environments and databases will be created in
+               the deployment directory. Results will be stored in Test/Results, and
+               config file will be generated in config/Test.yaml 
+            """
     )
 
     parser.add_argument(
@@ -119,20 +126,23 @@ def parse_arguments():
         dest = "debug",
         action = "store_true",
         help = """
-            Add debug messages during execution. Mostly used for development and debugging purposes
-        """
+               Add debug messages during execution. Mostly used for development and 
+               debugging purposes
+            """
     )
 
     return parser.parse_args()
 
 
+
 # Path resolution from samplesheet
 # ---------------------------------------------------------------------
-
 def resolve_sample_path(path_from_sheet, 
                         samplesheet_file,
                         test=False):
+    
     p = Path(path_from_sheet)
+    
     # If already absolute → keep it
     if p.is_absolute():
         return p
@@ -146,14 +156,17 @@ def resolve_sample_path(path_from_sheet,
     return (samplesheet_dir / p).resolve()
 
 
+
 # Samplesheet creation
 # ---------------------------------------------------------------------
-
-def create_samplesheet(samplesheet_file, input_dir):
+def create_samplesheet(samplesheet_file, 
+                       input_dir):
     """
-    Will scan the input dir recursively, and register paired end reads and assembly files automatically.
-    A samplesheet.tsv will be created at samplesheet_file location, it contains sample_name, read1, read2, assembly, and config variables
-    sample_name is devised from either {sample_name}_1.fastq.gz or {sample_name}_R1_*.fastq.gz of read1 OR alternately, from {sample_name}.fasta
+    Will scan the input dir recursively, and register paired end reads and assembly
+    files automatically. A samplesheet.tsv will be created at samplesheet_file location,
+    it contains sample_name, read1, read2, assembly, and config variables sample_name is
+    devised from either {sample_name}_1.fastq.gz or {sample_name}_R1_*.fastq.gz of read1 7
+    OR alternately, from {sample_name}.fasta
     """
     if not os.path.isdir(input_dir):
         logger.error(f"Input directory doesn't exist. Aborting!\n - {input_dir}")
@@ -174,7 +187,10 @@ def create_samplesheet(samplesheet_file, input_dir):
 
             # Extract sample name
             sample = fname.replace(".fasta", "")
-            records.setdefault(sample, {"read1": "NA", "read2": "NA", "assembly": "NA", "config": "default.yaml"})
+            records.setdefault(sample, {"read1": "NA", 
+                                        "read2": "NA", 
+                                        "assembly": "NA", 
+                                        "config": "default.yaml"})
             records[sample]["assembly"] = str(path)
 
         elif fname.endswith(".fastq.gz"):
@@ -182,7 +198,10 @@ def create_samplesheet(samplesheet_file, input_dir):
 
             # remove read indicators to get sample name
             sample = re.sub(r'(_R?[12].*)\.fastq\.gz$', '', fname)
-            records.setdefault(sample, {"read1": "NA", "read2": "NA", "assembly": "NA", "config": "default.yaml"})
+            records.setdefault(sample, {"read1": "NA", 
+                                        "read2": "NA", 
+                                        "assembly": "NA", 
+                                        "config": "default.yaml"})
 
             if re.search(r'(_R?1|_1)', fname):
                 records[sample]["read1"] = str(path)
@@ -190,20 +209,28 @@ def create_samplesheet(samplesheet_file, input_dir):
                 records[sample]["read2"] = str(path)
 
     samplesheet = (
-        pd.DataFrame.from_dict(records, orient="index")
+        pd.DataFrame.from_dict(records, 
+                               orient="index")
         .reset_index()
         .rename(columns={"index": "sample_name"})
     )
 
-    samplesheet.to_csv(samplesheet_file, sep = "\t", index = False)
+    samplesheet.to_csv(samplesheet_file, 
+                       sep = "\t", 
+                       index = False)
 
     return None
 
 
+
 # Configuration file creation
 # ---------------------------------------------------------------------
-
-def create_config(samplesheet_file, outdir, deploy_dir, config_file, root, force):
+def create_config(samplesheet_file, 
+                  outdir, 
+                  deploy_dir, 
+                  config_file, 
+                  root, 
+                  force):
     """
     Creates configuration file for snakemake.
     """    
@@ -220,8 +247,13 @@ def create_config(samplesheet_file, outdir, deploy_dir, config_file, root, force
     elif not force:
         timestamp = datetime.now().strftime("%y_%m_%d-%H_%M")
         config_file = f"{os.path.dirname(config_file)}/{timestamp}_{os.path.basename(config_file)}"
-        logging.warning(f"Configuration file already exists, will change current config_file to:\n - {config_file}")
-
+        logger.warning(
+        (
+            "Configuration file already exists, will change current config_file to:\n"
+            f"- {config_file}"
+        )
+    )
+    
     # Cleanup outdir
     outdir = os.path.abspath(outdir).rstrip("/")
     
@@ -233,79 +265,99 @@ def create_config(samplesheet_file, outdir, deploy_dir, config_file, root, force
     }
 
     with open(config_file, 'w') as config_yaml:
-        yaml.safe_dump(config, config_yaml)
+        yaml.safe_dump(config, 
+                       config_yaml)
 
     return config_file
 
 
-# Assembly linking
-#----------------------------------------------------------------------
 
-def link_assemblies(samplesheet_file, config_dir, outdir, test):
+# Create assembly symlinks
+#----------------------------------------------------------------------
+def link_assemblies(samplesheet_file,
+                    config_dir,
+                    outdir,
+                    test):
+    """
+    Generate assembly symlinks for each sample and assembler type.
+    """
+
     logger.debug("Reading samplesheet")
-    samplesheet = pd.read_csv(samplesheet_file, sep='\t').set_index("sample_name")
+    samplesheet = pd.read_csv(samplesheet_file, 
+                              sep="\t").set_index("sample_name")
+    
+
     logger.debug("Importing sample configs")
-    sample_configs = determine_sample_configs(samplesheet = samplesheet, config_dir = config_dir)
+    sample_configs = determine_sample_configs(samplesheet=samplesheet,
+                                              config_dir=config_dir)
+
+    outdir = Path(outdir)  ### TO RECHECK
 
     logger.debug("Initiating symlink generation")
-    # Iterate through sample specific configs
+
     for sample, configs in sample_configs.items():
-        
-        # Extract assembly column from samplesheet
+
         assembly_sheet = samplesheet.at[sample, "assembly"]
-        assembly_source = resolve_sample_path(assembly_sheet, 
+        assembly_source = resolve_sample_path(assembly_sheet,
                                               samplesheet_file,
                                               test=test)
-        # Ensure that assembly file exists
-        if os.path.isfile(assembly_source):
-            
-            # Iterate through each module
-            for module, options in configs.items():
 
-                # Ignore modules without extra settings
-                if type(options) == dict:
+        if not assembly_source.is_file():
+            if assembly_sheet.lower() not in ["na", ""]:
+                logger.warning(
+                    "Assembly file not found: %s", assembly_source
+                )
+            continue
 
-                    # Ensure that assembly type is specified in settings
-                    if "assemblers" in options.keys():
-                        assemblers = options.get("assemblers")
 
-                        # Handle multiple assembly types
-                        if isinstance(assemblers, str):
-                            assemblers = [assemblers]
+        # Extract ALL assembler types once per sample
+        assemblers = {
+            assembler
+            for options in configs.values()
+            if isinstance(options, dict)
+            and "assemblers" in options
+            for assembler in (
+                options["assemblers"]
+                if isinstance(options["assemblers"], list)
+                else [options["assemblers"]]
+            )
+        }
 
-                        # Iterate through assembly types
-                        for assembly_type in assemblers:
+        # Create symlinks (single loop now)
+        for assembler in assemblers:
 
-                            # Handle symlink directory
-                            assembly_dir = f"{outdir}/{sample}/{assembly_type}"
-                       
-                            # Ensure target directory exists
-                            if not os.path.isdir(assembly_dir):
-                                os.makedirs(assembly_dir)
+            assembly_dir = outdir / sample / assembler
+            assembly_dir.mkdir(parents=True, 
+                               exist_ok=True)
 
-                            # Handle assembly symlink
-                            assembly_destination = f"{assembly_dir}/{sample}.fasta"    
+            destination = assembly_dir / f"{sample}.fasta"
 
-                            # Remove preexisting links
-                            if os.path.islink(assembly_destination):
-                                logger.debug("Symlink already exists. Removing old link!")
-                                os.unlink(assembly_destination)
-                            
-                            # Generate links if nothing exists at destination
-                            if not os.path.isfile(assembly_destination):
-                                logger.debug(f"Creating symlink:\n - {assembly_source} -> {assembly_destination}")
-                                os.symlink(assembly_source, assembly_destination)
-                            else:
-                                logger.warning(f"File exists and is not a symbolic link:\n - {assembly_destination}")
+            if destination.is_symlink():
+                logger.debug("Removing existing symlink: %s", destination)
+                destination.unlink()
 
-        elif assembly_sheet.lower() not in ["na", ""]:
-            logger.warning(f"Assembly file specified in samplesheet could not be found:\n - {assembly_source}")
-    return None
+            if not destination.exists():
+                logger.info(
+                    "Creating symlink: %s -> %s",
+                    assembly_source,
+                    destination,
+                )
+                destination.symlink_to(assembly_source)
+            else:
+                logger.warning(
+                    "File exists and is not a symlink: %s",
+                    destination,
+                )
+
+
 
 # Command creation and execution
 # ---------------------------------------------------------------------
-
-def create_command(threads, config, conda_dir, arguments = None, rules = None):
+def create_command(threads, 
+                   config, 
+                   conda_dir, 
+                   arguments = None, 
+                   rules = None):
     """
     Unstacks the command list into a overall snakemake command.
     """
@@ -318,27 +370,44 @@ def create_command(threads, config, conda_dir, arguments = None, rules = None):
         target_rules = " ".join(rules)
 
     logger.debug(
-        f"Creating command from arguments\n - cores: {threads}\n - configfile: {config} \n - conda-prefix: {conda_dir}\n - "+
-        f"snakemake_arguments: {additionals}\n - snakemake_rules: {target_rules}"
+        (
+            "Creating command from arguments\n"
+            f" - cores: {threads}\n"
+            f" - configfile: {config}\n"
+            f" - conda-prefix: {conda_dir}\n"
+            f" - snakemake_arguments: {additionals}\n"
+            f" - snakemake_rules: {target_rules}"
+        )
     )
-    command = f"snakemake --use-conda --cores {threads} --keep-going --configfile {config} --conda-prefix {conda_dir} {additionals} {target_rules} --snakefile {SNAKEFILE}"
-
+    
+    command = (
+        "snakemake --use-conda "
+        f"--cores {threads} "
+        "--keep-going "
+        f"--configfile {config} "
+        f" --snakefile {SNAKEFILE} "
+        f"--conda-prefix {conda_dir} "
+                       f"{additionals} "
+                       f"{target_rules}"
+        )
 
     return command
 
 
+
 # Execute snakemake command
 #---------------------------------------------------------------------
-
 def execute_snakemake(command):
+    
     logger.debug(f"Executing command\n - {command}")
     status = subprocess.Popen(command, shell = True).wait()
 
     return status
     
+
+
 # Main function
 #----------------------------------------------------------------------
-
 def mmaseq(args):
 
     samplesheet_file = args.samplesheet_file
@@ -352,8 +421,15 @@ def mmaseq(args):
     debug = args.debug
 
     logger.debug(
-        f"User variables:\n - samplesheet: {samplesheet_file}\n - input_dir: {input_dir}\n - deploy_dir: {deploy_dir}\n - "+
-        f"outdir: {outdir}\n - threads: {threads}\n - config: {config}\n - test_active: {test}\n - debug_active: {debug}"
+        (
+            "User variables:\n"
+            f" - samplesheet: {samplesheet_file}\n"
+            f" - input_dir: {input_dir}\n"
+            f" - threads: {threads}\n "
+            f" - config: {config}\n"
+            f" - test_active: {test}\n"
+            f"- debug_active: {debug}"
+        )
     )
 
     force = False
@@ -361,9 +437,10 @@ def mmaseq(args):
         config = ROOT_LIB / "config/config.yaml" # Revert to default config location if not specified
         force = True
         logger.debug(f"Config file not specified")
-    if deploy_dir is None:
-        deploy_dir = ROOT_LIB / "Deploy" # Default deploy location if not specified 
-        logger.debug(f"Deployment directory not specified.")
+    
+    # if deploy_dir is None:
+    #     deploy_dir = ROOT_LIB / "Deploy" # Default deploy location if not specified 
+    #     logger.debug(f"Deployment directory not specified.")
     conda_dir = f"{deploy_dir}/conda"
 
     arguments = []
@@ -374,55 +451,96 @@ def mmaseq(args):
         config = f"{ROOT_LIB}/config/Test.yaml" # Default test config location
         samplesheet_file = f"{ROOT_LIB}/data/samplesheet.tsv" # Default test samplesheet location
         outdir = f"{ROOT_LIB}/Test/Results" # Default test output location
-
         rules.append("all")
 
-        logger.info(f"Variables before pipeline:\n - config: {config}\n - deploy_dir: {deploy_dir}\n - conda_dir: {conda_dir}\n - force: {force} --snakefile {SNAKEFILE}")
 
-        config = create_config(samplesheet_file = samplesheet_file, outdir = outdir, deploy_dir = deploy_dir, config_file = config, force = True, root = ROOT_LIB)
+        logger.info(
+            (
+                "Variables before pipeline:\n"
+                f" - config: {config}\n"
+                f" - deploy_dir: {deploy_dir}\n"
+                f" - conda_dir: {conda_dir}\n"
+                f" - force: {force}"
+                f" --snakefile {SNAKEFILE}"
+                
+            )
+        )
+        config = create_config(samplesheet_file = samplesheet_file, 
+                               outdir = outdir, 
+                               deploy_dir = deploy_dir, 
+                               config_file = config, 
+                               force = True, 
+                               root = ROOT_LIB)
 
         logger.info("Investigating preexisting assemblies")
-        
         species_configs_path = f"{ROOT_LIB}/config/species_configs"
-        link_assemblies(samplesheet_file = samplesheet_file, config_dir = species_configs_path, outdir = outdir,test=True)
+        link_assemblies(samplesheet_file = samplesheet_file, 
+                        config_dir = species_configs_path, 
+                        outdir = outdir,
+                        test=True)
 
         
-        command = create_command(threads, config, conda_dir, arguments = arguments, rules = rules)
+        command = create_command(threads, 
+                                 config, 
+                                 conda_dir, 
+                                 arguments = arguments, 
+                                 rules = rules)
 
     else:
         if samplesheet_file is None:
             logger.error("Samplesheet file user argument missing. Aborting!")
             sys.exit(1)
 
-        if outdir is None:
-            logger.error("Output directory must be specified. Aborting!")
-            sys.exit(1)
+        # if outdir is None:
+        #     logger.error("Output directory must be specified. Aborting!")
+        #     sys.exit(1)
 
-        if not os.path.isfile(samplesheet_file) and input_dir is not None:
+        if not os.path.isfile(samplesheet_file):# and input_dir is not None:
             logger.info(f"Samplesheet not found, attempting to create at: {samplesheet_file}")
-            create_samplesheet(samplesheet_file = samplesheet_file, input_dir = input_dir)
+            create_samplesheet(samplesheet_file = samplesheet_file, 
+                               input_dir = input_dir)
             arguments.append("--dry-run")
 
-        elif not os.path.isfile(samplesheet_file):
-            logger.error(f"Samplesheet not found, and input_dir not provided, can't continue. Aborting!")
-            sys.exit(1)
+        # elif not os.path.isfile(samplesheet_file):
+        #     logger.error(f"Samplesheet not found, and input_dir not provided, can't continue. Aborting!")
+        #     sys.exit(1)
 
         else:
-            logger.warning("Samplesheet file exists, but input_dir is also specified. Will ignore input_dir and continue!")
+            logger.warning("Samplesheet file exists and input_dir is also specified. Will ignore input_dir and continue!")
 
         logger.info("Processing pipeline configurations")
-        config = create_config(samplesheet_file = samplesheet_file, outdir = outdir, deploy_dir = deploy_dir, config_file = config, force = force, root = ROOT_LIB)
+        config = create_config(samplesheet_file = samplesheet_file, 
+                               outdir = outdir, 
+                               deploy_dir = deploy_dir, 
+                               config_file = config, 
+                               force = force, 
+                               root = ROOT_LIB)
 
         logger.info("Investigating preexisting assemblies")
-        config_dir = os.path.dirname(config)
         species_configs_path =  f"{ROOT_LIB}/config/species_configs"
+        link_assemblies(samplesheet_file = samplesheet_file, 
+                        outdir = outdir, 
+                        config_dir = species_configs_path,
+                        test=False)
 
-        link_assemblies(outdir = outdir, samplesheet_file = samplesheet_file, config_dir = species_configs_path,test=False)
+        # Communicate defined variables        
+        logger.debug(
+            (
+                "Variables before pipeline:\n"
+                f" - config: {config}\n"
+                f" - deploy_dir: {deploy_dir}\n"
+                f" - conda_dir: {conda_dir}\n"
+                f" - force: {force}"
+                f"--snakefile {SNAKEFILE}"
+                
+            )
+        )
 
-        # Communicate defined variables
-        logger.debug(f"Variables before pipeline:\n - config: {config}\n - deploy_dir: {deploy_dir}\n - conda_dir: {conda_dir}\n - force: {force}")
-
-        command = create_command(threads, config, conda_dir, arguments = arguments, rules = rules)
+        command = create_command(threads, 
+                                 config, 
+                                 conda_dir, 
+                                 arguments = arguments, 
+                                 rules = rules)
 
     logger.info("Executing pipeline: Mixed Microbial Analysis on Sequencing data")
     status = execute_snakemake(command)
@@ -432,9 +550,9 @@ def mmaseq(args):
         logger.info("Pipeline successful")
 
 
+
 # Launcher
 #---------------------------------------------------------------------
-
 def launcher() -> None:
     args = parse_arguments()
 
