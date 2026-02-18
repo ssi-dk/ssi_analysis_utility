@@ -1,15 +1,15 @@
 rule fetch_genbank:
     params:
-        metafile = "%s/{database}_genbank_metafile.tsv" %target_screening_path,
+        metafile = "%s/{database}_genbank_metafile.tsv" %TARGET_SCREENING_PATH,
         merge = 500
     output:
-        fasta = "%s/custom/{database,[^/]+}.fasta" % database_path,
-        bed = "%s/custom/{database,[^/]+}.bed6" % database_path,
-        version_db = "%s/custom/{database,[^/]+}_version.txt" %database_path
+        fasta = "%s/custom/{database,[^/]+}.fasta" % DATABASE_PATH,
+        bed = "%s/custom/{database,[^/]+}.bed6" % DATABASE_PATH,
+        version_db = "%s/custom/{database,[^/]+}_version.txt" %DATABASE_PATH
     conda:
         "../envs/fetch.yaml"
     log:
-        stdout = "%s/Databases/fetch_genbank_{database}.log" %logdir
+        stdout = "%s/Databases/fetch_genbank_{database}.log" %LOGDIR
     message:
         "[fetch_genbank]: Fetching {wildcards.database} from Genbank"
     shell:
@@ -18,7 +18,7 @@ rule fetch_genbank:
         mkdir -p $(dirname {output.fasta})
 
         # 1) Run the genbank fetcher
-        cmd="python {scripts}/genbank_fetcher.py --metafile {params.metafile} --bed {output.bed} --fasta {output.fasta} --merge {params.merge} --append"
+        cmd="python {SCRIPTS}/genbank_fetcher.py --metafile {params.metafile} --bed {output.bed} --fasta {output.fasta} --merge {params.merge} --append"
 
         echo "Executing command:\n$cmd\n" > {log.stdout}
         eval $cmd >> {log.stdout} 2>&1
@@ -40,12 +40,12 @@ rule fetch_genbank:
 
 rule fetch_type_repeat_sequence:
     output:
-        seq = "%s/custom/type_repeats/{TR}.fasta" %database_path,
-        version_db = "%s/custom/type_repeats/{TR}_version.txt" % database_path
+        seq = "%s/custom/type_repeats/{TR}.fasta" %DATABASE_PATH,
+        version_db = "%s/custom/type_repeats/{TR}_version.txt" % DATABASE_PATH
     conda:
         "../envs/fetch.yaml"
     log:
-        stdout = "%s/Databases/fetch_type_repeat_sequences_{TR}.log" %logdir
+        stdout = "%s/Databases/fetch_type_repeat_sequences_{TR}.log" %LOGDIR
     message:
         "[fetch_type_repeat_sequences]: Downloading Type Repeat Sequence Type sequences"
     shell:
@@ -70,11 +70,11 @@ rule fetch_type_repeat_sequence:
 
 rule fetch_type_repeat_metadata:
     output:
-        meta = "%s/custom/type_repeats/{TR}.txt" %database_path
+        meta = "%s/custom/type_repeats/{TR}.txt" %DATABASE_PATH
     conda:
         "../envs/fetch.yaml"
     log:
-        stdout = "%s/Databases/fetch_type_repeat_metadata_{TR}.log" %logdir
+        stdout = "%s/Databases/fetch_type_repeat_metadata_{TR}.log" %LOGDIR
     message:
         "[fetch_type_repeat_metadata]: Downloading Type Repeat Sequence Type metadata"
     shell:
@@ -89,12 +89,12 @@ rule fetch_type_repeat_metadata:
 
 rule fetch_ecoligenes:
     output:
-        source = "%s/custom/ecoligenes.fasta" %database_path,
-        version_db = "%s/custom/ecoligenes_version.txt" % database_path
+        source = "%s/custom/ecoligenes.fasta" %DATABASE_PATH,
+        version_db = "%s/custom/ecoligenes_version.txt" % DATABASE_PATH
     conda:
         "../envs/fetch.yaml"
     log:
-        stdout = "%s/Databases/setup_ecoligenes_ecoligenes.log" %logdir
+        stdout = "%s/Databases/setup_ecoligenes_ecoligenes.log" %LOGDIR
     message:
         "[fetch_ecoligenes]: Downloading custom database ecoligenes"
     shell:
@@ -118,13 +118,13 @@ rule fetch_ecoligenes:
 
 rule fetch_Senterica_Scheme:
     output:
-        source = "%s/custom/SalmonellaAchtman7GeneMLST.fasta" %database_path,
-        profile = "%s/custom/SalmonellaAchtman7GeneMLST.txt" %database_path,
-        version_db = "%s/custom/SalmonellaAchtman7GeneMLST_version.txt" % database_path
+        source = "%s/custom/SalmonellaAchtman7GeneMLST.fasta" %DATABASE_PATH,
+        profile = "%s/custom/SalmonellaAchtman7GeneMLST.txt" %DATABASE_PATH,
+        version_db = "%s/custom/SalmonellaAchtman7GeneMLST_version.txt" % DATABASE_PATH
     conda:
         "../envs/fetch.yaml"
     log:
-        stdout = "%s/Databases/setup_senterica_mlst_scheme.log" %logdir
+        stdout = "%s/Databases/setup_senterica_mlst_scheme.log" %LOGDIR
     message:
         "[fetch_Senterica_Scheme]: Downloading Achtman 7 Gene MLST scheme for Salmonella Enterica"
     shell:
@@ -167,12 +167,12 @@ rule fetch_Senterica_Scheme:
 
 rule fetch_Senterica_Serovar:
     output:
-        source = "%s/custom/Senterica_serovar.txt" % database_path,
-        version_db = "%s/custom/Senterica_serovar_version.txt" % database_path
+        source = "%s/custom/Senterica_serovar.txt" % DATABASE_PATH,
+        version_db = "%s/custom/Senterica_serovar_version.txt" % DATABASE_PATH
     conda:
         "../envs/fetch.yaml"
     log:
-        stdout = "%s/Databases/setup_senterica_sistr.log" %logdir
+        stdout = "%s/Databases/setup_senterica_sistr.log" %LOGDIR
     message:
         "[fetch_Senterica_Serovar]: Downloading SISTR serovar list"
     shell:
@@ -216,13 +216,13 @@ rule setup_LREfinder:
     conda:
         "../envs/kmeraligner.yaml"
     params:
-        prefix = "%s/custom/" %database_path,
-        dbdir = "%s/custom/elmDB/" %database_path,
+        prefix = "%s/custom/" %DATABASE_PATH,
+        dbdir = "%s/custom/elmDB/" %DATABASE_PATH,
     output:
-        source = "%s/custom/elmDB.fasta" %database_path,
-        version_db = "%s/custom/elmDB_version.txt" % database_path
+        source = "%s/custom/elmDB.fasta" %DATABASE_PATH,
+        version_db = "%s/custom/elmDB_version.txt" % DATABASE_PATH
     log:
-        stdout = "%s/Databases/LREfinder_db.log" %logdir
+        stdout = "%s/Databases/LREfinder_db.log" %LOGDIR
     message:
         "[setup_LREfinder]: Setting up LREfinder database"
     shell:
@@ -260,12 +260,12 @@ rule setup_LREfinder:
 
 rule fetch_chtyper_db:
     output:
-        source = "%s/custom/fumCH_db.fasta" %database_path,
-        version_db = "%s/custom/fumCH_db_version.txt" % database_path
+        source = "%s/custom/fumCH_db.fasta" %DATABASE_PATH,
+        version_db = "%s/custom/fumCH_db_version.txt" % DATABASE_PATH
     conda:
         "../envs/fetch.yaml"
     log:
-        stdout = "%s/Databases/setup_chtyper_database.log" %logdir
+        stdout = "%s/Databases/setup_chtyper_database.log" %LOGDIR
     message:
         "[fetch_chtyper_db]: Downloading custom database for CHtyper"
     shell:
@@ -309,10 +309,10 @@ rule fetch_custom_blast_database:
     conda:
         "../envs/blast.yaml"
     output:
-        source = "%s/custom/blast/OXAndm.fasta" %database_path,
-        version_db = "%s/custom/blast/OXAndm_version.txt" % database_path
+        source = "%s/custom/blast/OXAndm.fasta" %DATABASE_PATH,
+        version_db = "%s/custom/blast/OXAndm_version.txt" % DATABASE_PATH
     log:
-        stdout = "%s/Databases/setup_OXAndm.log" %logdir
+        stdout = "%s/Databases/setup_OXAndm.log" %LOGDIR
     message:
         "[fetch_custom_blast_database]: Downloading custom database OXAndm"
     shell:

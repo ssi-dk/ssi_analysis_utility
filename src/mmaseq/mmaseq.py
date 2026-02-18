@@ -136,7 +136,9 @@ def parse_arguments():
 
 # Path resolution from samplesheet
 # ---------------------------------------------------------------------
-def resolve_sample_path(path_from_sheet, samplesheet_file, test=False):
+def resolve_sample_path(path_from_sheet, 
+                        samplesheet_file, 
+                        test=False):
 
     p = Path(path_from_sheet)
 
@@ -153,7 +155,8 @@ def resolve_sample_path(path_from_sheet, samplesheet_file, test=False):
 
 # NEW: Normalize samplesheet paths (fix)
 # ---------------------------------------------------------------------
-def normalize_samplesheet_paths(samplesheet_file, test):
+def normalize_samplesheet_paths(samplesheet_file, 
+                                test):
     """
     Converts all read1/read2/assembly paths in the samplesheet
     into absolute paths using resolve_sample_path().
@@ -163,7 +166,9 @@ def normalize_samplesheet_paths(samplesheet_file, test):
 
     def fix(p):
         if isinstance(p, str) and p.lower() not in ["na", ""]:
-            return str(resolve_sample_path(p, samplesheet_file, test=test))
+            return str(resolve_sample_path(p, 
+                                           samplesheet_file, 
+                                           test=test))
         return p
 
     df["read1"] = df["read1"].apply(fix)
@@ -176,7 +181,8 @@ def normalize_samplesheet_paths(samplesheet_file, test):
 
 # Samplesheet creation
 # ---------------------------------------------------------------------
-def create_samplesheet(samplesheet_file, input_dir):
+def create_samplesheet(samplesheet_file, 
+                       input_dir):
 
     if not os.path.isdir(input_dir):
         logger.error(f"Input directory doesn't exist. Aborting!\n - {input_dir}")
@@ -222,14 +228,21 @@ def create_samplesheet(samplesheet_file, input_dir):
         .rename(columns={"index": "sample_name"})
     )
 
-    samplesheet.to_csv(samplesheet_file, sep="\t", index=False)
+    samplesheet.to_csv(samplesheet_file, 
+                       sep="\t", 
+                       index=False)
     return None
 
 
 
 # Configuration file creation
 # ---------------------------------------------------------------------
-def create_config(samplesheet_file, outdir, deploy_dir, config_file, root, force):
+def create_config(samplesheet_file, 
+                  outdir, 
+                  deploy_dir, 
+                  config_file, 
+                  root, 
+                  force):
 
     if not os.path.isfile(config_file):
         config_dir = os.path.dirname(config_file)
@@ -264,13 +277,18 @@ def create_config(samplesheet_file, outdir, deploy_dir, config_file, root, force
 
 # Create assembly symlinks
 # ---------------------------------------------------------------------
-def link_assemblies(samplesheet_file, config_dir, outdir, test):
+def link_assemblies(samplesheet_file, 
+                    config_dir, 
+                    outdir, 
+                    test):
 
     logger.debug("Reading samplesheet")
-    samplesheet = pd.read_csv(samplesheet_file, sep="\t").set_index("sample_name")
+    samplesheet = pd.read_csv(samplesheet_file, 
+                              sep="\t").set_index("sample_name")
 
     logger.debug("Importing sample configs")
-    sample_configs = determine_sample_configs(samplesheet=samplesheet, config_dir=config_dir)
+    sample_configs = determine_sample_configs(samplesheet=samplesheet, 
+                                              config_dir=config_dir)
 
     outdir = Path(outdir)
 
@@ -279,7 +297,9 @@ def link_assemblies(samplesheet_file, config_dir, outdir, test):
     for sample, configs in sample_configs.items():
 
         assembly_sheet = samplesheet.at[sample, "assembly"]
-        assembly_source = resolve_sample_path(assembly_sheet, samplesheet_file, test=test)
+        assembly_source = resolve_sample_path(assembly_sheet, 
+                                              samplesheet_file, 
+                                              test=test)
 
         if not assembly_source.is_file():
             if assembly_sheet.lower() not in ["na", ""]:
@@ -301,7 +321,8 @@ def link_assemblies(samplesheet_file, config_dir, outdir, test):
         for assembler in assemblers:
 
             assembly_dir = outdir / sample / assembler
-            assembly_dir.mkdir(parents=True, exist_ok=True)
+            assembly_dir.mkdir(parents=True, 
+                               exist_ok=True)
 
             destination = assembly_dir / f"{sample}.fasta"
 
@@ -309,7 +330,9 @@ def link_assemblies(samplesheet_file, config_dir, outdir, test):
                 destination.unlink()
 
             if not destination.exists():
-                logger.info("Creating symlink: %s -> %s", assembly_source, destination)
+                logger.info("Creating symlink: %s -> %s", 
+                            assembly_source, 
+                            destination)
                 destination.symlink_to(assembly_source)
             else:
                 logger.warning("File exists and is not a symlink: %s", destination)
@@ -318,7 +341,11 @@ def link_assemblies(samplesheet_file, config_dir, outdir, test):
 
 # Command creation
 # ---------------------------------------------------------------------
-def create_command(threads, config, conda_dir, arguments=None, rules=None):
+def create_command(threads, 
+                   config, 
+                   conda_dir, 
+                   arguments=None, 
+                   rules=None):
 
     additionals = " ".join(arguments) if arguments else ""
     target_rules = " ".join(rules) if rules else ""
@@ -341,7 +368,8 @@ def create_command(threads, config, conda_dir, arguments=None, rules=None):
 # Execute snakemake
 # ---------------------------------------------------------------------
 def execute_snakemake(command):
-    status = subprocess.Popen(command, shell=True).wait()
+    status = subprocess.Popen(command, 
+                              shell=True).wait()
     return status
 
 
@@ -357,7 +385,7 @@ def mmaseq(args):
     threads = args.threads
     config = args.config
     test = args.test
-    debug = args.debug
+
 
     force = False
     if config is None:
@@ -378,12 +406,24 @@ def mmaseq(args):
         # Fix: normalize paths in test
         normalize_samplesheet_paths(samplesheet_file, test=True)
 
-        config = create_config(samplesheet_file, outdir, deploy_dir, config, ROOT_LIB, force=True)
+        config = create_config(samplesheet_file, 
+                               outdir, 
+                               deploy_dir, 
+                               config, 
+                               ROOT_LIB, 
+                               force=True)
 
         species_configs_path = f"{ROOT_LIB}/config/species_configs"
-        link_assemblies(samplesheet_file, species_configs_path, outdir, test=True)
+        link_assemblies(samplesheet_file, 
+                        species_configs_path, 
+                        outdir, 
+                        test=True)
 
-        command = create_command(threads, config, conda_dir, arguments, rules)
+        command = create_command(threads, 
+                                 config, 
+                                 conda_dir, 
+                                 arguments, 
+                                 rules)
 
     else:
 
@@ -393,20 +433,34 @@ def mmaseq(args):
 
         if not os.path.isfile(samplesheet_file):
             logger.info("Samplesheet not found, attempting to create at: %s", samplesheet_file)
-            create_samplesheet(samplesheet_file, input_dir)
+            create_samplesheet(samplesheet_file, 
+                               input_dir)
             arguments.append("--dry-run")
         else:
             logger.warning("Samplesheet exists and input_dir is also specified. Ignoring input_dir.")
 
         # Fix: normalize user paths
-        normalize_samplesheet_paths(samplesheet_file, test=False)
+        normalize_samplesheet_paths(samplesheet_file, 
+                                    test=False)
 
-        config = create_config(samplesheet_file, outdir, deploy_dir, config, ROOT_LIB, force)
+        config = create_config(samplesheet_file, 
+                               outdir, 
+                               deploy_dir, 
+                               config, 
+                               ROOT_LIB, 
+                               force)
 
         species_configs_path = f"{ROOT_LIB}/config/species_configs"
-        link_assemblies(samplesheet_file, species_configs_path, outdir, test=False)
+        link_assemblies(samplesheet_file, 
+                        species_configs_path, 
+                        outdir, 
+                        test=False)
 
-        command = create_command(threads, config, conda_dir, arguments, rules)
+        command = create_command(threads, 
+                                 config, 
+                                 conda_dir, 
+                                 arguments, 
+                                 rules)
 
     logger.info("Executing pipeline: Mixed Microbial Analysis on Sequencing data")
     status = execute_snakemake(command)

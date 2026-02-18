@@ -2,10 +2,10 @@ rule setup_PlasmidFinder:
     conda:
         "../envs/plasmidfinder.yaml"
     output: 
-        database = directory("%s/plasmidfinder_db" %database_path),
-        version_db = "%s/plasmidfinder_db/PlasmidFinder_version.txt" %database_path
+        database = directory("%s/plasmidfinder_db" %DATABASE_PATH),
+        version_db = "%s/plasmidfinder_db/PlasmidFinder_version.txt" %DATABASE_PATH
     log:
-        stdout = "%s/Databases/setup_PlasmidFinder.log" %logdir
+        stdout = "%s/Databases/setup_PlasmidFinder.log" %LOGDIR
     message:
         "[setup_PlasmidFinder]: Setting up PlasmidFinder database"
     shell:
@@ -44,10 +44,10 @@ rule setup_ResFinder:
     conda:
         "../envs/resfinder.yaml"
     output:
-        database = directory("%s/resfinder_db" %database_path),
-        version_db = "%s/resfinder_db/ResFinder_version.txt" %database_path
+        database = directory("%s/resfinder_db" %DATABASE_PATH),
+        version_db = "%s/resfinder_db/ResFinder_version.txt" %DATABASE_PATH
     log:
-        stdout = "%s/Databases/setup_ResFinder.log" %logdir
+        stdout = "%s/Databases/setup_ResFinder.log" %LOGDIR
     message:
         "[setup_ResFinder]: Setting up ResFinder database"
     shell:
@@ -86,10 +86,10 @@ rule setup_PointFinder:
     conda:
         "../envs/resfinder.yaml"
     output:
-        database = directory("%s/pointfinder_db" %database_path),
-        version_db = "%s/pointfinder_db/PointFinder_version.txt" %database_path
+        database = directory("%s/pointfinder_db" %DATABASE_PATH),
+        version_db = "%s/pointfinder_db/PointFinder_version.txt" %DATABASE_PATH
     log:
-        stdout = "%s/Databases/setup_PointFinder.log" %logdir
+        stdout = "%s/Databases/setup_PointFinder.log" %LOGDIR
     message:
         "[setup_PointFinder]: Setting up PointFinder database"
     shell:
@@ -129,10 +129,10 @@ rule setup_DisinFinder:
     conda:
         "../envs/resfinder.yaml"
     output:
-        database = directory("%s/disinfinder_db" %database_path),
-        version_db = "%s/disinfinder_db/DisinFinder_version.txt" %database_path
+        database = directory("%s/disinfinder_db" %DATABASE_PATH),
+        version_db = "%s/disinfinder_db/DisinFinder_version.txt" %DATABASE_PATH
     log:
-        stdout = "%s/Databases/setup_DisinFinder.log" %logdir
+        stdout = "%s/Databases/setup_DisinFinder.log" %LOGDIR
     message:
         "[setup_DisinFinder]: Setting up DisinFinder database"
     shell:
@@ -171,10 +171,10 @@ rule setup_VirulenceFinder:
     conda:
         "../envs/virulencefinder.yaml"
     output:
-        database = directory("%s/virulencefinder_db" %database_path),
-        version_db = "%s/virulencefinder_db/VirulenceFinder_version.txt" %database_path
+        database = directory("%s/virulencefinder_db" %DATABASE_PATH),
+        version_db = "%s/virulencefinder_db/VirulenceFinder_version.txt" %DATABASE_PATH
     log:
-        stdout = "%s/Databases/setup_VirulenceFinder.log" %logdir
+        stdout = "%s/Databases/setup_VirulenceFinder.log" %LOGDIR
     message:
         "[setup_VirulenceFinder]: Setting up VirulenceFinder database"
     shell:
@@ -213,10 +213,10 @@ rule setup_SerotypeFinder:
     conda:
         "../envs/serotypefinder.yaml"
     output:
-        database = directory("%s/serotypefinder_db" %database_path),
-        version_db = "%s/serotypefinder_db/SerotypeFinder_version.txt" %database_path
+        database = directory("%s/serotypefinder_db" %DATABASE_PATH),
+        version_db = "%s/serotypefinder_db/SerotypeFinder_version.txt" %DATABASE_PATH
     log:
-        stdout = "%s/Databases/setup_SerotypeFinder.log" %logdir
+        stdout = "%s/Databases/setup_SerotypeFinder.log" %LOGDIR
     message:
         "[setup_SerotypeFinder]: Setting up SerotypeFinder database"
     shell:
@@ -253,9 +253,9 @@ rule setup_SerotypeFinder:
 
 rule setup_Spatyper:
     output:
-        database = directory("%s/spatyper_db" %database_path)
+        database = directory("%s/spatyper_db" %DATABASE_PATH)
     log:
-        stdout = "%s/Databases/setup_Spatyper.log" %logdir
+        stdout = "%s/Databases/setup_Spatyper.log" %LOGDIR
     message:
         "[Setup Spatyper]: Setting up SerotypeFinder database"
     shell:
@@ -273,10 +273,10 @@ rule setup_AMRFinder:
     conda:
         "../envs/amrfinder.yaml"
     output:
-        database = directory("%s/amrfinderplus/latest" %database_path),
-        version_db = "%s/amrfinderplus/latest/AMRFinder_version.txt" %database_path
+        database = directory("%s/amrfinderplus/latest" %DATABASE_PATH),
+        version_db = "%s/amrfinderplus/latest/AMRFinder_version.txt" %DATABASE_PATH
     log:
-        stdout = "%s/Databases/setup_AMRFinder.log" %logdir
+        stdout = "%s/Databases/setup_AMRFinder.log" %LOGDIR
     message:
         "[setup_AMRFinder]: Setting up AMRFinderPlus database"
     shell:
@@ -307,19 +307,19 @@ rule setup_AMRFinder:
 
 rule setup_custom_kmeraligner_index:
   input:
-    source = "%s/custom/{database}.fasta" %database_path
+    source = "%s/custom/{database}.fasta" %DATABASE_PATH
   params:
-    prefix = "%s/kmeraligner/{database}" %database_path
+    prefix = "%s/kmeraligner/{database}" %DATABASE_PATH
   output:
-    combined_size = "%s/kmeraligner/{database}.comp.b" %database_path,
-    lengths = "%s/kmeraligner/{database}.length.b" %database_path,
-    names = "%s/kmeraligner/{database}.name" %database_path,
-    seqs = "%s/kmeraligner/{database}.seq.b" %database_path,
-    version_db = "%s/kmeraligner/{database}_kmaindex_version.txt" %database_path
+    combined_size = "%s/kmeraligner/{database}.comp.b" %DATABASE_PATH,
+    lengths = "%s/kmeraligner/{database}.length.b" %DATABASE_PATH,
+    names = "%s/kmeraligner/{database}.name" %DATABASE_PATH,
+    seqs = "%s/kmeraligner/{database}.seq.b" %DATABASE_PATH,
+    version_db = "%s/kmeraligner/{database}_kmaindex_version.txt" %DATABASE_PATH
   conda:
     "../envs/kmeraligner.yaml"
   log:
-    stdout = "%s/Databases/setup_custom_kmeraligner_index_{database}.log" %logdir
+    stdout = "%s/Databases/setup_custom_kmeraligner_index_{database}.log" %LOGDIR
   message:
     "[setup_custom_kmeraligner_index]: Setting up {wildcards.database} database with kmeraligner"
   shell:
@@ -345,21 +345,21 @@ rule setup_custom_kmeraligner_index:
 
 rule setup_custom_bowtie2_index:
   input:
-    source = "%s/custom/{database}.fasta" %database_path
+    source = "%s/custom/{database}.fasta" %DATABASE_PATH
   params:
-    prefix = "%s/bowtie2/{database}" %database_path
+    prefix = "%s/bowtie2/{database}" %DATABASE_PATH
   output:
-    bt2_1 = "%s/bowtie2/{database}.1.bt2" %database_path,
-    bt2_2 = "%s/bowtie2/{database}.2.bt2" %database_path,
-    bt2_3 = "%s/bowtie2/{database}.3.bt2" %database_path,
-    bt2_4 = "%s/bowtie2/{database}.4.bt2" %database_path,
-    bt2_1_rev = "%s/bowtie2/{database}.rev.1.bt2" %database_path,
-    bt2_2_rev = "%s/bowtie2/{database}.rev.2.bt2" %database_path,
-    version_db = "%s/bowtie2/{database}_bowtie2index_version.txt" %database_path
+    bt2_1 = "%s/bowtie2/{database}.1.bt2" %DATABASE_PATH,
+    bt2_2 = "%s/bowtie2/{database}.2.bt2" %DATABASE_PATH,
+    bt2_3 = "%s/bowtie2/{database}.3.bt2" %DATABASE_PATH,
+    bt2_4 = "%s/bowtie2/{database}.4.bt2" %DATABASE_PATH,
+    bt2_1_rev = "%s/bowtie2/{database}.rev.1.bt2" %DATABASE_PATH,
+    bt2_2_rev = "%s/bowtie2/{database}.rev.2.bt2" %DATABASE_PATH,
+    version_db = "%s/bowtie2/{database}_bowtie2index_version.txt" %DATABASE_PATH
   conda:
     "../envs/bowtie2.yaml"
   log:
-    stdout = "%s/Databases/setup_custom_bowtie2index_{database}.log" %logdir
+    stdout = "%s/Databases/setup_custom_bowtie2index_{database}.log" %LOGDIR
   message:
     "[setup_custom_bowtie2_index]: Setting up {wildcards.database} database with bowtie2"
   shell:
@@ -385,14 +385,14 @@ rule setup_custom_bowtie2_index:
 
 rule setup_custom_samtool_index:
   input:
-    source = "%s/custom/{database}.fasta" %database_path
+    source = "%s/custom/{database}.fasta" %DATABASE_PATH
   output:
-    source = "%s/samtools/{database}.fasta" %database_path, 
-    index = "%s/samtools/{database}.fasta.fai" %database_path
+    source = "%s/samtools/{database}.fasta" %DATABASE_PATH, 
+    index = "%s/samtools/{database}.fasta.fai" %DATABASE_PATH
   conda:
     "../envs/htslib.yaml"
   log:
-    stdout = "%s/Databases/setup_custom_samtool_index_{database}.log" %logdir
+    stdout = "%s/Databases/setup_custom_samtool_index_{database}.log" %LOGDIR
   message:
     "[setup_custom_samtool_index]: Setting up {wildcards.database} database with samtools"
   shell:
