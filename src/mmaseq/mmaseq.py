@@ -137,16 +137,12 @@ def parse_arguments():
 # Path resolution from samplesheet
 # ---------------------------------------------------------------------
 def resolve_sample_path(path_from_sheet, 
-                        samplesheet_file, 
-                        test=False):
+                        samplesheet_file):
 
     p = Path(path_from_sheet)
 
     if p.is_absolute():
         return p
-
-    if test:
-        return (ROOT_LIB / p).resolve()
 
     samplesheet_dir = Path(samplesheet_file).resolve().parent
     return (samplesheet_dir / p).resolve()
@@ -167,8 +163,7 @@ def normalize_samplesheet_paths(samplesheet_file,
     def fix(p):
         if isinstance(p, str) and p.lower() not in ["na", ""]:
             return str(resolve_sample_path(p, 
-                                           samplesheet_file, 
-                                           test=test))
+                                           samplesheet_file))
         return p
 
     df["read1"] = df["read1"].apply(fix)
@@ -298,8 +293,7 @@ def link_assemblies(samplesheet_file,
 
         assembly_sheet = samplesheet.at[sample, "assembly"]
         assembly_source = resolve_sample_path(assembly_sheet, 
-                                              samplesheet_file, 
-                                              test=test)
+                                              samplesheet_file)
 
         if not assembly_source.is_file():
             if assembly_sheet.lower() not in ["na", ""]:
