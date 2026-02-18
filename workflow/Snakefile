@@ -2,13 +2,15 @@ import pandas as pd
 import yaml
 import warnings
 from mmaseq import helper_functions
-
+import os
 
 # --- Inputs & paths from config file------------------------------------------------
+
 root = config['root']
 samplesheet_path = config['samplesheet']
 deploy_dir = config['deploy_dir']   # used by setup rules
 outdir = config['outdir']
+scripts = os.path.abspath(os.path.join(workflow.basedir, "scripts"))
 
 config_dir = f"{root}/config"
 results_catalogue_path = f"{config_dir}/results_catalogue.yaml"
@@ -68,7 +70,7 @@ rule longtable_samples:
         "[LongTable]: Collapsing all module outputs into a sample specific long table"
     shell:
         r"""
-        cmd="python workflow/scripts/LongTable.py --samplesheet %s --catalogue %s --species_configs_dir %s --outdir %s --na"
+        cmd="python {scripts}/LongTable.py --samplesheet %s --catalogue %s --species_configs_dir %s --outdir %s --na"
 
         echo "Executing command:\n$cmd\n" > {log}
         eval $cmd >> {log} 2>&1
@@ -87,7 +89,7 @@ rule longtable_all:
         "[LongTable]: Collapsing all module outputs into a long table"
     shell:
         """
-        cmd="python workflow/scripts/LongTable.py --samplesheet %s --catalogue %s --species_configs_dir %s --outdir %s --na --extend"
+        cmd="python {scripts}/LongTable.py --samplesheet %s --catalogue %s --species_configs_dir %s --outdir %s --na --extend"
 
         echo "Executing command:\n$cmd\n" > {log}
         eval $cmd >> {log} 2>&1

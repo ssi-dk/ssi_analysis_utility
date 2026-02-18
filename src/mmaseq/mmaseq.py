@@ -19,7 +19,7 @@ from .helper_functions import determine_sample_configs
 # ---------------------------------------------------------------------
 SRC = Path(__file__).resolve()
 ROOT_LIB = SRC.parents[2]
-SNAKEFILE = ROOT_LIB / "workflow" / "Snakefile"
+SNAKEFILE = (ROOT_LIB / "workflow" / "Snakefile").resolve()
 
 
 # Logging configuration

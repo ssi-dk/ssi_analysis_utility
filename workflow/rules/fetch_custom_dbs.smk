@@ -18,7 +18,7 @@ rule fetch_genbank:
         mkdir -p $(dirname {output.fasta})
 
         # 1) Run the genbank fetcher
-        cmd="python workflow/scripts/genbank_fetcher.py --metafile {params.metafile} --bed {output.bed} --fasta {output.fasta} --merge {params.merge} --append"
+        cmd="python {scripts}/genbank_fetcher.py --metafile {params.metafile} --bed {output.bed} --fasta {output.fasta} --merge {params.merge} --append"
 
         echo "Executing command:\n$cmd\n" > {log.stdout}
         eval $cmd >> {log.stdout} 2>&1

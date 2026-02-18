@@ -127,7 +127,7 @@ rule spa_typing:
     shell:
         """
         outdir=$(dirname {output.spatyper})
-        cmd="python workflow/scripts/SPATyper_V2.py -a {input.assembly} -d {input.database} -o {output.spatyper} -b $outdir/seq_db -l $outdir/spatyper.log "
+        cmd="python {scripts}/SPATyper_V2.py -a {input.assembly} -d {input.database} -o {output.spatyper} -b $outdir/seq_db -l $outdir/spatyper.log "
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
@@ -190,7 +190,7 @@ rule LREfinder:
         """
         mkdir -p $(dirname {output.results})
     
-        cmd="python workflow/scripts/LRE-Typer.py -ires {input.res} -imat {input.matrix} -o {output.results}"
+        cmd="python {scripts}/LRE-Typer.py -ires {input.res} -imat {input.matrix} -o {output.results}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
@@ -217,7 +217,7 @@ rule snp_identifier:
         "[SNP Identifier]: Identifying SNPs of {wildcards.database} on {wildcards.sample}"
     shell:
         """
-        cmd="python workflow/scripts/SNP_identifier.py {params.options} --call {input.variants} --metafile {params.metafile} --output {output.indentified_variants}"
+        cmd="python {scripts}/SNP_identifier.py {params.options} --call {input.variants} --metafile {params.metafile} --output {output.indentified_variants}"
     
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
@@ -243,8 +243,8 @@ rule deletion_identifier:
     message:
         "[Deletion Identifier]: Identifying deletions of {wildcards.database} on {wildcards.sample} ({wildcards.assembler})"
     shell:
-        r"""
-        cmd="python workflow/scripts/deletion_identifier.py {params.options} --fsa {input.kma_seq} --call {input.variants} --mpileup {input.indels} --metafile {params.metafile} --sam {input.asm_aln} --output {output.identified_variants}"
+        """
+        cmd="python {scripts}/deletion_identifier.py {params.options} --fsa {input.kma_seq} --call {input.variants} --mpileup {input.indels} --metafile {params.metafile} --sam {input.asm_aln} --output {output.identified_variants}"
 
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
@@ -273,7 +273,7 @@ rule cdiff_repeat_identifier:
 
         db_dir=$(dirname {input.seqs} | uniq)
 
-        cmd="python workflow/scripts/Repeat_Identifier.py --fasta {input.assembly} --ref_seq {input.seqs} --ref_meta {input.metas} --output {output.repeat_types} --sample_id {wildcards.sample} --repeats {params.repeats} --combos {params.combos} --suffix tsv"
+        cmd="python {scripts}/Repeat_Identifier.py --fasta {input.assembly} --ref_seq {input.seqs} --ref_meta {input.metas} --output {output.repeat_types} --sample_id {wildcards.sample} --repeats {params.repeats} --combos {params.combos} --suffix tsv"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1 
