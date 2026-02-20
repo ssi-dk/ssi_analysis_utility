@@ -12,19 +12,19 @@ DEPLOY_DIR = config['deploy_dir']   # used by setup rules
 OUTDIR = config['outdir']
 
 # Determined from the config
-LOGDIR = f"{OUTDIR}/Logs"
+LOGDIR = Path(f"{OUTDIR}/Logs")
 
 # Determine the config directory based on the location of the ROOT
-CONFIG_DIR = f"{ROOT}/config"
-RESULTS_CATALOGUE_PATH = f"{CONFIG_DIR}/results_catalogue.yaml"
-TARGET_SCREENING_PATH = f"{CONFIG_DIR}/target_screening"
-SPECIES_CONFIGS_PATH = f"{CONFIG_DIR}/species_configs"
+CONFIG_DIR = Path(f"{ROOT}/config")
+RESULTS_CATALOGUE_PATH = Path(f"{CONFIG_DIR}/results_catalogue.yaml")
+TARGET_SCREENING_PATH = Path(f"{CONFIG_DIR}/target_screening")
+SPECIES_CONFIGS_PATH = Path(f"{CONFIG_DIR}/species_configs")
 
 # Determine the scripts location based on the location of the Snakemake file  
 SCRIPTS = os.path.abspath(os.path.join(workflow.basedir, "scripts"))
 
 # Determined from the config 
-DATABASE_PATH = f"{DEPLOY_DIR}/Databases"
+DATABASE_PATH = Path(f"{DEPLOY_DIR}/Databases")
 SAMPLESHEET = pd.read_csv(SAMPLESHEET_PATH, sep='\t').set_index("sample_name")
 
 # Determine the sample configs based on the samplesheet and the config directory
@@ -37,12 +37,12 @@ RESULTS_CATALOGUE = helper_functions.read_results_catalogue(RESULTS_CATALOGUE_PA
 all_results_files = helper_functions.list_results(SAMPLE_CONFIGS, RESULTS_CATALOGUE, OUTDIR)
 
 #define the long table output files to activate rule all
-longtable_samples_output = [f"{OUTDIR}/{sample}/{sample}_longtable.tsv" for sample in SAMPLESHEET.index]
-longtable_all = f"{OUTDIR}/all_results.tsv"
+longtable_samples_output = [Path(f"{OUTDIR}/{sample}/{sample}_longtable.tsv") for sample in SAMPLESHEET.index]
+longtable_all = Path(f"{OUTDIR}/all_results.tsv")
 
 # define the version files
-db_versions_all = f"{DATABASE_PATH}/Logs/Versions/all_db_versions.tsv"
-tool_versions_all = f"{DATABASE_PATH}/Logs/Versions/all_tool_versions.tsv"
+db_versions_all = Path(f"{DATABASE_PATH}/Logs/Versions/all_db_versions.tsv")
+tool_versions_all = Path(f"{DATABASE_PATH}/Logs/Versions/all_tool_versions.tsv")
 
 ##############################################################################
 #

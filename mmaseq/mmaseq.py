@@ -21,9 +21,8 @@ from .helper_functions import determine_sample_configs
 ROOT_LIB = resources.files("mmaseq")
 SNAKEFILE = ROOT_LIB / "workflow" / "Snakefile"
 WORKFLOW_DIR = SNAKEFILE.parent
-print(WORKFLOW_DIR)
 CONFIG_DIR = ROOT_LIB / "config"
-DATA_DIR = ROOT_LIB / "data"    # where samplesheet.tsv goes
+DATA_DIR = ROOT_LIB / "data"    
 
 
 # Logging configuration
@@ -155,14 +154,13 @@ def resolve_sample_path(path_from_sheet,
 
 # NEW: Normalize samplesheet paths (fix)
 # ---------------------------------------------------------------------
-def normalize_samplesheet_paths(samplesheet_file, 
-                                test):
+def normalize_samplesheet_paths(samplesheet_file):
     """
     Converts all read1/read2/assembly paths in the samplesheet
     into absolute paths using resolve_sample_path().
     This guarantees that Snakemake always receives valid paths.
     """
-    df = pd.read_csv(samplesheet_file, sep="\t")
+    df = pd.read_csv(samplesheet_file, sep="\t").copy()
 
     def fix(p):
         if isinstance(p, str) and p.lower() not in ["na", ""]:
@@ -174,7 +172,12 @@ def normalize_samplesheet_paths(samplesheet_file,
     df["read2"] = df["read2"].apply(fix)
     df["assembly"] = df["assembly"].apply(fix)
 
-    df.to_csv(samplesheet_file, sep="\t", index=False)
+    normalized = Path(samplesheet_file).with_suffix(".normalized.tsv")
+    df.to_csv(normalized, 
+              sep="\t", 
+              index=False)
+
+    return str(normalized)
 
 
 
@@ -278,8 +281,7 @@ def create_config(samplesheet_file,
 # ---------------------------------------------------------------------
 def link_assemblies(samplesheet_file, 
                     config_dir, 
-                    outdir, 
-                    test):
+                    outdir):
 
     logger.debug("Reading samplesheet")
     samplesheet = pd.read_csv(samplesheet_file, 
@@ -296,12 +298,10 @@ def link_assemblies(samplesheet_file,
     for sample, configs in sample_configs.items():
 
         assembly_sheet = samplesheet.at[sample, "assembly"]
-        assembly_source = resolve_sample_path(assembly_sheet, 
-                                              samplesheet_file)
-
-        if not assembly_source.is_file():
-            if assembly_sheet.lower() not in ["na", ""]:
-                logger.warning("Assembly file not found: %s", assembly_source)
+        try:
+            assembly_source = Path(assembly_sheet) # Retrieve assembly path from samplesheet
+        except:
+            logger.warning("Invalid assembly path for sample %s: %s", sample, assembly_sheet)
             continue
 
         assemblers = {
@@ -390,19 +390,20 @@ def mmaseq(args):
         config = ROOT_LIB / "config/config.yaml"
         force = True
 
-    conda_dir = f"{deploy_dir}/conda"
+    conda_dir = (Path(deploy_dir) / "conda").resolve()
+    print(conda_dir)
     arguments = []
     rules = []
 
     if test:
         logger.info("Test run initiated. Will ignore irrelevant user arguments!")
-        config = f"{ROOT_LIB}/config/Test.yaml"
+        config = f"{CONFIG_DIR}/Test.yaml"
         samplesheet_file = f"{ROOT_LIB}/data/samplesheet.tsv"
         outdir = f"{ROOT_LIB}/Test/Results"
         rules.append("all")
 
         # Fix: normalize paths in test
-        normalize_samplesheet_paths(samplesheet_file, test=True)
+        samplesheet_file = normalize_samplesheet_paths(samplesheet_file)
 
         config = create_config(samplesheet_file, 
                                outdir, 
@@ -414,8 +415,7 @@ def mmaseq(args):
         species_configs_path = f"{ROOT_LIB}/config/species_configs"
         link_assemblies(samplesheet_file, 
                         species_configs_path, 
-                        outdir, 
-                        test=True)
+                        outdir)
 
         command = create_command(threads, 
                                  config, 
@@ -438,8 +438,7 @@ def mmaseq(args):
             logger.warning("Samplesheet exists and input_dir is also specified. Ignoring input_dir.")
 
         # Fix: normalize user paths
-        normalize_samplesheet_paths(samplesheet_file, 
-                                    test=False)
+        samplesheet_file = normalize_samplesheet_paths(samplesheet_file)
 
         config = create_config(samplesheet_file, 
                                outdir, 
@@ -451,8 +450,7 @@ def mmaseq(args):
         species_configs_path = f"{ROOT_LIB}/config/species_configs"
         link_assemblies(samplesheet_file, 
                         species_configs_path, 
-                        outdir, 
-                        test=False)
+                        outdir)
 
         command = create_command(threads, 
                                  config, 
