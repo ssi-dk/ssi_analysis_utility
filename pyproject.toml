@@ -7,15 +7,28 @@ name = "MMAseq"
 version = "1.0.0"
 description = "Mixed Microbial Analysis on Sequencing data"
 readme = "README.md"
-requires-python = ">3.9"
-dependencies = ["snakemake", "pandas"]
+requires-python = ">=3.9"
+dependencies = [
+    "snakemake",
+    "pandas",
+]
+
+
+# THIS IS THE IMPORTANT PART
+[tool.hatch.build.targets.wheel]
+packages = ["mmaseq"]
 
 [tool.hatch.build]
-exclude = ["/data/reads/*gz", "/Deploy/*", "/Test/*"]
-include = ["/src/*", "/workflow/*", "/config/*", "/data/*"]
+exclude = [
+    "mmaseq/data/reads/*.gz",
+]
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/mmaseq"]
+# Add workflow, config, and data as packaged resources
+[tool.hatch.build.targets.wheel.force-include]
+"mmaseq/data/reads/dl_script.sh" = "mmaseq/data/reads/dl_script.sh"
+
+
+
 
 [project.scripts]
-mmaseq = "mmaseq:launcher"
+mmaseq = "mmaseq.mmaseq:launcher"
