@@ -298,10 +298,17 @@ def link_assemblies(samplesheet_file,
     for sample, configs in sample_configs.items():
 
         assembly_sheet = samplesheet.at[sample, "assembly"]
-        try:
-            assembly_source = Path(assembly_sheet) # Retrieve assembly path from samplesheet
-        except:
-            logger.warning("Invalid assembly path for sample %s: %s", sample, assembly_sheet)
+
+        # Case 1: NA or missing
+        if pd.isna(assembly_sheet):
+            logger.warning("No assembly provided for sample %s — skipping.", sample)
+            continue
+
+        assembly_source = Path(str(assembly_sheet))
+
+        # Case 2: Path is invalid or does not exist
+        if not assembly_source.exists():
+            logger.warning("Assembly path does not exist for sample %s: %s", sample, assembly_sheet)
             continue
 
         assemblers = {
