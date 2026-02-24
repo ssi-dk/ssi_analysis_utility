@@ -398,7 +398,6 @@ def mmaseq(args):
         force = True
 
     conda_dir = (Path(deploy_dir) / "conda").resolve()
-    print(conda_dir)
     arguments = []
     rules = []
 
