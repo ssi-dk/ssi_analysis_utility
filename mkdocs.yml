@@ -1,12 +1,12 @@
 # Setup of all the options available in the documentation
-site_name: SSI Analysis Utility Documentation
+site_name: MMASeq Documentation
 site_url: https://ssiutility.dk
 theme:
   name: readthedocs #material 
   font:
     text: Merriweather Sans
     code: Red Hat Mono
-  logo: assets/microbeseqlogo.png 
+  logo: assets/MMASeq_logo.png
   #favicon: assets/ssi_eu.svg
   features:
     - content.code.select
