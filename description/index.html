@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://ssiutility.dk/description/" />
       <link rel="shortcut icon" href="../img/favicon.ico" />
-    <title>Description - SSI Analysis Utility Documentation</title>
+    <title>Description - MMASeq Documentation</title>
     <link rel="stylesheet" href="../css/theme.css" />
     <link rel="stylesheet" href="../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
@@ -31,7 +31,7 @@
     <div class="wy-side-scroll">
       <div class="wy-side-nav-search">
           <a href="..">
-          <img src="../assets/microbeseqlogo.png" class="logo" alt="Logo"/>
+          <img src="../assets/MMASeq_logo.png" class="logo" alt="Logo"/>
         </a><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
       <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
@@ -53,7 +53,7 @@
         <ul>
     <li class="toctree-l3"><a class="reference internal" href="#workflow">workflow/</a>
     </li>
-    <li class="toctree-l3"><a class="reference internal" href="#examples">examples/</a>
+    <li class="toctree-l3"><a class="reference internal" href="#data">data/</a>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#config">config/</a>
     </li>
@@ -89,7 +89,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
       <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="..">SSI Analysis Utility Documentation</a>
+          <a href="..">MMASeq Documentation</a>
         
       </nav>
       <div class="wy-nav-content">
@@ -107,12 +107,15 @@
               
                 <h1 id="workflow-description">Workflow description</h1>
 <h2 id="input-data">Input data</h2>
+<p><strong>MMASeq (Mixed Microbial Analysis on Sequencing data)</strong> accepts as input either raw sequencing reads (FASTQ format) or assembled genomes (FASTA format). At the present state, the pipeline is designed to handle short-read. However, long-read support is planned for future releases. 
+The input data is specified through a samplesheet, which allows for batch processing of multiple samples in a single run. Each sample can be associated with its own set of reads and/or assemblies, enabling flexible analysis across different species or strains. The pipeline also supports the use of species-specific configuration files, which can be linked to each sample in the samplesheet to tailor the analysis according to the organism being studied. This modular approach ensures that the pipeline can be easily adapted to a wide range of bacterial species and genomic contexts, making it a versatile tool for microbial genomics research and surveillance. </p>
 <h2 id="repository-structure">Repository Structure</h2>
+<p>Within the <code>mmaseq</code> folder repository, the project is organized into several key directories and files that facilitate the workflow and its management:</p>
 <h3 id="workflow"><code>workflow/</code></h3>
 <dl>
 <dd>Contains all Snakemake-related files: rule definitions, species-specific configs, conda environments, and helper scripts.</dd>
 </dl>
-<h3 id="examples"><code>examples/</code></h3>
+<h3 id="data"><code>data/</code></h3>
 <dl>
 <dd>Includes test data and template samplesheets to demonstrate pipeline functionality and structure.</dd>
 </dl>
@@ -125,25 +128,28 @@
 
 <div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>.
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>├── LICENSE
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>├── config/
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>|   ├── Metadata/                      # Metadata Folder
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>|   ├── config.yaml                    # Main pipeline config
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>|   └── results_catalogue.yaml
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│   └── config.yaml                    
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>├── examples/
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>|   ├── Dataset/ 
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│   |   ├── assemblies/                # Example assemblies
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>|   │   ├── databases/                 # OXAndm junction database   
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>|   │   ├── reads/    
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>|   |   |   └── dl_script.sh           # Script to download test reads
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>│   └── samplesheet.tsv                # Example input sheet
-</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>│                          
-</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>├── workflow/
-</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    ├── Snakefile/
-</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>    ├── configs_species/               # Folder containing all species configuration file 
-</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    ├── envs/                          # Folder containing all environments configuration files 
-</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>    ├── rules/                         # Folder containing all snakemake rules 
-</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>    └── scripts/                       # Folder containing all helper scripts
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>├── README.md
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>├── mkdocs.yml
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>├── pyproject.toml
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>├── mmaseq/
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    ├── config/
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>        |   ├── target_screening/              # Metadata Folder
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>        |   ├── species_configs/               # Folder containing all species configuration file
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>        |   ├── results_catalogue.yaml         # File containing all the information regarding the                  
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>        |   ├── config.yaml                    # Main pipeline default configuration file                 
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>        ├── data/
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>        │   ├── assemblies/                    # Example assemblies  
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>        |   ├── reads/                         # Reads folder
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>        |   |    └── dl_script.sh              # Script to download test reads
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>        │   └── samplesheet.tsv                # Example input sheet
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>        │                          
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>        ├── workflow/
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>        │   ├── Snakefile                      # Main Snakemake workflow definition
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>        │   ├── envs/                          # Folder containing all environments configuration files 
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>        │   ├── rules/                         # Folder containing all snakemake rules 
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>        │   └── scripts/                       # Folder containing all helper scripts
+</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>        ├── helper_functions.py                # Helper functions used in the launcher
+</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>        └── mmaseq.py                          # Main launcher of the pipeline
 </span></code></pre></div>
 
 </details>
