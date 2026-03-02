@@ -32,8 +32,8 @@ nav:
   - Home: index.md
   - Description: description.md
   - Deployment: deployment.md
-  - Tools & Databases: tools_databases.md
-  - Supported Species: supported_species.md
+  - Supported Analysis: supported_analysis.md
+  - Tools and Databases: tools_databases.md
   - Tutorials: tutorials.md
   - References: references.md
 

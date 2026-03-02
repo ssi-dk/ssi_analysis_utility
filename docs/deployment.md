@@ -65,7 +65,7 @@ The pipeline is designed to be run using the executable `mmaseq.py`, which is th
 
 ### Options 
 
-```
+```bash
 SYNOPSIS
   Configure and execute MMASeq pipeline
 USAGE
@@ -202,9 +202,7 @@ kmeraligner:
     options : -ID 80 -1t1 -cge
 ```
 
-The analysis supported and their option are listed in the [supported species](supported_species.md) section of the documentation. Each species-specific configuration file can be linked to a sample in the samplesheet, allowing for flexible and tailored analysis across different organisms. This modular approach ensures that the pipeline can be easily adapted to a wide range of bacterial species and genomic contexts, making it a versatile tool for microbial genomics research and surveillance:
 
-
-
+The analysis supported and their option are listed in the [supported analysis](supported_analysis.md) section of the documentation. Each species-specific configuration file can be linked to a sample in the samplesheet, allowing for flexible and tailored analysis across different organisms. This modular approach ensures that the pipeline can be easily adapted to a wide range of bacterial species and genomic contexts, making it a versatile tool for microbial genomics research and surveillance:
 
 
