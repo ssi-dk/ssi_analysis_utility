@@ -1,0 +1,28 @@
+kma_filter:
+    options: --organism 'Escherichia coli'
+    database: ecoligenes
+
+resfinder:
+    options: --species 'Escherichia coli'
+    organism: 'Escherichia_coli'
+
+plasmidfinder: true
+
+virulencefinder: true
+
+serotypefinder: true
+
+amrfinder:
+    options: --organism 'Escherichia'
+    assemblers: shovill 
+
+chtyper:
+    database: fumCH_db 
+
+mlst:
+    assemblers: shovill  
+
+custom_blaster:
+    options: "-perc_identity 90.0"
+    assemblers: shovill
+    database : OXAndm

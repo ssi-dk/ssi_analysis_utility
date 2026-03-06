@@ -1,48 +1,49 @@
-from pprint import pprint # devpkg for printing objects
 import pandas as pd
-import os
 import yaml
-from scripts import convert_external_genome
 import warnings
-import math
+from scripts import helper_functions
 
 configfile: "config/config.yaml"
 
-# Read the CSV file
-CSV = config['input_manager']['path']
-CSV_DATA = pd.read_csv(CSV, sep='\t')
+# --- Inputs & paths from config file------------------------------------------------
+samplesheet_path = config['samplesheet']
+database_path = config['database_path']   # used by setup rules
+species_config_path = config['config_species'] # Path to species specific configuration files
+metadata_path = config['metadata_path']   # used by finder rules
+illumina_read_path_base = config['illumina_read_path']
+nanopore_read_path_base = config['nanopore_read_path']
+assembly_path_base = config['assembly_path']
+output_folder = config['output_folder']
+temp_storage_path = config['temp_storage']
+results_catalogue_path = config['result_catalogue']
 
-# Path to species specific configuration files
-SPECIES_PATH = config['input_manager']['config_species']
+samplesheet = pd.read_csv(samplesheet_path, sep='\t')
 
-# Setup output folder
-OUT_FOLDER = config['input_manager']['out_folder']
+sample_configs = helper_functions.determine_sample_configs(samplesheet, "workflow/configs_species", True)
 
-# Use the sample names as wildcards
-SAMPLES = CSV_DATA['sample_name'].tolist()
+results_catalogue = helper_functions.read_results_catalogue(results_catalogue_path)
 
-# Create a dictionary for mapping sampleID to file paths
-sample_to_illumina = {row['sample_name']: row['Illumina_read_files'].split(',') for idx, row in CSV_DATA.iterrows()}
-sample_to_nanopore = {row['sample_name']: row['Nanopore_read_file'] for idx, row in CSV_DATA.iterrows()}
-sample_to_assembly_file = {row['sample_name']: row['assembly_file'] for idx, row in CSV_DATA.iterrows()}
-sample_to_organism = {row['sample_name']: row['organism'] for idx, row in CSV_DATA.iterrows()}
+all_results_files = helper_functions.list_results(sample_configs, results_catalogue, output_folder)
 
-# Load species-specific configurations dynamically
-species_configs = {}
-for species in set(sample_to_organism.values()):
-    species_config_path = SPECIES_PATH + f"{species}.yaml"
-    if os.path.exists(species_config_path):
-        with open(species_config_path, "r") as species_config_file:
-            species_configs[species] = yaml.load(species_config_file, 
-                                                 Loader=yaml.Loader)
-    else: # means the config is not found / available
-        warnings.warn(f"Warning: Configuration file {species_config_path} not found. \
-                        Skipping analyses for {species}.", UserWarning)
-        species_configs[species] = {}  # Empty config to ensure skipping analyses
+# --- Samples & read locations -------------------------------------------------
+Sample_dict, sample_to_illumina, sample_to_nanopore, sample_to_assembly = helper_functions.sample_read_map(
+    samplesheet,
+    illumina_read_base=illumina_read_path_base,
+    nanopore_read_base=nanopore_read_path_base,
+    assembly_base=assembly_path_base
+)
 
+# The sample_dicts contains a identicial sample string as key and value, 
+# This is simply to have a list similar to the other dicts if we want sample specific longtables further down  
+Samples = list(Sample_dict.keys()) 
 
-database_path = config['input_manager']['database_path']
+#define the long table output files to activate rule all
+Longtable_samples_output = [f"{output_folder}/{sample}/{sample}_longtable.tsv" for sample in Samples]
+Longtable_all = f"{output_folder}/all_results.tsv"
 
+# define the version files
+DB_versions_all = "Logs/Versions/all_db_versions.tsv"
+Tool_versions_all = "Logs/Versions/all_tool_versions.tsv"
 
 ##############################################################################
 #
@@ -53,82 +54,110 @@ database_path = config['input_manager']['database_path']
 # Define the dynamic input for rule all
 rule all:
     input:
-        expand(
-            "%s/{sample}/kmeraligner/" %OUT_FOLDER, 
-            sample=[
-                s for s in SAMPLES 
-                if "kmeraligner" in species_configs[sample_to_organism[s]]["analyses_to_run"]
-            ]
-        ),
-        expand(
-            "%s/{sample}/emm_typing/" %OUT_FOLDER, 
-            sample=[
-                s for s in SAMPLES 
-                if "emm_typing" in species_configs[sample_to_organism[s]]["analyses_to_run"]
-            ]
-        ),       
-        expand(
-            "%s/{sample}/assembly_lineage/" %OUT_FOLDER, 
-            sample=[
-                s for s in SAMPLES 
-                if "assembly_lineage_determination" in species_configs[sample_to_organism[s]]["analyses_to_run"]
-            ]
-        ),
-        expand(
-            "%s/{sample}/PlasmidFinder/" %OUT_FOLDER, 
-            sample=[
-                s for s in SAMPLES 
-                if "plasmidfinder" in species_configs[sample_to_organism[s]]["analyses_to_run"]
-            ]
-        ),
-        expand(
-            "%s/{sample}/ResFinder/" %OUT_FOLDER, 
-            sample=[
-                s for s in SAMPLES 
-                if "resfinder" in species_configs[sample_to_organism[s]]["analyses_to_run"]
-            ]
-        ),
-        expand(
-            "%s/{sample}/VirulenceFinder/" %OUT_FOLDER, 
-            sample=[
-                s for s in SAMPLES 
-                if "virulencefinder" in species_configs[sample_to_organism[s]]["analyses_to_run"]
-            ]
-        ),
-        expand(
-            "%s/{sample}/lre-finder/" %OUT_FOLDER, 
-            sample=[
-                s for s in SAMPLES 
-                if "LRE-finder" in species_configs[sample_to_organism[s]]["analyses_to_run"]
-            ]
-        ),
-        expand(
-            "%s/{sample}/SerotypeFinder/" %OUT_FOLDER, 
-            sample=[
-                s for s in SAMPLES 
-                if "serotypefinder" in species_configs[sample_to_organism[s]]["analyses_to_run"]
-            ]
-        ),
-        expand(
-            "{out}/{sample}/AMRFinder", 
-            sample=[
-                s for s in SAMPLES 
-                if "amrfinder" in species_configs[sample_to_organism[s]]["analyses_to_run"]
-            ],
-            out=OUT_FOLDER
-        ),
-        expand(
-            "{out}/{sample}/MLST", 
-            sample=[
-                s for s in SAMPLES 
-                if "mlst" in species_configs[sample_to_organism[s]]["analyses_to_run"]
-            ],
-            out=OUT_FOLDER
-        ),
+        Longtable_samples_output,
+        Longtable_all,
+        DB_versions_all,
+        Tool_versions_all
 
-include : "rules/db_setups.smk"
+rule longtable_samples:
+    input:
+        all_results_files
+    output:
+        Longtable_samples_output
+    conda:
+        "envs/python_functions.yaml"
+    log:
+        "Logs/LongTableSamples.log"
+    message:
+        "[LongTable]: Collapsing all module outputs into a sample specific long table"
+    shell:
+        r"""
+        cmd="python workflow/scripts/LongTable.py --config config/config.yaml --na"
+
+        echo "Executing command:\n$cmd\n" > {log}
+        eval $cmd >> {log} 2>&1
+        """
+
+rule longtable_all:
+    input:
+        all_results_files
+    output:
+        Longtable_all
+    conda:
+        "envs/python_functions.yaml"
+    log:
+        "Logs/LongTableAll.log"
+    message:
+        "[LongTable]: Collapsing all module outputs into a long table"
+    shell:
+        r"""
+        cmd="python workflow/scripts/LongTable.py --config config/config.yaml --na --extend"
+
+        echo "Executing command:\n$cmd\n" > {log}
+        eval $cmd >> {log} 2>&1
+        """
+
+rule database_versions_all:
+    input:
+        Longtable_all
+    output:
+        DB_versions_all
+    params:
+        db_root = database_path
+    log:
+        "Logs/Databases/DatabaseVersionAll.log"
+    message:
+        "[DB versions]: Collecting all database *_version.txt into one file"
+    shell:
+        r"""
+        set -euo pipefail
+        mkdir -p $(dirname {output})
+
+        # find the files, then read them and print the lines if they have two columns (how they are created), while adding a first column being file name "file"
+        cmd="find {params.db_root} -type f -iname '*_version.txt' -print0 \
+          | while IFS= read -r -d '' f; do \
+              awk -F'\t' -v file=\"\$(basename \"\$f\")\" 'NF==2 && length(\$1) && length(\$2) {{print file \"\t\" \$1 \"\t\" \$2}}' \"\$f\"; \
+            done \
+          > {output}"
+
+        echo -e "Executing command:\n$cmd\n" > {log}
+        eval "$cmd" >> {log} 2>&1
+        echo "Wrote database versions into: {output}" >> {log}
+        """
+
+rule tool_versions_all:
+    input:
+        Longtable_all
+    output:
+        Tool_versions_all
+    params:
+        results_root = output_folder
+    log:
+        "Logs/Versions/ToolVersionAll.log"
+    message:
+        "[Tool versions]: Collecting all *_version.txt from results into one file"
+    shell:
+        r"""
+        set -euo pipefail
+        mkdir -p $(dirname {output})
+    
+        cmd="find {params.results_root} -type f -iname '*_version.txt' -print0 \
+          | while IFS= read -r -d '' f; do \
+              rel=\$(realpath --relative-to=\"{params.results_root}\" \"\$f\"); \
+              awk -F'\t' -v p=\"\$rel\" '{{gsub(/\r/,\"\",\$0)}} NF==2 && length(\$1) && length(\$2) {{print p \"\t\" \$1 \"\t\" \$2}}' \"\$f\"; \
+            done \
+          > {output}"
+
+        echo -e "Executing command:\n$cmd\n" > {log}
+        eval "$cmd" >> {log} 2>&1
+        echo "Wrote tool versions into: {output}" >> {log}
+        """
+    
+include : "rules/assemblers.smk"
+include : "rules/fetch_custom_dbs.smk"
+include : "rules/setup_dbs.smk"
+include : "rules/mappers.smk"
+include : "rules/htslib_utils.smk"
 include : "rules/finders.smk"
 include : "rules/characterizers.smk"
-include : "rules/others.smk"
-
-
+include : "rules/custom_wranglers.smk"

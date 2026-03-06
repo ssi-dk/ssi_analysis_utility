@@ -1,0 +1,12 @@
+name: spatyper
+channels:
+ - conda-forge
+dependencies:
+ - bioconda::blast
+ - pip
+ - pip:
+   - biopython
+   - pandas
+   - GitPython
+
+
