@@ -1,6 +1,8 @@
 channels:
  - conda-forge
- - bioconda
 dependencies:
- - mlst
+ - curl
+ - python=3.9
+ - biopython
+ - pandas
  - curl
