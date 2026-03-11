@@ -13,20 +13,20 @@ from importlib import resources
 import pandas as pd
 import yaml
 
-from .helper_functions import determine_sample_configs
+from .utils.helper_functions import determine_sample_configs
 
+# Determining system paths
+PKG_DIR = resources.files("mmaseq")
+WORKFLOW_DIR = PKG_DIR / "workflow"
+SNAKEFILE =  WORKFLOW_DIR / "Snakefile"
+CONFIG_DIR = PKG_DIR / "config"
+SPE_CONFIG_DIR = CONFIG_DIR / "species_configs"
+CWD = Path.cwd()
 
-# Package location discovery
-# ---------------------------------------------------------------------
-ROOT_LIB = resources.files("mmaseq")
-SNAKEFILE = ROOT_LIB / "workflow" / "Snakefile"
-WORKFLOW_DIR = SNAKEFILE.parent
-CONFIG_DIR = ROOT_LIB / "config"
-DATA_DIR = ROOT_LIB / "data"    
-
+# Determining test data path
+DATA_DIR = PKG_DIR / "data"    
 
 # Logging configuration
-# ---------------------------------------------------------------------
 logger = logging.getLogger("MMAseq")
 logger.setLevel(logging.INFO)
 
@@ -42,7 +42,9 @@ logger.propagate = False
 # ---------------------------------------------------------------------
 def parse_arguments():
     parser = argparse.ArgumentParser(
-        description="""Configure and execute Seq And Destroy pipeline"""
+        description="""
+        Mixed Microbial Analysis on Sequencing data (MMAseq)
+        """
     )
 
     parser.add_argument(
@@ -50,8 +52,9 @@ def parse_arguments():
         dest="samplesheet_file",
         default=None,
         help="""
-            Path to samplesheet TSV used by the pipeline. If the 
-            samplesheet doesn't exist, `input_dir` must be specified to create one.
+            Path to samplesheet TSV used by the pipeline. 
+            If the samplesheet doesn't exist, `input_dir` must be 
+            specified to create one.
         """
     )
 
@@ -60,34 +63,33 @@ def parse_arguments():
         dest="input_dir",
         default=None,
         help="""
-            Input directory MUST be specified if the samplesheet does not yet exist.
-            Input directory will be screened for `.fasta` and `fastq.gz` files, 
-            sample_names will be infered from the detected files, and used to populate 
-            a samplesheet. After samplesheet creation, the pipeline will be executed in 
-            dry-run mode (simulated run)
+            Input directory MUST be specified if the samplesheet does 
+            not yet exist. (Default None)
+            Input directory will be screened for `.fasta` and `fastq.gz` 
+            files, sample_names will be infered from the detected files, 
+            and used to populate a samplesheet. After samplesheet creation, 
+            the pipeline will be executed in dry-run mode (simulated run)
         """
     )
 
     parser.add_argument(
         "--deploy_dir",
         dest="deploy_dir",
-        default=ROOT_LIB / "Deploy",
-        help="""
-            Directory used to deploy databases and conda environments used during 
-            pipeline execution. Default is in current working directory.
-            If the directory doesn't exist, it will be created during execution.
-            To reinstall conda environments remove the folder: {deployment_dir}/conda. 
-            To fetch the latest databases remove the folder: {deployment_dir}/Databases
+        default=PKG_DIR / "Deploy",
+        help=f"""
+            Directory used to deploy virtual environment and databases 
+            used during pipeline execution. To reinstall environments 
+            and/or databases, remove the `conda/` and/or the `Databases/` 
+            folders in the deployment directory. (Default {PKG_DIR}/Deploy)
         """
     )
 
     parser.add_argument(
         "--outdir",
         dest="outdir",
-        default=Path.cwd() / "Results",
+        default=CWD / "Results",
         help="""
-            Directory used for storing analysis results.
-            Default is in current working directory. 
+            Directory used for storing analysis results. (Default ./Results)
         """
     )
 
@@ -96,18 +98,17 @@ def parse_arguments():
         dest="threads",
         default=4,
         help="""
-            Amount of threads (cores) to dedicate for executing the pipeline.
+            Amount of threads (cores) to dedicate for executing the pipeline. 
+            (Default 4)
         """
     )
 
     parser.add_argument(
         "--config",
         dest="config",
-        default=None,
-        help="""
-            Configuration file location. (Default ./config/config.yaml)
-            If not specified, the config file will be overwritten during subsequent 
-            executions.
+        default=CONFIG_DIR / "config.yaml",
+        help=f"""
+            Configuration file location. (Default {CONFIG_DIR}/config.yaml)
         """
     )
 
@@ -116,10 +117,11 @@ def parse_arguments():
         dest="test",
         action="store_true",
         help="""
-            Perform test run of all modules.
-            As a side effect, all conda environments and databases will be created in
-            the deployment directory. Results will be stored in Test/Results, and
-            config file will be generated in config/Test.yaml 
+            Perform test run of all modules. Can be used to install all 
+            conda environments and databases. The config file will be 
+            generated as {CONFIG_DIR}/Test.yaml and output will be stored 
+            in a Test/ folder of the specified output directory. 
+            (Default ./Results/Test)
         """
     )
 
@@ -128,8 +130,8 @@ def parse_arguments():
         dest="debug",
         action="store_true",
         help="""
-            Add debug messages during execution. Mostly used for development and 
-            debugging purposes
+            Add debug messages during execution. Mostly used for development 
+            and debugging purposes
         """
     )
 
@@ -394,7 +396,7 @@ def mmaseq(args):
 
     force = False
     if config is None:
-        config = ROOT_LIB / "config/config.yaml"
+        config = CONFIG_DIR / "config.yaml"
         force = True
 
     conda_dir = (Path(deploy_dir) / "conda").resolve()
@@ -404,8 +406,8 @@ def mmaseq(args):
     if test:
         logger.info("Test run initiated. Will ignore irrelevant user arguments!")
         config = f"{CONFIG_DIR}/Test.yaml"
-        samplesheet_file = f"{ROOT_LIB}/data/samplesheet.tsv"
-        outdir = f"{ROOT_LIB}/Test/Results"
+        samplesheet_file = f"{DATA_DIR}/samplesheet.tsv"
+        outdir = outdir / "Test"
         rules.append("all")
 
         # Fix: normalize paths in test
@@ -415,12 +417,11 @@ def mmaseq(args):
                                outdir, 
                                deploy_dir, 
                                config, 
-                               ROOT_LIB, 
+                               PKG_DIR, 
                                force=True)
 
-        species_configs_path = f"{ROOT_LIB}/config/species_configs"
         link_assemblies(samplesheet_file, 
-                        species_configs_path, 
+                        SPE_CONFIG_DIR, 
                         outdir)
 
         command = create_command(threads, 
@@ -450,12 +451,11 @@ def mmaseq(args):
                                outdir, 
                                deploy_dir, 
                                config, 
-                               ROOT_LIB, 
+                               PKG_DIR, 
                                force)
 
-        species_configs_path = f"{ROOT_LIB}/config/species_configs"
         link_assemblies(samplesheet_file, 
-                        species_configs_path, 
+                        SPE_CONFIG_DIR, 
                         outdir)
 
         command = create_command(threads, 

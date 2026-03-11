@@ -1,54 +1,60 @@
+from pathlib import Path
 import pandas as pd
 import yaml
 import warnings
-from mmaseq import helper_functions
+from mmaseq.utils import helper_functions
 import os
 
-# Inputs & paths from config file
-#-----------------------------------------------------------------------------------
-ROOT = config['root']
-SAMPLESHEET_PATH = config['samplesheet']
-DEPLOY_DIR = config['deploy_dir']   # used by setup rules
-OUTDIR = config['outdir']
+#######################
+### Input and paths ###
+#######################
+# Determine direct user inputs and package installation path
+PKG_DIR = Path(config["root"])
+samplesheet_path = Path(config["samplesheet"])
+deploy_dir = Path(config["deploy_dir"])
+outdir = Path(config["outdir"]) ###
 
-# Determined from the config
-LOGDIR = Path(f"{OUTDIR}/Logs")
+# Determine workflow directories
+WORKFLOW_DIR = PKG_DIR / "workflow"
+SCRIPTS_DIR = WORKFLOW_DIR / "scripts"
+ENVS_DIR = WORKFLOW_DIR / "envs"
 
-# Determine the config directory based on the location of the ROOT
-CONFIG_DIR = Path(f"{ROOT}/config")
-RESULTS_CATALOGUE_PATH = Path(f"{CONFIG_DIR}/results_catalogue.yaml")
-TARGET_SCREENING_PATH = Path(f"{CONFIG_DIR}/target_screening")
-SPECIES_CONFIGS_PATH = Path(f"{CONFIG_DIR}/species_configs")
+# Determine pipeline configuration directories
+CONFIG_DIR = PKG_DIR / "config"
+RESULTS_CATALOGUE_PATH = CONFIG_DIR / "results_catalogue.yaml"
+TARGET_SCREENING_DIR = CONFIG_DIR / "target_screening"
+SPECIES_CONFIGS_DIR = CONFIG_DIR / "species_configs"
 
-# Determine the scripts location based on the location of the Snakemake file  
-SCRIPTS = os.path.abspath(os.path.join(workflow.basedir, "scripts"))
+# Determine write-to directories
+logdir = outdir / "Logs" ###
+database_dir = deploy_dir / "Databases" ###
 
-# Determined from the config 
-DATABASE_PATH = Path(f"{DEPLOY_DIR}/Databases")
-SAMPLESHEET = pd.read_csv(SAMPLESHEET_PATH, sep='\t').set_index("sample_name")
+#######################################################
+### Create sample specific input and output objects ###
+#######################################################
+# Read samplesheet
+samplesheet = pd.read_csv(samplesheet_path, sep='\t').set_index("sample_name") ###
 
-# Determine the sample configs based on the samplesheet and the config directory
-SAMPLE_CONFIGS = helper_functions.determine_sample_configs(samplesheet = SAMPLESHEET, config_dir = SPECIES_CONFIGS_PATH)
+# Read result files catalogue
+results_catalogue = helper_functions.read_results_catalogue(RESULTS_CATALOGUE_PATH)
 
-# Read the results catalogue to determine the expected output files for the long table rules
-RESULTS_CATALOGUE = helper_functions.read_results_catalogue(RESULTS_CATALOGUE_PATH)
+# Deduce sample specific configurations
+sample_configs = helper_functions.determine_sample_configs(samplesheet = samplesheet, config_dir = SPECIES_CONFIGS_DIR) ###/
 
-# Determine the expected output files for the long table rules based on the sample configs and the results catalogue
-all_results_files = helper_functions.list_results(SAMPLE_CONFIGS, RESULTS_CATALOGUE, OUTDIR)
+# Determine the expected sample specific results files
+all_results_files = helper_functions.list_results(sample_configs, results_catalogue, outdir) ###
 
-#define the long table output files to activate rule all
-longtable_samples_output = [Path(f"{OUTDIR}/{sample}/{sample}_longtable.tsv") for sample in SAMPLESHEET.index]
-longtable_all = Path(f"{OUTDIR}/all_results.tsv")
+# define the long table output files to activate rule all
+longtable_samples_output = [Path(f"{outdir}/{sample}/{sample}_longtable.tsv") for sample in samplesheet.index] ###
+longtable_all = Path(f"{outdir}/all_results.tsv") ###
 
 # define the version files
-db_versions_all = Path(f"{DATABASE_PATH}/Logs/Versions/all_db_versions.tsv")
-tool_versions_all = Path(f"{DATABASE_PATH}/Logs/Versions/all_tool_versions.tsv")
+db_versions_all = Path(f"{database_dir}/Logs/Versions/all_db_versions.tsv") ###
+tool_versions_all = Path(f"{database_dir}/Logs/Versions/all_tool_versions.tsv") ###
 
-##############################################################################
-#
-#                              Snakefile 
-#
-##############################################################################
+##########################
+### Snakemake Pipeline ###
+##########################
 
 # Define the dynamic input for rule all
 rule all:
@@ -66,7 +72,7 @@ rule longtable_samples:
     conda:
         "envs/python_functions.yaml"
     log:
-        f"{LOGDIR}/LongTableSamples.log"
+        f"{logdir}/LongTableSamples.log"
     message:
         "[LongTable]: Collapsing all module outputs into a sample specific long table"
     shell:
@@ -75,7 +81,7 @@ rule longtable_samples:
 
         echo "Executing command:\n$cmd\n" > {log}
         eval $cmd >> {log} 2>&1
-        """%(SAMPLESHEET_PATH, RESULTS_CATALOGUE_PATH, SPECIES_CONFIGS_PATH, OUTDIR)
+        """%(samplesheet_path, RESULTS_CATALOGUE_PATH, SPECIES_CONFIGS_DIR, outdir) ###/
 
 rule longtable_all:
     input:
@@ -85,7 +91,7 @@ rule longtable_all:
     conda:
         "envs/python_functions.yaml"
     log:
-        f"{LOGDIR}/LongTableAll.log"
+        f"{logdir}/LongTableAll.log"
     message:
         "[LongTable]: Collapsing all module outputs into a long table"
     shell:
@@ -94,7 +100,7 @@ rule longtable_all:
 
         echo "Executing command:\n$cmd\n" > {log}
         eval $cmd >> {log} 2>&1
-        """%(SAMPLESHEET_PATH, RESULTS_CATALOGUE_PATH, SPECIES_CONFIGS_PATH, OUTDIR)
+        """%(samplesheet_path, RESULTS_CATALOGUE_PATH, SPECIES_CONFIGS_DIR, outdir)
 
 rule database_versions_all:
     input:
@@ -102,9 +108,9 @@ rule database_versions_all:
     output:
         db_versions_all
     params:
-        db_root = DATABASE_PATH
+        db_root = database_dir
     log:
-        f"{DATABASE_PATH}/Logs/Databases/DatabaseVersionAll.log"
+        f"{database_dir}/Logs/Databases/DatabaseVersionAll.log"
     message:
         "[DB versions]: Collecting all database *_version.txt into one file"
     shell:
@@ -130,9 +136,9 @@ rule tool_versions_all:
     output:
         tool_versions_all
     params:
-        results_root = OUTDIR
+        results_root = outdir
     log:
-        f"{DATABASE_PATH}/Logs/Versions/ToolVersionAll.log"
+        f"{database_dir}/Logs/Versions/ToolVersionAll.log"
     message:
         "[Tool versions]: Collecting all *_version.txt from results into one file"
     shell:

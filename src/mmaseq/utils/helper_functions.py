@@ -20,7 +20,6 @@ def read_results_catalogue(results_catalogue_path):
 
 
 def determine_sample_configs(samplesheet, config_dir):
-    #print("Determining sample configurations") #DEBUG msg
     # Create a dict for sample names and dict files
     sample_configs = {}
 
@@ -29,8 +28,6 @@ def determine_sample_configs(samplesheet, config_dir):
 
         # Deduce configuration file from samplesheet
         cfg_path = f"{config_dir}/{cfg}"
-
-        print("DEBUG MSG", config_dir, "EXITS:", os.path.isdir(config_dir))
 
         # Handle missing configuration file
         if not os.path.isfile(cfg_path):
