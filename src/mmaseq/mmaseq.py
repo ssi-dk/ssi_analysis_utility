@@ -31,7 +31,7 @@ logger = logging.getLogger("MMAseq")
 logger.setLevel(logging.INFO)
 
 _handler = logging.StreamHandler()
-_formatter = logging.Formatter("%(levelname)s:%(name)s:%(message)s")
+_formatter = logging.Formatter("[%(levelname)s] %(name)s: %(message)s")
 _handler.setFormatter(_formatter)
 
 logger.addHandler(_handler)

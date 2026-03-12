@@ -1,9 +1,6 @@
 from pathlib import Path
 import pandas as pd
-import yaml
-import warnings
 from mmaseq.utils import helper_functions
-import os
 
 #######################
 ### Input and paths ###
@@ -12,7 +9,7 @@ import os
 PKG_DIR = Path(config["root"])
 samplesheet_path = Path(config["samplesheet"])
 deploy_dir = Path(config["deploy_dir"])
-outdir = Path(config["outdir"]) ###
+outdir = Path(config["outdir"])
 
 # Determine workflow directories
 WORKFLOW_DIR = PKG_DIR / "workflow"
@@ -26,31 +23,31 @@ TARGET_SCREENING_DIR = CONFIG_DIR / "target_screening"
 SPECIES_CONFIGS_DIR = CONFIG_DIR / "species_configs"
 
 # Determine write-to directories
-logdir = outdir / "Logs" ###
-database_dir = deploy_dir / "Databases" ###
+logdir = outdir / "Logs"
+database_dir = deploy_dir / "Databases"
 
 #######################################################
 ### Create sample specific input and output objects ###
 #######################################################
 # Read samplesheet
-samplesheet = pd.read_csv(samplesheet_path, sep='\t').set_index("sample_name") ###
+samplesheet = pd.read_csv(samplesheet_path, sep='\t').set_index("sample_name")
 
 # Read result files catalogue
 results_catalogue = helper_functions.read_results_catalogue(RESULTS_CATALOGUE_PATH)
 
 # Deduce sample specific configurations
-sample_configs = helper_functions.determine_sample_configs(samplesheet = samplesheet, config_dir = SPECIES_CONFIGS_DIR) ###/
+sample_configs = helper_functions.determine_sample_configs(samplesheet = samplesheet, config_dir = SPECIES_CONFIGS_DIR)
 
 # Determine the expected sample specific results files
-all_results_files = helper_functions.list_results(sample_configs, results_catalogue, outdir) ###
+all_results_files = helper_functions.list_results(sample_configs, results_catalogue, outdir)
 
 # define the long table output files to activate rule all
-longtable_samples_output = [Path(f"{outdir}/{sample}/{sample}_longtable.tsv") for sample in samplesheet.index] ###
-longtable_all = Path(f"{outdir}/all_results.tsv") ###
+longtable_samples_output = [Path(f"{outdir}/{sample}/{sample}_longtable.tsv") for sample in samplesheet.index]
+longtable_all = Path(f"{outdir}/all_results.tsv")
 
 # define the version files
-db_versions_all = Path(f"{database_dir}/Logs/Versions/all_db_versions.tsv") ###
-tool_versions_all = Path(f"{database_dir}/Logs/Versions/all_tool_versions.tsv") ###
+db_versions_all = Path(f"{database_dir}/Logs/Versions/all_db_versions.tsv")
+tool_versions_all = Path(f"{database_dir}/Logs/Versions/all_tool_versions.tsv")
 
 ##########################
 ### Snakemake Pipeline ###
@@ -76,12 +73,12 @@ rule longtable_samples:
     message:
         "[LongTable]: Collapsing all module outputs into a sample specific long table"
     shell:
-        r"""
-        cmd="python {SCRIPTS}/LongTable.py --samplesheet %s --catalogue %s --species_configs_dir %s --outdir %s --na"
+        """
+        cmd="python {SCRIPTS_DIR}/LongTable.py --samplesheet %s --catalogue %s --species_configs_dir %s --outdir %s --na"
 
         echo "Executing command:\n$cmd\n" > {log}
         eval $cmd >> {log} 2>&1
-        """%(samplesheet_path, RESULTS_CATALOGUE_PATH, SPECIES_CONFIGS_DIR, outdir) ###/
+        """%(samplesheet_path, RESULTS_CATALOGUE_PATH, SPECIES_CONFIGS_DIR, outdir)
 
 rule longtable_all:
     input:
@@ -96,7 +93,7 @@ rule longtable_all:
         "[LongTable]: Collapsing all module outputs into a long table"
     shell:
         """
-        cmd="python {SCRIPTS}/LongTable.py --samplesheet %s --catalogue %s --species_configs_dir %s --outdir %s --na --extend"
+        cmd="python {SCRIPTS_DIR}/LongTable.py --samplesheet %s --catalogue %s --species_configs_dir %s --outdir %s --na --extend"
 
         echo "Executing command:\n$cmd\n" > {log}
         eval $cmd >> {log} 2>&1
