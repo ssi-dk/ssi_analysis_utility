@@ -4,7 +4,7 @@ rule kma_filter:
         database = rules.setup_custom_kmeraligner_index.output.names
     params:
         options = lambda wildcards: sample_configs[wildcards.sample]["kma_filter"]["options"],
-        metafile = "%s/kma_filter.tsv" %TARGET_SCREENING_DIR
+        metafile = "%s/kma_filter.tsv" %SCREENING_DIR
     output:
         filtered_tsv = "%s/{sample}/kma_filter/{database}.tsv" % outdir
     conda:

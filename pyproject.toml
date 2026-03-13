@@ -40,4 +40,5 @@ exclude = [
 
 [project.scripts]
 mmaseq = "mmaseq.mmaseq:launcher"
+create = "mmaseq.create:launcher"
 
