@@ -1,7 +1,7 @@
-from .utils import paths
+from mmaseq.utils import *
+from mmaseq.utils import helper_functions
 from pathlib import Path
 import pandas as pd
-from mmaseq.utils import helper_functions
 
 #######################
 ### Input and paths ###
@@ -75,7 +75,7 @@ rule longtable_samples:
         "[LongTable]: Collapsing all module outputs into a sample specific long table"
     shell:
         """
-        cmd="python {SCRIPTS_DIR}/LongTable.py --samplesheet %s --catalogue %s --SPE_CONFIGS %s --outdir %s --na"
+        cmd="python {SCRIPTS_DIR}/LongTable.py --samplesheet %s --catalogue %s --species_configs_dir %s --outdir %s --na"
 
         echo "Executing command:\n$cmd\n" > {log}
         eval $cmd >> {log} 2>&1
@@ -94,7 +94,7 @@ rule longtable_all:
         "[LongTable]: Collapsing all module outputs into a long table"
     shell:
         """
-        cmd="python {SCRIPTS_DIR}/LongTable.py --samplesheet %s --catalogue %s --SPE_CONFIGS %s --outdir %s --na --extend"
+        cmd="python {SCRIPTS_DIR}/LongTable.py --samplesheet %s --catalogue %s --species_configs_dir %s --outdir %s --na --extend"
 
         echo "Executing command:\n$cmd\n" > {log}
         eval $cmd >> {log} 2>&1

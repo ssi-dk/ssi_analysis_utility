@@ -1,5 +1,4 @@
-from .utils import pkg_logging, parse_create, adjust_log_level 
-from .utils import *
+from .utils import system_paths, pkg_logging, parse_create, adjust_log_level 
 from pathlib import Path
 import re
 import pandas as pd
@@ -8,33 +7,31 @@ import pandas as pd
 logger = pkg_logging.initiate_log("MMAseq Create")
 
 def create_samplesheet(args):
-
+    # Define user arguments
     indir = Path(args.indir)
     outdir = Path(args.outdir)
 
+    # Ensure that input directory exists
     if not indir.is_dir():
         logger.error(f"Input directory doesn't exist. Aborting!\n - {indir}")
         sys.exit(1)
 
+
+    logger.debug(f"Scanning for sample files in {indir}")
     root = indir.expanduser().resolve()
-
     records = {}
-
-    logger.info(f"Scanning for sample files in {indir}")
-
+    # Iterate recursively over everything in input directory
     for path in root.rglob("*"):
-
         file = Path(path.name)
         
         # Only examine files
         if path.is_file():
 
-            # Examining assembly file
-            if path.suffix in [".fasta", ".fa"]: # Was fname
-                logger.debug(f"Found assembly: {path}")
+            # Investegate assembly files
+            if path.suffix in [".fasta", ".fa"]:
                 sample = str(file.with_suffix(""))
 
-                # Ensure sample is created with reasonable defaults
+                logger.debug(f"Found {sample} with assembly file: {path}")
                 records.setdefault(sample, {
                     "read1": "NA",
                     "read2": "NA",
@@ -45,12 +42,11 @@ def create_samplesheet(args):
                 # Record assembly file location
                 records[sample]["assembly"] = str(path)
 
-            # Examining read file
+            # Investegate read files
             if path.suffixes in [[".fastq", ".gz"], [".fq", ".gz"]]:
-                logger.debug(f"Found read: {path}")
                 sample = re.sub(r'(_R?[12])\D*\.fastq\.gz$', '', str(file))
 
-                # Ensure sample is created with reasonable defaults
+                logger.debug(f"Found {sample} with read file: {path}")
                 records.setdefault(sample, {
                     "read1": "NA",
                     "read2": "NA",
@@ -58,15 +54,17 @@ def create_samplesheet(args):
                     "config": "default.yaml"
                 })
 
-                # Search for read mate annotations and record file location
+                # Record read mates based on specified suffices
                 if re.search(r"(_R?1\D?|_1\D?)", str(file)):
                     records[sample]["read1"] = str(path)
                 elif re.search(r"(_R?2\D?|_2\D?)", str(file)):
                     records[sample]["read2"] = str(path)
                 else:
+                    # Provide warnings for unknown naming convensions
                     logger.warning(f"""Read mate {path} was not recognized. 
                         Inspect samplesheet manually! Ignoring file for {sample}...""")
 
+    # Collect records into a data frame
     samplesheet = (
         pd.DataFrame.from_dict(records, orient = "index")
         .reset_index()
@@ -76,11 +74,15 @@ def create_samplesheet(args):
     samplesheet_file = outdir / "samplesheet.tsv"
     try:
         if not outdir.exists():
+            logger.debug(f"Creating output directory {outdir}")
             outdir.mkdir(parents = True)
+
+        logger.debug(f"Writing sample sheet to {samplesheet_file}")
 
         samplesheet.to_csv(samplesheet_file, 
             sep = "\t",
             index = False)
+    # Handle permission errors
     except PermissionError as e:
         logger.error(f"""You don't have permission to write to: 
             {os.path.dirname(samplesheet_file)}\n - Aborting!\n{e}""")
@@ -90,11 +92,13 @@ def create_samplesheet(args):
 
 
 def launcher():
-
+    # Read user arguments
     args = parse_create()
 
+    # Generate logger
     adjust_log_level(logger, args.debug)
 
+    logger.info("Initiating samplesheet creation")
     samplesheet_file = create_samplesheet(args)
 
     logger.info(f"Samplesheet successfully created: {samplesheet_file}")

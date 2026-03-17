@@ -6,5 +6,5 @@ from .pkg_logging import initiate_log, adjust_log_level
 
 # Import .utils * ONLY provides paths
 __all__ = ["PKG_DIR", "DATA_DIR", "PKG_CONFIGS", "SPE_CONFIGS",
-	"CATALOGUE_PATH", "SCREENING_DIR", "WORKFLOW_DIR", "SNAKEFILE",
-	"SCRIPTS_DIR", "ENVS_DIR", "CWD"]
+       "CATALOGUE_PATH", "SCREENING_DIR", "WORKFLOW_DIR", "SNAKEFILE",
+       "SCRIPTS_DIR", "ENVS_DIR", "CWD"]
