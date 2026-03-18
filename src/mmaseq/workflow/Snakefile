@@ -1,27 +1,17 @@
-from mmaseq.utils import *
-from mmaseq.utils import helper_functions
+from mmaseq.utils.paths import *
+from mmaseq.utils import helper_functions, pkg_logging
 from pathlib import Path
 import pandas as pd
+
+logger = pkg_logging.initiate_log("MMAseq Pipeline")
 
 #######################
 ### Input and paths ###
 #######################
 # Determine direct user inputs and package installation path
-# PKG_DIR = resources.files("mmaseq")
 samplesheet_path = Path(config["samplesheet"])
 deploy_dir = Path(config["deploy_dir"])
 outdir = Path(config["outdir"])
-
-# Determine workflow directories
-# WORKFLOW_DIR = PKG_DIR / "workflow"
-# SCRIPTS_DIR = WORKFLOW_DIR / "scripts"
-# ENVS_DIR = WORKFLOW_DIR / "envs"
-
-# # Determine pipeline configuration directories
-# CONFIG_DIR = PKG_DIR / "config"
-# CATALOGUE_PATH = CONFIG_DIR / "results_catalogue.yaml"
-# SCREENING_DIR = CONFIG_DIR / "target_screening"
-# SPE_CONFIGS = CONFIG_DIR / "species_configs"
 
 # Determine write-to directories
 logdir = outdir / "Logs"

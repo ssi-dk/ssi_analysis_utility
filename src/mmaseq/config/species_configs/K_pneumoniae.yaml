@@ -13,7 +13,7 @@ amrfinder:
 
 kleborate:
     options: --preset kpsc
-    assemblers: shovill  
+    assemblers: shovill
 
 mlst:
     assemblers: shovill  
