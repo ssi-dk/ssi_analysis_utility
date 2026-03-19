@@ -33,7 +33,7 @@ bcftools:
     view_options: -v indels -i 'INFO/DP>10'
 
 resfinder: 
-    options: ""
+    options: --species 'Escherichia coli'
 
 plasmidfinder: 
     options: ""
@@ -59,7 +59,7 @@ LREfinder:
     database : elmDB
 
 kleborate:
-    options: --preset kpsc
+    options: --preset escherichia
     assemblers: shovill
 
 meningotype:

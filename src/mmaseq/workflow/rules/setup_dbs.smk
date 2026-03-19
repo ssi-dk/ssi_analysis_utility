@@ -305,6 +305,39 @@ rule setup_AMRFinder:
         """
 
 
+rule setup_kleborate_amrfinder:
+    input:
+        database = rules.setup_AMRFinder.output.database,
+        version_db = rules.setup_AMRFinder.output.version_db
+    output:
+        version_db = "%s/kleborate/kleborate_version.txt" %database_dir
+    conda:
+        ENVS_DIR / "kleborate.yaml"
+    log:
+        stdout = "%s/Databases/setup_Kleborate_AMRFinder.log" %logdir
+    message:
+        "[Setup_Kleborate_AMRFinder]: Clonig AMRFinder database to Kleborate environment"
+    shell:
+        """
+            BIN=$(which kleborate)
+            echo "BIN is $BIN"
+            BINDIR=$(dirname $BIN)
+            echo "BINDIR is $BINDIR"
+            KLEBDIR="$(dirname $BINDIR)/../../share/amrfinderplus/data/latest"
+            echo "KLEBDIR is $KLEBDIR"
+
+            mkdir -p $(dirname $KLEBDIR)
+
+            cmd="ln -s {input.database} $KLEBDIR"
+
+            echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+            eval $cmd >> {log.stdout} 2>&1
+
+            mkdir -p $(dirname {output.version_db})
+            ln -s {input.version_db} {output.version_db}
+        """
+
+
 rule setup_custom_kmeraligner_index:
   input:
     source = "%s/custom/{database}.fasta" %database_dir
@@ -412,3 +445,5 @@ rule setup_custom_samtool_index:
 
     date -I > $outdir/creation.date
     """
+
+

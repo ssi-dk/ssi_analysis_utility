@@ -38,10 +38,9 @@ rule mlst:
 rule kleborate:
     input:
         assembly = rules.assembly.output.output_assembly,
+        version_db = rules.setup_kleborate_amrfinder.output.version_db
     output:
-        kleborate = "%s/{sample}/kleborate/{assembler}/klebsiella_pneumo_complex_output.txt" %outdir,
-        kleborate_hAMRonization = "%s/{sample}/kleborate/{assembler}/klebsiella_pneumo_complex_hAMRonization_output.txt" %outdir,
-        tool_version = "%s/{sample}/kleborate/{assembler}/klebsiella_pneumo_version.txt" %outdir,
+        kleborate = directory("%s/{sample}/kleborate/{assembler}" %outdir)
     params:
         options = lambda wildcards: sample_configs[wildcards.sample]["kleborate"]["options"]
     conda:
@@ -52,26 +51,13 @@ rule kleborate:
     	"[Kleborate]: Running Kleborate on {wildcards.assembler} assembly from {wildcards.sample}"
     shell:
         """
-        outdir=$(dirname {output.kleborate})
+        #mkdir -p $outdir
 
-        mkdir -p $outdir
-
-        cmd="kleborate --assemblies {input.assembly} --outdir $outdir {params.options}"
+        cmd="kleborate --assemblies {input.assembly} --outdir {output.kleborate} {params.options}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
-    	
-        # 2) create version file with date
-        version_cmd="kleborate --version 2>/dev/null"
-        date_cmd="date -I"
-            
-        echo -e "Executing command:\n$version_cmd\n$date_cmd\n" >> {log.stdout}
-
-        version_str="$(eval "$version_cmd" 2>> {log.stdout})"
-        date_str="$(eval "$date_cmd" 2>> {log.stdout})"
-
-        printf '%s%s\t%s\n' "Kleborate_" "$version_str" "$date_str" > {output.tool_version}
-        """
+    	"""
 
 rule chtyper:
     input:
