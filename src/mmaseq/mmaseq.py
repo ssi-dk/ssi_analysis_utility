@@ -166,6 +166,9 @@ def resolve_samplesheet_paths(samplesheet_file, outdir):
     samplesheet["assembly"] = samplesheet["assembly"].apply(fix)
 
     # Write samplesheet with resolved paths
+    if not outdir.exists():
+        outdir.mkdir(parents = True)
+
     samplesheet_resolved_file = outdir / re.sub(
         ".tsv", "_resolved.tsv", str(samplesheet_file.name)
     )
@@ -232,7 +235,7 @@ def link_assemblies(samplesheet_file,
                               sep = "\t").set_index("sample_name")
 
 
-    logger.debug("Importing sample configs")
+    logger.debug(f"Importing sample configs from {config_dir}")
     sample_configs = helper_functions.determine_sample_configs(samplesheet = samplesheet, 
                                               config_dir = config_dir)
 
@@ -241,16 +244,17 @@ def link_assemblies(samplesheet_file,
 
         # Reading assembly entry from samplesheet
         assembly_from_sheet = samplesheet.at[sample, "assembly"]
-        assembly_source = Path(assembly_from_sheet)
+        
+        # Handle if assembly is determined as NA
+        if pd.isna(assembly_from_sheet):
+            logger.debug(f"No assembly provided for {sample} — skipping!")
+            continue
 
+        assembly_source = Path(assembly_from_sheet)
         logger.debug(f"Assembly for {sample} in samplehseet is {assembly_source}")
 
-        # Attempt to locate assembly from sheet
-        if pd.isna(assembly_from_sheet):
-            # Handle if assembly is determined as NA
-            logger.debug(f"No assembly provided for {sample} — skipping!")
-
-        elif assembly_source.exists(follow_symlinks = True):
+        # Attempt to locate relative paths from assembly listed in sheet
+        if assembly_source.exists(follow_symlinks = True):
             # Handle if assembly file exists with a valid path
             logger.debug(f"Assembly found at {assembly_source}")
 
@@ -372,9 +376,12 @@ def mmaseq(args):
                            deploy_dir
                            )
 
-    if not ignore_assemblies:
+    if ignore_assemblies:
+        logger.info("Will not skip assembly parts with assemblies from samplehseet")
+    else:
         logger.info("Creating symbolic links for assemblies")
-        link_assemblies(samplesheet_file, SPE_CONFIGS, outdir)
+        link_assemblies(samplesheet_file, str(SPE_CONFIGS), outdir)
+
 
     logger.info("Creating pipeline command")
     command = create_command(threads, 

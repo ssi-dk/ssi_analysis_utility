@@ -11,3 +11,4 @@ Test/
 config/*yaml
 !config/results_catalogue.yaml
 *Results/
+MMAseq_Test/*

@@ -28,15 +28,6 @@ def parse_deploy():
     )
 
     parser.add_argument(
-        "--outdir",
-        dest = "outdir",
-        default = CWD / "MMAseq_Test",
-        help = """
-            Directory used for test dataset and analysis results. (Default ./MMAseq_Test)
-        """
-    )
-
-    parser.add_argument(
         "--small",
         dest = "small",
         action = "store_true",
@@ -86,9 +77,6 @@ def parse_deploy():
 
 def download_ftp_file(url, destination, max_retries):
 
-    print(url)
-    print(destination)
-    print(max_retries)
     status = False
     url = url.strip()
     retries = 0
@@ -132,6 +120,9 @@ def download_ftp_file(url, destination, max_retries):
             except UnboundLocalError:
                 logger.debug(("Closing FTP failed because it was never "
                     "established. This was expected behavior!"))
+            except AttributeError as e:
+                logger.error(f"Yeeeerp.. I have no idea yet what goes wrong, ignoring...\n{e}")
+
 
     return status
 
@@ -160,7 +151,6 @@ def deploy_dataset(small, max_retries):
 
 def deploy(args):
 
-    outdir = args.outdir
     deploy_dir = args.deploy_dir
     small = args.small
     retries = args.retries
@@ -173,25 +163,28 @@ def deploy(args):
 
     samplesheet_file = f"{DATA_DIR}/samplesheet.tsv"
 
+    # Create arguments for command
     dataset = "full"
+    additional_cmds = ""
     if small:
         dataset = "small"
         samplesheet_file = f"{DATA_DIR}/samplesheet_small.tsv"
+        additional_cmds = "--ignore_assemblies "
 
 
-    dbg = ""
+    outdir = CWD / "MMAseq_Test"
     if args.debug:
-        dbg = "--debug"
+        additional_cmds += "--debug "
 
+    # Create command
     command = (
         f"mmaseq --samplesheet {samplesheet_file} "
         f"--deploy_dir {deploy_dir} "
         f"--outdir {outdir} "
         f"--threads {threads} "
         f"--config {config} "
-        f"--ignore_assemblies "
-        f"--resolve "
-        f"{dbg}"
+        "--resolve "
+        f"{additional_cmds}"
     )
 
     logger.debug(f"Executing MMAseq with following command: {command}")
