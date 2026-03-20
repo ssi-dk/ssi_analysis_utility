@@ -131,8 +131,6 @@ rule spa_typing:
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
-
-        echo "Spatyping completed successfully for {wildcards.sample} with {wildcards.assembler} assembly" 
         """
 
 rule amrfinder:

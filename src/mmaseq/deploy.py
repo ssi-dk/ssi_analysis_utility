@@ -200,7 +200,7 @@ def deploy(args):
     else:
         logger.info((
             f"Deployment complete on {dataset} dataset. "
-            f"Environments isntalled and databases downloaded to {deploy_dir}.\n"
+            f"Environments installed and databases downloaded to {deploy_dir}.\n"
             f"Results from Test dataset stored in {outdir}"
         ))
 
