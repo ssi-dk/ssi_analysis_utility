@@ -151,7 +151,7 @@ def deploy_dataset(small, max_retries):
 
 def deploy(args):
 
-    deploy_dir = args.deploy_dir
+    deploy_dir = Path(args.deploy_dir)
     small = args.small
     retries = args.retries
     threads = args.threads
@@ -172,7 +172,7 @@ def deploy(args):
         additional_cmds = "--ignore_assemblies "
 
 
-    outdir = CWD / "MMAseq_Test"
+    outdir = deploy_dir / "MMAseq_Test"
     if args.debug:
         additional_cmds += "--debug "
 
