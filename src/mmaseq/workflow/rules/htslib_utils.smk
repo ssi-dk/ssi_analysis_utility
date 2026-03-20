@@ -1,14 +1,14 @@
 rule samtools_sam_filtration:
     input:
-        sam = "%s/{sample}/samtools/{database}.sam" %OUTDIR
+        sam = "%s/{sample}/samtools/{database}.sam" %outdir
     params:
-        options = lambda wc: SAMPLE_CONFIGS[wc.sample]["samtools"]["view_options"]
+        options = lambda wc: sample_configs[wc.sample]["samtools"]["view_options"]
     output:
-        bam = temp("%s/{sample}/samtools/{database}_filtered.bam" %OUTDIR)
+        bam = temp("%s/{sample}/samtools/{database}_filtered.bam" %outdir)
     conda:
-        "../envs/htslib.yaml"
+        ENVS_DIR / "htslib.yaml"
     log:
-        stdout = "%s/{sample}/custom_kmeralignment_samtools_filtration_{database}.log" %LOGDIR
+        stdout = "%s/{sample}/custom_kmeralignment_samtools_filtration_{database}.log" %logdir
     message:
         "[custom_kmeralignment_samtools_filtration]: Filtering kmeralignment output for {wildcards.database} on {wildcards.sample}"
     shell:
@@ -22,15 +22,15 @@ rule samtools_sam_filtration:
 
 rule samtools_bam_filtration:
     input:
-        bam = "%s/{sample}/samtools/{database}.bam" %OUTDIR
+        bam = "%s/{sample}/samtools/{database}.bam" %outdir
     params:
-        options = lambda wc: SAMPLE_CONFIGS[wc.sample]["samtools"]["view_options"]
+        options = lambda wc: sample_configs[wc.sample]["samtools"]["view_options"]
     output:
-        bam = temp("%s/{sample}/samtools/{database}_filtered.bam" %OUTDIR)
+        bam = temp("%s/{sample}/samtools/{database}_filtered.bam" %outdir)
     conda:
-        "../envs/htslib.yaml"
+        ENVS_DIR / "htslib.yaml"
     log:
-        stdout = "%s/{sample}/custom_kmeralignment_samtools_filtration_{database}.log" %LOGDIR
+        stdout = "%s/{sample}/custom_kmeralignment_samtools_filtration_{database}.log" %logdir
     message:
         "[custom_kmeralignment_samtools_filtration]: Filtering kmeralignment output for {wildcards.database} on {wildcards.sample}"
     shell:
@@ -44,16 +44,16 @@ rule samtools_bam_filtration:
 
 rule samtools_sort:
     input:
-        bam = "%s/{sample}/samtools/{database}_filtered.bam" %OUTDIR
+        bam = "%s/{sample}/samtools/{database}_filtered.bam" %outdir
     params:
-        options = lambda wc: SAMPLE_CONFIGS[wc.sample]["samtools"]["sort_options"]
+        options = lambda wc: sample_configs[wc.sample]["samtools"]["sort_options"]
     output:
-        bam_sort = temp("%s/{sample}/samtools/{database}_sorted.bam" %OUTDIR),
-        index = temp("%s/{sample}/samtools/{database}_sorted.bam.bai" %OUTDIR)
+        bam_sort = temp("%s/{sample}/samtools/{database}_sorted.bam" %outdir),
+        index = temp("%s/{sample}/samtools/{database}_sorted.bam.bai" %outdir)
     conda:
-        "../envs/htslib.yaml"
+        ENVS_DIR / "htslib.yaml"
     log:
-        stdout = "%s/{sample}/samtools_sort_{database}.log" %LOGDIR
+        stdout = "%s/{sample}/samtools_sort_{database}.log" %logdir
     message:
         "[samtools_sort]: Sorting filtered bam for {wildcards.database} on {wildcards.sample}"
     shell:
@@ -73,14 +73,14 @@ rule samtools_sort:
 rule bcftools_pileup:
     input:
         bam_sort = rules.samtools_sort.output.bam_sort,
-        reference = "%s/samtools/{database}.fasta" %DATABASE_PATH
+        reference = "%s/samtools/{database}.fasta" %database_dir
     output:
-        pileup = temp("%s/{sample}/bcftools/{database}_pileup.bcf" %OUTDIR),
-        index = temp("%s/{sample}/bcftools/{database}_pileup.bcf.csi" %OUTDIR)
+        pileup = temp("%s/{sample}/bcftools/{database}_pileup.bcf" %outdir),
+        index = temp("%s/{sample}/bcftools/{database}_pileup.bcf.csi" %outdir)
     conda:
-        "../envs/htslib.yaml"
+        ENVS_DIR / "htslib.yaml"
     log:
-        stdout = "%s/{sample}/bcftools_pileup_{database}.log" %LOGDIR
+        stdout = "%s/{sample}/bcftools_pileup_{database}.log" %logdir
     message:
         "[bcftools_pileup]: Generating mpileup for {wildcards.database} on {wildcards.sample}"
     shell:
@@ -102,14 +102,14 @@ rule bcftools_filter_indels:
         pileup = rules.bcftools_pileup.output.pileup,
         pileup_index = rules.bcftools_pileup.output.index,
     params:
-        options = lambda wc: SAMPLE_CONFIGS[wc.sample]["bcftools"]["view_options"]
+        options = lambda wc: sample_configs[wc.sample]["bcftools"]["view_options"]
     output:
-        indels = temp("%s/{sample}/bcftools/{database}_pileup_indels.bcf" %OUTDIR),
-        index = temp("%s/{sample}/bcftools/{database}_pileup_indels.bcf.csi" %OUTDIR)
+        indels = temp("%s/{sample}/bcftools/{database}_pileup_indels.bcf" %outdir),
+        index = temp("%s/{sample}/bcftools/{database}_pileup_indels.bcf.csi" %outdir)
     conda:
-        "../envs/htslib.yaml"
+        ENVS_DIR / "htslib.yaml"
     log:
-        stdout = "%s/{sample}/bcftools_filter_indels_{database}.log" %LOGDIR
+        stdout = "%s/{sample}/bcftools_filter_indels_{database}.log" %logdir
     message:
         "[bcftools_filter_indels]: Filtering indels of {wildcards.database} on {wildcards.sample}"
     shell:
@@ -131,12 +131,12 @@ rule bcftools_variant_call:
         pileup = rules.bcftools_pileup.output.pileup,
         pileup_index = rules.bcftools_pileup.output.index,
     output: 
-        variants = temp("%s/{sample}/bcftools/{database}_call_variants.bcf" %OUTDIR),
-        index = temp("%s/{sample}/bcftools/{database}_call_variants.bcf.csi" %OUTDIR)
+        variants = temp("%s/{sample}/bcftools/{database}_call_variants.bcf" %outdir),
+        index = temp("%s/{sample}/bcftools/{database}_call_variants.bcf.csi" %outdir)
     conda:
-        "../envs/htslib.yaml"
+        ENVS_DIR / "htslib.yaml"
     log:
-        stdout = "%s/{sample}/bcftools_variant_call_{database}.log" %LOGDIR
+        stdout = "%s/{sample}/bcftools_variant_call_{database}.log" %logdir
     message:
         "[bcftools_variant_call]: Calling variant of {wildcards.database} on {wildcards.sample}"
     shell:

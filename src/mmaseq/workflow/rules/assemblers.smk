@@ -1,13 +1,13 @@
 rule spades:
     input:
-        R1 = lambda wc: SAMPLESHEET.loc[wc.sample, "read1"],
-        R2 = lambda wc: SAMPLESHEET.loc[wc.sample, "read2"]
+        R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
+        R2 = lambda wc: samplesheet.loc[wc.sample, "read2"]
     output:
-        assembly = "%s/{sample}/spades/{sample}.fasta" %OUTDIR
+        assembly = "%s/{sample}/spades/{sample}.fasta" %outdir
     conda:
-        "../envs/shovill.yaml"
+        ENVS_DIR / "shovill.yaml"
     log:
-        stdout = "%s/Assemblies/{sample}_spades.log" %LOGDIR
+        stdout = "%s/Assemblies/{sample}_spades.log" %logdir
     threads:
         max(1, workflow.cores * 2 / 3)
     priority: 2
@@ -28,14 +28,14 @@ rule spades:
 
 rule skesa:
     input:
-        R1 = lambda wc: SAMPLESHEET.loc[wc.sample, "read1"],
-        R2 = lambda wc: SAMPLESHEET.loc[wc.sample, "read2"]
+        R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
+        R2 = lambda wc: samplesheet.loc[wc.sample, "read2"]
     output:
-        assembly = "%s/{sample}/skesa/{sample}.fasta" %OUTDIR
+        assembly = "%s/{sample}/skesa/{sample}.fasta" %outdir
     conda:
-        "../envs/shovill.yaml"
+        ENVS_DIR / "shovill.yaml"
     log:
-        stdout = "%s/Assemblies/{sample}_Skesa.log" %LOGDIR
+        stdout = "%s/Assemblies/{sample}_Skesa.log" %logdir
     threads:
         max(1, workflow.cores * 2 / 3)
     priority: 2
@@ -51,14 +51,14 @@ rule skesa:
 
 rule shovill:
     input:
-        R1 = lambda wc: SAMPLESHEET.loc[wc.sample, "read1"],
-        R2 = lambda wc: SAMPLESHEET.loc[wc.sample, "read2"]
+        R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
+        R2 = lambda wc: samplesheet.loc[wc.sample, "read2"]
     output:
-        assembly = "%s/{sample}/shovill/{sample}.fasta" %OUTDIR
+        assembly = "%s/{sample}/shovill/{sample}.fasta" %outdir
     conda:
-        "../envs/shovill.yaml"
+        ENVS_DIR / "shovill.yaml"
     log:
-        stdout = "%s/Assemblies/{sample}_Shovill.log" %LOGDIR
+        stdout = "%s/Assemblies/{sample}_Shovill.log" %logdir
     threads:
         max(1, workflow.cores * 2  / 3)
     priority: 2
@@ -82,11 +82,11 @@ rule shovill:
 
 rule assembly:
     input:
-        input_assembly = "%s/{sample}/{assembler}/{sample}.fasta" %OUTDIR
+        input_assembly = "%s/{sample}/{assembler}/{sample}.fasta" %outdir
     output:
-        output_assembly = "%s/{sample}/Assemblies/{sample}_{assembler}.fasta" %OUTDIR
+        output_assembly = "%s/{sample}/Assemblies/{sample}_{assembler}.fasta" %outdir
     log:
-        stdout = "%s/Assemblies/{sample}_{assembler}_assembly.log" %LOGDIR
+        stdout = "%s/Assemblies/{sample}_{assembler}_assembly.log" %logdir
     shell:
         """
         mkdir -p $(dirname {output.output_assembly})

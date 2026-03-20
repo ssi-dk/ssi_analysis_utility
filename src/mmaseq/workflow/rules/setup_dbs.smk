@@ -1,11 +1,11 @@
 rule setup_PlasmidFinder:
     conda:
-        "../envs/plasmidfinder.yaml"
+        ENVS_DIR / "plasmidfinder.yaml"
     output: 
-        database = directory("%s/plasmidfinder_db" %DATABASE_PATH),
-        version_db = "%s/plasmidfinder_db/PlasmidFinder_version.txt" %DATABASE_PATH
+        database = directory("%s/plasmidfinder_db" %database_dir),
+        version_db = "%s/plasmidfinder_db/PlasmidFinder_version.txt" %database_dir
     log:
-        stdout = "%s/Databases/setup_PlasmidFinder.log" %LOGDIR
+        stdout = "%s/Databases/setup_PlasmidFinder.log" %logdir
     message:
         "[setup_PlasmidFinder]: Setting up PlasmidFinder database"
     shell:
@@ -42,12 +42,12 @@ rule setup_PlasmidFinder:
 
 rule setup_ResFinder:
     conda:
-        "../envs/resfinder.yaml"
+        ENVS_DIR / "resfinder.yaml"
     output:
-        database = directory("%s/resfinder_db" %DATABASE_PATH),
-        version_db = "%s/resfinder_db/ResFinder_version.txt" %DATABASE_PATH
+        database = directory("%s/resfinder_db" %database_dir),
+        version_db = "%s/resfinder_db/ResFinder_version.txt" %database_dir
     log:
-        stdout = "%s/Databases/setup_ResFinder.log" %LOGDIR
+        stdout = "%s/Databases/setup_ResFinder.log" %logdir
     message:
         "[setup_ResFinder]: Setting up ResFinder database"
     shell:
@@ -84,12 +84,12 @@ rule setup_ResFinder:
 
 rule setup_PointFinder:
     conda:
-        "../envs/resfinder.yaml"
+        ENVS_DIR / "resfinder.yaml"
     output:
-        database = directory("%s/pointfinder_db" %DATABASE_PATH),
-        version_db = "%s/pointfinder_db/PointFinder_version.txt" %DATABASE_PATH
+        database = directory("%s/pointfinder_db" %database_dir),
+        version_db = "%s/pointfinder_db/PointFinder_version.txt" %database_dir
     log:
-        stdout = "%s/Databases/setup_PointFinder.log" %LOGDIR
+        stdout = "%s/Databases/setup_PointFinder.log" %logdir
     message:
         "[setup_PointFinder]: Setting up PointFinder database"
     shell:
@@ -127,12 +127,12 @@ rule setup_PointFinder:
 
 rule setup_DisinFinder:
     conda:
-        "../envs/resfinder.yaml"
+        ENVS_DIR / "resfinder.yaml"
     output:
-        database = directory("%s/disinfinder_db" %DATABASE_PATH),
-        version_db = "%s/disinfinder_db/DisinFinder_version.txt" %DATABASE_PATH
+        database = directory("%s/disinfinder_db" %database_dir),
+        version_db = "%s/disinfinder_db/DisinFinder_version.txt" %database_dir
     log:
-        stdout = "%s/Databases/setup_DisinFinder.log" %LOGDIR
+        stdout = "%s/Databases/setup_DisinFinder.log" %logdir
     message:
         "[setup_DisinFinder]: Setting up DisinFinder database"
     shell:
@@ -169,12 +169,12 @@ rule setup_DisinFinder:
 
 rule setup_VirulenceFinder:
     conda:
-        "../envs/virulencefinder.yaml"
+        ENVS_DIR / "virulencefinder.yaml"
     output:
-        database = directory("%s/virulencefinder_db" %DATABASE_PATH),
-        version_db = "%s/virulencefinder_db/VirulenceFinder_version.txt" %DATABASE_PATH
+        database = directory("%s/virulencefinder_db" %database_dir),
+        version_db = "%s/virulencefinder_db/VirulenceFinder_version.txt" %database_dir
     log:
-        stdout = "%s/Databases/setup_VirulenceFinder.log" %LOGDIR
+        stdout = "%s/Databases/setup_VirulenceFinder.log" %logdir
     message:
         "[setup_VirulenceFinder]: Setting up VirulenceFinder database"
     shell:
@@ -211,12 +211,12 @@ rule setup_VirulenceFinder:
 
 rule setup_SerotypeFinder:
     conda:
-        "../envs/serotypefinder.yaml"
+        ENVS_DIR / "serotypefinder.yaml"
     output:
-        database = directory("%s/serotypefinder_db" %DATABASE_PATH),
-        version_db = "%s/serotypefinder_db/SerotypeFinder_version.txt" %DATABASE_PATH
+        database = directory("%s/serotypefinder_db" %database_dir),
+        version_db = "%s/serotypefinder_db/SerotypeFinder_version.txt" %database_dir
     log:
-        stdout = "%s/Databases/setup_SerotypeFinder.log" %LOGDIR
+        stdout = "%s/Databases/setup_SerotypeFinder.log" %logdir
     message:
         "[setup_SerotypeFinder]: Setting up SerotypeFinder database"
     shell:
@@ -253,9 +253,9 @@ rule setup_SerotypeFinder:
 
 rule setup_Spatyper:
     output:
-        database = directory("%s/spatyper_db" %DATABASE_PATH)
+        database = directory("%s/spatyper_db" %database_dir)
     log:
-        stdout = "%s/Databases/setup_Spatyper.log" %LOGDIR
+        stdout = "%s/Databases/setup_Spatyper.log" %logdir
     message:
         "[Setup Spatyper]: Setting up SerotypeFinder database"
     shell:
@@ -271,12 +271,12 @@ rule setup_Spatyper:
 
 rule setup_AMRFinder:
     conda:
-        "../envs/amrfinder.yaml"
+        ENVS_DIR / "amrfinder.yaml"
     output:
-        database = directory("%s/amrfinderplus/latest" %DATABASE_PATH),
-        version_db = "%s/amrfinderplus/latest/AMRFinder_version.txt" %DATABASE_PATH
+        database = directory("%s/amrfinderplus/latest" %database_dir),
+        version_db = "%s/amrfinderplus/latest/AMRFinder_version.txt" %database_dir
     log:
-        stdout = "%s/Databases/setup_AMRFinder.log" %LOGDIR
+        stdout = "%s/Databases/setup_AMRFinder.log" %logdir
     message:
         "[setup_AMRFinder]: Setting up AMRFinderPlus database"
     shell:
@@ -305,21 +305,54 @@ rule setup_AMRFinder:
         """
 
 
+rule setup_kleborate_amrfinder:
+    input:
+        database = rules.setup_AMRFinder.output.database,
+        version_db = rules.setup_AMRFinder.output.version_db
+    output:
+        version_db = "%s/kleborate/kleborate_version.txt" %database_dir
+    conda:
+        ENVS_DIR / "kleborate.yaml"
+    log:
+        stdout = "%s/Databases/setup_Kleborate_AMRFinder.log" %logdir
+    message:
+        "[Setup_Kleborate_AMRFinder]: Clonig AMRFinder database to Kleborate environment"
+    shell:
+        """
+            BIN=$(which kleborate)
+            echo "BIN is $BIN"
+            BINDIR=$(dirname $BIN)
+            echo "BINDIR is $BINDIR"
+            KLEBDIR="$(dirname $BINDIR)/../../share/amrfinderplus/data/latest"
+            echo "KLEBDIR is $KLEBDIR"
+
+            mkdir -p $(dirname $KLEBDIR)
+
+            cmd="ln -s {input.database} $KLEBDIR"
+
+            echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+            eval $cmd >> {log.stdout} 2>&1
+
+            mkdir -p $(dirname {output.version_db})
+            ln -s {input.version_db} {output.version_db}
+        """
+
+
 rule setup_custom_kmeraligner_index:
   input:
-    source = "%s/custom/{database}.fasta" %DATABASE_PATH
+    source = "%s/custom/{database}.fasta" %database_dir
   params:
-    prefix = "%s/kmeraligner/{database}" %DATABASE_PATH
+    prefix = "%s/kmeraligner/{database}" %database_dir
   output:
-    combined_size = "%s/kmeraligner/{database}.comp.b" %DATABASE_PATH,
-    lengths = "%s/kmeraligner/{database}.length.b" %DATABASE_PATH,
-    names = "%s/kmeraligner/{database}.name" %DATABASE_PATH,
-    seqs = "%s/kmeraligner/{database}.seq.b" %DATABASE_PATH,
-    version_db = "%s/kmeraligner/{database}_kmaindex_version.txt" %DATABASE_PATH
+    combined_size = "%s/kmeraligner/{database}.comp.b" %database_dir,
+    lengths = "%s/kmeraligner/{database}.length.b" %database_dir,
+    names = "%s/kmeraligner/{database}.name" %database_dir,
+    seqs = "%s/kmeraligner/{database}.seq.b" %database_dir,
+    version_db = "%s/kmeraligner/{database}_kmaindex_version.txt" %database_dir
   conda:
-    "../envs/kmeraligner.yaml"
+    ENVS_DIR / "kmeraligner.yaml"
   log:
-    stdout = "%s/Databases/setup_custom_kmeraligner_index_{database}.log" %LOGDIR
+    stdout = "%s/Databases/setup_custom_kmeraligner_index_{database}.log" %logdir
   message:
     "[setup_custom_kmeraligner_index]: Setting up {wildcards.database} database with kmeraligner"
   shell:
@@ -345,21 +378,21 @@ rule setup_custom_kmeraligner_index:
 
 rule setup_custom_bowtie2_index:
   input:
-    source = "%s/custom/{database}.fasta" %DATABASE_PATH
+    source = "%s/custom/{database}.fasta" %database_dir
   params:
-    prefix = "%s/bowtie2/{database}" %DATABASE_PATH
+    prefix = "%s/bowtie2/{database}" %database_dir
   output:
-    bt2_1 = "%s/bowtie2/{database}.1.bt2" %DATABASE_PATH,
-    bt2_2 = "%s/bowtie2/{database}.2.bt2" %DATABASE_PATH,
-    bt2_3 = "%s/bowtie2/{database}.3.bt2" %DATABASE_PATH,
-    bt2_4 = "%s/bowtie2/{database}.4.bt2" %DATABASE_PATH,
-    bt2_1_rev = "%s/bowtie2/{database}.rev.1.bt2" %DATABASE_PATH,
-    bt2_2_rev = "%s/bowtie2/{database}.rev.2.bt2" %DATABASE_PATH,
-    version_db = "%s/bowtie2/{database}_bowtie2index_version.txt" %DATABASE_PATH
+    bt2_1 = "%s/bowtie2/{database}.1.bt2" %database_dir,
+    bt2_2 = "%s/bowtie2/{database}.2.bt2" %database_dir,
+    bt2_3 = "%s/bowtie2/{database}.3.bt2" %database_dir,
+    bt2_4 = "%s/bowtie2/{database}.4.bt2" %database_dir,
+    bt2_1_rev = "%s/bowtie2/{database}.rev.1.bt2" %database_dir,
+    bt2_2_rev = "%s/bowtie2/{database}.rev.2.bt2" %database_dir,
+    version_db = "%s/bowtie2/{database}_bowtie2index_version.txt" %database_dir
   conda:
-    "../envs/bowtie2.yaml"
+    ENVS_DIR / "bowtie2.yaml"
   log:
-    stdout = "%s/Databases/setup_custom_bowtie2index_{database}.log" %LOGDIR
+    stdout = "%s/Databases/setup_custom_bowtie2index_{database}.log" %logdir
   message:
     "[setup_custom_bowtie2_index]: Setting up {wildcards.database} database with bowtie2"
   shell:
@@ -385,14 +418,14 @@ rule setup_custom_bowtie2_index:
 
 rule setup_custom_samtool_index:
   input:
-    source = "%s/custom/{database}.fasta" %DATABASE_PATH
+    source = "%s/custom/{database}.fasta" %database_dir
   output:
-    source = "%s/samtools/{database}.fasta" %DATABASE_PATH, 
-    index = "%s/samtools/{database}.fasta.fai" %DATABASE_PATH
+    source = "%s/samtools/{database}.fasta" %database_dir, 
+    index = "%s/samtools/{database}.fasta.fai" %database_dir
   conda:
-    "../envs/htslib.yaml"
+    ENVS_DIR / "htslib.yaml"
   log:
-    stdout = "%s/Databases/setup_custom_samtool_index_{database}.log" %LOGDIR
+    stdout = "%s/Databases/setup_custom_samtool_index_{database}.log" %logdir
   message:
     "[setup_custom_samtool_index]: Setting up {wildcards.database} database with samtools"
   shell:
@@ -413,15 +446,4 @@ rule setup_custom_samtool_index:
     date -I > $outdir/creation.date
     """
 
-# rule update_databases:
-#     input:
-#         rules.setup_AMRFinder.output,
-#         rules.setup_custom_bowtie2_index.output,
-#         rules.setup_custom_kmeraligner_index.output,
-#         rules.setup_custom_samtool_index.output,
-#         rules.setup_DisinFinder.output,
-#         rules.setup_PlasmidFinder.output,
-#         rules.setup_PointFinder.output,
-#         rules.setup_ResFinder.output,
-#         rules.setup_SerotypeFinder.output,
-#         rules.setup_VirulenceFinder.output
+
