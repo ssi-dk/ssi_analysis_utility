@@ -12,9 +12,16 @@ logger = pkg_logging.initiate_log("MMAcreate")
 
 def parse_create():
     parser = argparse.ArgumentParser(
-        description = """
-        Create samplesheet for execution
-        """
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description = (
+            "MMAseq create\n"
+            "Create a samplesheet by scanning the input directory for sample files."
+        ),
+        epilog = (
+            "This is the MMAseq Create module.\n"
+            "For details on the deployment module execute 'mmadeploy -h'\n"
+            "For details on the main module execute 'mmaseq -h'"
+        )
     )
 
     parser.add_argument(
@@ -42,14 +49,22 @@ def parse_create():
     )
 
     parser.add_argument(
-    "--debug",
-    dest = "debug",
-    action = "store_true",
-    help = """
-        Add debug messages during execution. (Default False) 
-        Mostly used for development and debugging purposes.
-    """
+        "--verbosity",
+        dest = "verbosity",
+        type = int,
+        #choices = [0:3],
+        default = 0,
+        help = """
+            Adjust the verbosity level of running with integers between 0 and 2.
+            0: Show standard messages
+            1: Provide debug messages (Usefull for inspecting errors)
+            2: Provide detailed trace messages (Usefull for development)
+
+            d debug messages during execution. (Default False) 
+            Mostly used for development and debugging purposes.
+        """
     )
+
 
     return parser.parse_args()
 
@@ -79,7 +94,7 @@ def create_samplesheet(args):
             if path.suffix in [".fasta", ".fa"]:
                 sample = str(file.with_suffix(""))
 
-                logger.debug(f"Found {sample} with assembly file: {path}")
+                logger.trace(f"Found {sample} with assembly file: {path}")
                 records.setdefault(sample, {
                     "read1": "NA",
                     "read2": "NA",
@@ -94,7 +109,7 @@ def create_samplesheet(args):
             if path.suffixes in [[".fastq", ".gz"], [".fq", ".gz"]]:
                 sample = re.sub(r'(_R?[12])\D*\.fastq\.gz$', '', str(file))
 
-                logger.debug(f"Found {sample} with read file: {path}")
+                logger.trace(f"Found {sample} with read file: {path}")
                 records.setdefault(sample, {
                     "read1": "NA",
                     "read2": "NA",
@@ -118,6 +133,7 @@ def create_samplesheet(args):
         .reset_index()
         .rename(columns = {"index": "sample_name"})
     )
+    logger.info("Creating samplesheet")
 
     samplesheet_file = outdir / "samplesheet.tsv"
     try:
@@ -143,9 +159,17 @@ def launcher():
     args = parse_create()
 
     # Generate logger
-    pkg_logging.adjust_log_level(logger, args.debug)
+    pkg_logging.adjust_log_level(logger, args.verbosity)
 
-    logger.info("Initiating samplesheet creation")
+    print((
+        "###################################################\n"
+        "### Mixed Microbial Analysis create samplesheet ###\n"
+        "###################################################"
+    ))
     samplesheet_file = create_samplesheet(args)
 
-    logger.info(f"Samplesheet creation successful!")
+    logger.info((
+        "Samplesheet creation successful. "
+        "Now go and check the config column of the samplesheet, "
+        "and change these to your likings!"
+    ))

@@ -10,9 +10,18 @@ logger = pkg_logging.initiate_log("MMAdeploy")
 
 def parse_deploy():
     parser = argparse.ArgumentParser(
-        description = """
-        Run pipeline on inbuild test set and setup module environments and databases for deployment of all modules and databases.
-        """
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description = (
+            "MMAseq deploy\n"
+            "Install environments and creates databases by "
+            "executing MMAseq on an inbuilt test dataset.\n"
+            "Pipeline results files are written to the deployment directory."
+        ),
+        epilog = (
+            "This is the MMAseq Deploy module.\n"
+            "For details on samplesheet creation execute 'mmacreate -h'\n"
+            "For details on the main module execute 'mmaseq -h'"
+        )
     )
 
     parser.add_argument(
@@ -63,19 +72,32 @@ def parse_deploy():
     )
 
     parser.add_argument(
-        "--debug",
-        dest = "debug",
-        action = "store_true",
+        "--verbosity",
+        dest = "verbosity",
+        type = int,
+        #choices = [0:3],
+        default = 0,
         help = """
-            Add debug messages during execution. Mostly used for development 
-            and debugging purposes
+            Adjust the verbosity level of running with integers between 0 and 2.
+            0: Show standard messages
+            1: Provide debug messages (Usefull for inspecting errors)
+            2: Provide detailed trace messages (Usefull for development)
+
+            d debug messages during execution. (Default False) 
+            Mostly used for development and debugging purposes.
         """
     )
+
 
     return parser.parse_args()
 
 
 def download_ftp_file(url, destination, max_retries):
+
+    logger.trace(("download_ftp_file(\n - "
+        f"url: {url}\n - "
+        f"destination: {destination}\n - "
+        f"max_retries: {max_retries})"))
 
     status = False
     url = url.strip()
@@ -92,34 +114,34 @@ def download_ftp_file(url, destination, max_retries):
             
             # Abort if the file exists 
             if target_file.exists():
-                logger.debug((f"File {target_file.name} is skipped "
-                    f"because it allready exists: {target_file}"))
                 return None
             
-            logger.debug(f"Connecting to FTP server at {host}")
+            logger.trace(f"Connecting to FTP server at {host}")
             ftp = ftplib.FTP(host)
 
             # Anonymous login
             ftp.login()
 
-            logger.info(f"Downloading {url} -> {target_file}")
+            logger.info(
+                f"Downloading {target_file.name} into {destination}"
+            )
+
             with open(target_file, 'wb') as local_file:
                 ftp.retrbinary(f'RETR {"/".join(path)}', local_file.write)
             
-            logger.debug(f"Downloaded successfully to {target_file}")
-
             status = True
 
         except Exception as e: # Look for Login exceptions, connection not found exceptions etc.
             logger.error((f"Failed to download {url} on attempt #{retries}\n"
                 f"Error: {str(e)}"))
         finally:
-            logger.debug("Closing ftp connection.")
+            logger.trace(f"Attempting to close the FTP connection to {host}.")
             try:
                 ftp.quit()
             except UnboundLocalError:
-                logger.debug(("Closing FTP failed because it was never "
-                    "established. This was expected behavior!"))
+                logger.trace(("Closing FTP failed because it was never "
+                    "established in the first place. "
+                    "This was expected behavior!"))
             except AttributeError as e:
                 logger.error(f"Yeeeerp.. I have no idea yet what goes wrong, ignoring...\n{e}")
 
@@ -129,8 +151,12 @@ def download_ftp_file(url, destination, max_retries):
 
 def deploy_dataset(small, max_retries):
 
+    logger.trace(("deploy_dataset(\n - "
+        f"small: {small}\n - "
+        f"max_retries: {max_retries})"))
+
     with open(URL_FILE, "r") as url_file:
-        urls = url_file.readlines()
+        urls = url_file.read().splitlines()
 
     # Reduce dataset size if small is selected
     size = "the full"
@@ -139,14 +165,21 @@ def deploy_dataset(small, max_retries):
         size = "a subselection of the"
 
 
-    logger.debug((
-        f"Attempting to download {size} deployment dataset "
-        f"allowing up to {max_retries} retries on each file."))
+    logger.debug(
+        f"Examining the need for downloading {size} deployment dataset."
+    )
 
     for url in urls:
-        downloaded = download_ftp_file(url, READ_DIR, max_retries)
+        logger.debug(f"Inspecting {url}")
+        status = download_ftp_file(url, READ_DIR, max_retries)
 
         # Want to introduce status messages here.
+        if status is None:
+            logger.debug(f"File allready downloaded. Skipping!")
+        elif status:
+            logger.debug(f"Downloaded successfully into {READ_DIR}")
+        else:
+            logger.warning(f"File failed to download!")
 
 
 def deploy(args):
@@ -155,8 +188,9 @@ def deploy(args):
     small = args.small
     retries = args.retries
     threads = args.threads
+    verbosity = args.verbosity
 
-    logger.info("Downloading deployment dataset.")
+    logger.info(f"Inspecting the deployment dataset")
     deploy_dataset(small, retries)
 
     config = f"{PKG_CONFIGS}/Test.yaml"
@@ -173,8 +207,7 @@ def deploy(args):
 
 
     outdir = deploy_dir / "MMAseq_Test"
-    if args.debug:
-        additional_cmds += "--debug "
+    additional_cmds += f"--verbosity {verbosity}"
 
     # Create command
     command = (
@@ -186,14 +219,15 @@ def deploy(args):
         "--resolve "
         f"{additional_cmds}"
     )
+    logger.debug(f"Created command for MMAseq:\n{command}")
 
-    logger.debug(f"Executing MMAseq with following command: {command}")
+    logger.info(f"Executing MMAseq")
     status = subprocess.Popen(command, shell = True).wait()
 
     if status != 0:
         logger.error((
             "Something went wrong during deployment. "
-            "Rerun command with '--debug' for more details."
+            "Rerun command with '--verbosity 1' for more details."
         ))
         sys.exit(1)
 
@@ -206,13 +240,18 @@ def deploy(args):
 
 
 def launcher() -> None:
+    print((
+        "###########################################\n"
+        "### Mixed Microbial Analysis deployment ###\n"
+        "###########################################"
+    ))
+
     # Parse user input
     args = parse_deploy()
 
     # Generate logger
-    pkg_logging.adjust_log_level(logger, args.debug)
+    pkg_logging.adjust_log_level(logger, args.verbosity)
 
-    logger.info("Running MMAseq Deployment")
     deploy(args)
 
     logger.info("Deployment successful!")
