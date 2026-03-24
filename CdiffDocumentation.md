@@ -34,7 +34,7 @@ To accurately filter the generated alignment files to identify the genes of inte
 The Clostridioides difficile-specific analysis is performed in separate steps, including detection of locus presence/absence, TRST markers, canonical SNPs, and deletions. In combination, these features can be indicative, but not conclusive, of a genome-based sequence type ([ST](https://github.com/ssi-dk/ssi_analysis_utility_db/blob/main/clostridioides_difficile/Cdiff_ST_table.tsv)).
 
 ## Repeat identification
-The *cdiff_repeat_identifier* [rule](https://github.com/ssi-dk/MMASeq/blob/dev/workflow/rules/finders.smk) identifies Clostridioides difficile repeat types from a genome assembly by scanning contigs for known TR6 and TR10 repeat types, which are defined in metadata tables and the reference repeat fragments are provided as FASTA records, where each header (for example R001) defines a short repeat fragment sequence.
+The *cdiff_repeat_identifier* rule in the [pipeline](https://github.com/ssi-dk/MMASeq/blob/dev/workflow/rules/finders.smk) uses a custom [script](https://github.com/ssi-dk/MMASeq/blob/dev/workflow/scripts/Repeat_Identifier.py) to identify repeat types from a genome assembly by scanning contigs for known TR6 and TR10 repeat types, which are defined in metadata tables and the reference repeat fragments are provided as FASTA records, where each header (for example R001) defines a short repeat fragment sequence.
 
 e.g. TR6 repeat [sequence](https://github.com/ssi-dk/ssi_analysis_utility_db/blob/main/clostridioides_difficile/type_repeats/TR6.fasta) sequence
 ```bash
@@ -85,3 +85,23 @@ tr290	A133	B032
 tr291	A132	B057
 ```
 
+## SNP identification
+The snp_identifier rule in the [pipeline](https://github.com/ssi-dk/MMASeq/blob/dev/workflow/rules/finders.smk) uses a custom [script](https://github.com/ssi-dk/MMASeq/blob/dev/workflow/scripts/SNP_identifier.py) to identify predefined SNPs and deletion events from a sample BCF file using a metadata [table](https://github.com/ssi-dk/MMASeq/blob/dev/config/Metadata/SNP_metafile.tsv) of expected variant positions.
+
+The metadata file specifies the organism, target gene, genomic position, expected reference and alternative allele, and a minimum read-depth threshold (gt_DP) for each marker.
+```bash
+species	gene	position	reference	alternative	gt_DP
+Clostridioides difficile	tcdC	117	A	T	10
+Clostridioides difficile	tcdC	184	C	T	10
+```
+
+For each entry in the metadata table, the script first filters rows to the requested organism, then matches each target gene name to a contig in the BCF header. Then it extracts variant records at the expected position, with a small configurable buffer around the site, and filters these records by minimum depth using the INFO/DP field and *gt_DP* as the threshold.
+
+The script classifies each target position as one of the following:
+
+- the expected SNP, reported in the form *"A117T"*
+- a deletion spanning the position, reported as *"Δ117"*
+- another SNP at the same position that does not match the expected allele change, reported as *"other"*
+- no qualifying variant at the site, reported as *"wt"*
+
+Results are written as a tab-delimited table containing the species, matched contig name, gene, position, and inferred variant state for each configured marker.
