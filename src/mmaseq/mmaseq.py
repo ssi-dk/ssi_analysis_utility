@@ -16,9 +16,16 @@ logger = pkg_logging.initiate_log("MMAseq")
 
 def parse_mmaseq():
     parser = argparse.ArgumentParser(
-        description = """
-        Execute Mixed Microbial Analysis on Sequencing data (MMAseq)
-        """
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description = (
+            "Mixed Microbial Analysis on Sequencing data\n"
+            "This is the main module used for executing the MMAseq pipeline. "
+            "MMAseq is split into the following three executable commands:\n"
+            " * mmacreate - Create input samplesheets for MMAseq\n"
+            " * mmadeploy - Install environment and create databases\n"
+            " * mmaseq - Execute the pipeline."
+
+        )
     )
 
     parser.add_argument(
@@ -99,22 +106,27 @@ def parse_mmaseq():
     )
 
     parser.add_argument(
-        "--debug",
-        dest = "debug",
-        action = "store_true",
+        "--verbosity",
+        dest = "verbosity",
+        default = 0,
         help = """
-            Add debug messages during execution. (Default False) 
+            Adjust the verbosity level of running with integers between 0 and 2.
+            0: Show standard messages
+            1: Provide debug messages (Usefull for inspecting errors)
+            2: Provide detailed trace messages (Usefull for development)
+
+            d debug messages during execution. (Default False) 
             Mostly used for development and debugging purposes.
         """
     )
 
     return parser.parse_args()
 
-
-
 def resolve_path(path, samplesheet_file):
+    logger.trace(("resolve_path(\n - "
+            f"path: {path}\n - "
+            f"samplesheet_file: {samplesheet_file})"))
 
-    # Determine possible file paths
     path_absolute = path.is_absolute()
     path_from_cwd = CWD / path
     samplesheet_dir = samplesheet_file.resolve().parent
@@ -123,19 +135,28 @@ def resolve_path(path, samplesheet_file):
     # Hierichically look through potential file paths
     if path_absolute & path.exists():
         absolute = path
-        logger.debug(f"Path is absolute, no resolving needed {absolute}")
+        logger.trace(
+            f"Path is absolute, no resolving needed:\n - {absolute}"
+        )
     elif (not path_absolute) & path_from_cwd.exists():
         absolute = path_from_cwd.resolve()
-        logger.debug(f"Path not absolute, but found relative to current location {absolute}")
+        logger.trace((
+            f"Path is not absolute, but found relative to current location:"
+            "\n - {absolute}"
+        ))
     elif (not path_absolute) & path_from_samplesheet_dir.exists():
         absolute = path_from_samplesheet_dir.resolve()
-        logger.debug(f"Path not absolute, but found relative to samplesheet directory {absolute}")
+        logger.trace((
+            f"Path is not absolute, but found relative to samplesheet:"
+            "\n - {absolute}"
+        ))
 
     else:
         # Abort if file path was unsolvable
         logger.error((
             f"Unable to resolve sample path: {path}.\n"
-            "- Resolve the paths in your samplesheet and try again. Aborting!"
+            f"- Resolve the paths in your samplesheet {samplesheet_file} "
+            "and try again.\nAborting!"
         ))
         sys.exit(1)
 
@@ -148,6 +169,10 @@ def resolve_samplesheet_paths(samplesheet_file, outdir):
     into absolute paths using resolve_sample_path().
     This guarantees that Snakemake always receives valid paths.
     """
+    logger.trace(("resolve_samplesheet_paths(\n - "
+            f"samplesheet_file: {samplesheet_file}\n - "
+            f"outdir: {outdir})"))
+
     def fix(path):
         # Ensure that path is specified
         if isinstance(path, str) and path.lower() not in ["na", ""]:
@@ -157,25 +182,25 @@ def resolve_samplesheet_paths(samplesheet_file, outdir):
 
         return path
 
+
     samplesheet = pd.read_csv(samplesheet_file, sep="\t").copy()
 
 
-    # Resolve read and assembly file paths to absolute
+    # Resolve read and assembly file paths
     samplesheet["read1"] = samplesheet["read1"].apply(fix)
     samplesheet["read2"] = samplesheet["read2"].apply(fix)
     samplesheet["assembly"] = samplesheet["assembly"].apply(fix)
 
-    # Write samplesheet with resolved paths
-    if not outdir.exists():
-        outdir.mkdir(parents = True)
-
+    # Write samplesheet with resolved paths"
     samplesheet_resolved_file = outdir / re.sub(
         ".tsv", "_resolved.tsv", str(samplesheet_file.name)
     )
-    logger.debug((
-        "Writting samplesheet with resolved paths to "
-        f"{samplesheet_resolved_file}"
-    ))
+
+    logger.debug(("Writting samplesheet with resolved paths to "
+        f"{samplesheet_resolved_file}"))
+
+    if not outdir.exists():
+        outdir.mkdir(parents = True)
     samplesheet.to_csv(samplesheet_resolved_file,
         sep = "\t", 
         index = False)
@@ -185,8 +210,15 @@ def resolve_samplesheet_paths(samplesheet_file, outdir):
 
 def create_config(samplesheet_file, 
                   outdir, 
-                  deploy_dir
+                  deploy_dir,
+                  verbosity
                   ):
+
+    logger.trace(("create_config(\n - "
+        f"samplesheet_file: {samplesheet_file}\n - "
+        f"outdir: {outdir}\n - "
+        f"deploy_dir: {deploy_dir}\n - "
+        f"verbosity: {verbosity})"))
 
     # Determine config file
     outdir = outdir.resolve()
@@ -194,9 +226,9 @@ def create_config(samplesheet_file,
 
     # Check whether config file exists
     if not config_file.exists():
-        logger.debug(f"Creating new config file {config_file}")
+        logger.trace(f"Creating new config file {config_file}")
         if not outdir.exists():
-            logger.debug((
+            logger.trace((
                 "Output directory does not exists, "
                 f"creating directory {outdir}"
             ))
@@ -215,7 +247,8 @@ def create_config(samplesheet_file,
     config = {
         "samplesheet": str(samplesheet_file),
         "deploy_dir": str(deploy_dir),
-        "outdir": str(outdir)
+        "outdir": str(outdir),
+        "verbosity": str(verbosity)
     }
 
     logger.debug(f"Creating config file {config_file}")
@@ -229,13 +262,18 @@ def create_config(samplesheet_file,
 def link_assemblies(samplesheet_file, 
                     config_dir, 
                     outdir):
+    logger.trace(("link_assemblies(\n - "
+        f"samplesheet_file: {samplesheet_file}\n - "
+        f"config_dir: {config_dir}\n - "
+        f"outdir: {outdir})"))
 
-    logger.debug(f"Reading samplesheet from {samplesheet_file}")
+    logger.debug("Initiating assembly symlinking")
+    logger.trace(f"Reading samplesheet from {samplesheet_file}")
     samplesheet = pd.read_csv(samplesheet_file, 
                               sep = "\t").set_index("sample_name")
 
 
-    logger.debug(f"Importing sample configs from {config_dir}")
+    logger.trace(f"Importing sample configs from {config_dir}")
     sample_configs = helper_functions.determine_sample_configs(samplesheet = samplesheet, 
                                               config_dir = config_dir)
 
@@ -247,16 +285,16 @@ def link_assemblies(samplesheet_file,
         
         # Handle if assembly is determined as NA
         if pd.isna(assembly_from_sheet):
-            logger.debug(f"No assembly provided for {sample} — skipping!")
+            logger.trace(f"No assembly provided for {sample} — skipping!")
             continue
 
         assembly_source = Path(assembly_from_sheet)
-        logger.debug(f"Assembly for {sample} in samplehseet is {assembly_source}")
+        logger.trace(f"Assembly for {sample} in samplehseet is {assembly_source}")
 
         # Attempt to locate relative paths from assembly listed in sheet
         if assembly_source.exists(follow_symlinks = True):
             # Handle if assembly file exists with a valid path
-            logger.debug(f"Assembly found at {assembly_source}")
+            logger.trace(f"Assembly found at {assembly_source}")
 
             # Determine assemblers specified in sample configs
             assemblers = {
@@ -289,12 +327,12 @@ def link_assemblies(samplesheet_file,
 
                 # Ignore prexisting functional symbolic links at destination
                 if destination.is_symlink():
-                    logger.info(f"""Assembly allready linked to results
+                    logger.debug(f"""Assembly allready linked to results
                      directory at {destination}.\nSkipping!""")
 
                 # Initiate symlink creation if destination is empty
                 if not destination.exists(follow_symlinks = False):
-                    logger.info(f"""Creating symlink: 
+                    logger.debug(f"""Creating symlink: 
                         {assembly_source} -> {destination}""")
                     destination.symlink_to(assembly_source)
 
@@ -317,6 +355,11 @@ def create_command(threads,
                    conda_dir, 
                    arguments = None, 
                    rules = None):
+    logger.trace(("create_command(\n - "
+        f"config_file: {config_file}\n - "
+        f"conda_dir: {conda_dir}\n - "
+        f"arguments: {arguments}\n - "
+        f"rules: {rules})"))
 
     # Define arguments and rules as a single string
     additionals = " ".join(arguments) if arguments else ""
@@ -334,12 +377,11 @@ def create_command(threads,
         f"{target_rules}"
     )
 
-    logger.debug(f"Pipeline command created: {command}")
-
     return command
 
 
 def execute_snakemake(command):
+    logger.debug(f"Executing Snakemake command:\n{command}")
     status = subprocess.Popen(command, shell = True).wait()
     return status
 
@@ -356,8 +398,14 @@ def mmaseq(args):
 
     # Resolve other objects
     conda_dir = (deploy_dir / "conda").resolve()
-    arguments = []
-    rules = []
+    logger.trace(("User argumentsand deduced variables:\n - "
+        "samplesheet_file: {samplesheet_file}\n - "
+        "deploy_dir: {deploy_dir}\n - "
+        "outdir: {outdir}\n - "
+        "threads: {threads}\n - "
+        "resolve: {resolve}\n - "
+        "ignore_assemblies: {ignore_assemblies}\n - "
+        "conda_dir: {conda_dir}"))
 
     # Handle missing samplesheet
     if not samplesheet_file.exists():
@@ -367,30 +415,35 @@ def mmaseq(args):
 
     # Enable path normalization
     if resolve:
-        logger.info("Creating new samplesheet with resolved paths")
         samplesheet_file = resolve_samplesheet_paths(samplesheet_file, outdir)
+        logger.info(("Resolving paths in samplesheet, "
+        f"created new samplesheet at {samplesheet_file}."))
 
-    logger.info("Creating configurations")
+    logger.info("Creating pipeline configuration file")
     config_file = create_config(samplesheet_file, 
                            outdir, 
-                           deploy_dir
+                           deploy_dir,
+                           args.verbosity
                            )
 
     if ignore_assemblies:
-        logger.info("Will not skip assembly parts with assemblies from samplehseet")
+        logger.info(("Assemblies in samplehseet will not replace "
+        "assembly steps in the pipeline. This might take some time!"))
     else:
-        logger.info("Creating symbolic links for assemblies")
+        logger.info(("Assemblies in samplesheet will be used to skip "
+            "assembly steps in the pipeline, where applicable!"))
         link_assemblies(samplesheet_file, str(SPE_CONFIGS), outdir)
 
 
-    logger.info("Creating pipeline command")
-    command = create_command(threads, 
+    logger.debug("Creating pipeline command")
+    command = create_command(threads,
                              config_file, 
-                             conda_dir, 
-                             arguments, 
-                             rules)
+                             conda_dir
+                             )
 
-    logger.info("Executing pipeline: Mixed Microbial Analysis on Sequencing data")
+    logger.info(
+        "Executing Snakemake for Mixed Microbial Analysis on Sequencing data"
+    )
     status = execute_snakemake(command)
 
     if status != 0:
@@ -403,7 +456,7 @@ def launcher() -> None:
     args = parse_mmaseq()
 
     # Generate logger
-    pkg_logging.adjust_log_level(logger, args.debug)
+    pkg_logging.adjust_log_level(logger, args.verbosity)
 
     logger.info("Initiating MMAseq")
     mmaseq(args)

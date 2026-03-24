@@ -5,31 +5,41 @@ import pandas as pd
 
 logger = pkg_logging.initiate_log("MMAseq Pipeline")
 
-#######################
-### Input and paths ###
-#######################
-# Determine direct user inputs and package installation path
+# Generate logger
+pkg_logging.adjust_log_level(logger, config["verbosity"])
+
+logger.info("Setting up pipeline variables")
+#####################################################
+logger.debug("Importing user input from config file")
+# Read user input
 samplesheet_path = Path(config["samplesheet"])
 deploy_dir = Path(config["deploy_dir"])
 outdir = Path(config["outdir"])
 
-# Determine write-to directories
+logger.trace(("User input (by config):\n"
+    f" - samplesheet_path: {samplesheet_path}"
+    f" - deploy_dir: {deploy_dir}"
+    f" - outdir: {outdir}"))
+
+# Deduce variables
 logdir = outdir / "Logs"
 database_dir = deploy_dir / "Databases"
+logger.trace(("Deduced variables:\n"
+    f" - logdir: {logdir}"
+    f" - database_dir: {database_dir}"))
 
-#######################################################
-### Create sample specific input and output objects ###
-#######################################################
-# Read samplesheet
+#################################################################
+logger.debug("Creating sample specific input and output objects")
+logger.trace("Reading samplesheet")
 samplesheet = pd.read_csv(samplesheet_path, sep='\t').set_index("sample_name")
 
-# Read result files catalogue
+logger.trace("Reading result files catalogue")
 results_catalogue = helper_functions.read_results_catalogue(CATALOGUE_PATH)
 
-# Deduce sample specific configurations
+logger.trace("Defining sample specific configurations")
 sample_configs = helper_functions.determine_sample_configs(samplesheet = samplesheet, config_dir = SPE_CONFIGS)
 
-# Determine the expected sample specific results files
+logger.trace("Determining expected results files")
 all_results_files = helper_functions.list_results(sample_configs, results_catalogue, outdir)
 
 # define the long table output files to activate rule all
@@ -40,9 +50,8 @@ longtable_all = Path(f"{outdir}/all_results.tsv")
 db_versions_all = Path(f"{database_dir}/Logs/Versions/all_db_versions.tsv")
 tool_versions_all = Path(f"{database_dir}/Logs/Versions/all_tool_versions.tsv")
 
-##########################
-### Snakemake Pipeline ###
-##########################
+####################################
+logger.info("Initiating pipeline")
 
 # Define the dynamic input for rule all
 rule all:
