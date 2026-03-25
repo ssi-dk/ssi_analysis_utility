@@ -3,7 +3,9 @@ from .utils.paths import *
 import argparse
 import subprocess
 import sys
+import collections
 import ftplib
+
 
 logger = pkg_logging.initiate_log("MMAdeploy")
 
@@ -92,61 +94,95 @@ def parse_deploy():
     return parser.parse_args()
 
 
-def download_ftp_file(url, destination, max_retries):
+def extract_hosts(urls):
+    logger.trace(f"extract_hosts(urls = {urls})")
+    hosts = collections.defaultdict(list)
+    for url in urls:
+        host, *path_list = url.replace('ftp://', '').split('/')
+        path = f"/{'/'.join(path_list)}"
+        hosts[host].append(path)
+
+    return hosts
+
+
+def connect_ftp(host):
+    logger.trace(f"Connecting to {host}")
+
+    ftp = ftplib.FTP(host)
+
+    # Anonymous login
+    ftp.login()
+
+    return(ftp)
+
+
+def download_ftp_file(ftp, paths, destination, max_retries):
 
     logger.trace(("download_ftp_file(\n - "
-        f"url: {url}\n - "
+        f"ftp: {ftp}\n - "
+        f"paths: {paths}\n - "
         f"destination: {destination}\n - "
         f"max_retries: {max_retries})"))
 
-    status = False
-    url = url.strip()
-    retries = 0
-    while retries <= max_retries:
-        retries += 1
+    for path in paths:
+
+        # Define target file and download chunk file
+        target_file = destination / path.split('/')[-1]
+        target_chnk = target_file.with_suffix(f"{target_file.suffix}.chunk")
+                
+        # Remove old chunks if allready exists
+        if target_chnk.exists():
+            logger.warning(
+                f"Old chunk file detected: {target_chnk} "
+                "this is not intended. Removing!"
+            )
+            target_chnk.unlink()
+
+        # Abort if the file exists 
+        if target_file.exists():
+            logger.debug((
+                f"File allready downloaded. Skipping {target_file.name}"
+            ))
+            continue
+
+        logger.info(f"Test sample missing. Downloading {target_file.name}")
+
+        success = False    
         try:
-            # Parse the URL
-            ftp_url = url.replace('ftp://', '')
-            host, *path = ftp_url.split('/')        
 
-            # Define the target file path
-            target_file = destination / path[-1]
-            
-            # Abort if the file exists 
-            if target_file.exists():
-                return None
-            
-            logger.trace(f"Connecting to FTP server at {host}")
-            ftp = ftplib.FTP(host)
-
-            # Anonymous login
-            ftp.login()
-
-            logger.info(
-                f"Downloading {target_file.name} into {destination}"
+            logger.trace(
+                f"Downloading {target_file.name} as {target_chnk}"
             )
 
-            with open(target_file, 'wb') as local_file:
-                ftp.retrbinary(f'RETR {"/".join(path)}', local_file.write)
+            with open(target_chnk, 'wb') as local_file:
+                ftp.retrbinary(f'RETR {path}', local_file.write)
+
+            logger.trace(
+                f"Renaming {target_chnk.name} to {target_file.name}"
+            )
+            target_chnk.replace(target_file)
             
-            status = True
+            success = True
 
-        except Exception as e: # Look for Login exceptions, connection not found exceptions etc.
-            logger.error((f"Failed to download {url} on attempt #{retries}\n"
-                f"Error: {str(e)}"))
+        except Exception as e:
+            logger.error((
+                f"Something went wrong with download.\n"
+                f"{e}"
+            ))
         finally:
-            logger.trace(f"Attempting to close the FTP connection to {host}.")
-            try:
-                ftp.quit()
-            except UnboundLocalError:
-                logger.trace(("Closing FTP failed because it was never "
-                    "established in the first place. "
-                    "This was expected behavior!"))
-            except AttributeError as e:
-                logger.error(f"Yeeeerp.. I have no idea yet what goes wrong, ignoring...\n{e}")
+            if target_file.exists() and not success:
+                logger.warning("Download was unsuccessful, "
+                    f"but target does exist: {target_file}. "
+                    "Something is wrong - Deleting!")
+                target_file.unlink()
 
+        # Want to introduce status messages here.
+        if success:
+            logger.trace(f"{target_file.name} was successfully downloaded into {READ_DIR}")
+        else:
+            logger.warning(f"{target_file.name} failed to download!")
 
-    return status
+    return None
 
 
 def deploy_dataset(small, max_retries):
@@ -164,22 +200,46 @@ def deploy_dataset(small, max_retries):
         urls = urls[0:2]
         size = "a subselection of the"
 
+    hosts = extract_hosts(urls)
 
-    logger.debug(
-        f"Examining the need for downloading {size} deployment dataset."
-    )
+    for host in hosts.keys():
 
-    for url in urls:
-        logger.debug(f"Inspecting {url}")
-        status = download_ftp_file(url, READ_DIR, max_retries)
+        paths = hosts.get(host)
 
-        # Want to introduce status messages here.
-        if status is None:
-            logger.debug(f"File allready downloaded. Skipping!")
-        elif status:
-            logger.debug(f"Downloaded successfully into {READ_DIR}")
-        else:
-            logger.warning(f"File failed to download!")
+        logger.debug(f"Examining {host} for test dataset")
+        
+        retries = 0
+        while retries <= max_retries:
+            retries += 1
+            try:        
+
+                ftp = connect_ftp(host)
+
+                download_ftp_file(ftp, paths, READ_DIR, max_retries)
+
+                retries = max_retries + 1
+
+            except Exception as e:
+                logger.error((f"Failed to download {paths} on attempt #{retries}\n"
+                    f"Error: {str(e)}"))
+            finally:
+                logger.trace(f"Attempting to close the FTP connection to {host}.")
+                try:
+                    ftp.quit()
+                    logger.trace("FTP connection soft close successful!")
+                except UnboundLocalError:
+                    logger.trace(("Closing FTP failed because it was never "
+                        "established in the first place. "
+                        "This was expected behavior!"))
+                except AttributeError as e:
+                    logger.warning((
+                        "FTP connection can't be terminated softly. "
+                        "Attempting aggressive termination!"))
+                    try:
+                        ftp.close()
+                        logger.trace("FTP connection aggressive close successful!")
+                    except Exception as e:
+                        logger.error(f"FTP disconnect failed. ")
 
 
 def deploy(args):
