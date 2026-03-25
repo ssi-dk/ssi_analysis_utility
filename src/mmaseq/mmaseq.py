@@ -365,6 +365,7 @@ def create_command(threads,
         "snakemake --use-conda "
         f"--cores {threads} "
         "--keep-going "
+        "--rerun-incomplete "
         f"--configfile {config_file} "
         f"--snakefile {SNAKEFILE} "
         f"--conda-prefix {conda_dir} "

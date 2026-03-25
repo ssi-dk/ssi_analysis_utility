@@ -143,7 +143,7 @@ def download_ftp_file(url, destination, max_retries):
                     "established in the first place. "
                     "This was expected behavior!"))
             except AttributeError as e:
-                logger.error(f"Yeeeerp.. I have no idea yet what goes wrong, ignoring...\n{e}")
+                logger.error(f"Yeeeerp.. I have no idea yet what goes wrong, but file was downloaded successfully anyways. so... ignoring!\n{e}")
 
 
     return status
@@ -234,8 +234,8 @@ def deploy(args):
     else:
         logger.info((
             f"Deployment complete on {dataset} dataset. "
-            f"Environments installed and databases downloaded to {deploy_dir}.\n"
-            f"Results from Test dataset stored in {outdir}"
+            f"Environments installed and databases downloaded to {deploy_dir}\n"
+            f"Results from Test dataset stored in {outdir} - These can be deleted if you wish"
         ))
 
 
