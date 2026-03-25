@@ -24,7 +24,6 @@ def parse_mmaseq():
             " * mmacreate - Create input samplesheets for MMAseq\n"
             " * mmadeploy - Install environment and create databases\n"
             " * mmaseq - Execute the pipeline."
-
         )
     )
 
@@ -108,16 +107,16 @@ def parse_mmaseq():
     parser.add_argument(
         "--verbosity",
         dest = "verbosity",
+        type = int,
+        choices = [0, 1, 2],
         default = 0,
-        help = """
-            Adjust the verbosity level of running with integers between 0 and 2.
-            0: Show standard messages
-            1: Provide debug messages (Usefull for inspecting errors)
-            2: Provide detailed trace messages (Usefull for development)
-
-            d debug messages during execution. (Default False) 
-            Mostly used for development and debugging purposes.
-        """
+        help = (
+            "Adjust the verbosity level of running with integers between 0 and 2."
+            "0: Show standard messages"
+            "1: Provide debug messages (Usefull for inspecting errors)"
+            "2: Provide VERY detailed trace messages (Usefull for development)"
+            "Mostly used for development and debugging purposes."
+        )
     )
 
     return parser.parse_args()
@@ -129,8 +128,7 @@ def resolve_path(path, samplesheet_file):
 
     path_absolute = path.is_absolute()
     path_from_cwd = CWD / path
-    samplesheet_dir = samplesheet_file.resolve().parent
-    path_from_samplesheet_dir = samplesheet_dir / path
+    path_from_samplesheet_dir = samplesheet_file.resolve().parent / path
 
     # Hierichically look through potential file paths
     if path_absolute & path.exists():
@@ -142,13 +140,13 @@ def resolve_path(path, samplesheet_file):
         absolute = path_from_cwd.resolve()
         logger.trace((
             f"Path is not absolute, but found relative to current location:"
-            "\n - {absolute}"
+            f"\n - {absolute}"
         ))
     elif (not path_absolute) & path_from_samplesheet_dir.exists():
         absolute = path_from_samplesheet_dir.resolve()
         logger.trace((
             f"Path is not absolute, but found relative to samplesheet:"
-            "\n - {absolute}"
+            f"\n - {absolute}"
         ))
 
     else:
@@ -196,7 +194,7 @@ def resolve_samplesheet_paths(samplesheet_file, outdir):
         ".tsv", "_resolved.tsv", str(samplesheet_file.name)
     )
 
-    logger.debug(("Writting samplesheet with resolved paths to "
+    logger.debug(("Writting samplesheet with resolved paths "
         f"{samplesheet_resolved_file}"))
 
     if not outdir.exists():
@@ -238,10 +236,7 @@ def create_config(samplesheet_file,
         # Ensure config is not overwritten
         timestamp = datetime.now().strftime("%y_%m_%d-%H_%M")
         config_file = config_file.parent / f"{timestamp}_{config_file.name}"
-        logger.warning((
-            "Old configuration file detected, "
-            f"creating new file {config_file}"
-        ))
+        logger.debug("Old configuration file detected. Creating new file!")
     
     # Record config contents
     config = {
@@ -251,7 +246,7 @@ def create_config(samplesheet_file,
         "verbosity": str(verbosity)
     }
 
-    logger.debug(f"Creating config file {config_file}")
+    logger.debug(f"Writing config file to {config_file}")
     with open(config_file, "w") as config_yaml:
         yaml.safe_dump(config, config_yaml)
 
@@ -381,7 +376,7 @@ def create_command(threads,
 
 
 def execute_snakemake(command):
-    logger.debug(f"Executing Snakemake command:\n{command}")
+    logger.debug(f"Executing:\n{command}")
     status = subprocess.Popen(command, shell = True).wait()
     return status
 
@@ -398,7 +393,7 @@ def mmaseq(args):
 
     # Resolve other objects
     conda_dir = (deploy_dir / "conda").resolve()
-    logger.trace(("User argumentsand deduced variables:\n - "
+    logger.trace(("User arguments and deduced variables:\n - "
         "samplesheet_file: {samplesheet_file}\n - "
         "deploy_dir: {deploy_dir}\n - "
         "outdir: {outdir}\n - "
@@ -416,10 +411,9 @@ def mmaseq(args):
     # Enable path normalization
     if resolve:
         samplesheet_file = resolve_samplesheet_paths(samplesheet_file, outdir)
-        logger.info(("Resolving paths in samplesheet, "
-        f"created new samplesheet at {samplesheet_file}."))
+        logger.info("Resolved the file paths stated in the samplesheet")
 
-    logger.info("Creating pipeline configuration file")
+    logger.debug("Creating pipeline configuration file")
     config_file = create_config(samplesheet_file, 
                            outdir, 
                            deploy_dir,
@@ -442,7 +436,7 @@ def mmaseq(args):
                              )
 
     logger.info(
-        "Executing Snakemake for Mixed Microbial Analysis on Sequencing data"
+        "Executing pipeline for Mixed Microbial Analysis on Sequencing data"
     )
     status = execute_snakemake(command)
 
@@ -455,10 +449,12 @@ def launcher() -> None:
     # Parse user input
     args = parse_mmaseq()
 
-    # Generate logger
     pkg_logging.adjust_log_level(logger, args.verbosity)
 
-    logger.info("Initiating MMAseq")
+    print((
+        "###################################################\n"
+        "### Mixed Microbial Analysis on Sequencing data ###\n"
+        "###################################################"))
     mmaseq(args)
 
     logger.info("MMAseq successful!")

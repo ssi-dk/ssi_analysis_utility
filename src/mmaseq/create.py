@@ -19,7 +19,7 @@ def parse_create():
         ),
         epilog = (
             "This is the MMAseq Create module.\n"
-            "For details on the deployment module execute 'mmadeploy -h'"
+            "For details on the deployment module execute 'mmadeploy -h'\n"
             "For details on the main module execute 'mmaseq -h'"
         )
     )
@@ -51,6 +51,8 @@ def parse_create():
     parser.add_argument(
         "--verbosity",
         dest = "verbosity",
+        type = int,
+        #choices = [0:3],
         default = 0,
         help = """
             Adjust the verbosity level of running with integers between 0 and 2.
@@ -62,6 +64,7 @@ def parse_create():
             Mostly used for development and debugging purposes.
         """
     )
+
 
     return parser.parse_args()
 
@@ -158,7 +161,15 @@ def launcher():
     # Generate logger
     pkg_logging.adjust_log_level(logger, args.verbosity)
 
-    logger.info("Initiating samplesheet creation")
+    print((
+        "###################################################\n"
+        "### Mixed Microbial Analysis create samplesheet ###\n"
+        "###################################################"
+    ))
     samplesheet_file = create_samplesheet(args)
 
-    logger.info(f"Samplesheet creation successful!")
+    logger.info((
+        "Samplesheet creation successful. "
+        "Now go and check the config column of the samplesheet, "
+        "and change these to your likings!"
+    ))
