@@ -123,6 +123,26 @@ def connect_ftp(host):
     return(ftp)
 
 
+def disconnect_ftp(ftp):
+    logger.trace(f"Attempting to close the FTP connection.")
+    try:
+        ftp.quit()
+        logger.trace("FTP connection soft close successful!")
+    except UnboundLocalError:
+        logger.trace(("Closing FTP failed because it was never "
+            "established in the first place. "
+            "This was expected behavior!"))
+    except AttributeError as e:
+        logger.warning((
+            "FTP connection can't be terminated softly. "
+            "Attempting aggressive termination!"))
+        try:
+            ftp.close()
+            logger.trace("FTP connection aggressive close successful!")
+        except Exception as e:
+            logger.error(f"FTP disconnect failed. ")
+
+
 def download_ftp_file(ftp, paths, destination, max_retries):
 
     logger.trace(("download_ftp_file(\n - "
@@ -155,33 +175,38 @@ def download_ftp_file(ftp, paths, destination, max_retries):
         logger.info(f"Test sample missing. Downloading {target_file.name}")
 
         success = False    
-        try:
+        retries = 0
+        while retries <= max_retries:
+            retries += 1
 
-            logger.trace(
-                f"Downloading {target_file.name} as {target_chnk}"
-            )
+            try:
 
-            with open(target_chnk, 'wb') as local_file:
-                ftp.retrbinary(f'RETR {path}', local_file.write)
+                logger.trace(
+                    f"Downloading {target_file.name} as {target_chnk}"
+                )
 
-            logger.trace(
-                f"Renaming {target_chnk.name} to {target_file.name}"
-            )
-            target_chnk.replace(target_file)
-            
-            success = True
+                with open(target_chnk, 'wb') as local_file:
+                    ftp.retrbinary(f'RETR {path}', local_file.write)
 
-        except Exception as e:
-            logger.error((
-                f"Something went wrong with download.\n"
-                f"{e}"
-            ))
-        finally:
-            if target_file.exists() and not success:
-                logger.warning("Download was unsuccessful, "
-                    f"but target does exist: {target_file}. "
-                    "Something is wrong - Deleting!")
-                target_file.unlink()
+                logger.trace(
+                    f"Renaming {target_chnk.name} to {target_file.name}"
+                )
+                target_chnk.replace(target_file)
+                
+                success = True
+
+                retries = max_retries + 1
+
+            except Exception as e:
+                logger.error((
+                    f"Failed to download {path} on attempt #{retries}\n"
+                    f"{e}"))
+            finally:
+                if target_file.exists() and not success:
+                    logger.warning("Download was unsuccessful, "
+                        f"but target does exist: {target_file}. "
+                        "Something is wrong - Deleting!")
+                    target_file.unlink()
 
         # Want to introduce status messages here.
         if success:
@@ -215,38 +240,15 @@ def deploy_dataset(small, max_retries):
 
         logger.debug(f"Examining {host} for test dataset")
         
-        retries = 0
-        while retries <= max_retries:
-            retries += 1
-            try:        
+        try:        
+            ftp = connect_ftp(host)
+        except Exception as e:
+            logger.error(f"WHAAAAT? Som'thin bad bro... Skipping!!!\n{e}")
+            continue
 
-                ftp = connect_ftp(host)
+        download_ftp_file(ftp, paths, READ_DIR, max_retries)
 
-                download_ftp_file(ftp, paths, READ_DIR, max_retries)
-
-                retries = max_retries + 1
-
-            except Exception as e:
-                logger.error((f"Failed to download {paths} on attempt #{retries}\n"
-                    f"Error: {str(e)}"))
-            finally:
-                logger.trace(f"Attempting to close the FTP connection to {host}.")
-                try:
-                    ftp.quit()
-                    logger.trace("FTP connection soft close successful!")
-                except UnboundLocalError:
-                    logger.trace(("Closing FTP failed because it was never "
-                        "established in the first place. "
-                        "This was expected behavior!"))
-                except AttributeError as e:
-                    logger.warning((
-                        "FTP connection can't be terminated softly. "
-                        "Attempting aggressive termination!"))
-                    try:
-                        ftp.close()
-                        logger.trace("FTP connection aggressive close successful!")
-                    except Exception as e:
-                        logger.error(f"FTP disconnect failed. ")
+        disconnect_ftp(ftp)
 
 
 def deploy(args):
