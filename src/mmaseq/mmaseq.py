@@ -14,6 +14,7 @@ import subprocess
 # Initiate logging
 logger = pkg_logging.initiate_log("MMAseq")
 
+
 def parse_mmaseq():
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -47,16 +48,16 @@ def parse_mmaseq():
             Directory used to deploy virtual environment and databases 
             used during pipeline execution. To reinstall environments 
             and/or databases, remove the `conda/` and/or the `Databases/` 
-            folders in the deployment directory. (Default {PKG_DIR}/Deploy)
+            folders in the deployment directory. (Default: %(default)s)
         """
     )
 
     parser.add_argument(
         "--outdir",
         dest = "outdir",
-        default = CWD / "MMAseq_Results",
+        required = True,
         help = """
-            Directory used for storing analysis results. (Default ./MMAseq_Results)
+            Directory used for storing analysis results.
         """
     )
 
@@ -65,7 +66,7 @@ def parse_mmaseq():
         dest = "config",
         default = PKG_CONFIGS / "config.yaml",
         help = f"""
-            Configuration file location. (Default {PKG_CONFIGS}/config.yaml)
+            Configuration file location. (Default: %(default)s)
         """
     )
 
@@ -75,7 +76,7 @@ def parse_mmaseq():
         default = 4,
         help = """
             Amount of threads (cores) to dedicate for executing the pipeline. 
-            (Default 4)
+            (Default: %(default)s)
         """
     )
 
@@ -85,7 +86,7 @@ def parse_mmaseq():
         action = "store_true",
         help = """
             Resolves absolute paths from samplesheet columns, will 
-            overwrite samplesheet. (Default False)
+            overwrite samplesheet. (Default: %(default)s)
         """
     )
 
@@ -95,7 +96,7 @@ def parse_mmaseq():
         action = "store_true",
         help = """
             Avoid creating symbolic links of the assemblies into the 
-            pipeline output directory. (Default False) 
+            pipeline output directory. (Default: %(default)s) 
             If this is not specified, symbolic links will be created 
             to the output directory, hence avoidubg assembly steps in the 
             pipeline. Use this option to enforce the pipeline to create 
@@ -111,21 +112,33 @@ def parse_mmaseq():
         choices = [0, 1, 2],
         default = 0,
         help = (
-            "Adjust the verbosity level of running with integers between 0 and 2."
-            "0: Show standard messages"
-            "1: Provide debug messages (Usefull for inspecting errors)"
-            "2: Provide VERY detailed trace messages (Usefull for development)"
-            "Mostly used for development and debugging purposes."
+            "Adjust the verbosity (Default: %(default)s); "
+            "0: Minimal messages, "
+            "1: Debug messages, "
+            "2: Trace messages (deveolpment only)"
+        )
+    )
+
+    parser.add_argument(
+        "--logfile",
+        dest = "logfile",
+        type = str,
+        default = None,
+        help = (
+            "If provided, will redirect log messages from STDOUT to logfile. (Default: %(default)s) "
+            "Will be ignored if logfile parent folder deosn't exists."
         )
     )
 
     return parser.parse_args()
+
 
 def resolve_path(path, samplesheet_file):
     logger.trace(("resolve_path(\n - "
             f"path: {path}\n - "
             f"samplesheet_file: {samplesheet_file})"))
 
+    # Determine possible file paths
     path_absolute = path.is_absolute()
     path_from_cwd = CWD / path
     path_from_samplesheet_dir = samplesheet_file.resolve().parent / path
@@ -216,7 +229,7 @@ def create_config(samplesheet_file,
         f"samplesheet_file: {samplesheet_file}\n - "
         f"outdir: {outdir}\n - "
         f"deploy_dir: {deploy_dir}\n - "
-        f"verbosity: {verbosity})"))
+        f"verbosity: {verbosity}"))
 
     # Determine config file
     outdir = outdir.resolve()
@@ -243,7 +256,7 @@ def create_config(samplesheet_file,
         "samplesheet": str(samplesheet_file),
         "deploy_dir": str(deploy_dir),
         "outdir": str(outdir),
-        "verbosity": str(verbosity)
+        "verbosity": int(verbosity)
     }
 
     logger.debug(f"Writing config file to {config_file}")
@@ -365,6 +378,7 @@ def create_command(threads,
         "snakemake --use-conda "
         f"--cores {threads} "
         "--keep-going "
+        "--rerun-incomplete "
         f"--configfile {config_file} "
         f"--snakefile {SNAKEFILE} "
         f"--conda-prefix {conda_dir} "
@@ -449,12 +463,9 @@ def launcher() -> None:
     # Parse user input
     args = parse_mmaseq()
 
-    pkg_logging.adjust_log_level(logger, args.verbosity)
+    # Initiate logging
+    pkg_logging.adjust_log(logger, args.verbosity, args.logfile)
 
-    print((
-        "###################################################\n"
-        "### Mixed Microbial Analysis on Sequencing data ###\n"
-        "###################################################"))
     mmaseq(args)
 
     logger.info("MMAseq successful!")

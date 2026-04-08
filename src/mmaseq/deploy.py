@@ -6,7 +6,6 @@ import sys
 import collections
 import ftplib
 
-
 logger = pkg_logging.initiate_log("MMAdeploy")
 
 
@@ -34,7 +33,7 @@ def parse_deploy():
             Directory used to deploy virtual environment and databases 
             used during pipeline execution. To reinstall environments 
             and/or databases, remove the `conda/` and/or the `Databases/` 
-            folders in the deployment directory. (Default {PKG_DIR}/Deploy)
+            folders in the deployment directory. (Default: %(default)s)
         """
     )
 
@@ -43,7 +42,7 @@ def parse_deploy():
         dest = "small",
         action = "store_true",
         help = f"""
-            Use a small dataset rather than running on  full deployment dataset. (Default False)
+            Use a small dataset rather than running on  full deployment dataset. (Default: %(default)s)
             The small dataset consists of a single isolate, executed on ALL modules.
             If enabled, Read data of a single isolate will be downloaded rather a selection of species.
             Read data will be downloaded to {READ_DIR}
@@ -55,7 +54,7 @@ def parse_deploy():
         dest = "retries",
         default = 3,
         help = f"""
-            Amount of attempts allwoed for each file, when downloading the dataset. (Default 3) 
+            Amount of attempts allwoed for each file, when downloading the dataset. (Default: %(default)s) 
             Setting this to 0 will lead to failure if any short instance of disconnect occurs. 
             Contrarily setting this to a too high value could lead to long run time, 
             if any continous connection issue ARE occuring. 
@@ -69,7 +68,7 @@ def parse_deploy():
         default = 4,
         help = """
             Amount of threads (cores) to dedicate for executing the pipeline. 
-            (Default 4)
+            (Default: %(default)s)
         """
     )
 
@@ -77,17 +76,25 @@ def parse_deploy():
         "--verbosity",
         dest = "verbosity",
         type = int,
-        #choices = [0:3],
+        choices = [0, 1, 2],
         default = 0,
-        help = """
-            Adjust the verbosity level of running with integers between 0 and 2.
-            0: Show standard messages
-            1: Provide debug messages (Usefull for inspecting errors)
-            2: Provide detailed trace messages (Usefull for development)
+        help = (
+            "Adjust the verbosity (Default: %(default)s); "
+            "0: Minimal messages, "
+            "1: Debug messages, "
+            "2: Trace messages (deveolpment only)"
+        )
+    )
 
-            d debug messages during execution. (Default False) 
-            Mostly used for development and debugging purposes.
-        """
+    parser.add_argument(
+        "--logfile",
+        dest = "logfile",
+        type = str,
+        default = None,
+        help = (
+            "If provided, will redirect log messages from STDOUT to logfile. (Default: %(default)s) "
+            "Will be ignored if logfile parent folder deosn't exists."
+        )
     )
 
 
@@ -300,16 +307,11 @@ def deploy(args):
 
 
 def launcher() -> None:
-    print((
-        "###########################################\n"
-        "### Mixed Microbial Analysis deployment ###\n"
-        "###########################################"
-    ))
 
     # Parse user input
     args = parse_deploy()
 
-    # Generate logger
+    # Adjust logger
     pkg_logging.adjust_log_level(logger, args.verbosity)
 
     deploy(args)

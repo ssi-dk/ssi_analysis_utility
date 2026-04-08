@@ -27,10 +27,10 @@ def parse_create():
     parser.add_argument(
         "--indir",
         dest = "indir",
-        default = None,
+        required = True,
         help = """
             Input directory MUST be specified if the samplesheet does 
-            not yet exist. (Default None)
+            not yet exist.
             Input directory will be screened for `.fasta` and `fastq.gz` 
             files, sample_names will be infered from the detected files, 
             and used to populate a samplesheet. After samplesheet creation, 
@@ -39,30 +39,38 @@ def parse_create():
     )
 
     parser.add_argument(
-    "--outdir",
-    dest = "outdir",
-    default = CWD / "MMAseq_Results",
-    help = """
-        Directory used for storing the samplesheet. (Default ./MMAseq_Results)
-        Samplesheet will be stored in ourdir as 'samplesheet.tsv'
-    """
+        "--outdir",
+        dest = "outdir",
+        required = True,
+        help = """
+            Directory used for storing the samplesheet.
+            Samplesheet will be stored in ourdir as 'samplesheet.tsv'
+        """
     )
 
     parser.add_argument(
         "--verbosity",
         dest = "verbosity",
         type = int,
-        #choices = [0:3],
+        choices = [0, 1, 2],
         default = 0,
-        help = """
-            Adjust the verbosity level of running with integers between 0 and 2.
-            0: Show standard messages
-            1: Provide debug messages (Usefull for inspecting errors)
-            2: Provide detailed trace messages (Usefull for development)
+        help = (
+            "Adjust the verbosity (Default: %(default)s); "
+            "0: Minimal messages, "
+            "1: Debug messages, "
+            "2: Trace messages (deveolpment only)"
+        )
+    )
 
-            d debug messages during execution. (Default False) 
-            Mostly used for development and debugging purposes.
-        """
+    parser.add_argument(
+        "--logfile",
+        dest = "logfile",
+        type = str,
+        default = None,
+        help = (
+            "If provided, will redirect log messages from STDOUT to logfile. (Default: %(default)s) "
+            "Will be ignored if logfile parent folder deosn't exists."
+        )
     )
 
 
@@ -107,7 +115,7 @@ def create_samplesheet(args):
 
             # Investegate read files
             if path.suffixes in [[".fastq", ".gz"], [".fq", ".gz"]]:
-                sample = re.sub(r'(_R?[12])\D*\.fastq\.gz$', '', str(file))
+                sample = re.sub(r'(_R?[12])_?\d*\.fastq\.gz$', '', str(file))
 
                 logger.trace(f"Found {sample} with read file: {path}")
                 records.setdefault(sample, {
@@ -158,14 +166,9 @@ def launcher():
     # Read user arguments
     args = parse_create()
 
-    # Generate logger
-    pkg_logging.adjust_log_level(logger, args.verbosity)
+    # Adjusting logging
+    pkg_logging.adjust_log(logger, args.verbosity, args.logfile)
 
-    print((
-        "###################################################\n"
-        "### Mixed Microbial Analysis create samplesheet ###\n"
-        "###################################################"
-    ))
     samplesheet_file = create_samplesheet(args)
 
     logger.info((

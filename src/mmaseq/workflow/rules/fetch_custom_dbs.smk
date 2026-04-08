@@ -233,15 +233,17 @@ rule setup_LREfinder:
         sequence_url="https://bitbucket.org/genomicepidemiology/lre-finder/raw/fac445d190853cc90c1aed392a55102fe9df4376/elmDB.tar.gz"
 
         # 1) download raw sequence
-        curl -fSL $sequence_url --output - | tar -xzvf - -C {params.prefix}
-        mv {params.dbdir}elm.fsa {output.source}
-        rm -rf {params.dbdir}
+        cmd="curl -fSL $sequence_url --output - | tar -xzvf - -C {params.prefix} && mv {params.dbdir}elm.fsa {output.source} && rm -rf {params.dbdir}"
+
+        echo -e "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+
 
         # 2) download version from etag
         etag_cmd="curl -sI $sequence_url | sed -n 's/^etag: //Ip' | tr -d '\\r' | tr -d '\\042'"
         date_cmd="date -I"
 
-        echo -e "Executing command:\n$etag_cmd\n$date_cmd\n" >> {log.stdout}
+        echo -e "Executing command:\n$etag_cmd\n$date_cmd\n" >> {log.stdout} 2>&1
 
         etag_str="$(eval "$etag_cmd" 2>> {log.stdout})"
         date_str="$(eval "$date_cmd" 2>> {log.stdout})"

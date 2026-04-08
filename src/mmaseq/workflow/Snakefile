@@ -3,10 +3,9 @@ from mmaseq.utils import helper_functions, pkg_logging
 from pathlib import Path
 import pandas as pd
 
+# Initiate logging
 logger = pkg_logging.initiate_log("MMAseq Pipeline")
-
-# Generate logger
-pkg_logging.adjust_log_level(logger, config["verbosity"])
+pkg_logging.adjust_log(logger, int(config["verbosity"]))
 
 logger.info("Setting up pipeline variables")
 #####################################################
