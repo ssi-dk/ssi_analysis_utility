@@ -312,7 +312,7 @@ def launcher() -> None:
     args = parse_deploy()
 
     # Adjust logger
-    pkg_logging.adjust_log_level(logger, args.verbosity)
+    pkg_logging.adjust_log(logger, args.verbosity)
 
     deploy(args)
 
