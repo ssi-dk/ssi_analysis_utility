@@ -91,6 +91,18 @@ def parse_mmaseq():
     )
 
     parser.add_argument(
+        "--force",
+        dest = "force",
+        action = "store_true",
+        help = """
+            Force running all rules. (Default: %(default)s) 
+            This will cause all nescesary rules for a given run to be executed, 
+            which e.g. run assemblies despite preexisting ones existing.
+            Mostly usefull for forcing deployment, or rerunning a suspicious batch.
+        """
+    )
+
+    parser.add_argument(
         "--ignore_assemblies",
         dest = "ignore_assemblies",
         action = "store_true",
@@ -360,18 +372,23 @@ def link_assemblies(samplesheet_file,
 
 def create_command(threads, 
                    config_file, 
-                   conda_dir, 
+                   conda_dir,
+                   force,
                    arguments = None, 
                    rules = None):
     logger.trace(("create_command(\n - "
         f"config_file: {config_file}\n - "
         f"conda_dir: {conda_dir}\n - "
+        f"force: {force}\n - "
         f"arguments: {arguments}\n - "
         f"rules: {rules})"))
 
     # Define arguments and rules as a single string
     additionals = " ".join(arguments) if arguments else ""
     target_rules = " ".join(rules) if rules else ""
+
+    if force:
+        additionals += "--forceall"
 
     # Determine command
     command = (
@@ -403,6 +420,7 @@ def mmaseq(args):
     outdir = Path(args.outdir)
     threads = args.threads
     resolve = args.resolve
+    force = args.force
     ignore_assemblies = args.ignore_assemblies
 
     # Resolve other objects
@@ -434,7 +452,7 @@ def mmaseq(args):
                            args.verbosity
                            )
 
-    if ignore_assemblies:
+    if ignore_assemblies or force:
         logger.info(("Assemblies in samplehseet will not replace "
         "assembly steps in the pipeline. This might take some time!"))
     else:
@@ -446,7 +464,8 @@ def mmaseq(args):
     logger.debug("Creating pipeline command")
     command = create_command(threads,
                              config_file, 
-                             conda_dir
+                             conda_dir,
+                             force
                              )
 
     logger.info(

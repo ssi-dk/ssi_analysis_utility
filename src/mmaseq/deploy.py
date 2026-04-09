@@ -38,13 +38,12 @@ def parse_deploy():
     )
 
     parser.add_argument(
-        "--small",
-        dest = "small",
+        "--update",
+        dest = "update",
         action = "store_true",
         help = f"""
-            Use a small dataset rather than running on  full deployment dataset. (Default: %(default)s)
-            The small dataset consists of a single isolate, executed on ALL modules.
-            If enabled, Read data of a single isolate will be downloaded rather a selection of species.
+            Will force rerunning all rules, thus issuing database updates. (Default: %(default)s)
+            The small dataset consists of a single isolate, executed on ALL modules, thus all results should be considered wrong.
             Read data will be downloaded to {READ_DIR}
         """
     )
@@ -217,10 +216,10 @@ def download_ftp_file(ftp, paths, destination, max_retries):
     return None
 
 
-def deploy_dataset(small, max_retries):
+def deploy_dataset(update, max_retries):
 
     logger.trace(("deploy_dataset(\n - "
-        f"small: {small}\n - "
+        f"update: {update}\n - "
         f"max_retries: {max_retries})"))
 
     with open(URL_FILE, "r") as url_file:
@@ -228,7 +227,7 @@ def deploy_dataset(small, max_retries):
 
     # Reduce dataset size if small is selected
     size = "the full"
-    if small:
+    if update:
         urls = urls[0:2]
         size = "a subselection of the"
 
@@ -254,13 +253,13 @@ def deploy_dataset(small, max_retries):
 def deploy(args):
 
     deploy_dir = Path(args.deploy_dir)
-    small = args.small
+    update = args.update
     retries = args.retries
     threads = args.threads
     verbosity = args.verbosity
 
     logger.info(f"Inspecting the deployment dataset")
-    deploy_dataset(small, retries)
+    deploy_dataset(update, retries)
 
     config = f"{PKG_CONFIGS}/Test.yaml"
 
@@ -269,10 +268,10 @@ def deploy(args):
     # Create arguments for command
     dataset = "full"
     additional_cmds = ""
-    if small:
+    if update:
         dataset = "small"
         samplesheet_file = f"{DATA_DIR}/samplesheet_small.tsv"
-        additional_cmds = "--ignore_assemblies "
+        additional_cmds += "--ignore_assemblies --force "
 
 
     outdir = deploy_dir / "MMAseq_Test"
