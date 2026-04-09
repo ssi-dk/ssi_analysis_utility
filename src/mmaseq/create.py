@@ -14,13 +14,13 @@ def parse_create():
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description = (
-            "MMAseq create\n"
-            "Create a samplesheet by scanning the input directory for sample files."
+            f"MMAseq create\n"
+            f"Create a samplesheet by scanning the input directory for sample files."
         ),
         epilog = (
-            "This is the MMAseq Create module.\n"
-            "For details on the deployment module execute 'mmadeploy -h'\n"
-            "For details on the main module execute 'mmaseq -h'"
+            f"This is the MMAseq Create module.\n"
+            f"For details on the deployment module execute 'mmadeploy -h'\n"
+            f"For details on the main module execute 'mmaseq -h'"
         )
     )
 
@@ -28,24 +28,24 @@ def parse_create():
         "--indir",
         dest = "indir",
         required = True,
-        help = """
-            Input directory MUST be specified if the samplesheet does 
-            not yet exist.
-            Input directory will be screened for `.fasta` and `fastq.gz` 
-            files, sample_names will be infered from the detected files, 
-            and used to populate a samplesheet. After samplesheet creation, 
-            the pipeline will be executed in dry-run mode (simulated run)
-        """
+        help = 
+            f"Input directory MUST be specified if the samplesheet does"
+            f"not yet exist."
+            f"Input directory will be screened for `.fasta` and `fastq.gz`"
+            f"files, sample_names will be infered from the detected files,"
+            f"and used to populate a samplesheet. After samplesheet creation," 
+            f"the pipeline will be executed in dry-run mode (simulated run)"
+        
     )
 
     parser.add_argument(
         "--outdir",
         dest = "outdir",
         required = True,
-        help = """
-            Directory used for storing the samplesheet.
-            Samplesheet will be stored in ourdir as 'samplesheet.tsv'
-        """
+        help = 
+            f"Directory used for storing the samplesheet."
+            f"Samplesheet will be stored in outdir as 'samplesheet.tsv'"
+      
     )
 
     parser.add_argument(
@@ -58,7 +58,7 @@ def parse_create():
             "Adjust the verbosity (Default: %(default)s); "
             "0: Minimal messages, "
             "1: Debug messages, "
-            "2: Trace messages (deveolpment only)"
+            "2: Trace messages (development only)"
         )
     )
 
@@ -68,8 +68,8 @@ def parse_create():
         type = str,
         default = None,
         help = (
-            "If provided, will redirect log messages from STDOUT to logfile. (Default: %(default)s) "
-            "Will be ignored if logfile parent folder deosn't exists."
+            f"If provided, will redirect log messages from STDOUT to logfile. (Default: %(default)s)"
+            f"Will be ignored if logfile parent folder doesn't exists."
         )
     )
 
@@ -98,7 +98,7 @@ def create_samplesheet(args):
         # Only examine files
         if path.is_file():
 
-            # Investegate assembly files
+            # Investigate assembly files
             if path.suffix in [".fasta", ".fa"]:
                 sample = str(file.with_suffix(""))
 
@@ -113,7 +113,7 @@ def create_samplesheet(args):
                 # Record assembly file location
                 records[sample]["assembly"] = str(path)
 
-            # Investegate read files
+            # Investigate read files
             if path.suffixes in [[".fastq", ".gz"], [".fq", ".gz"]]:
                 sample = re.sub(r'(_R?[12])_?\d*\.fastq\.gz$', '', str(file))
 
@@ -125,13 +125,13 @@ def create_samplesheet(args):
                     "config": "default.yaml"
                 })
 
-                # Record read mates based on specified suffices
+                # Record read mates based on specified suffixes
                 if re.search(r"(_R?1\D?|_1\D?)", str(file)):
                     records[sample]["read1"] = str(path)
                 elif re.search(r"(_R?2\D?|_2\D?)", str(file)):
                     records[sample]["read2"] = str(path)
                 else:
-                    # Provide warnings for unknown naming convensions
+                    # Provide warnings for unknown naming conventions
                     logger.warning(f"""Read mate {path} was not recognized. 
                         Inspect samplesheet manually! Ignoring file for {sample}...""")
 
@@ -156,7 +156,7 @@ def create_samplesheet(args):
     # Handle permission errors
     except PermissionError as e:
         logger.error(f"""You don't have permission to write to: 
-            {samplesheet_file.parrent}\n - Aborting!\n{e}""")
+            {samplesheet_file.parent}\n - Aborting!\n{e}""")
         sys.exit(1)
 
     return samplesheet_file
@@ -172,7 +172,7 @@ def launcher():
     samplesheet_file = create_samplesheet(args)
 
     logger.info((
-        "Samplesheet creation successful. "
-        "Now go and check the config column of the samplesheet, "
-        "and change these to your likings!"
+        f"Samplesheet creation successful. "
+        f"Now go and check the config column of the samplesheet, "
+        f"and change these to your liking!"
     ))

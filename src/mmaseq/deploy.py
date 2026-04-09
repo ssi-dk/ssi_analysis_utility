@@ -13,15 +13,15 @@ def parse_deploy():
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description = (
-            "MMAseq deploy\n"
-            "Install environments and creates databases by "
-            "executing MMAseq on an inbuilt test dataset.\n"
-            "Pipeline results files are written to the deployment directory."
+            f"MMAseq deploy\n"
+            f"Install environments and creates databases by "
+            f"executing MMAseq on an inbuilt test dataset.\n"
+            f"Pipeline results files are written to the deployment directory."
         ),
         epilog = (
-            "This is the MMAseq Deploy module.\n"
-            "For details on samplesheet creation execute 'mmacreate -h'\n"
-            "For details on the main module execute 'mmaseq -h'"
+            f"This is the MMAseq Deploy module.\n"
+            f"For details on samplesheet creation execute 'mmacreate -h'\n"
+            f"For details on the main module execute 'mmaseq -h'"
         )
     )
 
@@ -29,46 +29,44 @@ def parse_deploy():
         "--deploy_dir",
         dest = "deploy_dir",
         default = PKG_DIR / "Deploy",
-        help = f"""
-            Directory used to deploy virtual environment and databases 
-            used during pipeline execution. To reinstall environments 
-            and/or databases, remove the `conda/` and/or the `Databases/` 
-            folders in the deployment directory. (Default: %(default)s)
-        """
+        help = 
+               f"Directory used to deploy virtual environment and databases "
+               f"used during pipeline execution. To reinstall environments "
+               f"and/or databases, remove the `conda/` and/or the `Databases/` "
+               f"folders in the deployment directory. (Default: %(default)s)"
+            
     )
 
     parser.add_argument(
         "--update",
         dest = "update",
         action = "store_true",
-        help = f"""
-            Will force rerunning all rules, thus issuing database updates. (Default: %(default)s)
-            The small dataset consists of a single isolate, executed on ALL modules, thus all results should be considered wrong.
-            Read data will be downloaded to {READ_DIR}
-        """
+        help = 
+            f"Will force rerunning all rules, thus issuing database updates. (Default: %(default)s)"
+            f"The small dataset consists of a single isolate, executed on ALL modules, thus all results should be considered wrong."
+            f"Read data will be downloaded to {READ_DIR}"
     )
 
     parser.add_argument(
         "--retries",
         dest = "retries",
         default = 3,
-        help = f"""
-            Amount of attempts allwoed for each file, when downloading the dataset. (Default: %(default)s) 
-            Setting this to 0 will lead to failure if any short instance of disconnect occurs. 
-            Contrarily setting this to a too high value could lead to long run time, 
-            if any continous connection issue ARE occuring. 
-            It's recommended to allow for a handfull of attempts.
-        """
+        help = 
+            f"Amount of attempts allowed for each file, when downloading the dataset. (Default: %(default)s)"
+            f"Setting this to 0 will lead to failure if any short instance of disconnect occurs."
+            f"Contrarily setting this to a too high value could lead to long run time," 
+            f"if any continuous connection issue ARE occurring."
+            f"It's recommended to allow for a handful of attempts."
     )
 
     parser.add_argument(
         "--threads",
         dest = "threads",
         default = 4,
-        help = """
-            Amount of threads (cores) to dedicate for executing the pipeline. 
-            (Default: %(default)s)
-        """
+        help = 
+            f"Amount of threads (cores) to dedicate for executing the pipeline. "
+            f"(Default: %(default)s)"
+
     )
 
     parser.add_argument(
@@ -81,7 +79,7 @@ def parse_deploy():
             "Adjust the verbosity (Default: %(default)s); "
             "0: Minimal messages, "
             "1: Debug messages, "
-            "2: Trace messages (deveolpment only)"
+            "2: Trace messages (development only)"
         )
     )
 
@@ -91,8 +89,8 @@ def parse_deploy():
         type = str,
         default = None,
         help = (
-            "If provided, will redirect log messages from STDOUT to logfile. (Default: %(default)s) "
-            "Will be ignored if logfile parent folder deosn't exists."
+            f"If provided, will redirect log messages from STDOUT to logfile. (Default: %(default)s) "
+            f"Will be ignored if logfile parent folder doesn't exists."
         )
     )
 
@@ -156,7 +154,7 @@ def download_ftp_file(ftp, paths, destination, max_retries):
         target_file = destination / path.split('/')[-1]
         target_chnk = target_file.with_suffix(f"{target_file.suffix}.chunk")
                 
-        # Remove old chunks if allready exists
+        # Remove old chunks if already exists
         if target_chnk.exists():
             logger.warning(
                 f"Old chunk file detected: {target_chnk} "
@@ -167,7 +165,7 @@ def download_ftp_file(ftp, paths, destination, max_retries):
         # Abort if the file exists 
         if target_file.exists():
             logger.debug((
-                f"File allready downloaded. Skipping {target_file.name}"
+                f"File already downloaded. Skipping {target_file.name}"
             ))
             continue
 
@@ -242,7 +240,7 @@ def deploy_dataset(update, max_retries):
         try:        
             ftp = connect_ftp(host)
         except Exception as e:
-            logger.error(f"WHAAAAT? Som'thin bad bro... Skipping!!!\n{e}")
+            logger.error(f"What? Something bad is going on... Skipping!!!\n{e}")
             continue
 
         download_ftp_file(ftp, paths, READ_DIR, max_retries)
@@ -318,3 +316,4 @@ def launcher() -> None:
     deploy(args)
 
     logger.info("Deployment successful!")
+
