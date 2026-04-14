@@ -26,3 +26,8 @@ custom_blaster:
     options: "-perc_identity 90.0"
     assemblers: shovill
     database : OXAndm
+
+kleborate:
+    options: --preset escherichia
+    assemblers: shovill
+    output: escherichia_output.txt

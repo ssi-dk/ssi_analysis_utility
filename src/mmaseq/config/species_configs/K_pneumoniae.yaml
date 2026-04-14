@@ -14,6 +14,7 @@ amrfinder:
 kleborate:
     options: --preset kpsc
     assemblers: shovill
+    output: [klebsiella_pneumo_complex_hAMRonization_output.txt, klebsiella_pneumo_complex_output.txt]
 
 mlst:
     assemblers: shovill  

@@ -5,6 +5,7 @@ rule mlst:
         assembly = rules.assembly.output.output_assembly
     output:
         mlst_file = "%s/{sample}/mlst/{assembler}_mlst.tsv" %outdir,
+        mlst_tmp = temp("%s/{sample}/mlst/{assembler}_mlst.mp" %outdir),
         tool_version = "%s/{sample}/mlst/{assembler}_mlst_version.txt" %outdir,
     conda:
         ENVS_DIR / "mlst.yaml"
@@ -16,10 +17,12 @@ rule mlst:
         """
         mkdir -p $(dirname {output.mlst_file})
 
-        cmd="mlst {input.assembly} --label $(basename {input.assembly} .fasta) > {output.mlst_file}"
+        cmd="mlst {input.assembly} --label $(basename {input.assembly} .fasta) > {output.mlst_tmp}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
+
+        awk -f {SCRIPTS_DIR}/mlst_header.awk {output.mlst_tmp} > {output.mlst_file}
 
         # 2) create version file with date
         version_cmd="mlst --version"
@@ -40,9 +43,10 @@ rule kleborate:
         assembly = rules.assembly.output.output_assembly,
         version_db = rules.setup_kleborate_amrfinder.output.version_db
     output:
-        kleborate = directory("%s/{sample}/kleborate/{assembler}" %outdir)
+        outfile = helper_functions.determine_rule_output(outdir, "{sample}", "kleborate", results_catalogue, sample_configs)
     params:
-        options = lambda wildcards: sample_configs[wildcards.sample]["kleborate"]["options"]
+        options = lambda wildcards: sample_configs[wildcards.sample]["kleborate"]["options"],
+        output = lambda wildcards: sample_configs[wildcards.sample]["kleborate"]["output"]
     conda:
         ENVS_DIR / "kleborate.yaml"
     log:
@@ -53,7 +57,7 @@ rule kleborate:
         """
         #mkdir -p $outdir
 
-        cmd="kleborate --assemblies {input.assembly} --outdir {output.kleborate} {params.options}"
+        cmd="kleborate --assemblies {input.assembly} --outdir $(dirname {output.kleborate}) {params.options} && mv {params.output} {output.outfile}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1

@@ -61,6 +61,7 @@ LREfinder:
 kleborate:
     options: --preset escherichia
     assemblers: shovill
+    output: escherichia_output.txt
 
 meningotype:
     assemblers: shovill

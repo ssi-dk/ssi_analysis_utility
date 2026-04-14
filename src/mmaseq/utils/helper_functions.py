@@ -4,9 +4,9 @@ import yaml
 from typing import Dict, Tuple, Set, List
 import warnings
 import sys
+from pathlib import Path
+from collections import defaultdict
 import itertools
-from copy import deepcopy
-
 
 def read_results_catalogue(results_catalogue_path):
     with open(results_catalogue_path, "r") as catalogue_file:
@@ -62,125 +62,160 @@ def determine_sample_configs(samplesheet, config_dir):
     return(sample_configs)
 
 
-def map_configs_to_results(configs, results_dir, results_file):
-    """
-    Expand list-valued configuration fields into all possible combinations
-    and format the result file pattern for each concrete configuration set.
+def deconvolute_path(template, configs):
+    if not isinstance(configs, dict):
+        return [template]
 
-    Example:
-        configs = { "assemblers": ["spades","skesa"], "sample": "ERR142064" }
-        results_file = "{assemblers}_repeat_types.tsv"
+    # Convert multiple arguments into exhaustive parallel lists
+    options = list(configs.keys())
+    arguments = [arg if isinstance(arg, (list, tuple)) else [arg] for arg in (configs[k] for k in options)]
 
-    Produces:
-        [
-            ".../spades_repeat_types.tsv",
-            ".../skesa_repeat_types.tsv"
-        ]
-    """
-    # Work on a copy to avoid mutating the original dictionary
-    cfg = deepcopy(configs)
-
-    # Prepare to expand every config key; scalar values become 1-item lists
-    keys = list(cfg.keys())
-    value_lists = []
-    for k in keys:
-        v = cfg[k]
-        if isinstance(v, list):
-            # Already a list → keep as is
-            value_lists.append(v)
+    exhaustive_templates = list()
+    # Iteratively generate exhaustive dicts for handling multiple option/arugment relationships
+    for combo in itertools.product(*arguments):
+        paired = dict(zip(options, combo))
+        # Laizily map option/arguments where applicatble into expected result file names
+        if len(configs) > 0:
+            fname = template.format(**paired)
+            exhaustive_templates.append(fname)
+                
+        # Handle missing options
         else:
-            # Scalar → wrap into list so itertools.product works uniformly
-            value_lists.append([v])
+            exhaustive_templates.append(template)
 
-    results = []
-
-    # Cartesian product over all config values
-    # → yields one fully concrete mapping per file to generate
-    for combo in itertools.product(*value_lists):
-        mapping = dict(zip(keys, combo))  # map keys to this particular combination
-
-        try:
-            # Attempt to apply the mapping to the filename format string
-            path = f"{results_dir}/{results_file.format(**mapping)}"
-        except KeyError:
-            # If the result pattern references a config key that isn't present, silently skip.
-            continue
-
-        results.append(path)
-
-    return results
+    return exhaustive_templates
 
 
-def list_results(sample_configs, results_catalogue, outdir):
-    """
-    Construct a full list of output file paths for each sample by:
-      - iterating over all sample modules
-      - matching module names to the results catalogue
-      - expanding list-valued configuration fields (assemblers, repeats, etc.)
-      - formatting each results entry using module configs
-    """
+def define_module_results_file(outdir, sample, module, results_catalogue, sample_configs):
 
-    results_files = []
-    seen = set()  # Used to deduplicate while preserving ordering
+    prefix = Path(f"{outdir}/{sample}/{module}").expanduser()
 
-    # Iterate over all modules for individual samples
+    module_result_files = list()
+
+    # Define and normalise expected reult file names
+    result_strings = results_catalogue.get(module)
+    if not isinstance(result_strings, (list, tuple)):
+        result_strings = [result_strings]
+
+    # Define module configurations
+    sample_cfg = sample_configs.get(sample)
+    configs = sample_cfg.get(module)
+
+    # Define container for results
+    module_result_files = []
+
+    # Iterate over multiple expected output results files
+    for template in result_strings:
+        deconvoluted_paths = deconvolute_path(template, configs)
+
+        for path in deconvoluted_paths:
+            module_result_files.append(prefix / path)
+
+    return module_result_files
+
+
+
+def define_all_result_files(outdir, sample_configs, results_catalogue):
+
+    # Define carrier object
+    all_result_files = defaultdict(dict)
+
+    # Iterate over individual sample configurations
     for sample, modules in sample_configs.items():
         
-        # Iterate over all configurations for any sample specific module
-        for sample_module, configs in modules.items():
+        # Iterate over individual modules
+        for mod in modules.keys():
 
-            # Skip modules that are NOT in the results catalogue
-            if sample_module not in results_catalogue:
+            # Ensure that module exists in results catalogue
+            if mod not in results_catalogue.keys():
                 continue
+            
+            # Define Result file strings
+            result_strings = results_catalogue.get(mod)
 
-            # Construct the directory where results for this module live
-            results_dir = f"{outdir}/{sample}/{sample_module}"
+            # Streamline object as list
+            if type(result_strings) is not list:
+                result_strings = [result_strings]
 
-            # Normalise results definitions into a list for uniform iteration
-            module_results = results_catalogue.get(sample_module)
-            if isinstance(module_results, str):
-                module_results = [module_results]
+            # Extract the configurations as keywords
+            configs = modules.get(mod)
 
-            # Case 1: Current module has configurations that must be mapped to the results file
-            if isinstance(configs, dict):
+            # Streamline object as dict
+            if type(configs) is not dict:
+                configs = dict() # Not a dict means no keywords
 
-                # Copy configs and add the sample name for sloppy mapping
-                configs_copy = deepcopy(configs)
-                configs_copy["sample"] = sample
+            result_files = define_module_results_file(outdir, sample, mod, results_catalogue, sample_configs)
 
-                # Handle multiple module result files
-                for results_file in module_results:
+            all_result_files[sample].update({mod: result_files})
 
-                    # Map configuration parameters to results files
-                    concrete_paths = map_configs_to_results(
-                        configs_copy,
-                        results_dir,
-                        results_file
-                    )
-
-                    # Prevent potential duplications, then record final paths
-                    for path in concrete_paths:
-                        if path not in seen:
-                            seen.add(path)
-                            results_files.append(path)
-
-            # Case 2: Current module has *no* configs at all (rare but allowed)
-            else:
-                # Use raw file patterns with no mapping
-                for results_file in module_results:
-                    path = f"{results_dir}/{results_file}"
-                    if path not in seen:
-                        seen.add(path)
-                        results_files.append(path)
-
-    # Fail fast if no files were generated at all
-    if not results_files:
-        sys.exit("Warning: No result files detected.")
-
-    return results_files
+    return all_result_files
 
 
-def read_tsv(path):
-    raw = pd.read_csv(path, sep = "\t")
-    file = os.path.basename(path)
-    raw["file"] = file
+def unpivot_results(sample, module, file, results):
+
+    # Convert index to row number column starting from row 1
+    results.index += 1
+    results = results.reset_index(names = "Row")
+
+    # Generate long list format of results file
+    results_long = results.melt(
+        id_vars = "Row",
+        var_name = "Column",
+        value_name = "Value"
+        )
+
+    # add columns in a single assignment (faster than multiple insert calls)
+    results_long[["Sample", "Module", "File"]] = [sample, module, file.name]
+    
+    # if you want a specific column order:
+    cols = ["Sample", "Module", "File", "Row", "Column", "Value"]
+    results_long = results_long[cols]
+
+    return results_long
+
+
+def generate_long_results(all_result_files):
+    all_sample_results = list()
+
+    for sample, modules in all_result_files.items():
+
+        for mod, files in modules.items():
+
+            long_mod_results = list()
+
+            for file in files:
+
+                try:
+                    sample_results = pd.read_csv(file, sep = "\t", index_col = False)
+                except pd.errors.EmptyDataError as e:
+                    print(f"Results file {file.name} for {sample} is empty. Skipping!")
+                    continue
+
+                sample_long = unpivot_results(sample, mod, file, sample_results)
+
+                all_sample_results.append(sample_long)
+
+    return pd.concat(all_sample_results, ignore_index = True)
+
+
+def determine_rule_output(outdir, sample, module, results_catalogue, sample_configs):
+
+    result_strings = results_catalogue.get(module)
+    if not isinstance(result_strings, (list, tuple)):
+        result_strings = [result_strings]
+
+    # Define module configurations
+    sample_cfg = sample_configs.get(sample)
+    configs = sample_cfg.get(module)
+
+    # Define container for results
+    module_result_path = []
+
+    # Iterate over multiple expected output results files
+    for template in result_strings:
+        deconvoluted_paths = deconvolute_path(template, configs)
+
+        for path in deconvoluted_paths:
+            module_result_path.append(path)
+
+    return ["%s/{sample}/{module}/" %outdir + path for path in module_result_path]

@@ -366,9 +366,9 @@ def link_assemblies(samplesheet_file,
                         {assembly_source} -> {destination}""")
                     destination.symlink_to(assembly_source)
 
-                # Warn if assembly file already exists, but not as a link
+                # Note if assembly file allready exists, but not as a link
                 else:
-                    logger.warning(f"""File exists and is not a symlink {destination}.
+                    logger.debug(f"""File exists and is not a symlink {destination}.
                         Skipping!""")
 
 
