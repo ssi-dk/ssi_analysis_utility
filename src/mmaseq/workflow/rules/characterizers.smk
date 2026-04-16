@@ -124,8 +124,7 @@ rule seqsero2:
     output:
         seqsero = "%s/{sample}/seqsero2/SeqSero_result.tsv" %outdir,
         tool_version = "%s/{sample}/seqsero2/SeqSero_version.txt" %outdir,
-    threads:
-        max(1, workflow.cores * 1 / 3)
+    threads: workflow.cores - 1 - (workflow.cores - 1) % 2
     priority: 1
     conda:
         ENVS_DIR / "seqsero2.yaml"
@@ -164,9 +163,8 @@ rule sistr:
         gmlst_profile = "%s/{sample}/sistr/{assembler}_cgmlst_profiles.csv" %outdir,
         allele_results = "%s/{sample}/sistr/{assembler}_allele-results.json" %outdir,
         tool_version = "%s/{sample}/sistr/{assembler}_sistr_version.txt" %outdir,
-    threads:
-        max(1, workflow.cores * 1 / 3)
-    priority: 2
+    threads: workflow.cores - 1 - (workflow.cores - 1) % 2
+    priority: 1
     conda:
         ENVS_DIR / "sistr.yaml"
     log:

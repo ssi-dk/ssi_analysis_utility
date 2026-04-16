@@ -1,9 +1,9 @@
 rule setup_PlasmidFinder:
-    conda:
-        ENVS_DIR / "plasmidfinder.yaml"
     output: 
         database = directory("%s/plasmidfinder_db" %database_dir),
         version_db = "%s/plasmidfinder_db/PlasmidFinder_version.txt" %database_dir
+    conda:
+        ENVS_DIR / "plasmidfinder.yaml"
     log:
         stdout = "%s/Databases/setup_PlasmidFinder.log" %logdir
     message:
@@ -41,11 +41,11 @@ rule setup_PlasmidFinder:
         """
 
 rule setup_ResFinder:
-    conda:
-        ENVS_DIR / "resfinder.yaml"
     output:
         database = directory("%s/resfinder_db" %database_dir),
         version_db = "%s/resfinder_db/ResFinder_version.txt" %database_dir
+    conda:
+        ENVS_DIR / "resfinder.yaml"
     log:
         stdout = "%s/Databases/setup_ResFinder.log" %logdir
     message:
@@ -83,11 +83,11 @@ rule setup_ResFinder:
         """
 
 rule setup_PointFinder:
-    conda:
-        ENVS_DIR / "resfinder.yaml"
     output:
         database = directory("%s/pointfinder_db" %database_dir),
         version_db = "%s/pointfinder_db/PointFinder_version.txt" %database_dir
+    conda:
+        ENVS_DIR / "resfinder.yaml"
     log:
         stdout = "%s/Databases/setup_PointFinder.log" %logdir
     message:
@@ -126,11 +126,11 @@ rule setup_PointFinder:
         """
 
 rule setup_DisinFinder:
-    conda:
-        ENVS_DIR / "resfinder.yaml"
     output:
         database = directory("%s/disinfinder_db" %database_dir),
         version_db = "%s/disinfinder_db/DisinFinder_version.txt" %database_dir
+    conda:
+        ENVS_DIR / "resfinder.yaml"
     log:
         stdout = "%s/Databases/setup_DisinFinder.log" %logdir
     message:
@@ -168,11 +168,11 @@ rule setup_DisinFinder:
         """
 
 rule setup_VirulenceFinder:
-    conda:
-        ENVS_DIR / "virulencefinder.yaml"
     output:
         database = directory("%s/virulencefinder_db" %database_dir),
         version_db = "%s/virulencefinder_db/VirulenceFinder_version.txt" %database_dir
+    conda:
+        ENVS_DIR / "virulencefinder.yaml"
     log:
         stdout = "%s/Databases/setup_VirulenceFinder.log" %logdir
     message:
@@ -210,11 +210,11 @@ rule setup_VirulenceFinder:
         """
 
 rule setup_SerotypeFinder:
-    conda:
-        ENVS_DIR / "serotypefinder.yaml"
     output:
         database = directory("%s/serotypefinder_db" %database_dir),
         version_db = "%s/serotypefinder_db/SerotypeFinder_version.txt" %database_dir
+    conda:
+        ENVS_DIR / "serotypefinder.yaml"
     log:
         stdout = "%s/Databases/setup_SerotypeFinder.log" %logdir
     message:
@@ -270,11 +270,11 @@ rule setup_Spatyper:
 
 
 rule setup_AMRFinder:
-    conda:
-        ENVS_DIR / "amrfinder.yaml"
     output:
         database = directory("%s/amrfinderplus/latest" %database_dir),
         version_db = "%s/amrfinderplus/latest/AMRFinder_version.txt" %database_dir
+    conda:
+        ENVS_DIR / "amrfinder.yaml"
     log:
         stdout = "%s/Databases/setup_AMRFinder.log" %logdir
     message:
@@ -336,111 +336,111 @@ rule setup_kleborate_amrfinder:
 
 
 rule setup_custom_kmeraligner_index:
-  input:
-    source = "%s/custom/{database}.fasta" %database_dir
-  params:
-    prefix = "%s/kmeraligner/{database}" %database_dir
-  output:
-    combined_size = "%s/kmeraligner/{database}.comp.b" %database_dir,
-    lengths = "%s/kmeraligner/{database}.length.b" %database_dir,
-    names = "%s/kmeraligner/{database}.name" %database_dir,
-    seqs = "%s/kmeraligner/{database}.seq.b" %database_dir,
-    version_db = "%s/kmeraligner/{database}_kmaindex_version.txt" %database_dir
-  conda:
-    ENVS_DIR / "kmeraligner.yaml"
-  log:
-    stdout = "%s/Databases/setup_custom_kmeraligner_index_{database}.log" %logdir
-  message:
-    "[setup_custom_kmeraligner_index]: Setting up {wildcards.database} database with kmeraligner"
-  shell:
-    """
-    mkdir -p $(dirname {params.prefix})
+    input:
+        source = "%s/custom/{database}.fasta" %database_dir
+    params:
+        prefix = "%s/kmeraligner/{database}" %database_dir
+    output:
+        combined_size = "%s/kmeraligner/{database}.comp.b" %database_dir,
+        lengths = "%s/kmeraligner/{database}.length.b" %database_dir,
+        names = "%s/kmeraligner/{database}.name" %database_dir,
+        seqs = "%s/kmeraligner/{database}.seq.b" %database_dir,
+        version_db = "%s/kmeraligner/{database}_kmaindex_version.txt" %database_dir
+    conda:
+        ENVS_DIR / "kmeraligner.yaml"
+    log:
+        stdout = "%s/Databases/setup_custom_kmeraligner_index_{database}.log" %logdir
+    message:
+        "[setup_custom_kmeraligner_index]: Setting up {wildcards.database} database with kmeraligner"
+    shell:
+        """
+            mkdir -p $(dirname {params.prefix})
 
-    cmd="kma index -i {input.source} -o {params.prefix}"
+            cmd="kma index -i {input.source} -o {params.prefix}"
 
-    echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-    eval $cmd >> {log.stdout} 2>&1
+            echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+            eval $cmd >> {log.stdout} 2>&1
 
-    # 2) create version file with date
-    version_cmd="kma index -v"
-    date_cmd="date -I"
-        
-    echo -e "Executing command:\n$version_cmd\n$date_cmd\n" >> {log.stdout}
+            # 2) create version file with date
+            version_cmd="kma index -v"
+            date_cmd="date -I"
+                
+            echo -e "Executing command:\n$version_cmd\n$date_cmd\n" >> {log.stdout}
 
-    version_str="$(eval "$version_cmd" 2>> {log.stdout})"
-    date_str="$(eval "$date_cmd" 2>> {log.stdout})"
+            version_str="$(eval "$version_cmd" 2>> {log.stdout})"
+            date_str="$(eval "$date_cmd" 2>> {log.stdout})"
 
-    printf '%s\t%s\n' "$version_str" "$date_str" > {output.version_db}
-    """
+            printf '%s\t%s\n' "$version_str" "$date_str" > {output.version_db}
+        """
 
 rule setup_custom_bowtie2_index:
-  input:
-    source = "%s/custom/{database}.fasta" %database_dir
-  params:
-    prefix = "%s/bowtie2/{database}" %database_dir
-  output:
-    bt2_1 = "%s/bowtie2/{database}.1.bt2" %database_dir,
-    bt2_2 = "%s/bowtie2/{database}.2.bt2" %database_dir,
-    bt2_3 = "%s/bowtie2/{database}.3.bt2" %database_dir,
-    bt2_4 = "%s/bowtie2/{database}.4.bt2" %database_dir,
-    bt2_1_rev = "%s/bowtie2/{database}.rev.1.bt2" %database_dir,
-    bt2_2_rev = "%s/bowtie2/{database}.rev.2.bt2" %database_dir,
-    version_db = "%s/bowtie2/{database}_bowtie2index_version.txt" %database_dir
-  conda:
-    ENVS_DIR / "bowtie2.yaml"
-  log:
-    stdout = "%s/Databases/setup_custom_bowtie2index_{database}.log" %logdir
-  message:
-    "[setup_custom_bowtie2_index]: Setting up {wildcards.database} database with bowtie2"
-  shell:
-    """
-    mkdir -p $(dirname {params.prefix})
-    cmd="bowtie2-build {input.source} {params.prefix}"
+    input:
+        source = "%s/custom/{database}.fasta" %database_dir
+    params:
+        prefix = "%s/bowtie2/{database}" %database_dir
+    output:
+        bt2_1 = "%s/bowtie2/{database}.1.bt2" %database_dir,
+        bt2_2 = "%s/bowtie2/{database}.2.bt2" %database_dir,
+        bt2_3 = "%s/bowtie2/{database}.3.bt2" %database_dir,
+        bt2_4 = "%s/bowtie2/{database}.4.bt2" %database_dir,
+        bt2_1_rev = "%s/bowtie2/{database}.rev.1.bt2" %database_dir,
+        bt2_2_rev = "%s/bowtie2/{database}.rev.2.bt2" %database_dir,
+        version_db = "%s/bowtie2/{database}_bowtie2index_version.txt" %database_dir
+    conda:
+        ENVS_DIR / "bowtie2.yaml"
+    log:
+        stdout = "%s/Databases/setup_custom_bowtie2index_{database}.log" %logdir
+    message:
+        "[setup_custom_bowtie2_index]: Setting up {wildcards.database} database with bowtie2"
+    shell:
+        """
+            mkdir -p $(dirname {params.prefix})
+            cmd="bowtie2-build {input.source} {params.prefix}"
 
-    echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-    eval $cmd >> {log.stdout} 2>&1
+            echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+            eval $cmd >> {log.stdout} 2>&1
 
-    # 2) create version file with date
-    version_cmd="bowtie2-build --version | head -n1 | grep -oE '[0-9]+([.][0-9]+)+'"
-    date_cmd="date -I"
-        
-    echo -e "Executing command:\n$version_cmd\n$date_cmd\n" >> {log.stdout}
+            # 2) create version file with date
+            version_cmd="bowtie2-build --version | head -n1 | grep -oE '[0-9]+([.][0-9]+)+'"
+            date_cmd="date -I"
+                
+            echo -e "Executing command:\n$version_cmd\n$date_cmd\n" >> {log.stdout}
 
-    version_str="$(eval "$version_cmd" 2>> {log.stdout})"
-    date_str="$(eval "$date_cmd" 2>> {log.stdout})"
+            version_str="$(eval "$version_cmd" 2>> {log.stdout})"
+            date_str="$(eval "$date_cmd" 2>> {log.stdout})"
 
-    printf '%s\t%s\n' "$version_str" "$date_str" > {output.version_db}
-    """
+            printf '%s\t%s\n' "$version_str" "$date_str" > {output.version_db}
+        """
 
 
 rule setup_custom_samtool_index:
-  input:
-    source = "%s/custom/{database}.fasta" %database_dir
-  output:
-    source = "%s/samtools/{database}.fasta" %database_dir, 
-    index = "%s/samtools/{database}.fasta.fai" %database_dir
-  conda:
-    ENVS_DIR / "htslib.yaml"
-  log:
-    stdout = "%s/Databases/setup_custom_samtool_index_{database}.log" %logdir
-  message:
-    "[setup_custom_samtool_index]: Setting up {wildcards.database} database with samtools"
-  shell:
-    """
-    outdir=$(dirname {output.source})
-    mkdir -p $outdir
+    input:
+        source = "%s/custom/{database}.fasta" %database_dir
+    output:
+        source = "%s/samtools/{database}.fasta" %database_dir, 
+        index = "%s/samtools/{database}.fasta.fai" %database_dir
+    conda:
+        ENVS_DIR / "htslib.yaml"
+    log:
+        stdout = "%s/Databases/setup_custom_samtool_index_{database}.log" %logdir
+    message:
+        "[setup_custom_samtool_index]: Setting up {wildcards.database} database with samtools"
+    shell:
+        """
+            outdir=$(dirname {output.source})
+            mkdir -p $outdir
 
-    cmd="cp {input.source} {output.source}"
+            cmd="cp {input.source} {output.source}"
 
-    echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-    eval $cmd >> {log.stdout} 2>&1
+            echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+            eval $cmd >> {log.stdout} 2>&1
 
-    cmd="samtools faidx {output.source} -o {output.index}"
+            cmd="samtools faidx {output.source} -o {output.index}"
 
-    echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
-    eval $cmd >> {log.stdout} 2>&1
+            echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
+            eval $cmd >> {log.stdout} 2>&1
 
-    date -I > $outdir/creation.date
-    """
+            date -I > $outdir/creation.date
+        """
 
 

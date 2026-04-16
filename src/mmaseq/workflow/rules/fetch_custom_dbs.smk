@@ -213,14 +213,14 @@ rule fetch_Senterica_Serovar:
         """
 
 rule setup_LREfinder:
-    conda:
-        ENVS_DIR / "kmeraligner.yaml"
     params:
         prefix = "%s/custom/" %database_dir,
         dbdir = "%s/custom/elmDB/" %database_dir,
     output:
         source = "%s/custom/elmDB.fasta" %database_dir,
         version_db = "%s/custom/elmDB_version.txt" % database_dir
+    conda:
+        ENVS_DIR / "kmeraligner.yaml"
     log:
         stdout = "%s/Databases/LREfinder_db.log" %logdir
     message:
@@ -308,11 +308,11 @@ rule fetch_chtyper_db:
 # Place holder rule until we have an online repo for all dbs
 # We store momentarily in Dataset/databases
 rule fetch_custom_blast_database:
-    conda:
-        ENVS_DIR / "blast.yaml"
     output:
         source = "%s/custom/blast/OXAndm.fasta" %database_dir,
         version_db = "%s/custom/blast/OXAndm_version.txt" % database_dir
+    conda:
+        ENVS_DIR / "blast.yaml"
     log:
         stdout = "%s/Databases/setup_OXAndm.log" %logdir
     message:
