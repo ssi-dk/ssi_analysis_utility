@@ -1,0 +1,75 @@
+kma_filter:
+    options: --organism 'Escherichia coli'
+    database: ecoligenes
+
+snp_identifier:
+    options: --organism 'Clostridioides difficile' --snp_region_buffer 5
+    database: Cdiff_Toxins
+
+deletion_identifier:
+    options: --organism 'Clostridioides difficile' --deletion_region_buffer 5 --overlap_fraction 0.5
+    database: Cdiff_Toxins
+    assemblers: shovill
+
+assembly_minimap2:
+    options: -ax asm5 --cs
+    database: Cdiff_Toxins
+    assemblers: shovill
+
+cdiff_repeat_identifier:
+    repeats: TR6 TR10
+    combos: TRST
+    assemblers: shovill
+
+amrfinder:
+    assemblers: shovill
+    options: ""
+
+samtools:
+    view_options: -q 20
+    sort_options: -n
+
+bcftools:
+    view_options: -v indels -i 'INFO/DP>10'
+
+resfinder: 
+    options: --species 'Escherichia coli'
+
+plasmidfinder: 
+    options: ""
+
+virulencefinder:
+    options: ""
+
+serotypefinder:
+    options: ""    
+
+chtyper:
+    database: fumCH_db 
+
+mlst:
+    assemblers: shovill  
+
+custom_blaster:
+    options: "-perc_identity 90.0"
+    assemblers: shovill
+    database : OXAndm
+
+LREfinder:
+    database : elmDB
+
+kleborate:
+    options: --preset escherichia
+    assemblers: shovill
+
+meningotype:
+    assemblers: shovill
+
+spatyper:
+  assemblers: shovill
+
+seqsero2: true
+
+sistr:
+  assemblers: shovill
+

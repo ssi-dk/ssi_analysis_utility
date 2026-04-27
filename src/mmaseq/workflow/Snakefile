@@ -1,0 +1,164 @@
+from mmaseq.utils.paths import *
+from mmaseq.utils import helper_functions, pkg_logging
+from pathlib import Path
+import pandas as pd
+
+# Initiate logging
+logger = pkg_logging.initiate_log("MMAseq Pipeline")
+pkg_logging.adjust_log(logger, int(config["verbosity"]))
+
+logger.info("Setting up pipeline variables")
+#####################################################
+logger.debug("Importing user input from config file")
+# Read user input
+samplesheet_path = Path(config["samplesheet"])
+deploy_dir = Path(config["deploy_dir"])
+outdir = Path(config["outdir"])
+
+logger.trace(("User input (by config):\n"
+    f" - samplesheet_path: {samplesheet_path}"
+    f" - deploy_dir: {deploy_dir}"
+    f" - outdir: {outdir}"))
+
+# Deduce variables
+logdir = outdir / "Logs"
+database_dir = deploy_dir / "Databases"
+logger.trace(("Deduced variables:\n"
+    f" - logdir: {logdir}"
+    f" - database_dir: {database_dir}"))
+
+#################################################################
+logger.debug("Creating sample specific input and output objects")
+logger.trace("Reading samplesheet")
+samplesheet = pd.read_csv(samplesheet_path, sep='\t').set_index("sample_name")
+
+logger.trace("Reading result files catalogue")
+results_catalogue = helper_functions.read_results_catalogue(CATALOGUE_PATH)
+
+logger.trace("Defining sample specific configurations")
+sample_configs = helper_functions.determine_sample_configs(samplesheet = samplesheet, config_dir = SPE_CONFIGS)
+
+logger.trace("Determining expected results files")
+all_results_files = helper_functions.list_results(sample_configs, results_catalogue, outdir)
+
+# define the long table output files to activate rule all
+longtable_samples_output = [Path(f"{outdir}/{sample}/{sample}_longtable.tsv") for sample in samplesheet.index]
+longtable_all = Path(f"{outdir}/all_results.tsv")
+
+# define the version files
+db_versions_all = Path(f"{database_dir}/Logs/Versions/all_db_versions.tsv")
+tool_versions_all = Path(f"{database_dir}/Logs/Versions/all_tool_versions.tsv")
+
+####################################
+logger.info("Initiating pipeline")
+
+# Define the dynamic input for rule all
+rule all:
+    input:
+        longtable_samples_output,
+        longtable_all,
+        db_versions_all,
+        tool_versions_all
+
+rule longtable_samples:
+    input:
+        all_results_files
+    output:
+        longtable_samples_output
+    conda:
+        "envs/python_functions.yaml"
+    log:
+        f"{logdir}/LongTableSamples.log"
+    message:
+        "[LongTable]: Collapsing all module outputs into a sample specific long table"
+    shell:
+        """
+        cmd="python {SCRIPTS_DIR}/LongTable.py --samplesheet %s --catalogue %s --species_configs_dir %s --outdir %s --na"
+
+        echo "Executing command:\n$cmd\n" > {log}
+        eval $cmd >> {log} 2>&1
+        """%(samplesheet_path, CATALOGUE_PATH, SPE_CONFIGS, outdir)
+
+rule longtable_all:
+    input:
+        all_results_files
+    output:
+        longtable_all
+    conda:
+        "envs/python_functions.yaml"
+    log:
+        f"{logdir}/LongTableAll.log"
+    message:
+        "[LongTable]: Collapsing all module outputs into a long table"
+    shell:
+        """
+        cmd="python {SCRIPTS_DIR}/LongTable.py --samplesheet %s --catalogue %s --species_configs_dir %s --outdir %s --na --extend"
+
+        echo "Executing command:\n$cmd\n" > {log}
+        eval $cmd >> {log} 2>&1
+        """%(samplesheet_path, CATALOGUE_PATH, SPE_CONFIGS, outdir)
+
+rule database_versions_all:
+    input:
+        longtable_all
+    output:
+        db_versions_all
+    params:
+        db_root = database_dir
+    log:
+        f"{database_dir}/Logs/Databases/DatabaseVersionAll.log"
+    message:
+        "[DB versions]: Collecting all database *_version.txt into one file"
+    shell:
+        r"""
+        set -euo pipefail
+        mkdir -p $(dirname {output})
+
+        # find the files, then read them and print the lines if they have two columns (how they are created), while adding a first column being file name "file"
+        cmd="find {params.db_root} -type f -iname '*_version.txt' -print0 \
+          | while IFS= read -r -d '' f; do \
+              awk -F'\t' -v file=\"\$(basename \"\$f\")\" 'NF==2 && length(\$1) && length(\$2) {{print file \"\t\" \$1 \"\t\" \$2}}' \"\$f\"; \
+            done \
+          > {output}"
+
+        echo -e "Executing command:\n$cmd\n" > {log}
+        eval "$cmd" >> {log} 2>&1
+        echo "Wrote database versions into: {output}" >> {log}
+        """
+
+rule tool_versions_all:
+    input:
+        longtable_all
+    output:
+        tool_versions_all
+    params:
+        results_root = outdir
+    log:
+        f"{database_dir}/Logs/Versions/ToolVersionAll.log"
+    message:
+        "[Tool versions]: Collecting all *_version.txt from results into one file"
+    shell:
+        r"""
+        set -euo pipefail
+        mkdir -p $(dirname {output})
+    
+        cmd="find {params.results_root} -type f -iname '*_version.txt' -print0 \
+          | while IFS= read -r -d '' f; do \
+              rel=\$(realpath --relative-to=\"{params.results_root}\" \"\$f\"); \
+              awk -F'\t' -v p=\"\$rel\" '{{gsub(/\r/,\"\",\$0)}} NF==2 && length(\$1) && length(\$2) {{print p \"\t\" \$1 \"\t\" \$2}}' \"\$f\"; \
+            done \
+          > {output}"
+
+        echo -e "Executing command:\n$cmd\n" > {log}
+        eval "$cmd" >> {log} 2>&1
+        echo "Wrote tool versions into: {output}" >> {log}
+        """
+    
+include : "rules/assemblers.smk"
+include : "rules/fetch_custom_dbs.smk"
+include : "rules/setup_dbs.smk"
+include : "rules/mappers.smk"
+include : "rules/htslib_utils.smk"
+include : "rules/finders.smk"
+include : "rules/characterizers.smk"
+include : "rules/custom_wranglers.smk"

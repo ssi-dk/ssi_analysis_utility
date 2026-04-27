@@ -1,0 +1,69 @@
+# Setup of all the options available in the documentation
+site_name: MMASeq Documentation
+site_url: https://ssiutility.dk
+theme:
+  name: readthedocs #material 
+  font:
+    text: Merriweather Sans
+    code: Red Hat Mono
+  logo: assets/MMASeq_logo.png
+  #favicon: assets/ssi_eu.svg
+  features:
+    - content.code.select
+    - content.code.annotate
+    - content.code.copy
+    - navigation.sections
+    - navigation.footer
+    - toc.integrate 
+  annotation: material/information
+  palette:
+    # Dark Mode
+    - scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Dark mode
+      primary: green
+      accent: deep purple
+plugins:
+  - search
+
+# Order of the pages
+nav:
+  - Home: index.md
+  - Description: description.md
+  - Deployment: deployment.md
+  - Supported Analysis: supported_analysis.md
+  - Tools and Databases: tools_databases.md
+  - Tutorials: tutorials.md
+  - References: references.md
+
+# Markdown Extension for our each page in the documentation 
+markdown_extensions: 
+  - def_list
+  - attr_list
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - pymdownx.details
+
+extra:
+  social:
+    - icon: simple/github
+      link: https://github.com/ssi-dk/ssi_analysis_utility
+
+
+copyright: The MIT License (MIT)  Copyright © 2023 Statens Serum Institut

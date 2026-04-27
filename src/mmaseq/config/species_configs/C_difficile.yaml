@@ -1,0 +1,36 @@
+kma_filter:
+    options: --organism 'Clostridioides difficile'
+    database: Cdiff_Toxins
+
+snp_identifier:
+    options: --organism 'Clostridioides difficile' --snp_region_buffer 5
+    database: Cdiff_Toxins
+
+deletion_identifier:
+    options: --organism 'Clostridioides difficile' --deletion_region_buffer 5 --overlap_fraction 0.5
+    database: Cdiff_Toxins
+    assemblers: [spades]        # <--- NEW: matches the assembler wildcard
+
+assembly_minimap2:
+    options: -ax asm5 --cs
+    database: Cdiff_Toxins
+    assemblers: [spades]        # used to configure which assembler(s) to align
+
+cdiff_repeat_identifier:
+    repeats: TR6 TR10
+    combos: TRST
+    assemblers: [spades, skesa]
+
+amrfinder:
+    options: --organism 'Clostridioides_difficile'
+    assemblers: spades 
+
+mlst:
+    assemblers: spades  
+
+samtools:
+    view_options: -q 20
+    sort_options: -n
+
+bcftools:
+    view_options: -v indels -i 'INFO/DP>10'
