@@ -191,7 +191,10 @@ def generate_long_results(all_result_files):
                     print(f"Results file {file.name} for {sample} is empty. Skipping!")
                     continue
 
-                sample_long = unpivot_results(sample, mod, file, sample_results)
+                # Determine whether the long table format is allready observed
+                sample_long = sample_results
+                if not {"Sample", "Module", "File", "Row", "Column", "Value"}.issubset(sample_results.columns):
+                    sample_long = unpivot_results(sample, mod, file, sample_results)
 
                 all_sample_results.append(sample_long)
 

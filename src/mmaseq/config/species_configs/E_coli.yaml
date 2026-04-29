@@ -30,4 +30,3 @@ custom_blaster:
 kleborate:
     options: --preset escherichia
     assemblers: shovill
-    output: escherichia_output.txt

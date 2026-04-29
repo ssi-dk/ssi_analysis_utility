@@ -8,7 +8,7 @@ rule spades:
         ENVS_DIR / "shovill.yaml"
     log:
         stdout = "%s/Assemblies/{sample}_spades.log" %logdir
-    threads: workflow.cores - 1 - (workflow.cores - 1) % 2
+    threads: max(1, workflow.cores - 1 - (workflow.cores - 1) % 2)
     priority: 2
     message:
         "[SPAdes]: Assemblying {wildcards.sample} using SPAdes with {threads} thread(s). This may take some time!\nInspect {log.stdout} for more details!"
@@ -35,7 +35,7 @@ rule skesa:
         ENVS_DIR / "shovill.yaml"
     log:
         stdout = "%s/Assemblies/{sample}_Skesa.log" %logdir
-    threads: workflow.cores - 1 - (workflow.cores - 1) % 2
+    threads: max(1, workflow.cores - 1 - (workflow.cores - 1) % 2)
     priority: 2
     message:
         "[Skesa]: Assemblying {wildcards.sample} using Skesa with {threads} core(s). This may take some time!\nInspect {log.stdout} for more details!"
@@ -57,7 +57,7 @@ rule shovill:
         ENVS_DIR / "shovill.yaml"
     log:
         stdout = "%s/Assemblies/{sample}_Shovill.log" %logdir
-    threads: workflow.cores - 1 - (workflow.cores - 1) % 2
+    threads: max(1, workflow.cores - 1 - (workflow.cores - 1) % 2)
     priority: 2
     message:
         "[Shovill]: Assemblying {wildcards.sample} using Shovill with {threads} CPU(s). This may take some time!\nInspect {log.stdout} for more details!"
