@@ -1,4 +1,0 @@
-deploy_dir: ../ssi_analysis_utility/Deploy
-outdir: /home/simonescrima/Desktop/test_pipeline
-root: /home/simonescrima/Desktop/ssi_analysis_utility/mmaseq
-samplesheet: samplesheet.tsv

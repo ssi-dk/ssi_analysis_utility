@@ -220,7 +220,7 @@ def resolve_samplesheet_paths(samplesheet_file, outdir):
         return path
 
 
-    samplesheet = pd.read_csv(samplesheet_file, sep="\t").copy()
+    samplesheet = pd.read_csv(samplesheet_file, sep="\t").copy() ## why copy?
 
 
     # Resolve read and assembly file paths
@@ -245,8 +245,10 @@ def resolve_samplesheet_paths(samplesheet_file, outdir):
     return samplesheet_resolved_file
 
 
-def create_config(samplesheet_file, 
-                  outdir, 
+def create_config(samplesheet_file,
+                  outdir,
+                  ignore_assemblies,
+                  force,
                   deploy_dir,
                   verbosity
                   ):
@@ -254,6 +256,8 @@ def create_config(samplesheet_file,
     logger.trace(("create_config(\n - "
                   f"samplesheet_file: {samplesheet_file}\n - "
                   f"outdir: {outdir}\n - "
+                  f"ignore_assemblies: {ignore_assemblies}\n - "
+                  f"force: {force}\n - "
                   f"deploy_dir: {deploy_dir}\n - "
                   f"verbosity: {verbosity}"))
 
@@ -276,11 +280,15 @@ def create_config(samplesheet_file,
         timestamp = datetime.now().strftime("%y_%m_%d-%H_%M")
         config_file = config_file.parent / f"{timestamp}_{config_file.name}"
         logger.debug("Old configuration file detected. Creating new file!")
+
+    if force:
+        ignore_assemblies = True
     
     # Record config contents
     config = {
         "samplesheet": str(samplesheet_file),
         "deploy_dir": str(deploy_dir),
+        "ignore_assemblies": ignore_assemblies,
         "outdir": str(outdir),
         "verbosity": int(verbosity)
     }
@@ -295,7 +303,8 @@ def create_config(samplesheet_file,
 
 def link_assemblies(samplesheet_file, 
                     config_dir, 
-                    outdir):
+                    outdir,
+                    ignore_assemblies):
     logger.trace((
         "link_assemblies(\n - "
         f"samplesheet_file: {samplesheet_file}\n - "
@@ -309,27 +318,25 @@ def link_assemblies(samplesheet_file,
 
 
     logger.trace(f"Importing sample configs from {config_dir}")
-    sample_configs = helper_functions.determine_sample_configs(samplesheet = samplesheet, 
-                                                               config_dir = config_dir)
+    sample_configs = helper_functions.determine_sample_configs(samplesheet, 
+                                                               config_dir,
+                                                               ignore_assemblies)
 
     # Iterating over sample configurations
     for sample, configs in sample_configs.items():
 
-        # Reading assembly entry from samplesheet
-        assembly_from_sheet = samplesheet.at[sample, "assembly"]
-        
-        # Handle if assembly is determined as NA
-        if pd.isna(assembly_from_sheet):
-            logger.trace(f"No assembly provided for {sample} — skipping!")
-            continue
-
-        assembly_source = Path(assembly_from_sheet)
-        logger.trace(f"Assembly for {sample} in samplesheet is {assembly_source}")
+        assembly_source = helper_functions.inspect_samplesheet_assembly_path(sample, samplesheet)
+        assembly_path = assembly_source.get(sample)
 
         # Attempt to locate relative paths from assembly listed in sheet
-        if assembly_source.exists(follow_symlinks = True):
+        if assembly_path is None:
+            logger.trace(f"Skipping assembly for {sample}")
+        elif not assembly_path:
+            logger.warning(f"Failed to locate assembly file for {sample} at {assembly_path}\nSkipping!")
+            continue
+        else:
             # Handle if assembly file exists with a valid path
-            logger.trace(f"Assembly found at {assembly_source}")
+            logger.trace(f"Assembly found at {assembly_path}")
 
             # Determine assemblers specified in sample configs
             assemblers = set() 
@@ -363,21 +370,15 @@ def link_assemblies(samplesheet_file,
                 # Initiate symlink creation if destination is empty
                 if not destination.exists(follow_symlinks = False):
                     logger.debug(f"""Creating symlink: 
-                        {assembly_source} -> {destination}""")
-                    destination.symlink_to(assembly_source)
+                        {assembly_path} -> {destination}""")
+                    destination.symlink_to(assembly_path)
 
                 # Note if assembly file allready exists, but not as a link
                 else:
                     logger.debug(f"""File exists and is not a symlink {destination}.
                         Skipping!""")
 
-
-
-        else:
-
-            # Handle if assembly file path is invalid or not existing
-            logger.warning(f"Assembly path does not exist for {sample}"
-                           f"at location {assembly_source}\nSkipping!")
+    return None
 
 
 def create_command(threads, 
@@ -458,7 +459,9 @@ def mmaseq(args):
 
     logger.debug("Creating pipeline configuration file")
     config_file = create_config(samplesheet_file, 
-                           outdir, 
+                           outdir,
+                           ignore_assemblies,
+                           force,
                            deploy_dir,
                            args.verbosity
                            )
@@ -469,7 +472,7 @@ def mmaseq(args):
     else:
         logger.info("Assemblies in samplesheet will be used to skip "
                     "assembly steps in the pipeline, where applicable!")
-        link_assemblies(samplesheet_file, str(SPE_CONFIGS), outdir)
+        link_assemblies(samplesheet_file, str(SPE_CONFIGS), outdir, ignore_assemblies)
 
 
     logger.debug("Creating pipeline command")

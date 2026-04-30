@@ -12,8 +12,10 @@ logger.info("Setting up pipeline variables")
 logger.debug("Importing user input from config file")
 # Read user input
 samplesheet_path = Path(config["samplesheet"])
-deploy_dir = Path(config["deploy_dir"])
 outdir = Path(config["outdir"])
+ignore_assemblies = config["ignore_assemblies"]
+deploy_dir = Path(config["deploy_dir"])
+
 
 logger.trace(("User input (by config):\n"
     f" - samplesheet_path: {samplesheet_path}"
@@ -36,7 +38,7 @@ logger.trace("Reading result files catalogue")
 results_catalogue = helper_functions.read_results_catalogue(CATALOGUE_PATH)
 
 logger.trace("Defining sample specific configurations")
-sample_configs = helper_functions.determine_sample_configs(samplesheet = samplesheet, config_dir = SPE_CONFIGS)
+sample_configs = helper_functions.determine_sample_configs(samplesheet, SPE_CONFIGS, ignore_assemblies)
 
 all_result_files = helper_functions.define_all_result_files(outdir, sample_configs, results_catalogue)
 
