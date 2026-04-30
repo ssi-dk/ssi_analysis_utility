@@ -87,7 +87,7 @@ rule custom_bowtie2alignment:
        options = lambda wc: sample_configs[wc.sample]["custom_bowtie2alignment"]["options"]
     output:
         sam = temp("%s/{sample}/bowtie2/{database}.sam" %outdir)
-    threads: workflow.cores - 1 - (workflow.cores - 1) % 2
+    threads: max(1, workflow.cores - 1 - (workflow.cores - 1) % 2)
     priority: 1
     conda:
         ENVS_DIR / "bowtie2.yaml"

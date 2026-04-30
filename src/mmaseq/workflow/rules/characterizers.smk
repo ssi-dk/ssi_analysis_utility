@@ -5,6 +5,7 @@ rule mlst:
         assembly = rules.assembly.output.output_assembly
     output:
         mlst_file = "%s/{sample}/mlst/{assembler}_mlst.tsv" %outdir,
+        mlst_tmp = temp("%s/{sample}/mlst/{assembler}_mlst.mp" %outdir),
         tool_version = "%s/{sample}/mlst/{assembler}_mlst_version.txt" %outdir,
     conda:
         ENVS_DIR / "mlst.yaml"
@@ -16,10 +17,12 @@ rule mlst:
         """
         mkdir -p $(dirname {output.mlst_file})
 
-        cmd="mlst {input.assembly} --label $(basename {input.assembly} .fasta) > {output.mlst_file}"
+        cmd="mlst {input.assembly} --label $(basename {input.assembly} .fasta) > {output.mlst_tmp}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
+
+        awk -f {SCRIPTS_DIR}/mlst_header.awk {output.mlst_tmp} > {output.mlst_file}
 
         # 2) create version file with date
         version_cmd="mlst --version"
@@ -40,7 +43,7 @@ rule kleborate:
         assembly = rules.assembly.output.output_assembly,
         version_db = rules.setup_kleborate_amrfinder.output.version_db
     output:
-        kleborate = directory("%s/{sample}/kleborate/{assembler}" %outdir)
+        kleborate = "%s/{sample}/kleborate/{assembler}/Kleborate_long.tsv" %outdir
     params:
         options = lambda wildcards: sample_configs[wildcards.sample]["kleborate"]["options"]
     conda:
@@ -51,12 +54,33 @@ rule kleborate:
     	"[Kleborate]: Running Kleborate on {wildcards.assembler} assembly from {wildcards.sample}"
     shell:
         """
+        outdir=$(dirname {output.kleborate})
         #mkdir -p $outdir
 
-        cmd="kleborate --assemblies {input.assembly} --outdir {output.kleborate} {params.options}"
+        cmd="kleborate --assemblies {input.assembly} --outdir $outdir {params.options}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
+
+        # Creating long table
+        (
+            echo -e "Sample\tModule\tFile\tRow\tColumn\tValue"
+            for f in $outdir/*.txt; do
+                fname=$(basename "$f" .tsv)
+
+                awk -v file="$fname" 'BEGIN{{FS=OFS="\t"}}
+                NR==1 {{
+                    for (i=2; i<=NF; i++) header[i]=$i
+                    next
+                }}
+                {{
+                    rownum++
+                    for (i=2; i<=NF; i++) {{
+                        print $1, "kleborate", file, rownum, header[i], $i
+                    }}
+                }}' "$f"
+            done
+        ) > {output.kleborate}
     	"""
 
 rule chtyper:
@@ -124,7 +148,7 @@ rule seqsero2:
     output:
         seqsero = "%s/{sample}/seqsero2/SeqSero_result.tsv" %outdir,
         tool_version = "%s/{sample}/seqsero2/SeqSero_version.txt" %outdir,
-    threads: workflow.cores - 1 - (workflow.cores - 1) % 2
+    threads: max(1, workflow.cores - 1 - (workflow.cores - 1) % 2)
     priority: 1
     conda:
         ENVS_DIR / "seqsero2.yaml"
@@ -163,7 +187,7 @@ rule sistr:
         gmlst_profile = "%s/{sample}/sistr/{assembler}_cgmlst_profiles.csv" %outdir,
         allele_results = "%s/{sample}/sistr/{assembler}_allele-results.json" %outdir,
         tool_version = "%s/{sample}/sistr/{assembler}_sistr_version.txt" %outdir,
-    threads: workflow.cores - 1 - (workflow.cores - 1) % 2
+    threads: max(1, workflow.cores - 1 - (workflow.cores - 1) % 2)
     priority: 1
     conda:
         ENVS_DIR / "sistr.yaml"
