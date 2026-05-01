@@ -321,17 +321,20 @@ rule setup_kleborate_amrfinder:
         """
             BIN=$(which kleborate)
             BINDIR=$(dirname $BIN)
-            KLEBDIR="$(dirname $BINDIR)/../../share/amrfinderplus/data/latest"
+            KLEBDIR="$(dirname $BINDIR)/share/amrfinderplus/data"
 
-            mkdir -p $(dirname $KLEBDIR)
-
-            cmd="ln -sf {input.database} $KLEBDIR"
+            mkdir -p  $KLEBDIR
+            database=$(realpath -s {input.database})
+            cmd="ln -sf $database $KLEBDIR/"
 
             echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
             eval $cmd >> {log.stdout} 2>&1
 
             mkdir -p $(dirname {output.version_db})
-            ln -s {input.version_db} {output.version_db}
+            version_database=$(realpath -s {input.version_db})
+            cmd="ln -sf $version_database {output.version_db}"
+            echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
+            eval $cmd >> {log.stdout} 2>&1
         """
 
 
