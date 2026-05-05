@@ -8,7 +8,7 @@ rule kma_filter:
     output:
         filtered_tsv = "%s/{sample}/kma_filter/{database}.tsv" % outdir
     conda:
-        ENVS_DIR / "python_functions.yaml"
+        ENVS_DIR / "py_utls.yaml"
     log:
         stdout = "%s/{sample}/KMA_results/{sample}_{database}.log" %logdir
     message:

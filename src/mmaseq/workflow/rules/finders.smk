@@ -8,7 +8,7 @@ rule plasmidfinder:
         # Output directory for plasmidfinder results.
         replicons = "%s/{sample}/plasmidfinder/results_tab.tsv" %outdir
     conda:
-        ENVS_DIR / "plasmidfinder.yaml"
+        ENVS_DIR / "CGE_finders.yaml"
     log:
         stdout = "%s/{sample}/plasmidfinder.log" %logdir
     message:
@@ -37,7 +37,7 @@ rule resfinder:
         resistance = "%s/{sample}/resfinder/ResFinder_results_tab.txt" %outdir,
         tool_version = "%s/{sample}/resfinder/ResFinder_version.txt" %outdir,
     conda:
-        ENVS_DIR / "resfinder.yaml"
+        ENVS_DIR / "CGE_finders.yaml"
     log:
         stdout = "%s/{sample}/resfinder.log" %logdir
     message:
@@ -75,7 +75,7 @@ rule virulencefinder:
     output:
         virulence = "%s/{sample}/virulencefinder/results_tab.tsv" %outdir,
     conda:
-        ENVS_DIR / "virulencefinder.yaml"
+        ENVS_DIR / "CGE_finders.yaml"
     log:
         stdout = "%s/{sample}/virulencefinder.log" %logdir
     message:
@@ -98,7 +98,7 @@ rule serotypefinder:
     output:
         serotype = "%s/{sample}/serotypefinder/results_tab.tsv" %outdir,
     conda:
-        ENVS_DIR / "serotypefinder.yaml"
+        ENVS_DIR / "CGE_finders.yaml"
     log:
         stdout = "%s/{sample}/serotypefinder.log" %logdir
     message:
@@ -119,7 +119,7 @@ rule spa_typing:
     output:
         spatyper = "%s/{sample}/spatyper/{assembler}_spatype_results.tsv" %outdir
     conda:
-        ENVS_DIR / "spatyper.yaml"
+        ENVS_DIR / "py_utls.yaml"
     log:
         stdout = "%s/{sample}/spatyper_{assembler}.log" %logdir
     message:
@@ -179,7 +179,7 @@ rule LREfinder:
     output:
         results = "%s/{sample}/LREfinder/{database}.tsv" %outdir,
     conda:
-        ENVS_DIR / "python_functions.yaml"
+        ENVS_DIR / "py_utls.yaml"
     log:
         stdout = "%s/{sample}/LRE-finder_{database}.log" %logdir
     message:
@@ -208,7 +208,7 @@ rule snp_identifier:
     output:
         indentified_variants = "%s/{sample}/snp_identifier/{database}.tsv" %outdir
     conda:
-        ENVS_DIR / "python_functions.yaml"
+        ENVS_DIR / "py_utls.yaml"
     log:
         stdout = "%s/{sample}/snp_identifier_{database}.log" %logdir
     message:
@@ -235,7 +235,7 @@ rule deletion_identifier:
     output:
         identified_variants = f"{outdir}/{{sample}}/deletion_identifier/{{assembler,[^_]+}}_{{database}}.tsv" #added regex expression to ensure assemblies cannot contain '_' which our database also does
     conda:
-        ENVS_DIR / "python_functions.yaml"
+        ENVS_DIR / "py_utls.yaml"
     log:
         stdout = "%s/{sample}/deletion_identifier_{assembler}_{database}.log" %logdir
     message:
@@ -260,7 +260,7 @@ rule cdiff_repeat_identifier:
     output:
         repeat_types = "%s/{sample}/cdiff_repeat_identifier/{assembler}_repeat_types.tsv" %outdir
     conda:
-        ENVS_DIR / "python_functions.yaml"
+        ENVS_DIR / "py_utls.yaml"
     log:
         stdout = "%s/{sample}/cdiff_repeat_identifier_{assembler}_repeat_types.log" %logdir
     message:

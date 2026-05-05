@@ -7,7 +7,7 @@ rule fetch_genbank:
         bed = "%s/custom/{database,[^/]+}.bed6" % database_dir,
         version_db = "%s/custom/{database,[^/]+}_version.txt" %database_dir
     conda:
-        ENVS_DIR / "fetch.yaml"
+        ENVS_DIR / "py_utls.yaml"
     log:
         stdout = "%s/Databases/fetch_genbank_{database}.log" %logdir
     message:
@@ -43,7 +43,7 @@ rule fetch_type_repeat_sequence:
         seq = "%s/custom/type_repeats/{TR}.fasta" %database_dir,
         version_db = "%s/custom/type_repeats/{TR}_version.txt" % database_dir
     conda:
-        ENVS_DIR / "fetch.yaml"
+        ENVS_DIR / "py_utls.yaml"
     log:
         stdout = "%s/Databases/fetch_type_repeat_sequences_{TR}.log" %logdir
     message:
@@ -72,7 +72,7 @@ rule fetch_type_repeat_metadata:
     output:
         meta = "%s/custom/type_repeats/{TR}.txt" %database_dir
     conda:
-        ENVS_DIR / "fetch.yaml"
+        ENVS_DIR / "py_utls.yaml"
     log:
         stdout = "%s/Databases/fetch_type_repeat_metadata_{TR}.log" %logdir
     message:
@@ -92,7 +92,7 @@ rule fetch_ecoligenes:
         source = "%s/custom/ecoligenes.fasta" %database_dir,
         version_db = "%s/custom/ecoligenes_version.txt" % database_dir
     conda:
-        ENVS_DIR / "fetch.yaml"
+        ENVS_DIR / "py_utls.yaml"
     log:
         stdout = "%s/Databases/setup_ecoligenes_ecoligenes.log" %logdir
     message:
@@ -122,7 +122,7 @@ rule fetch_Senterica_Scheme:
         profile = "%s/custom/SalmonellaAchtman7GeneMLST.txt" %database_dir,
         version_db = "%s/custom/SalmonellaAchtman7GeneMLST_version.txt" % database_dir
     conda:
-        ENVS_DIR / "fetch.yaml"
+        ENVS_DIR / "py_utls.yaml"
     log:
         stdout = "%s/Databases/setup_senterica_mlst_scheme.log" %logdir
     message:
@@ -170,7 +170,7 @@ rule fetch_Senterica_Serovar:
         source = "%s/custom/Senterica_serovar.txt" % database_dir,
         version_db = "%s/custom/Senterica_serovar_version.txt" % database_dir
     conda:
-        ENVS_DIR / "fetch.yaml"
+        ENVS_DIR / "py_utls.yaml"
     log:
         stdout = "%s/Databases/setup_senterica_sistr.log" %logdir
     message:
@@ -265,7 +265,7 @@ rule fetch_chtyper_db:
         source = "%s/custom/fumCH_db.fasta" %database_dir,
         version_db = "%s/custom/fumCH_db_version.txt" % database_dir
     conda:
-        ENVS_DIR / "fetch.yaml"
+        ENVS_DIR / "py_utls.yaml"
     log:
         stdout = "%s/Databases/setup_chtyper_database.log" %logdir
     message:

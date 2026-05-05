@@ -3,6 +3,9 @@ channels:
   - bioconda
 dependencies:
   - python=3.9
+  - plasmidfinder
+  - resfinder
+  - serotypefinder
   - virulencefinder
   - kma 
   - blast 
