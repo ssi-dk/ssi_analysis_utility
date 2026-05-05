@@ -215,3 +215,47 @@ rule sistr:
 
         printf '%s\t%s\n' "$version_str" "$date_str" > {output.tool_version}
         """
+
+
+rule serotypefinder:
+    input:
+        R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
+        R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
+        database = rules.setup_SerotypeFinder.output.database
+    output:
+        serotype = "%s/{sample}/serotypefinder/results_tab.tsv" %outdir,
+    conda:
+        ENVS_DIR / "CGE_finders.yaml"
+    log:
+        stdout = "%s/{sample}/serotypefinder.log" %logdir
+    message:
+        "[SerotypeFinder]: Running SerotypeFinder on {wildcards.sample}"
+    shell:
+        """
+        outdir=$(dirname {output.serotype})
+        cmd="serotypefinder -i {input.R1} {input.R2} -o $outdir -p {input.database} -x"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+        """
+
+rule spa_typing:
+    input:
+        assembly = rules.assembly.output.output_assembly,
+        database = rules.setup_Spatyper.output.database
+    output:
+        spatyper = "%s/{sample}/spatyper/{assembler}_spatype_results.tsv" %outdir
+    conda:
+        ENVS_DIR / "py_utls.yaml"
+    log:
+        stdout = "%s/{sample}/spatyper_{assembler}.log" %logdir
+    message:
+        "[Spatyping]: Running Spatyper for {wildcards.sample} using ({wildcards.assembler}) contigs"
+    shell:
+        """
+        outdir=$(dirname {output.spatyper})
+        cmd="python {SCRIPTS_DIR}/SPATyper_V2.py -a {input.assembly} -d {input.database} -o {output.spatyper} -b $outdir/seq_db -l $outdir/spatyper.log "
+
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+        """
