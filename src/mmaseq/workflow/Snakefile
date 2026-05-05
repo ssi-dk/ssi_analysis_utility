@@ -58,11 +58,14 @@ rule all:
         all_results_long.to_csv(output.all, sep = "\t")
 
 
+include : "rules/db_fetch.smk"      
+include : "rules/db_setup.smk"       
 include : "rules/assemblers.smk"
-include : "rules/fetch_custom_dbs.smk"
-include : "rules/setup_dbs.smk"
 include : "rules/mappers.smk"
-include : "rules/htslib_utils.smk"
-include : "rules/finders.smk"
-include : "rules/characterizers.smk"
-include : "rules/custom_wranglers.smk"
+include : "rules/variant_calling.smk"
+include : "rules/amr_finders.smk"
+include : "rules/typing.smk"
+include : "rules/custom_analysis.smk"
+
+
+

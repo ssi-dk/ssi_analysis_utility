@@ -153,7 +153,6 @@ rule LREfinder:
         echo "LRE-finder successfully executed" > {log.stdout}
         """
 
-
 rule custom_blaster:
     input:
         # A complete access to the wildcard is needed, if we try to call the output of different rule we have the blending of wildcards 
