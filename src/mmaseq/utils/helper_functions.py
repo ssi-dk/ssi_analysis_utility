@@ -94,7 +94,7 @@ def determine_sample_configs(samplesheet, config_dir, ignore_assemblies):
             if not isinstance(opts, dict):
                 continue
             elif "assemblers" in opts.keys():
-                sample_configs[sample][mod]["assemblers"] = ["original"]
+                sample_configs[sample][mod]["assemblers"] = ["UnkAssembly"]
 
     return(sample_configs)
 
