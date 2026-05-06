@@ -19,7 +19,7 @@ def adjust_log(logger, verbosity, logfile = None):
     logging.Logger.trace = trace
 
     # Define text formatting options
-    logformat_simple = "[%(name)s] %(asctime)s: %(message)s"
+    logformat_simple = "[%(name)s] %(levelname)s: %(message)s"
     logformat_advced = "[%(name)s] %(levelname)s %(asctime)s: %(message)s"
 
     # Determine verbosity settings

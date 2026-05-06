@@ -239,12 +239,19 @@ def deploy_dataset(update, max_retries):
         
         try:        
             ftp = connect_ftp(host)
+        except TimeoutError as e:
+            logger.error((
+                f"ftp connection to {host} could not be established. Are you firewalled?\n"
+                "Check whether ftp ports are openned (default is often 20, 21 or 990). "
+                "Aborting deployment!"
+            ))
+            sys.exit(1)
         except Exception as e:
             logger.error(f"What? Something bad is going on... Skipping!!!\n{e}")
             continue
 
         download_ftp_file(ftp, paths, READ_DIR, max_retries)
-
+        
         disconnect_ftp(ftp)
 
 
