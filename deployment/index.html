@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://ssiutility.dk/deployment/" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Deployment - MMASeq Documentation</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Deployment";
+        var mkdocs_page_input_path = "deployment.md";
+        var mkdocs_page_url = "/deployment/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="..">
+          <img src="../assets/MMASeq_logo.png" class="logo" alt="Logo"/>
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../description/">Description</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Deployment</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#installation-guide">Installation Guide</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#conda-installation">Conda Installation</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#pip">pip</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#install-from-source">Install from source</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#running-the-workflow">Running the workflow</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#options">Options</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#run-the-test-set">Run the test set</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#run-the-pipeline-on-your-data">Run the pipeline on your data</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#final-report">Final report</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#configure-workflow">Configure workflow</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#input-manager-configuration">Input manager configuration</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#samplesheet-configuration">Samplesheet configuration</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#species-specific-configuration">Species-specific configuration</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../supported_analysis/">Supported Analysis</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../tools_databases/">Tools and Databases</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../tutorials/">Tutorials</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../references/">References</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">MMASeq Documentation</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Deployment</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="deployment">Deployment</h1>
+<h2 id="installation-guide">Installation Guide</h2>
+<p>The latest version of <strong>MMASeq</strong> can be installed using <a href="#conda-installation">Conda</a>, <a href="#pip">pip</a>, or directly <a href="#install-from-source">from source</a>.</p>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>MMASeq currently supports <strong>Linux</strong> and <strong>macOS</strong> only.</p>
+</div>
+<hr />
+<h3 id="conda-installation"><a name="conda-installation"></a> Conda Installation</h3>
+<p>Because the workflow is implemented in <strong>Snakemake</strong>, and Snakemake does <strong>not</strong> fully support micromamba, installation via <strong>Conda</strong> is the recommended approach.</p>
+<p>To create a clean, isolated environment:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>mmaseq<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>-c<span class="w"> </span>bioconda<span class="w"> </span>mmaseq
+</span></code></pre></div>
+<p>Activate the enviroment</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>conda<span class="w"> </span>activate<span class="w"> </span>mmaseq
+</span></code></pre></div>
+<h3 id="pip"><a name="pip"></a> pip</h3>
+<p>You can install the latest stable release of MMASeq via pip:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pip<span class="w"> </span>install<span class="w"> </span>mmaseq<span class="w"> </span>
+</span></code></pre></div>
+<h3 id="install-from-source"><a name="Install from source"></a> Install from source</h3>
+<p>This section is for user who wants to install <strong>MMASeq</strong> directly from source (e.g., for reproducibility or to debug a release).
+However, the user must ensure to have the <strong>Snakemake &gt;=9.12.0</strong> dependency is installed in the environment. </p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>mmaseq<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>-c<span class="w"> </span>bioconda<span class="w"> </span><span class="s2">&quot;snakemake&gt;=9.12.0&quot;</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>pip<span class="w"> </span>install<span class="w"> </span>pandas
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/ssi-dk/ssi_analysis_utility
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>pip<span class="w"> </span>install<span class="w"> </span>.<span class="w"> </span>
+</span></code></pre></div>
+<p>If the user wants to work on a development branch:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>mmaseq<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>-c<span class="w"> </span>bioconda<span class="w"> </span><span class="s2">&quot;snakemake&gt;=9.12.0&quot;</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>pip<span class="w"> </span>install<span class="w"> </span>pandas
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/ssi-dk/ssi_analysis_utility
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="w"> </span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="nb">cd</span><span class="w"> </span>ssi_analysis_utility
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>git<span class="w"> </span>switch<span class="w"> </span>dev<span class="w">    </span><span class="c1"># work on the develop branch</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>new-feature-branch<span class="w">  </span><span class="c1"># Create a new branch from dev to work on new changes</span>
+</span></code></pre></div>
+<h2 id="running-the-workflow">Running the workflow</h2>
+<p>The pipeline is designed to be run using the executable <code>mmaseq.py</code>, which is the main launcher of the pipeline. The launcher is responsible for parsing the input configurations, setting up the necessary environments and databases, and executing the Snakemake workflow according to the specified parameters. When run for the first time the pipeline  will setup the <a href="#conda">conda</a> environments and the different <a href="#databases">databases</a> automatically in the specified deployment directory. The deployment directory is a folder where all the conda environments and databases used during the pipeline execution are stored. By default, it is set to be in the current working directory, but it can be specified by the user when running the pipeline. If the specified deployment directory does not exist, it will be created during execution. If it already exists and correctly specified in the launcher command, the pipeline will check for the presence of the required databases and environments before execution, and it will use them if they are found. This approach allows for efficient management of resources and ensures that the necessary components are readily available for the pipeline to run smoothly.</p>
+<h3 id="options">Options</h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>SYNOPSIS
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>Configure<span class="w"> </span>and<span class="w"> </span>execute<span class="w"> </span>MMASeq<span class="w"> </span>pipeline
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>USAGE
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>usage:<span class="w"> </span>mmaseq<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">                </span><span class="o">[</span>--samplesheet<span class="w"> </span>SAMPLESHEET_FILE<span class="o">]</span><span class="w"> </span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">                </span><span class="o">[</span>--input_dir<span class="w"> </span>INPUT_DIR<span class="o">]</span><span class="w"> </span>
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">                </span><span class="o">[</span>--deploy_dir<span class="w"> </span>DEPLOY_DIR<span class="o">]</span><span class="w"> </span>
+</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">                </span><span class="o">[</span>--outdir<span class="w"> </span>OUTDIR<span class="o">]</span><span class="w"> </span>
+</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">                </span><span class="o">[</span>--threads<span class="w"> </span>THREADS<span class="o">]</span>
+</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">                </span><span class="o">[</span>--config<span class="w"> </span>CONFIG<span class="o">]</span><span class="w"> </span>
+</span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">                </span><span class="o">[</span>--test<span class="o">]</span><span class="w"> </span>
+</span><span id="__span-5-12"><a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">                </span><span class="o">[</span>--debug<span class="o">]</span>
+</span><span id="__span-5-13"><a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>GENERAL
+</span><span id="__span-5-14"><a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="w">  </span>--help<span class="w">             </span>This<span class="w"> </span><span class="nb">help</span>
+</span><span id="__span-5-15"><a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>
+</span><span id="__span-5-16"><a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="w">  </span>--debug<span class="w">            </span>Add<span class="w"> </span>debug<span class="w"> </span>messages<span class="w"> </span>during<span class="w"> </span>execution.<span class="w"> </span>Mostly<span class="w"> </span>used<span class="w"> </span><span class="k">for</span><span class="w"> </span>development<span class="w"> </span>and<span class="w"> </span>debugging<span class="w"> </span>purposes
+</span><span id="__span-5-17"><a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>INPUT
+</span><span id="__span-5-18"><a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="w">  </span>--samplesheet<span class="w"> </span>XXX<span class="w">  </span>Path<span class="w"> </span>to<span class="w"> </span>samplesheet<span class="w"> </span>TSV<span class="w"> </span>used<span class="w"> </span>by<span class="w"> </span>the<span class="w"> </span>pipeline.<span class="w"> </span>If<span class="w"> </span>the<span class="w"> </span>samplesheet<span class="w"> </span>doesn<span class="s1">&#39;t exist, `input_dir` must be specified to create one.</span>
+</span><span id="__span-5-19"><a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="s1">  --input_dir XXX    To be specified if the samplesheet does not yet exist. Input directory will be screened for `.fasta` and `fastq.gz` files, </span>
+</span><span id="__span-5-20"><a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="s1">                     sample_names will be infered from the detected files, and used to populate a samplesheet. After samplesheet creation, </span>
+</span><span id="__span-5-21"><a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a><span class="s1">                     the pipeline will be executed in dry-run mode (simulated run)</span>
+</span><span id="__span-5-22"><a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a><span class="s1">  --deploy_dir XXX   Directory used to deploy databases and conda environments used during pipeline execution. Default is in current working directory.</span>
+</span><span id="__span-5-23"><a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a><span class="s1">                     If the directory doesn&#39;</span>t<span class="w"> </span>exist,<span class="w"> </span>it<span class="w"> </span>will<span class="w"> </span>be<span class="w"> </span>created<span class="w"> </span>during<span class="w"> </span>execution.<span class="w"> </span>If<span class="w"> </span>the<span class="w"> </span>directory<span class="w"> </span>already<span class="w"> </span>exists,<span class="w"> </span>it<span class="w"> </span>will<span class="w"> </span>be<span class="w"> </span>used<span class="w"> </span>as<span class="w"> </span>is,<span class="w"> </span>and<span class="w"> </span>
+</span><span id="__span-5-24"><a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a><span class="w">                     </span>the<span class="w"> </span>pipeline<span class="w"> </span>will<span class="w"> </span>check<span class="w"> </span><span class="k">for</span><span class="w"> </span>the<span class="w"> </span>presence<span class="w"> </span>of<span class="w"> </span>the<span class="w"> </span>required<span class="w"> </span>databases<span class="w"> </span>and<span class="w"> </span>environments<span class="w"> </span>before<span class="w"> </span>execution.
+</span><span id="__span-5-25"><a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a><span class="w">  </span>--config<span class="w"> </span>XXX<span class="w">       </span>Configuration<span class="w"> </span>file<span class="w"> </span>location<span class="w"> </span><span class="o">(</span>Default<span class="w"> </span>./config/config.yaml<span class="o">)</span>.<span class="w"> </span>If<span class="w"> </span>not<span class="w"> </span>specified,<span class="w"> </span>the<span class="w"> </span>config<span class="w"> </span>file<span class="w"> </span>will<span class="w"> </span>be<span class="w"> </span>overwritten<span class="w"> </span>during<span class="w"> </span>
+</span><span id="__span-5-26"><a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a><span class="w">                     </span>subsequent<span class="w"> </span>executions.
+</span><span id="__span-5-27"><a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a><span class="w">  </span>--test<span class="w">             </span>Perform<span class="w"> </span><span class="nb">test</span><span class="w"> </span>run<span class="w"> </span>of<span class="w"> </span>all<span class="w"> </span>modules.<span class="w"> </span>All<span class="w"> </span>conda<span class="w"> </span>environments<span class="w"> </span>and<span class="w"> </span>databases<span class="w"> </span>will<span class="w"> </span>be<span class="w"> </span>created<span class="w"> </span><span class="k">in</span><span class="w"> </span>the<span class="w"> </span>deployment<span class="w"> </span>directory.<span class="w"> </span>
+</span><span id="__span-5-28"><a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a><span class="w">                     </span>Results<span class="w"> </span>will<span class="w"> </span>be<span class="w"> </span>stored<span class="w"> </span><span class="k">in</span><span class="w"> </span>package<span class="w"> </span>folder<span class="w"> </span>Test/Results,<span class="w"> </span>and<span class="w"> </span>config<span class="w"> </span>file<span class="w"> </span>will<span class="w"> </span>be<span class="w"> </span>generated<span class="w"> </span><span class="k">in</span><span class="w"> </span>config/Test.yaml
+</span><span id="__span-5-29"><a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a>OUTPUT
+</span><span id="__span-5-30"><a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a><span class="w">  </span>--outdir<span class="w"> </span>XXX<span class="w">       </span>Directory<span class="w"> </span>used<span class="w"> </span><span class="k">for</span><span class="w"> </span>storing<span class="w"> </span>analysis<span class="w"> </span>results.<span class="w"> </span>Default<span class="w"> </span>is<span class="w"> </span><span class="k">in</span><span class="w"> </span>current<span class="w"> </span>working<span class="w"> </span>directory.
+</span><span id="__span-5-31"><a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a>RESOURCES
+</span><span id="__span-5-32"><a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a><span class="w">  </span>--threads<span class="w"> </span>XXX<span class="w">      </span>Amount<span class="w"> </span>of<span class="w"> </span>threads<span class="w"> </span><span class="o">(</span>cores<span class="o">)</span><span class="w"> </span>to<span class="w"> </span>dedicate<span class="w"> </span><span class="k">for</span><span class="w"> </span>executing<span class="w"> </span>the<span class="w"> </span>pipeline.
+</span></code></pre></div>
+<h3 id="run-the-test-set">Run the test set</h3>
+<p>Running the test set is a good way to verify that the pipeline is correctly installed and configured on your system. It will execute a predefined set of analyses using example data, and it will help you familiarize with the expected input and output formats. To run the test set, simply execute the following command:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>mmaseq<span class="w"> </span>--test<span class="w"> </span>
+</span></code></pre></div>
+<h3 id="run-the-pipeline-on-your-data">Run the pipeline on your data</h3>
+<p>Run the pipeline with the following command:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>mmaseq<span class="w"> </span>--samplesheet<span class="w"> </span>path/to/samplesheet.tsv<span class="w"> </span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="w">       </span>--deploy_dir<span class="w"> </span>path/to/deploy_dir<span class="w"> </span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">       </span>--outdir<span class="w"> </span>path/to/output_dir
+</span></code></pre></div>
+<h2 id="final-report">Final report</h2>
+<p>All the workflow results are stored in the output directory specified by <code>--outdir</code>. 
+The final output is a file named "all_results.tsv". This file is a concatenated file of all the collected output that can be further processed by the user.
+It is in the following format:</p>
+<table>
+<thead>
+<tr>
+<th>sample_name</th>
+<th>tool</th>
+<th>filename</th>
+<th>organism</th>
+<th>row_index</th>
+<th>row</th>
+<th>value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sample1</td>
+<td>resfinder</td>
+<td>ResFinder_results_tab.txt</td>
+<td>xxx</td>
+<td>1</td>
+<td>Resistance gene</td>
+<td>xxx</td>
+</tr>
+<tr>
+<td>Sample1</td>
+<td>plasmidfinder</td>
+<td>results_tab.tsv</td>
+<td></td>
+<td>1</td>
+<td>Accession number</td>
+<td>xxx</td>
+</tr>
+<tr>
+<td>Sample1</td>
+<td>virulencefinder</td>
+<td>results_tab.tsv</td>
+<td></td>
+<td>1</td>
+<td>Database</td>
+<td>xxx</td>
+</tr>
+<tr>
+<td>....</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="configure-workflow">Configure workflow</h2>
+<p>This section is dedicated on how to configure and set up the different workflow components such as the input manager, the samplesheet and the species-specific configuration files. </p>
+<h3 id="input-manager-configuration">Input manager configuration</h3>
+<p>We refer the main configuration file as "input manager" and contains all the informations regarding input, metadata, output etc...
+It is formatted as the following:</p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nt">deploy_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">folder/where/the/deployed/conda/envs/and/databases/are</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nt">outdir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/folder/where/to/store/the/results</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="nt">samplesheet</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">path/to/samplesheet.tsv</span>
+</span></code></pre></div>
+<p>Generally, this file is created automatically during pipeline execution, based on the input parameters provided by the user. However, it can also be created manually before running the pipeline, in which case it will be used as-is. If the file already exists and is correctly specified in the launcher command, the pipeline will not overwrite it.  </p>
+<p>This behavior allows the user to maintain full control over configuration settings and tailor them to their specific needs. If the file does not exist, it will be generated during execution using the parameters supplied by the user, ensuring that all required configurations are available for the pipeline to run smoothly.</p>
+<h3 id="samplesheet-configuration">Samplesheet configuration</h3>
+<p>The pipeline employs a samplesheet in the .tsv format to run all the analysis  in batch for the samples.
+The format is the following:</p>
+<table>
+<thead>
+<tr>
+<th>sample_name</th>
+<th>Illumina_mate1</th>
+<th>Illumina_mate2</th>
+<th>Assembly</th>
+<th>config</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Sample1</td>
+<td>path/to/read2.fastq.gz</td>
+<td>path/to/read2.fastq.gz</td>
+<td>path/to/assembly.fasta</td>
+<td>path/to/species_config.yaml</td>
+</tr>
+<tr>
+<td>Sample2</td>
+<td>path/to/read2.fastq.gz</td>
+<td>path/to/read2.fastq.gz</td>
+<td>path/to/assembly.fasta</td>
+<td>path/to/species_config.yaml</td>
+</tr>
+<tr>
+<td>---</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>We included a "samplesheet.tsv" in the "data/" folder. This can be modified by the user to suit its need. </p>
+<h3 id="species-specific-configuration">Species-specific configuration</h3>
+<p>Certain species may require different tools than those currently defined or tool-specific parameters that differ from those used in other species. The options which distinguish them are defined in the species-specific configuration files.
+The format is typical of a .yaml file, and is the following:</p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nt">mlst</span><span class="p">:</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">    </span><span class="nt">assemblers</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">shovill</span><span class="w">  </span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="nt">resfinder</span><span class="p">:</span>
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="w">    </span><span class="nt">options</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">--species &#39;Other&#39;</span>
+</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
+</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="nt">plasmidfinder</span><span class="p">:</span>
+</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="w">    </span><span class="nt">options</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+</span><span id="__span-9-9"><a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>
+</span><span id="__span-9-10"><a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="nt">virulencefinder</span><span class="p">:</span>
+</span><span id="__span-9-11"><a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="w">    </span><span class="nt">options</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+</span><span id="__span-9-12"><a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>
+</span><span id="__span-9-13"><a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="nt">serotypefinder</span><span class="p">:</span>
+</span><span id="__span-9-14"><a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="w">    </span><span class="nt">options</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+</span><span id="__span-9-15"><a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>
+</span><span id="__span-9-16"><a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="nt">amrfinder</span><span class="p">:</span>
+</span><span id="__span-9-17"><a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a><span class="w">    </span><span class="nt">assemblers</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">shovill</span>
+</span><span id="__span-9-18"><a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a><span class="w">    </span><span class="nt">options</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&quot;</span>
+</span><span id="__span-9-19"><a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a>
+</span><span id="__span-9-20"><a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a><span class="nt">meningotype</span><span class="p">:</span>
+</span><span id="__span-9-21"><a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a><span class="w">    </span><span class="nt">assemblers</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">shovill</span>
+</span><span id="__span-9-22"><a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a>
+</span><span id="__span-9-23"><a id="__codelineno-9-23" name="__codelineno-9-23" href="#__codelineno-9-23"></a><span class="nt">kmeraligner</span><span class="p">:</span>
+</span><span id="__span-9-24"><a id="__codelineno-9-24" name="__codelineno-9-24" href="#__codelineno-9-24"></a><span class="w">    </span><span class="nt">database</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">elmDB</span>
+</span><span id="__span-9-25"><a id="__codelineno-9-25" name="__codelineno-9-25" href="#__codelineno-9-25"></a><span class="w">    </span><span class="nt">options </span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-ID 80 -1t1 -cge</span>
+</span></code></pre></div>
+<p>The analysis supported and their option are listed in the <a href="../supported_analysis/">supported analysis</a> section of the documentation. Each species-specific configuration file can be linked to a sample in the samplesheet, allowing for flexible and tailored analysis across different organisms. This modular approach ensures that the pipeline can be easily adapted to a wide range of bacterial species and genomic contexts, making it a versatile tool for microbial genomics research and surveillance:</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../description/" class="btn btn-neutral float-left" title="Description"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../supported_analysis/" class="btn btn-neutral float-right" title="Supported Analysis">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>The MIT License (MIT)  Copyright © 2023 Statens Serum Institut</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../description/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../supported_analysis/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

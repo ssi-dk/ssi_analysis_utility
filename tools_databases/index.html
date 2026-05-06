@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://ssiutility.dk/tools_databases/" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Tools and Databases - MMASeq Documentation</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Tools and Databases";
+        var mkdocs_page_input_path = "tools_databases.md";
+        var mkdocs_page_url = "/tools_databases/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="..">
+          <img src="../assets/MMASeq_logo.png" class="logo" alt="Logo"/>
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../description/">Description</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../deployment/">Deployment</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../supported_analysis/">Supported Analysis</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Tools and Databases</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#supported-tools">Supported Tools</a>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../tutorials/">Tutorials</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../references/">References</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">MMASeq Documentation</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Tools and Databases</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="tools-and-databases">Tools and Databases</h1>
+<h2 id="supported-tools">Supported Tools</h2>
+<p>This pipeline integrates a broad collection of well-established bioinformatics tools and curated reference databases to enable comprehensive bacterial genome analysis across multiple species and sequencing technologies. </p>
+<dl>
+<dt><strong>AMRFinder</strong></dt>
+<dd>
+<p>Detects antimicrobial resistance genes, resistance-associated point mutations, 
+and stress response genes using NCBI-curated databases.  </p>
+</dd>
+</dl>
+<hr />
+<dl>
+<dt><strong>ResFinder</strong></dt>
+<dd>
+<p>Identifies acquired antimicrobial resistance genes by sequence similarity against the ResFinder database.</p>
+</dd>
+</dl>
+<hr />
+<dl>
+<dt><strong>Kleborate</strong></dt>
+<dd>
+<p>Performs species confirmation, sequence typing, virulence profiling, and resistance detection 
+specifically for <em>Klebsiella pneumoniae</em> species complexes.</p>
+</dd>
+</dl>
+<hr />
+<dl>
+<dt><strong>MLST</strong></dt>
+<dd>
+<p>Assigns multilocus sequence types based on allele profiles from housekeeping genes using PubMLST schemes.</p>
+</dd>
+</dl>
+<hr />
+<dl>
+<dt><strong>MeningoType</strong></dt>
+<dd>
+<p>Provides genogrouping and fine typing of <em>Neisseria meningitidis</em> based on capsule and antigen genes. </p>
+</dd>
+</dl>
+<hr />
+<dl>
+<dt><strong>Shovill</strong></dt>
+<dd>
+<p>A wrapper for short-read genome assembly that optimizes parameters and automates preprocessing, typically using SPAdes or SKESA.</p>
+</dd>
+</dl>
+<hr />
+<dl>
+<dt><strong>SerotypeFinder</strong></dt>
+<dd>
+<p>Predicts bacterial serotypes by identifying serotype-specific genetic markers.</p>
+</dd>
+</dl>
+<hr />
+<dl>
+<dt><strong>spaTyper</strong></dt>
+<dd>
+<p>Determines <em>Staphylococcus aureus</em> spa types by detecting and classifying repeat patterns in the protein A (spa) gene.</p>
+</dd>
+</dl>
+<hr />
+<dl>
+<dt><strong>VirulenceFinder</strong></dt>
+<dd>
+<p>Identifies known virulence-associated genes using curated virulence gene databases.</p>
+</dd>
+</dl>
+<hr />
+<dl>
+<dt><strong>BLAST</strong></dt>
+<dd>
+<p>Performs sequence similarity searches for gene detection, confirmation, or custom database screening.</p>
+</dd>
+</dl>
+<hr />
+<dl>
+<dt><strong>Bowtie2</strong></dt>
+<dd>
+<p>Aligns short sequencing reads to reference sequences, commonly used for targeted mapping and presence/absence analysis.</p>
+</dd>
+</dl>
+<hr />
+<dl>
+<dt><strong>Minimap2</strong></dt>
+<dd>
+<p>Aligns long-read or mixed-read sequencing data to reference genomes or gene databases.</p>
+</dd>
+</dl>
+<hr />
+<dl>
+<dt><strong>HTSlib</strong></dt>
+<dd>
+<p>Provides core utilities for handling and processing BAM, SAM, and CRAM alignment files.</p>
+</dd>
+</dl>
+<hr />
+<dl>
+<dt><strong>SeqSero2</strong></dt>
+<dd>
+<p>Predicts <em>Salmonella</em> serotypes using genomic data, supporting both read- and assembly-based workflows.</p>
+</dd>
+</dl>
+<hr />
+<dl>
+<dt><strong>SISTR</strong></dt>
+<dd>
+<p>Performs <em>Salmonella</em> in silico serotyping and provides cgMLST-based phylogenetic context.</p>
+</dd>
+</dl>
+<hr />
+<dl>
+<dt><strong>PlasmidFinder</strong></dt>
+<dd>
+<p>Detects plasmid replicon sequences to infer plasmid content and incompatibility groups.</p>
+</dd>
+</dl>
+<hr />
+<dl>
+<dt><strong>kma</strong></dt>
+<dd>
+<p>Uses k-mer–based matching to rapidly assign genotypes, lineages, or profiles against predefined reference sets.</p>
+</dd>
+</dl>
+<hr />
+<p>All tools are executed within isolated Conda environments, and their associated databases are versioned and either bundled or automatically downloaded and indexed by the pipeline to ensure reproducibility and consistent results across analyses.</p>
+<p>For citations of included tools please see the <a href="../references/">references</a>.</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../supported_analysis/" class="btn btn-neutral float-left" title="Supported Analysis"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../tutorials/" class="btn btn-neutral float-right" title="Tutorials">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>The MIT License (MIT)  Copyright © 2023 Statens Serum Institut</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../supported_analysis/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../tutorials/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
