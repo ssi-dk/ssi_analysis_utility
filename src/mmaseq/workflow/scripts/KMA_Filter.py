@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+"""
+KMA_Filter.py
+
+Contributors:
+- Rasmus Henrik Amund Henriksen
+"""
+
 import pandas as pd
 import argparse
 from typing import List, Dict, Tuple

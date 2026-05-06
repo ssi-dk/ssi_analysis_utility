@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+"""
+deletion_identifier.py
+
+Contributors:
+- Rasmus Henrik Amund Henriksen
+"""
+
 
 from __future__ import annotations
 

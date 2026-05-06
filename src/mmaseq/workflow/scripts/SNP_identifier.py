@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+"""
+SNP_identifier.py
+
+Contributors:
+- Rasmus Henrik Amund Henriksen
+"""
 
 from __future__ import annotations
 

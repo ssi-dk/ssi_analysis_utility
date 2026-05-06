@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""
+genbank_fetcher.py
+
+Contributors:
+- Rasmus Henrik Amund Henriksen
+"""
+
 import argparse
 import sys
 from typing import List, Tuple, Dict, Optional, Any

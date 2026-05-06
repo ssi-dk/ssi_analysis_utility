@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+"""
+Repeat_Identifier.py
+
+Contributors:
+- Rasmus Henrik Amund Henriksen
+"""
+
 import os
 import sys
 import argparse
@@ -10,7 +17,6 @@ from Bio.Seq import Seq
 import re
 
 sys.path.insert(0, os.path.abspath("../scripts"))
-from logging_utils import setup_logging
 
 # ---------------------- FASTA and Type Parsers ---------------------- #
 
@@ -39,7 +45,7 @@ def parse_repeat_types(ref_txt: str, fragments: Dict[str, str]) -> Dict[str, str
     """
     type_map = {}
     with open(ref_txt) as f:
-        logging.debug(f"Loaded {len(type_map)} repeat patterns from {ref_txt}")
+        #logging.debug(f"Loaded {len(type_map)} repeat patterns from {ref_txt}")
 
         for line in f:
             if ",\t" in line:
@@ -48,7 +54,8 @@ def parse_repeat_types(ref_txt: str, fragments: Dict[str, str]) -> Dict[str, str
                     sequence = ''.join(fragments[p] for p in pattern.split("-"))
                     type_map[type_id] = sequence
                 except KeyError:
-                    logging.warning(f"Fragment(s) missing for {type_id} in {ref_txt}")
+                    #logging.warning(f"Fragment(s) missing for {type_id} in {ref_txt}")
+                    raise KeyError(f"Fragment(s) missing for {type_id} in {ref_txt}")
     return type_map
 
 def find_repeat_hits(sequence: str, id: str, type_map: Dict[str, str]) -> List[str]:
@@ -66,7 +73,7 @@ def find_repeat_hits(sequence: str, id: str, type_map: Dict[str, str]) -> List[s
     for repeat_id, repeat_seq in type_map.items():
         pattern_seq = Seq(repeat_seq)
         if re.search(str(pattern_seq), sequence, re.IGNORECASE) or re.search(str(pattern_seq.reverse_complement()), sequence, re.IGNORECASE):
-            logging.info(f"found match between {id} and {str(repeat_id)}")
+            #logging.info(f"found match between {id} and {str(repeat_id)}")
             hits.append(repeat_id)
     return hits
 
@@ -87,24 +94,24 @@ def match_combination_from_table(ref_combo: str, repeat_hits: Dict[str, List[str
         lines = [line.strip() for line in f if line.strip()]
 
     if len(lines) < 2:
-        logging.warning(f"Combination file {ref_combo} is empty or malformed.")
+        #logging.warning(f"Combination file {ref_combo} is empty or malformed.")
         return "Unknown"
 
     header = lines[0].split("\t")
     data_rows = [line.split("\t") for line in lines[1:] if len(line.split("\t")) == len(header)]
 
     if len(header) < 3: #need at least three columns, the combined type, and then two or more repeats to be combined.
-        logging.warning(f"Combination file {ref_combo} must have at least 3 columns.")
+        #logging.warning(f"Combination file {ref_combo} must have at least 3 columns.")
         return "Unknown"
 
     # Skip first column (e.g. ST_COMB) and assume remaining columns align with repeat_names
     combo_fields = header[1:]
 
     if len(combo_fields) != len(repeat_names):
-        logging.warning(f"Mismatch between combo fields {combo_fields} and repeat names {repeat_names}")
+        #logging.warning(f"Mismatch between combo fields {combo_fields} and repeat names {repeat_names}")
         return "Unknown"
 
-    logging.info(f"Matching combo file {os.path.basename(ref_combo)} using repeat names: {repeat_names}")
+    #logging.info(f"Matching combo file {os.path.basename(ref_combo)} using repeat names: {repeat_names}")
 
     for row in data_rows:
         combo_id = row[0]              # e.g., 'tr001'
@@ -119,10 +126,12 @@ def match_combination_from_table(ref_combo: str, repeat_hits: Dict[str, List[str
                 matched_all = False
                 break
             else:
-                logging.info(f"Checking combo {combo_id}: repeat '{repeat_name}' needs '{expected}', observed: {observed_set}")
-
+                #logging.info(f"Checking combo {combo_id}: repeat '{repeat_name}' needs '{expected}', observed: {observed_set}")
+                print(f"Checking combo {combo_id}: repeat '{repeat_name}' needs '{expected}', observed: {observed_set}")
+        
         if matched_all:
-            logging.info(f"Matched combo {combo_id} with: {dict(zip(repeat_names, expected_values))}")
+            #logging.info(f"Matched combo {combo_id} with: {dict(zip(repeat_names, expected_values))}")
+            print(f"Matched combo {combo_id} with: {dict(zip(repeat_names, expected_values))}")
             return combo_id
 
     return "Unknown"
@@ -144,7 +153,7 @@ def run_repeat_typing(fasta_path: str, repeat_names: List[str], combo_names: Lis
     """
     
     contigs = list(SeqIO.parse(fasta_path, "fasta"))
-    logging.info(f"Found {len(contigs)} contigs in {fasta_path}")
+    #logging.info(f"Found {len(contigs)} contigs in {fasta_path}")
 
     results = {}
     repeat_hits = {}
@@ -155,7 +164,8 @@ def run_repeat_typing(fasta_path: str, repeat_names: List[str], combo_names: Lis
     for name in repeat_names:
         ref_fasta = [fasta for fasta in ref_seq if name in fasta]
         if len(ref_fasta) > 1:
-            logging.warning(f"Multiple TR fasta files with similar names found, will only use first of:\n - {nl.join(ref_fasta)}")
+            #logging.warning(f"Multiple TR fasta files with similar names found, will only use first of:\n - {nl.join(ref_fasta)}")
+            print(f"Multiple TR fasta files with similar names found, will only use first of:\n - {nl.join(ref_fasta)}")
         elif len(ref_fasta) < 1:
             raise(f"Aborting. No reference fasta file found for Type Repeats: {name}")
         ref_fasta = ref_fasta[0]
@@ -175,7 +185,8 @@ def run_repeat_typing(fasta_path: str, repeat_names: List[str], combo_names: Lis
 
         ref_txt = [meta for meta in ref_meta if name in meta]
         if len(ref_txt) > 1:
-            logging.warning(f"Multiple TR metadata files with similar names found, will only use first of:\n - {nl.join(ref_txt)}")
+            #logging.warning(f"Multiple TR metadata files with similar names found, will only use first of:\n - {nl.join(ref_txt)}")
+            print(f"Multiple TR metadata files with similar names found, will only use first of:\n - {nl.join(ref_txt)}")
         elif len(ref_txt) < 1:
             raise(f"Aborting. No reference metadata file found for Type Repeats: {name}")
         ref_txt = ref_txt[0]
@@ -190,14 +201,14 @@ def run_repeat_typing(fasta_path: str, repeat_names: List[str], combo_names: Lis
         """
 
         if not (os.path.exists(ref_fasta) and os.path.exists(ref_txt)):
-            logging.warning(f"Missing files for repeat type {name}. Skipping.")
+            #logging.warning(f"Missing files for repeat type {name}. Skipping.")
             results[name] = "Unknown"
         else:
 
             fragments = parse_fasta(ref_fasta)
             type_map = parse_repeat_types(ref_txt, fragments)
             hits = set()
-            logging.debug(f"Loaded {len(fragments)} sequence fragments from {ref_fasta}")
+            #logging.debug(f"Loaded {len(fragments)} sequence fragments from {ref_fasta}")
 
             for record in contigs:
                 hits.update(find_repeat_hits(str(record.seq),str(record.id),type_map))
@@ -212,7 +223,8 @@ def run_repeat_typing(fasta_path: str, repeat_names: List[str], combo_names: Lis
     for combo_name in combo_names:
         ref_combo = [meta for meta in ref_meta if combo_name in meta]
         if len(ref_combo) > 1:
-            logging.warning(f"Multiple TR metadata files with similar names found, will only use first of:\n - {nl.join(ref_combo)}")
+            #logging.warning(f"Multiple TR metadata files with similar names found, will only use first of:\n - {nl.join(ref_combo)}")
+            print(f"Multiple TR metadata files with similar names found, will only use first of:\n - {nl.join(ref_combo)}")
         elif len(ref_combo) < 1:
             raise(f"Aborting. No reference metadata file found for Type Repeats: {combo_name}")
         ref_combo = ref_combo[0]
@@ -225,7 +237,7 @@ def run_repeat_typing(fasta_path: str, repeat_names: List[str], combo_names: Lis
         """
 
         if not os.path.exists(ref_combo):
-            logging.warning(f"Missing combination file for {combo_name}. Skipping.")
+            #logging.warning(f"Missing combination file for {combo_name}. Skipping.")
             results[combo_name] = "Unknown"
         else:
 
@@ -233,7 +245,7 @@ def run_repeat_typing(fasta_path: str, repeat_names: List[str], combo_names: Lis
                 header = f.readline().strip().split("\t")
 
             if len(header) < 3: #need at least three columns, the combined type, and then two or more repeats to be combined.
-                logging.warning(f"Combination file {ref_combo} does not have ≥3 columns. Skipping.")
+                #logging.warning(f"Combination file {ref_combo} does not have ≥3 columns. Skipping.")
                 results[combo_name] = "Unknown"
                 continue
 
@@ -244,16 +256,16 @@ def run_repeat_typing(fasta_path: str, repeat_names: List[str], combo_names: Lis
 # ---------------------------- Main CLI ---------------------------- #
 
 def main(args):
-    if args.log_file:
-        # Use your existing logging setup to log to a file
-        setup_logging(log_file=args.log_file)
-    else:
-        # Simple stdout logging if no file is provided
-        logging.basicConfig(
-            level=logging.INFO,
-            format="%(asctime)s - %(levelname)s - %(message)s",
-            stream=sys.stdout,
-        )
+    # if args.log_file:
+    #     # Use your existing logging setup to log to a file
+    #     setup_logging(log_file=args.log_file)
+    # else:
+    #     # Simple stdout logging if no file is provided
+    #     logging.basicConfig(
+    #         level=logging.INFO,
+    #         format="%(asctime)s - %(levelname)s - %(message)s",
+    #         stream=sys.stdout,
+    #     )
 
     try:
         results = run_repeat_typing(
@@ -264,7 +276,7 @@ def main(args):
             ref_meta=args.ref_meta
         )
     except Exception as e:
-        logging.error(f"Typing failed for {args.sample_id}: {e}")
+        #logging.error(f"Typing failed for {args.sample_id}: {e}")
         raise
 
     results["sample_id"] = args.sample_id
@@ -273,7 +285,7 @@ def main(args):
 
     sep = "\t" if args.suffix == "tsv" else "," if args.suffix == "csv" else " "
     df.to_csv(args.output, sep=sep, index=False)
-    logging.info(f"Repeat typing results written to {args.output}")
+    #logging.info(f"Repeat typing results written to {args.output}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generalized repeat typing from assemblies using pattern matching.")

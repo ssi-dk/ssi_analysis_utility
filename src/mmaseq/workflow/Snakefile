@@ -4,13 +4,16 @@ from pathlib import Path
 import pandas as pd
 
 # Initiate logging
+###################################################################
 logger = pkg_logging.initiate_log("MMAseq Pipeline")
 pkg_logging.adjust_log(logger, int(config["verbosity"]))
 
 logger.info("Setting up pipeline variables")
-#####################################################
 logger.debug("Importing user input from config file")
+
+
 # Read user input
+###################################################################
 samplesheet_path = Path(config["samplesheet"])
 outdir = Path(config["outdir"])
 ignore_assemblies = config["ignore_assemblies"]
@@ -23,31 +26,45 @@ logger.trace(("User input (by config):\n"
     f" - outdir: {outdir}"))
 
 # Deduce variables
+###################################################################
 logdir = outdir / "Logs"
 database_dir = deploy_dir / "Databases"
 logger.trace(("Deduced variables:\n"
     f" - logdir: {logdir}"
     f" - database_dir: {database_dir}"))
 
+
+# Read config files
 #################################################################
 logger.debug("Creating sample specific input and output objects")
 logger.trace("Reading samplesheet")
-samplesheet = pd.read_csv(samplesheet_path, sep='\t').set_index("sample_name")
+samplesheet = pd.read_csv(samplesheet_path, 
+                          sep='\t').set_index("sample_name")
 
 logger.trace("Reading result files catalogue")
 results_catalogue = helper_functions.read_results_catalogue(CATALOGUE_PATH)
 
 logger.trace("Defining sample specific configurations")
-sample_configs = helper_functions.determine_sample_configs(samplesheet, SPE_CONFIGS, ignore_assemblies)
+sample_configs = helper_functions.determine_sample_configs(samplesheet, 
+                                                           SPE_CONFIGS, 
+                                                           ignore_assemblies)
 
-all_result_files = helper_functions.define_all_result_files(outdir, sample_configs, results_catalogue)
+all_result_files = helper_functions.define_all_result_files(outdir, 
+                                                            sample_configs, 
+                                                            results_catalogue)
 
-all_result_filepaths = [path for sample in all_result_files.values() for files in sample.values() for path in files]
+all_result_filepaths = [
+    path
+    for sample in all_result_files.values()
+    for files in sample.values()
+    for path in files
+]
 
-####################################
 logger.info("Initiating pipeline")
 
+
 # Define the dynamic input for rule all
+###################################################################
 rule all:
     input:
         all = all_result_filepaths
@@ -63,7 +80,7 @@ include : "rules/db_setup.smk"
 include : "rules/assemblers.smk"
 include : "rules/mappers.smk"
 include : "rules/variant_calling.smk"
-include : "rules/amr_finders.smk"
+include : "rules/screening.smk"
 include : "rules/typing.smk"
 include : "rules/custom_analysis.smk"
 
