@@ -4,6 +4,7 @@ import yaml
 from typing import Dict, Tuple, Set, List
 import warnings
 import sys
+import pathlib
 from pathlib import Path
 from collections import defaultdict
 import itertools
@@ -19,12 +20,39 @@ def read_results_catalogue(results_catalogue_path):
     return(results_catalogue)
 
 
-def determine_sample_configs(samplesheet, config_dir):
+def inspect_samplesheet_assembly_path(sample, samplesheet):
+    # Reading assembly entry from samplesheet
+    assembly_from_sheet = samplesheet.at[sample, "assembly"]
+    
+    # Handle if assembly is determined as NA
+    assembly_path = Path(assembly_from_sheet)
+    
+    if assembly_path.exists(follow_symlinks = True):
+        path = {sample: assembly_path}
+    elif pd.isna(assembly_from_sheet):
+        logger.trace(f"No assembly provided for {sample}")
+        path = {sample: None}
+    else:
+        logger.warning(f"Failed to find {assembly_from_sheet}")
+        path = {sample: False}
+
+    return path
+
+
+def determine_sample_configs(samplesheet, config_dir, ignore_assemblies):
     # Create a dict for sample names and dict files
     sample_configs = {}
+    assemblers_unknown = []
 
     # Iterate samplesheet and pair samples with configurations
     for sample, cfg in zip(samplesheet.index, samplesheet["config"]):
+
+        # Determine assemlby paths
+        assembly_path = inspect_samplesheet_assembly_path(sample, samplesheet)
+
+        # Add sample assembly to list of unknown assembler, if assembly exists
+        if isinstance(assembly_path.get(sample), Path) and not ignore_assemblies:
+            assemblers_unknown.append(sample)
 
         # Deduce configuration file from samplesheet
         cfg_path = f"{config_dir}/{cfg}"
@@ -58,7 +86,16 @@ def determine_sample_configs(samplesheet, config_dir):
     if len(sample_configs) == 0:
         sys.exit("No sample configuration files found. Ensure that the `config` column of the samplesheet is correctly filled.")
 
-    #print(f"Returning sample_configs with length {len(sample_configs)} as {type(sample_configs)}") # As log_debug
+    # Chanfing assembler values for samples with unknown assemblers
+    for sample in assemblers_unknown:
+        sample_cfg = sample_configs.get(sample)
+
+        for mod, opts in sample_cfg.items():
+            if not isinstance(opts, dict):
+                continue
+            elif "assemblers" in opts.keys():
+                sample_configs[sample][mod]["assemblers"] = ["UnkAssembly"]
+
     return(sample_configs)
 
 
