@@ -51,7 +51,7 @@ def determine_sample_configs(samplesheet, config_dir, ignore_assemblies):
         assembly_path = inspect_samplesheet_assembly_path(sample, samplesheet)
 
         # Add sample assembly to list of unknown assembler, if assembly exists
-        if isinstance(assembly_path.get(sample), pathlib._local.PosixPath) and not ignore_assemblies:
+        if isinstance(assembly_path.get(sample), Path) and not ignore_assemblies:
             assemblers_unknown.append(sample)
 
         # Deduce configuration file from samplesheet
