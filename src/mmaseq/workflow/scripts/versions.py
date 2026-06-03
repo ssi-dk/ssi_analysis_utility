@@ -6,7 +6,7 @@ import shutil
 import pandas as pd
 import yaml
 
-conda_bin = shutil.which("conda") 
+conda_bin = shutil.which("conda") or os.environ.get("CONDA_EXE")
 if not conda_bin:
     raise RuntimeError("conda not found — ensure conda is installed in the current environment")
 

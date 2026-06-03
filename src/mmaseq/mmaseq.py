@@ -61,13 +61,6 @@ def parse_mmaseq():
     )
 
     parser.add_argument(
-        "--config",
-        dest="config",
-        default=PKG_CONFIGS / "config.yaml",
-        help="Configuration file location. (Default: %(default)s)"
-    )
-
-    parser.add_argument(
         "--threads",
         dest="threads",
         default=4,
@@ -90,7 +83,7 @@ def parse_mmaseq():
     parser.add_argument(
         "--clean",
         dest="clean",
-        action="store_false",
+        action="store_true",
         help=(
             "Remove intermediate folders and files after completion. (Default: %(default)s) "
             "If disabled, intermediate folders are maintained as OUTDIR/SAMPLE/raw/MODULE/ "
@@ -412,6 +405,7 @@ def create_command(threads,
         additionals += "--forceall "
            
     target_rule = "table "
+    
     if clean:
         target_rule = "clean "
 
