@@ -1,6 +1,8 @@
 amrfinder: "{assemblers}.tsv"
 plasmidfinder: "results_tab.tsv"
 resfinder: "ResFinder_results_tab.txt"
+pointfinder: "PointFinder_results.txt"
+disinfinder: "DisinFinder_results_tab.txt"
 serotypefinder: "results_tab.tsv"
 virulencefinder: "results_tab.tsv"
 LREfinder: "{database}.tsv"

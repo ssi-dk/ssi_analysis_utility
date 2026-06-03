@@ -257,7 +257,7 @@ rule setup_Spatyper:
     log:
         stdout = "%s/Databases/setup_Spatyper.log" %logdir
     message:
-        "[Setup Spatyper]: Setting up SerotypeFinder database"
+        "[setup_Spatyper]: Setting up SerotypeFinder database"
     shell:
         """
         cmd="git clone https://bitbucket.org/genomicepidemiology/spatyper_db.git {output.database}"
@@ -316,7 +316,7 @@ rule setup_kleborate_amrfinder:
     log:
         stdout = "%s/Databases/setup_Kleborate_AMRFinder.log" %logdir
     message:
-        "[Setup_Kleborate_AMRFinder]: Clonig AMRFinder database to Kleborate environment"
+        "[setup_kleborate_amrfinder]: Clonig AMRFinder database to Kleborate environment"
     shell:
         """
             BIN=$(which kleborate)

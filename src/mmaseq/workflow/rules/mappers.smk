@@ -14,7 +14,7 @@ rule custom_kmeralignment:
     log:
         stdout = "%s/{sample}/custom_kmeralignment_{database}.log" %logdir
     message:
-        "[kmeraligner]: Running KMA for {wildcards.database} on {wildcards.sample}"
+        "[custom_kmeralignment]: Running KMA for {wildcards.database} on {wildcards.sample}"
     shell:
         """
         OUTDIR=$(dirname {output.results})
@@ -45,7 +45,7 @@ rule custom_kmerconsensus:
     log:
         stdout = "%s/{sample}/custom_kmerconsensus_{database}.log" %logdir
     message:
-        "[kmerconsensus]: Running KMA for {wildcards.database} on {wildcards.sample}"
+        "[custom_kmerconsensus]: Running KMA for {wildcards.database} on {wildcards.sample}"
     shell:
         """
         OUTDIR=$(dirname {output.seq})
@@ -73,7 +73,7 @@ rule custom_bowtie2alignment:
     log:
         stdout = "%s/{sample}/custom_bowtie2_{database}.log" %logdir
     message:
-        "[bowtie2aligner]: Running Bowtie2 for {wildcards.database} on {wildcards.sample} using {threads} thread(s)"
+        "[custom_bowtie2alignment]: Running Bowtie2 for {wildcards.database} on {wildcards.sample} using {threads} thread(s)"
     shell:
         """
         mkdir -p $(dirname {output.sam})
@@ -126,7 +126,7 @@ rule kma_filter:
     log:
         stdout = "%s/{sample}/KMA_results/{sample}_{database}.log" %logdir
     message:
-        "[KMA Filter]: Filtering KMA .res result for {wildcards.sample}"
+        "[KMA kma_filter]: Filtering KMA .res result for {wildcards.sample}"
     shell:
         """
         mkdir -p $(dirname {output.filtered_tsv})
