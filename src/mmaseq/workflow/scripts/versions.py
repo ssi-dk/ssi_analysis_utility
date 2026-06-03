@@ -6,9 +6,9 @@ import shutil
 import pandas as pd
 import yaml
 
-conda_bin = shutil.which("conda") or os.environ.get("CONDA_EXE")
+conda_bin = shutil.which("conda") 
 if not conda_bin:
-    raise RuntimeError("conda not found — ensure conda is on PATH or CONDA_EXE is set")
+    raise RuntimeError("conda not found — ensure conda is installed in the current environment")
 
 deploy_dir = snakemake.input.deploy_dir
 versions_file = snakemake.output.versions_file
