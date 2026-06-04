@@ -311,11 +311,11 @@ def deploy(args):
     if update:
         dataset = "small"
         samplesheet_file = f"{DATA_DIR}/samplesheet_small.tsv"
-        additional_cmds += "--ignore_assemblies --force "
+        additional_cmds += "--ignore_assemblies --force --clean "
 
 
     outdir = deploy_dir / "MMAseq_Test"
-    additional_cmds += f"--verbosity {verbosity}"
+    additional_cmds += f"--clean --verbosity {verbosity}"
 
     # Create command
     command = (
