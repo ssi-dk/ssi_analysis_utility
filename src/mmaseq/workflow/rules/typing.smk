@@ -11,7 +11,7 @@ rule mlst:
     log:
     	stdout = "%s/{sample}/{assembler}_mlst.log" %logdir
     message:
-    	"[MLST]: Running MLST on {wildcards.assembler} assembly from {wildcards.sample}"
+    	"[mlst]: Running MLST on {wildcards.assembler} assembly from {wildcards.sample}"
     shell:
         """
         mkdir -p $(dirname {output.mlst_file})
@@ -39,7 +39,7 @@ rule kleborate:
     log:
     	stdout = "%s/{sample}/Kleborate_{assembler}.log" %logdir
     message:
-    	"[Kleborate]: Running Kleborate on {wildcards.assembler} assembly from {wildcards.sample}"
+    	"[kleborate]: Running Kleborate on {wildcards.assembler} assembly from {wildcards.sample}"
     shell:
         """
         outdir=$(dirname {output.kleborate})
@@ -82,7 +82,7 @@ rule chtyper:
     log:
         stdout = "%s/{sample}/{database}_chtyper.log" %logdir
     message:
-    	"[CH Typer]: Running Chtyper on {wildcards.database} assembly for {wildcards.sample}"
+    	"[chtyper]: Running Chtyper on {wildcards.database} assembly for {wildcards.sample}"
     shell:
         """
         mkdir -p $(dirname {output.filtered_tsv})
@@ -105,7 +105,7 @@ rule meningotype:
     log:
         stdout = "%s/{sample}/{assembler}_meningotype.log" %logdir
     message:
-    	"[Meningotype]: Running Meningotype on {wildcards.assembler} assembly for {wildcards.sample}"
+    	"[meningotype]: Running Meningotype on {wildcards.assembler} assembly for {wildcards.sample}"
     shell:
         """
         mkdir -p $(dirname {output.meningotype})
@@ -157,7 +157,7 @@ rule sistr:
     log:
         stdout = "%s/{sample}/{assembler}_SISTR_serovar.log" %logdir
     message:
-        "[Salmonella_serovar]: Predict Salmonella serovar with SISTR"
+        "[sistr]: Predict Salmonella serovar with SISTR"
     shell:
         """
         mkdir -p $(dirname {output.sistr_tab})
@@ -181,7 +181,7 @@ rule serotypefinder:
     log:
         stdout = "%s/{sample}/serotypefinder.log" %logdir
     message:
-        "[SerotypeFinder]: Running SerotypeFinder on {wildcards.sample}"
+        "[serotypefinder]: Running SerotypeFinder on {wildcards.sample}"
     shell:
         """
         outdir=$(dirname {output.serotype})
@@ -202,7 +202,7 @@ rule spa_typing:
     log:
         stdout = "%s/{sample}/spatyper_{assembler}.log" %logdir
     message:
-        "[Spatyping]: Running Spatyper for {wildcards.sample} using ({wildcards.assembler}) contigs"
+        "[spa_typing]: Running Spatyper for {wildcards.sample} using ({wildcards.assembler}) contigs"
     shell:
         """
         outdir=$(dirname {output.spatyper})

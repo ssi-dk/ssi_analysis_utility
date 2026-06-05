@@ -12,7 +12,7 @@ rule snp_identifier:
     log:
         stdout = "%s/{sample}/snp_identifier_{database}.log" %logdir
     message:
-        "[SNP Identifier]: Identifying SNPs of {wildcards.database} on {wildcards.sample}"
+        "[snp_identifier]: Identifying SNPs of {wildcards.database} on {wildcards.sample}"
     shell:
         """
         cmd="python {SCRIPTS_DIR}/SNP_identifier.py {params.options} --call {input.variants} --metafile {params.metafile} --output {output.indentified_variants}"
@@ -39,7 +39,7 @@ rule deletion_identifier:
     log:
         stdout = "%s/{sample}/deletion_identifier_{assembler}_{database}.log" %logdir
     message:
-        "[Deletion Identifier]: Identifying deletions of {wildcards.database} on {wildcards.sample} ({wildcards.assembler})"
+        "[deletion_identifier]: Identifying deletions of {wildcards.database} on {wildcards.sample} ({wildcards.assembler})"
     shell:
         """
         cmd="python {SCRIPTS_DIR}/deletion_identifier.py {params.options} --fsa {input.kma_seq} --call {input.variants} --mpileup {input.indels} --metafile {params.metafile} --sam {input.asm_aln} --output {output.identified_variants}"
@@ -64,7 +64,7 @@ rule cdiff_repeat_identifier:
     log:
         stdout = "%s/{sample}/cdiff_repeat_identifier_{assembler}_repeat_types.log" %logdir
     message:
-        "[CDiff Repeat identifier]: Identifying C. Difficile repeats in {wildcards.sample} on {wildcards.assembler} assembly"
+        "[cdiff_repeat_identifier]: Identifying C. Difficile repeats in {wildcards.sample} on {wildcards.assembler} assembly"
     shell:
         """
         mkdir -p $(dirname {output.repeat_types})

@@ -4,7 +4,12 @@ kma_filter:
 
 resfinder:
     options: --species 'Escherichia coli'
-    organism: 'Escherichia_coli'
+
+pointfinder:
+    options: --species 'Escherichia coli'
+
+disinfinder:
+    options: --species 'Escherichia coli'
 
 plasmidfinder: true
 
