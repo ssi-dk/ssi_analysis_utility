@@ -2,13 +2,13 @@ import json
 import os
 import subprocess
 from pathlib import Path
-
+import shutil 
 import pandas as pd
 import yaml
 
-conda_exe = os.environ.get("CONDA_EXE")
-if not conda_exe:
-    raise RuntimeError("CONDA_EXE is not set — is conda initialized?")
+conda_bin = shutil.which("conda") or os.environ.get("CONDA_EXE")
+if not conda_bin:
+    raise RuntimeError("conda not found — ensure conda is installed in the current environment")
 
 deploy_dir = snakemake.input.deploy_dir
 versions_file = snakemake.output.versions_file
@@ -30,7 +30,7 @@ for conda_path in conda_dir.iterdir():
     if not prefix.is_dir():
         continue
     result = subprocess.run(
-        [conda_exe, "list", "--prefix", str(prefix), "--json"],
+        [conda_bin, "list", "--prefix", str(prefix), "--json"],
         capture_output=True, text=True, check=True
     )
     for pkg in json.loads(result.stdout):
