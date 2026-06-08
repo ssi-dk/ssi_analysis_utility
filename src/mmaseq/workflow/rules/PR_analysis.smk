@@ -6,9 +6,9 @@ rule custom_kmeralignment:
     params:
         prefix_db = rules.setup_custom_kmeraligner_index.params.prefix    
     output:
-        results = "%s/{sample}/raw/kmeraligner/{database}.res" %outdir,
-        sam = temp("%s/{sample}/raw/samtools/{database}.sam" %outdir),
-        matrix = temp("%s/{sample}/raw/kmeraligner/{database}.mat.gz" %outdir)
+        results = "%s/{sample}/raw/kmeraligner/pr/{database}.res" %outdir,
+        sam = temp("%s/{sample}/raw/samtools/pr/{database}.sam" %outdir),
+        matrix = temp("%s/{sample}/raw/kmeraligner/pr/{database}.mat.gz" %outdir)
     conda:
         ENVS_DIR / "kmeraligner.yaml"
     log:
@@ -37,9 +37,9 @@ rule custom_kmerconsensus:
     params:
         prefix_db = rules.setup_custom_kmeraligner_index.params.prefix,
     output:
-        results = temp("%s/{sample}/raw/kmerconsensus/{database}.res" %outdir),
-        seq = "%s/{sample}/raw/kmerconsensus/{database}.fsa" %outdir,
-        aln = temp("%s/{sample}/raw/kmerconsensus/{database}.aln" %outdir)
+        results = temp("%s/{sample}/raw/kmerconsensus/pr/{database}.res" %outdir),
+        seq = "%s/{sample}/raw/kmerconsensus/pr/{database}.fsa" %outdir,
+        aln = temp("%s/{sample}/raw/kmerconsensus/pr/{database}.aln" %outdir)
     conda:
         ENVS_DIR / "kmeraligner.yaml"
     log:
@@ -65,7 +65,7 @@ rule custom_bowtie2alignment:
     params:
        options = lambda wc: sample_configs[wc.sample]["custom_bowtie2alignment"]["options"]
     output:
-        sam = temp("%s/{sample}/raw/bowtie2/{database}.sam" %outdir)
+        sam = temp("%s/{sample}/raw/bowtie2/pr/{database}.sam" %outdir)
     threads: max(1, workflow.cores - 1 - (workflow.cores - 1) % 2)
     priority: 1
     conda:
@@ -92,7 +92,7 @@ rule seqsero2:
         R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
         R2 = lambda wc: samplesheet.loc[wc.sample, "read2"]
     output:
-        seqsero = "%s/{sample}/raw/seqsero2/SeqSero_result.tsv" %outdir
+        seqsero = "%s/{sample}/raw/seqsero2/pr/SeqSero_result.tsv" %outdir
     threads: max(1, workflow.cores - 1 - (workflow.cores - 1) % 2)
     priority: 1
     conda:
@@ -118,28 +118,77 @@ rule resfinder:
     input:
         R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
         R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
-        res_database = rules.setup_ResFinder.output.database,
-        point_database = rules.setup_PointFinder.output.database, #Pointfinder requires `species` definition
-        disin_database = rules.setup_DisinFinder.output.database
+        res_database = rules.setup_ResFinder.output.database
     params:
         options = lambda wc: sample_configs[wc.sample]["resfinder"]["options"]
     output:
-        resistance = "%s/{sample}/raw/resfinder/ResFinder_results_tab.txt" %outdir
+        resistance = "%s/{sample}/raw/resfinder/pr/ResFinder_results_tab.txt" %outdir
     conda:
         ENVS_DIR / "resfinder.yaml"
     log:
         stdout = "%s/{sample}/resfinder.log" %logdir
     message:
-        "[ResFinder]: Running ResFinder, PointFinder, and DisinFinder on {wildcards.sample}"
+        "[resfinder]: Running ResFinder on {wildcards.sample}"
     shell:
         """
         outdir=$(dirname {output.resistance})
-        cmd="run_resfinder.py -ifq {input.R1} {input.R2} -o $outdir --acquired -db_res {input.res_database} --disinfectant -db_disinf {input.disin_database} --point -db_point {input.point_database} {params.options}"
+        cmd="run_resfinder.py -ifq {input.R1} {input.R2} -o $outdir --acquired -db_res {input.res_database} {params.options}"
     
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
         """
 
+
+rule pointfinder:
+    input:
+        R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
+        R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
+        res_database = rules.setup_ResFinder.output.database,
+        point_database = rules.setup_PointFinder.output.database
+    params:
+        options = lambda wc: sample_configs[wc.sample]["pointfinder"]["options"]
+    output:
+        point_mutations = "%s/{sample}/raw/pointfinder/pr/PointFinder_results.txt" %outdir
+    conda:
+        ENVS_DIR / "resfinder.yaml"
+    log:
+        stdout = "%s/{sample}/pointfinder.log" %logdir
+    message:
+        "[pointfinder]: Running PointFinder on {wildcards.sample}"
+    shell:
+        """
+        outdir=$(dirname {output.point_mutations})
+        cmd="run_resfinder.py -ifq {input.R1} {input.R2} -o $outdir -db_res {input.res_database} --point -db_point {input.point_database} {params.options}"
+    
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+        """
+
+
+rule disinfinder:
+    input:
+        R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
+        R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
+        res_database = rules.setup_ResFinder.output.database,
+        disin_database = rules.setup_DisinFinder.output.database
+    params:
+        options = lambda wc: sample_configs[wc.sample]["disinfinder"]["options"]
+    output:
+        disins = "%s/{sample}/raw/disinfinder/pr/DisinFinder_results_tab.txt" %outdir
+    conda:
+        ENVS_DIR / "resfinder.yaml"
+    log:
+        stdout = "%s/{sample}/disinfinder.log" %logdir
+    message:
+        "[disinfinder]: Running DisinFinder on {wildcards.sample}"
+    shell:
+        """
+        outdir=$(dirname {output.disins})
+        cmd="run_resfinder.py -ifq {input.R1} {input.R2} -o $outdir -db_res {input.res_database} --disinfectant -db_disinf {input.disin_database} {params.options}"
+    
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+        """
 
 
 rule plasmidfinder:
@@ -149,7 +198,7 @@ rule plasmidfinder:
         R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
         database = rules.setup_PlasmidFinder.output.database
     output:
-        replicons = "%s/{sample}/raw/plasmidfinder/results_tab.tsv" %outdir
+        replicons = "%s/{sample}/raw/plasmidfinder/pr/results_tab.tsv" %outdir
     conda:
         ENVS_DIR / "plasmidfinder.yaml"
     log:
@@ -173,7 +222,7 @@ rule virulencefinder:
         R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
         database = rules.setup_VirulenceFinder.output.database
     output:
-        virulence = "%s/{sample}/raw/virulencefinder/results_tab.tsv" %outdir,
+        virulence = "%s/{sample}/raw/virulencefinder/pr/results_tab.tsv" %outdir,
     conda:
         ENVS_DIR / "virulencefinder.yaml"
     log:
@@ -196,7 +245,7 @@ rule serotypefinder:
         R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
         database = rules.setup_SerotypeFinder.output.database
     output:
-        serotype = "%s/{sample}/raw/serotypefinder/results_tab.tsv" %outdir,
+        serotype = "%s/{sample}/raw/serotypefinder/pr/results_tab.tsv" %outdir,
     conda:
         ENVS_DIR / "serotypefinder.yaml"
     log:

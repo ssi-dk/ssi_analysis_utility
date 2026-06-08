@@ -141,7 +141,4 @@ def determine_sample_configs(samplesheet, config_dir, ignore_assemblies):
             elif "assemblers" in opts.keys():
                 sample_configs[sample][mod]["assemblers"] = ["UnkAssembly"]
 
-    print(sample_configs)
-
-
     return sample_configs
