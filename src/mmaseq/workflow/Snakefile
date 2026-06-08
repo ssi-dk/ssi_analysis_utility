@@ -73,8 +73,9 @@ all_result_filepaths = [
     for path in files
 ]
 
-#################################
+##################################
 logger.info("Initiating pipeline")
+##################################
 rule copy:
     input:
         raw = all_raw_result_filepaths
@@ -95,6 +96,7 @@ rule copy:
             cp -f $FILE $NEWDIR/
         done
         """
+
 
 rule versions:
     input:
@@ -143,11 +145,9 @@ rule clean:
         """
 
 
-include : "rules/db_fetch.smk"      
-include : "rules/db_setup.smk"       
-include : "rules/assemblers.smk"
-include : "rules/mappers.smk"
-include : "rules/variant_calling.smk"
-include : "rules/screening.smk"
-include : "rules/typing.smk"
-include : "rules/custom_analysis.smk"
+include : "rules/databases.smk"       
+include : "rules/assembly.smk"
+include : "rules/AS_analysis.smk"
+include : "rules/PR_analysis.smk"
+include : "rules/SR_analysis.smk"
+include : "rules/OT_analysis.smk"

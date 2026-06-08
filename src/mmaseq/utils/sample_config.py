@@ -10,6 +10,26 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+
+def inspect_samplesheet_reads(sample, samplesheet):
+    read1_from_sheet = samplesheet.at[sample, "read1"]
+    read2_from_sheet = samplesheet.at[sample, "read2"]
+        
+
+    type = None
+    if not pd.isna(read1_from_sheet):
+        type = "SR"
+        if not pd.isna(read2_from_sheet):
+            type = "PR"
+    elif not pd.isna(read2_from_sheet):
+        raise RuntimeError(
+            f"Read 1 is not defined but Read 2 is for sample {sample}.\n"
+            "Samplesheet might be corrupt!"
+        )
+
+    return type
+
+
 def inspect_samplesheet_assembly_path(sample, samplesheet):
     """
     Inspects the assembly path for a given sample from the samplesheet.
@@ -66,6 +86,8 @@ def determine_sample_configs(samplesheet, config_dir, ignore_assemblies):
         if isinstance(assembly_path.get(sample), Path) and not ignore_assemblies:
             assemblers_unknown.append(sample)
 
+        read_type = inspect_samplesheet_reads(sample, samplesheet)
+
         # Deduce configuration file from samplesheet
         cfg_path = f"{config_dir}/{cfg}"
 
@@ -97,10 +119,14 @@ def determine_sample_configs(samplesheet, config_dir, ignore_assemblies):
             with open(cfg_path, "r") as config_file:
                 sample_configs[sample] = yaml.safe_load(config_file)
 
+            # Determine read type
+            sample_configs[sample]["read_type"] = read_type
+
         # Warn user of no configuration is included
         else:
             print(f"No configuration file was specified for sample {sample}.\nSkipping!")
     
+
     # Ensure that there are indeed sample configurations
     if len(sample_configs) == 0:
         sys.exit("No sample configuration files found. Ensure that the `config` column of the samplesheet is correctly filled.")
@@ -114,5 +140,8 @@ def determine_sample_configs(samplesheet, config_dir, ignore_assemblies):
                 continue
             elif "assemblers" in opts.keys():
                 sample_configs[sample][mod]["assemblers"] = ["UnkAssembly"]
+
+    print(sample_configs)
+
 
     return sample_configs
