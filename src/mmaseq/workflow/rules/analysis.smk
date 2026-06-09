@@ -47,19 +47,19 @@ rule assembly_minimap2:
         """
 
 
-rule custom_blaster:
+rule blastn:
     input:
         # A complete access to the wildcard is needed, if we try to call the output of different rule we have the blending of wildcards 
         assembly = rules.assembly.output.output_assembly,
-        database = rules.fetch_custom_blast_database.output.source
+        database = rules.fetch_blast_database.output.source
     params:
-        options = lambda wc: sample_configs[wc.sample]["custom_blaster"]["options"]
+        options = lambda wc: sample_configs[wc.sample]["blastn"]["options"]
     output:
-        results = "%s/{sample}/raw/custom_blaster/blast_{assembler}_{database}.tsv" %outdir
+        results = "%s/{sample}/raw/blastn/blast_{assembler}_{database}.tsv" %outdir
     conda:
         ENVS_DIR / "blast.yaml"
     log:
-        stdout = "%s/{sample}/custom_blaster_{assembler}_{database}.log" %logdir
+        stdout = "%s/{sample}/blastn_{assembler}_{database}.log" %logdir
     message:
         "[setup_{wildcards.database}]: Setting up the {wildcards.database} database from the temporary storage folder"
     shell:
@@ -125,10 +125,10 @@ rule mlst:
 
 rule LREfinder:
     input:
-        res = rules.custom_kmeralignment.output.results,
-        matrix = rules.custom_kmeralignment.output.matrix
+        res = rules.kmeraligner.output.results,
+        matrix = rules.kmeraligner.output.matrix
     # params:
-    #     options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["custom_blaster"]["options"],    
+    #     options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["blastn"]["options"],    
     output:
         results = "%s/{sample}/raw/LREfinder/{database}.tsv" %outdir,
     conda:
@@ -152,7 +152,7 @@ rule LREfinder:
 
 rule chtyper:
     input:
-        results = rules.custom_kmeralignment.output.results
+        results = rules.kmeraligner.output.results
     params:
         id = 90,
         coverage = 60
@@ -301,9 +301,9 @@ rule samtools_sam_filtration:
     conda:
         ENVS_DIR / "samtools.yaml"
     log:
-        stdout = "%s/{sample}/custom_kmeralignment_samtools_filtration_{database}.log" %logdir
+        stdout = "%s/{sample}/samtools_filtration_{database}.log" %logdir
     message:
-        "[custom_samtools_filtration]: Filtering kmeralignment output for {wildcards.database} on {wildcards.sample}"
+        "[samtools_sam_filtration]: Filtering SAM of {wildcards.sample} mapped against {wildcards.database}"
     shell:
         """
         cmd="samtools view {input.sam} {params.options} -F 4 -bo {output.bam}"
@@ -323,9 +323,9 @@ rule samtools_bam_filtration:
     conda:
         ENVS_DIR / "samtools.yaml"
     log:
-        stdout = "%s/{sample}/custom_kmeralignment_samtools_filtration_{database}.log" %logdir
+        stdout = "%s/{sample}/samtools_filtration_{database}.log" %logdir
     message:
-        "[custom_kmeralignment_samtools_filtration]: Filtering kmeralignment output for {wildcards.database} on {wildcards.sample}"
+        "[samtools_bam_filtration]: Filtering BAM of {wildcards.sample} mapped against {wildcards.database}"
     shell:
         """
         cmd="samtools view {input.bam} {params.options} -F 4 -bo {output.bam}"
@@ -501,7 +501,7 @@ rule snp_identifier:
 
 rule deletion_identifier:
     input:
-        kma_seq = rules.custom_kmerconsensus.output.seq,
+        kma_seq = rules.kmeraligner_consensus.output.seq,
         indels = rules.bcftools_filter_indels.output.indels,
         indels_index = rules.bcftools_filter_indels.output.index,
         variants = rules.bcftools_variant_call.output.variants,
@@ -532,8 +532,8 @@ rule deletion_identifier:
 
 rule kma_filter:
     input:
-        results = rules.custom_kmeralignment.output.results,
-        database = rules.setup_custom_kmeraligner_index.output.names
+        results = rules.kmeraligner.output.results,
+        database = rules.setup_kmeraligner_index.output.names
     params:
         options = lambda wildcards: sample_configs[wildcards.sample]["kma_filter"]["options"],
         metafile = "%s/kma_filter.tsv" %SCREENING_DIR
@@ -544,7 +544,7 @@ rule kma_filter:
     log:
         stdout = "%s/{sample}/KMA_results/{sample}_{database}.log" %logdir
     message:
-        "[KMA Filter]: Filtering KMA .res result for {wildcards.sample}"
+        "[kma_filter]: Filtering KMA .res result for {wildcards.sample}"
     shell:
         """
         mkdir -p $(dirname {output.filtered_tsv})

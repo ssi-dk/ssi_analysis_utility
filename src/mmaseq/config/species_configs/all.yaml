@@ -56,7 +56,7 @@ chtyper:
 mlst:
     assemblers: shovill  
 
-custom_blaster:
+blastn:
     options: "-perc_identity 90.0"
     assemblers: shovill
     database : OXAndm

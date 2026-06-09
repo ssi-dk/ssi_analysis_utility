@@ -389,7 +389,7 @@ rule setup_LREfinder:
         """
 
 
-rule setup_custom_kmeraligner_index:
+rule setup_kmeraligner_index:
     input:
         source = "%s/custom/{database}.fasta" %database_dir
     params:
@@ -403,9 +403,9 @@ rule setup_custom_kmeraligner_index:
     conda:
         ENVS_DIR / "kmeraligner.yaml"
     log:
-        stdout = "%s/Databases/setup_custom_kmeraligner_index_{database}.log" %logdir
+        stdout = "%s/Databases/setup_kmeraligner_index_{database}.log" %logdir
     message:
-        "[setup_custom_kmeraligner_index]: Setting up {wildcards.database} database with kmeraligner"
+        "[setup_kmeraligner_index]: Setting up {wildcards.database} database with kmeraligner"
     shell:
         """
             mkdir -p $(dirname {params.prefix})
@@ -427,7 +427,7 @@ rule setup_custom_kmeraligner_index:
             printf '%s\t%s\n' "$version_str" "$date_str" > {output.version_db}
         """
 
-rule setup_custom_bowtie2_index:
+rule setup_bowtie2_index:
     input:
         source = "%s/custom/{database}.fasta" %database_dir
     params:
@@ -443,9 +443,9 @@ rule setup_custom_bowtie2_index:
     conda:
         ENVS_DIR / "bowtie2.yaml"
     log:
-        stdout = "%s/Databases/setup_custom_bowtie2index_{database}.log" %logdir
+        stdout = "%s/Databases/setup_bowtie2index_{database}.log" %logdir
     message:
-        "[setup_custom_bowtie2_index]: Setting up {wildcards.database} database with bowtie2"
+        "[setup_bowtie2_index]: Setting up {wildcards.database} database with bowtie2"
     shell:
         """
             mkdir -p $(dirname {params.prefix})
@@ -467,7 +467,7 @@ rule setup_custom_bowtie2_index:
         """
 
 
-rule setup_custom_samtool_index:
+rule setup_samtool_index:
     input:
         source = "%s/custom/{database}.fasta" %database_dir
     output:
@@ -476,9 +476,9 @@ rule setup_custom_samtool_index:
     conda:
         ENVS_DIR / "samtools.yaml"
     log:
-        stdout = "%s/Databases/setup_custom_samtool_index_{database}.log" %logdir
+        stdout = "%s/Databases/setup_samtool_index_{database}.log" %logdir
     message:
-        "[setup_custom_samtool_index]: Setting up {wildcards.database} database with samtools"
+        "[setup_samtool_index]: Setting up {wildcards.database} database with samtools"
     shell:
         """
             outdir=$(dirname {output.source})
@@ -598,7 +598,7 @@ rule fetch_ecoligenes:
     log:
         stdout = "%s/Databases/setup_ecoligenes_ecoligenes.log" %logdir
     message:
-        "[fetch_ecoligenes]: Downloading custom database ecoligenes"
+        "[fetch_ecoligenes]: Downloading database ecoligenes"
     shell:
         """
         set -euo pipefail
@@ -724,7 +724,7 @@ rule fetch_chtyper_db:
     log:
         stdout = "%s/Databases/setup_chtyper_database.log" %logdir
     message:
-        "[fetch_chtyper_db]: Downloading custom database for CHtyper"
+        "[fetch_chtyper_db]: Downloading database for CHtyper"
     shell:
         """
         set -euo pipefail
@@ -761,7 +761,7 @@ rule fetch_chtyper_db:
         """
 
 
-rule fetch_custom_blast_database:
+rule fetch_blast_database:
     output:
         source = "%s/custom/blast/OXAndm.fasta" %database_dir,
         version_db = "%s/custom/blast/OXAndm_version.txt" % database_dir
@@ -770,7 +770,7 @@ rule fetch_custom_blast_database:
     log:
         stdout = "%s/Databases/setup_OXAndm.log" %logdir
     message:
-        "[fetch_custom_blast_database]: Downloading custom database OXAndm"
+        "[fetch_blast_database]: Downloading database OXAndm"
     shell:
         """
         set -euo pipefail
@@ -797,7 +797,7 @@ rule fetch_vancomycin:
     log:
         stdout = "%s/Databases/vancomycin.log" %logdir
     message:
-        "[fetch_vancomycin]: Downloading custom vancomycin database"
+        "[fetch_vancomycin]: Downloading vancomycin database"
     shell:
         """
         set -euo pipefail
@@ -819,7 +819,7 @@ rule fetch_vancomycin_operon:
     log:
         stdout = "%s/Databases/vancomycin_operon.log" %logdir
     message:
-        "[fetch_vancomycin_operon]: Downloading custom vancomycin operon database"
+        "[fetch_vancomycin_operon]: Downloading vancomycin operon database"
     shell:
         """
         set -euo pipefail

@@ -80,13 +80,13 @@ rule shovill:
 
 # Custom mapping
 
-rule custom_kmeralignment:
+rule kmeraligner:
     input:
         R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
         R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
-        database = rules.setup_custom_kmeraligner_index.output.names
+        database = rules.setup_kmeraligner_index.output.names
     params:
-        prefix_db = rules.setup_custom_kmeraligner_index.params.prefix    
+        prefix_db = rules.setup_kmeraligner_index.params.prefix    
     output:
         results = "%s/{sample}/raw/PR/kmeraligner/{database}.res" %outdir,
         sam = temp("%s/{sample}/raw/samtools/{database}.sam" %outdir),
@@ -94,7 +94,7 @@ rule custom_kmeralignment:
     conda:
         ENVS_DIR / "kmeraligner.yaml"
     log:
-        stdout = "%s/{sample}/custom_kmeralignment_{database}.log" %logdir
+        stdout = "%s/{sample}/kmeraligner_{database}.log" %logdir
     message:
         "[kmeraligner]: Running KMA for {wildcards.database} on {wildcards.sample}"
     shell:
@@ -111,13 +111,13 @@ rule custom_kmeralignment:
         eval $cmd >> {log.stdout} 2>&1
         """
 
-rule custom_kmerconsensus:
+rule kmeraligner_consensus:
     input:
         R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
         R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
-        database = rules.setup_custom_kmeraligner_index.output.names
+        database = rules.setup_kmeraligner_index.output.names
     params:
-        prefix_db = rules.setup_custom_kmeraligner_index.params.prefix,
+        prefix_db = rules.setup_kmeraligner_index.params.prefix,
     output:
         results = temp("%s/{sample}/raw/PR/kmerconsensus/{database}.res" %outdir),
         seq = "%s/{sample}/raw/PR/kmerconsensus/{database}.fsa" %outdir,
@@ -125,9 +125,9 @@ rule custom_kmerconsensus:
     conda:
         ENVS_DIR / "kmeraligner.yaml"
     log:
-        stdout = "%s/{sample}/custom_kmerconsensus_{database}.log" %logdir
+        stdout = "%s/{sample}/kmeraligner_consensus_{database}.log" %logdir
     message:
-        "[kmerconsensus]: Running KMA for {wildcards.database} on {wildcards.sample}"
+        "[kmeraligner_consensus]: Running KMA for {wildcards.database} on {wildcards.sample}"
     shell:
         """
         OUTDIR=$(dirname {output.seq})
@@ -140,13 +140,13 @@ rule custom_kmerconsensus:
         """
 
 
-rule custom_bowtie2alignment:
+rule bowtie2:
     input:
         R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
         R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
-        database = rules.setup_custom_bowtie2_index.output.bt2_1 # just locate one of the bt2 files to activate the db_setup
+        database = rules.setup_bowtie2_index.output.bt2_1 # just locate one of the bt2 files to activate the db_setup
     params:
-       options = lambda wc: sample_configs[wc.sample]["custom_bowtie2alignment"]["options"]
+       options = lambda wc: sample_configs[wc.sample]["bowtie2"]["options"]
     output:
         sam = temp("%s/{sample}/raw/PR/bowtie2/{database}.sam" %outdir)
     threads: max(1, workflow.cores - 1 - (workflow.cores - 1) % 2)
@@ -154,7 +154,7 @@ rule custom_bowtie2alignment:
     conda:
         ENVS_DIR / "bowtie2.yaml"
     log:
-        stdout = "%s/{sample}/custom_bowtie2_{database}.log" %logdir
+        stdout = "%s/{sample}/bowtie2_{database}.log" %logdir
     message:
         "[bowtie2aligner]: Running Bowtie2 for {wildcards.database} on {wildcards.sample} using {threads} thread(s)"
     shell:
