@@ -55,6 +55,7 @@ def parse_deploy():
         "--retries",
         dest="retries",
         default=3,
+        type=int,
         help=(
             "Amount of attempts allowed for each file, when downloading the "
             "dataset. (Default: %(default)s) Setting this to 0 will lead to "
@@ -302,8 +303,6 @@ def deploy(args):
     logger.info(f"Inspecting the deployment dataset")
     deploy_dataset(update, retries)
 
-    config = f"{PKG_CONFIGS}/Test.yaml"
-
     samplesheet_file = f"{DATA_DIR}/samplesheet.tsv"
 
     # Create arguments for command
@@ -312,11 +311,11 @@ def deploy(args):
     if update:
         dataset = "small"
         samplesheet_file = f"{DATA_DIR}/samplesheet_small.tsv"
-        additional_cmds += "--ignore_assemblies --force "
+        additional_cmds += "--ignore_assemblies --force --clean "
 
 
     outdir = deploy_dir / "MMAseq_Test"
-    additional_cmds += f"--verbosity {verbosity}"
+    additional_cmds += f"--clean --verbosity {verbosity}"
 
     # Create command
     command = (
@@ -324,7 +323,6 @@ def deploy(args):
         f"--deploy_dir {deploy_dir} "
         f"--outdir {outdir} "
         f"--threads {threads} "
-        f"--config {config} "
         "--resolve "
         f"{additional_cmds}"
     )

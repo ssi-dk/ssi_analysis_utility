@@ -118,7 +118,7 @@ def create_samplesheet(args):
             # Investigate read files
             if path.suffixes in [[".fastq", ".gz"], [".fq", ".gz"]]:
                 sample = re.sub(
-                    r'(_R?[12])_?\d*\.fastq\.gz$', '', str(file)
+                    r'(_R?[12])_?\d*\.(fastq|fq)\.gz$', '', str(file)
                 )
 
                 logger.trace(f"Found {sample} with read file: {path}")

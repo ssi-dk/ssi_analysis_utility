@@ -13,17 +13,25 @@ dependencies = [
     "snakemake",
     "pandas",
 ]
+authors = [
+    {name = "Kasper Thystrup Karstensen", email = "kathka@gmail.com"},
+    {name = "Simone Scrima", email = "simonescrima@gmail.com"},
+]
+maintainers = [
+    {name = "Kasper Thystrup Karstensen", email = "kathka@gmail.com"},
+    {name = "Simone Scrima", email = "simonescrima@gmail.com"}
+
+]
 
 [project.urls]
-Documentation = "https://ssi-dk.github.io/ssi_analysis_utility/"
-Repository = "https://github.com/ssi-dk/ssi_analysis_utility"
+Documentation = "https://ssi-dk.github.io/MMASeq"
+Repository = "https://github.com/ssi-dk/MMASeq"
 
-# ---- Build configuration (Hatchling) ----
 [tool.hatch.build.targets.wheel]
-packages = ["src/mmaseq", "src/mmaseq/utils"] # In future to ensure complete uninstallation: add "src/mmaseq/config", "src/mmaseq/data", "src/mmaseq/Deploy", "src/mmaseq/Test"]
+packages = ["src/mmaseq"]
 
 [tool.hatch.build.targets.sdist]
-only-include = ["src/mmaseq", "README.md", "LICENSE", "pyproject.toml", "version_guide.md"]
+only-include = ["src/mmaseq", "README.md", "LICENSE", "pyproject.toml"]
 
 [tool.hatch.build]
 exclude = [
@@ -33,10 +41,6 @@ exclude = [
   "**/__pycache__/**",
   "**/.snakemake/**"
 ]
-
-# Add workflow, config, and data as packaged resources
-[tool.hatch.build.targets.wheel.force-include]
-"src/mmaseq/data/reads/reads.urls" = "src/mmaseq/data/reads/reads.urls"
 
 [project.scripts]
 mmadeploy = "mmaseq.deploy:launcher"

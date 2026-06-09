@@ -11,7 +11,7 @@ rule plasmidfinder:
     log:
         stdout = "%s/{sample}/plasmidfinder.log" %logdir
     message:
-        "[PlasmidFinder]: Running PlasmidFinder on {wildcards.sample}"
+        "[plasmidfinder]: Running PlasmidFinder on {wildcards.sample}"
     shell:
         """
         outdir=$(dirname {output.replicons})
@@ -27,9 +27,7 @@ rule resfinder:
     input:
         R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
         R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
-        res_database = rules.setup_ResFinder.output.database,
-        point_database = rules.setup_PointFinder.output.database, #Pointfinder requires `species` definition
-        disin_database = rules.setup_DisinFinder.output.database
+        res_database = rules.setup_ResFinder.output.database
     params:
         options = lambda wc: sample_configs[wc.sample]["resfinder"]["options"]
     output:
@@ -39,11 +37,63 @@ rule resfinder:
     log:
         stdout = "%s/{sample}/resfinder.log" %logdir
     message:
-        "[ResFinder]: Running ResFinder, PointFinder, and DisinFinder on {wildcards.sample}"
+        "[resfinder]: Running ResFinder on {wildcards.sample}"
     shell:
         """
         outdir=$(dirname {output.resistance})
-        cmd="run_resfinder.py -ifq {input.R1} {input.R2} -o $outdir --acquired -db_res {input.res_database} --disinfectant -db_disinf {input.disin_database} --point -db_point {input.point_database} {params.options}"
+        cmd="run_resfinder.py -ifq {input.R1} {input.R2} -o $outdir --acquired -db_res {input.res_database} {params.options}"
+    
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+        """
+
+
+rule pointfinder:
+    input:
+        R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
+        R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
+        res_database = rules.setup_ResFinder.output.database,
+        point_database = rules.setup_PointFinder.output.database
+    params:
+        options = lambda wc: sample_configs[wc.sample]["pointfinder"]["options"]
+    output:
+        point_mutations = "%s/{sample}/raw/pointfinder/PointFinder_results.txt" %outdir
+    conda:
+        ENVS_DIR / "resfinder.yaml"
+    log:
+        stdout = "%s/{sample}/pointfinder.log" %logdir
+    message:
+        "[pointfinder]: Running PointFinder on {wildcards.sample}"
+    shell:
+        """
+        outdir=$(dirname {output.point_mutations})
+        cmd="run_resfinder.py -ifq {input.R1} {input.R2} -o $outdir -db_res {input.res_database} --point -db_point {input.point_database} {params.options}"
+    
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+        """
+
+
+rule disinfinder:
+    input:
+        R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
+        R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
+        res_database = rules.setup_ResFinder.output.database,
+        disin_database = rules.setup_DisinFinder.output.database
+    params:
+        options = lambda wc: sample_configs[wc.sample]["disinfinder"]["options"]
+    output:
+        disins = "%s/{sample}/raw/disinfinder/DisinFinder_results_tab.txt" %outdir
+    conda:
+        ENVS_DIR / "resfinder.yaml"
+    log:
+        stdout = "%s/{sample}/disinfinder.log" %logdir
+    message:
+        "[disinfinder]: Running DisinFinder on {wildcards.sample}"
+    shell:
+        """
+        outdir=$(dirname {output.disins})
+        cmd="run_resfinder.py -ifq {input.R1} {input.R2} -o $outdir -db_res {input.res_database} --disinfectant -db_disinf {input.disin_database} {params.options}"
     
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
@@ -62,7 +112,7 @@ rule virulencefinder:
     log:
         stdout = "%s/{sample}/virulencefinder.log" %logdir
     message:
-        "[VirulenceFinder]: Running VirulenceFinder on {wildcards.sample}"
+        "[virulencefinder]: Running VirulenceFinder on {wildcards.sample}"
     shell:
         """
         outdir=$(dirname {output.virulence})
@@ -86,7 +136,7 @@ rule amrfinder:
     log:
         stdout = "%s/{sample}/amrfinder_{assembler}.log" %logdir
     message:
-        "[AMRFinderPlus]: Running AMRFinderPlus for {wildcards.sample} using ({wildcards.assembler}) contigs"
+        "[amrfinder]: Running AMRFinderPlus for {wildcards.sample} using ({wildcards.assembler}) contigs"
     shell:
         """
         mkdir -p $(dirname {output.result})
@@ -110,7 +160,7 @@ rule LREfinder:
     log:
         stdout = "%s/{sample}/LRE-finder_{database}.log" %logdir
     message:
-        "[LRE-finder]: Identify genes and mutations leading to linezolid resistance in E. faecalis and E. faecium"
+        "[LRE-finder]: Identify genes and mutations for linezolid resistance in {wildcards.sample}"
     shell:
         """
         mkdir -p $(dirname {output.results})
@@ -137,7 +187,7 @@ rule custom_blaster:
     log:
         stdout = "%s/{sample}/custom_blaster_{assembler}_{database}.log" %logdir
     message:
-        "[setup_{wildcards.database}]: Setting up the {wildcards.database} database from the temporary storage folder"
+        "[custom_blaster]: Blasting {wildcards.database} against {wildcards.sample} database from the temporary storage folder"
     shell:
         """
         mkdir -p $(dirname {output.results})

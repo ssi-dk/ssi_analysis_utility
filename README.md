@@ -18,7 +18,9 @@ A complete documentation is available [MMAseq Documentation](https://ssi-dk.gith
 Please to report bugs or enhancement use the Issue Tracker. 
 
 # Citation
-When using SSI analysis in published work, please cite the following...
+When using SSI analysis in published work, please cite the following:
+
+[PLACEHOLDER FOR CITATION INSTRUCTION]
 
 
-For citations of included algorithms and sub-modules please see the (placeholerreferences).
+For citations of included algorithms and sub-modules please see the [references](https://ssi-dk.github.io/MMASeq/references/)

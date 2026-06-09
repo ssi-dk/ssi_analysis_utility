@@ -288,3 +288,49 @@ rule fetch_custom_blast_database:
         eval "$cmd_fasta" >> {log.stdout} 2>&1
         eval "$cmd_ver"   >> {log.stdout} 2>&1
         """
+
+
+# Place holder rule until we have an online repo for all dbs
+# We store momentarily in Dataset/databases
+rule fetch_vancomycin:
+    output:
+        source = "%s/custom/vancomycin.fasta" %database_dir
+    log:
+        stdout = "%s/Databases/vancomycin.log" %logdir
+    message:
+        "[fetch_vancomycin]: Downloading custom vancomycin database"
+    shell:
+        """
+        set -euo pipefail
+        OUTDIR=$(dirname {output.source})
+        mkdir -p $OUTDIR
+                
+        fasta_url="https://raw.githubusercontent.com/ssi-dk/ssi_analysis_utility_db/refs/heads/main/resistance/vancomycin.fasta"
+
+        cmd="curl -fSL $fasta_url -o {output.source}"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout}
+        eval "$cmd" >> {log.stdout} 2>&1
+        """
+
+
+rule fetch_vancomycin_operon:
+    output:
+        source = "%s/custom/vancomycin_operon.fasta" %database_dir
+    log:
+        stdout = "%s/Databases/vancomycin_operon.log" %logdir
+    message:
+        "[fetch_vancomycin_operon]: Downloading custom vancomycin operon database"
+    shell:
+        """
+        set -euo pipefail
+        OUTDIR=$(dirname {output.source})
+        mkdir -p $OUTDIR
+                
+        fasta_url="https://raw.githubusercontent.com/ssi-dk/ssi_analysis_utility_db/refs/heads/main/resistance/vancomycin_operon.fasta"
+
+        cmd="curl -fSL $fasta_url -o {output.source}"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout}
+        eval "$cmd" >> {log.stdout} 2>&1
+        """

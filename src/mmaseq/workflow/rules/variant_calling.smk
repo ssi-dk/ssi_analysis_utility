@@ -10,7 +10,7 @@ rule samtools_sam_filtration:
     log:
         stdout = "%s/{sample}/custom_kmeralignment_samtools_filtration_{database}.log" %logdir
     message:
-        "[custom_kmeralignment_samtools_filtration]: Filtering kmeralignment output for {wildcards.database} on {wildcards.sample}"
+        "[samtools_sam_filtration]: Filtering kmeralignment output for {wildcards.database} on {wildcards.sample}"
     shell:
         """
         cmd="samtools view {input.sam} {params.options} -F 4 -bo {output.bam}"
@@ -32,7 +32,7 @@ rule samtools_bam_filtration:
     log:
         stdout = "%s/{sample}/custom_kmeralignment_samtools_filtration_{database}.log" %logdir
     message:
-        "[custom_kmeralignment_samtools_filtration]: Filtering kmeralignment output for {wildcards.database} on {wildcards.sample}"
+        "[samtools_bam_filtration]: Filtering kmeralignment output for {wildcards.database} on {wildcards.sample}"
     shell:
         """
         cmd="samtools view {input.bam} {params.options} -F 4 -bo {output.bam}"

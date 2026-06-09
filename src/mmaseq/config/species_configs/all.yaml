@@ -32,8 +32,14 @@ samtools:
 bcftools:
     view_options: -v indels -i 'INFO/DP>10'
 
-resfinder: 
-    options: --species 'Escherichia coli'
+resfinder:
+    options: --species 'Other'
+
+pointfinder:
+    options: --species 'Other'
+
+disinfinder:
+    options: --species 'Other'
 
 plasmidfinder: 
     options: ""
@@ -73,3 +79,5 @@ seqsero2: true
 sistr:
   assemblers: shovill
 
+kmeraligner:
+    database : [vancomycin, vancomycin_operon]

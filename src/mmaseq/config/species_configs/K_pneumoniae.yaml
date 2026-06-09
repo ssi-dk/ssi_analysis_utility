@@ -3,6 +3,12 @@ plasmidfinder: true
 resfinder:
     options: --species 'Klebsiella'
 
+pointfinder:
+    options: --species 'Klebsiella'
+
+disinfinder:
+    options: --species 'Klebsiella'
+
 virulencefinder: true
 
 serotypefinder: true

@@ -113,8 +113,6 @@ meningotype:
 
 ## S.Aureus  
 
-# Typical of S.Aureus
-
 ```yaml
 spatyper:
   assemblers: [spades]   

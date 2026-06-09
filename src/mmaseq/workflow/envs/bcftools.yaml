@@ -1,3 +1,7 @@
 name: bcftools
 dependencies:
   - bioconda::bcftools
+  # BioConda bcftools incorrectly lists gsl >2.7 as a dependency,
+  # despite being compiled against 2.5. By adding this as a separate
+  # dependency, this will cause the correct .so file to be present.
+  - conda-forge::gsl=2.5

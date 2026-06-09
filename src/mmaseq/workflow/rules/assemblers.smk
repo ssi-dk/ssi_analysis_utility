@@ -11,7 +11,7 @@ rule spades:
     threads: max(1, workflow.cores - 1 - (workflow.cores - 1) % 2)
     priority: 2
     message:
-        "[SPAdes]: Assemblying {wildcards.sample} using SPAdes with {threads} thread(s). This may take some time!\nInspect {log.stdout} for more details!"
+        "[spades]: Assemblying {wildcards.sample} using SPAdes with {threads} thread(s). This may take some time!\nInspect {log.stdout} for more details!"
     shell:
         """
         outdir=$(dirname {output.assembly})
@@ -38,7 +38,7 @@ rule skesa:
     threads: max(1, workflow.cores - 1 - (workflow.cores - 1) % 2)
     priority: 2
     message:
-        "[Skesa]: Assemblying {wildcards.sample} using Skesa with {threads} core(s). This may take some time!\nInspect {log.stdout} for more details!"
+        "[skesa]: Assemblying {wildcards.sample} using Skesa with {threads} core(s). This may take some time!\nInspect {log.stdout} for more details!"
     shell:
         """
         cmd="skesa --reads {input.R1},{input.R2} --contigs_out {output.assembly} --cores {threads}"
@@ -60,7 +60,7 @@ rule shovill:
     threads: max(1, workflow.cores - 1 - (workflow.cores - 1) % 2)
     priority: 2
     message:
-        "[Shovill]: Assemblying {wildcards.sample} using Shovill with {threads} CPU(s). This may take some time!\nInspect {log.stdout} for more details!"
+        "[shovill]: Assemblying {wildcards.sample} using Shovill with {threads} CPU(s). This may take some time!\nInspect {log.stdout} for more details!"
     shell:
         """
         mkdir -p $(dirname {output.assembly})

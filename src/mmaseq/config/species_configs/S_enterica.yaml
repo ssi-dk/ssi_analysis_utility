@@ -1,6 +1,13 @@
 resfinder:
   options: --species 'Salmonella enterica'
 
+pointfinder:
+  options: --species 'Salmonella enterica'
+
+disinfinder:
+  options: --species 'Salmonella enterica'
+
+
 amrfinder:
   options: --organism 'Salmonella'
   assemblers: shovill
