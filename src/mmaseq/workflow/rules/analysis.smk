@@ -2,11 +2,11 @@
 
 rule assembly:
     input:
-        input_assembly = "%s/{sample}/raw/{assembler}/{sample}.fasta" %outdir
+        input_assembly = f"{outdir}/{{sample}}/raw/{{assembler}}/{{sample}}.fasta"
     output:
-        output_assembly = "%s/{sample}/Assemblies/{sample}_{assembler}.fasta" %outdir
+        output_assembly = f"{outdir}/{{sample}}/Assemblies/{{assembler}}_{{sample}}.fasta"
     log:
-        stdout = "%s/Assemblies/{sample}_{assembler}_assembly.log" %logdir
+        stdout = f"{logdir}/Assemblies/{{assembler}}_{{sample}}.log"
     message:
         "[assembly]: Moving {wildcards.assembler} assembly for {wildcards.sample} from raw location to assembly folder"
  
@@ -22,40 +22,14 @@ rule assembly:
 
 # Gene mappers
 
-rule assembly_minimap2:
-    input:
-        assembly = rules.assembly.output.output_assembly,
-        database = rules.fetch_genbank.output.fasta
-    params:
-        options = lambda wc: sample_configs[wc.sample]["assembly_minimap2"]["options"]
-    output:
-        results = temp(f"{outdir}/{{sample}}/raw/minimap2/{{assembler}}_{{database}}.sam")
-    conda:
-        ENVS_DIR / "minimap2.yaml"
-    log:
-        stdout = "%s/{sample}/minimap2/{assembler}_{database}.log" %logdir
-    message:
-        "[assembly_minimap2]: Running Minimap2 for {wildcards.database} on {wildcards.assembler} for {wildcards.sample}"
-    shell:
-        r"""
-        mkdir -p $(dirname {output.results})
-
-        cmd="minimap2 {params.options} {input.database} {input.assembly} -o {output.results}"
-
-        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-        eval $cmd >> {log.stdout} 2>&1
-        """
-
-
 rule blastn:
     input:
-        # A complete access to the wildcard is needed, if we try to call the output of different rule we have the blending of wildcards 
         assembly = rules.assembly.output.output_assembly,
         database = rules.fetch_blast_database.output.source
     params:
         options = lambda wc: sample_configs[wc.sample]["blastn"]["options"]
     output:
-        results = "%s/{sample}/raw/blastn/blast_{assembler}_{database}.tsv" %outdir
+        tsv = "%s/{sample}/raw/blastn/blastn_{assembler}_{database}.tsv" %outdir
     conda:
         ENVS_DIR / "blast.yaml"
     log:
@@ -66,7 +40,7 @@ rule blastn:
         """
         mkdir -p $(dirname {output.results})
 
-        cmd="blastn -subject {input.database} -query {input.assembly} -outfmt '6' -out {output.results} {params.options}"
+        cmd="blastn -subject {input.database} -query {input.assembly} -outfmt '6' -out {output.tsv} {params.options}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
@@ -80,7 +54,7 @@ rule amrfinder:
     params:
         options = lambda wc: sample_configs[wc.sample]["amrfinder"]["options"]
     output:
-        result = "%s/{sample}/raw/amrfinder/{assembler}.tsv" %outdir
+        tsv = "%s/{sample}/raw/amrfinder/amrfinder_{assembler}.tsv" %outdir
     conda:
         ENVS_DIR / "amrfinder.yaml"
     log:
@@ -446,6 +420,32 @@ rule bcftools_variant_call:
         """
 
 # Custom analysis
+
+rule minimap2:
+    input:
+        assembly = rules.assembly.output.output_assembly,
+        database = rules.fetch_genbank.output.fasta
+    params:
+        options = lambda wc: sample_configs[wc.sample]["minimap2"]["options"]
+    output:
+        asm_aln = temp(f"{outdir}/{{sample}}/raw/minimap2/{{assembler}}_{{database}}_minimap2.sam")
+    conda:
+        ENVS_DIR / "minimap2.yaml"
+    log:
+        stdout = "%s/{sample}/minimap2/{assembler}_{database}.log" %logdir
+    message:
+        "[minimap2]: Running Minimap2 for {wildcards.database} on {wildcards.assembler} for {wildcards.sample}"
+    shell:
+        r"""
+        mkdir -p $(dirname {output.results})
+
+        cmd="minimap2 {params.options} {input.database} {input.assembly} -o {output.asm_aln}"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+        """
+
+
 rule cdiff_repeat_identifier:
     input:
         seqs  = expand(rules.fetch_type_repeat_sequence.output.seq, TR = ["TR6", "TR10"]),
@@ -506,7 +506,7 @@ rule deletion_identifier:
         indels_index = rules.bcftools_filter_indels.output.index,
         variants = rules.bcftools_variant_call.output.variants,
         variants_index = rules.bcftools_variant_call.output.index,
-        asm_aln = rules.assembly_minimap2.output.results
+        asm_aln = rules.minimap2.output.asm_aln
     params:
         options  = lambda wc: sample_configs[wc.sample]["deletion_identifier"]["options"],
         metafile = "%s/deletion_metafile.tsv" %SCREENING_DIR

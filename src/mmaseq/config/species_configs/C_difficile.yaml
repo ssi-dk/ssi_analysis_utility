@@ -11,7 +11,7 @@ deletion_identifier:
     database: Cdiff_Toxins
     assemblers: [spades]        # <--- NEW: matches the assembler wildcard
 
-assembly_minimap2:
+minimap2:
     options: -ax asm5 --cs
     database: Cdiff_Toxins
     assemblers: [spades]        # used to configure which assembler(s) to align
