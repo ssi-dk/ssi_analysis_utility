@@ -3,7 +3,7 @@ requires = ["hatchling>=1.25"]
 build-backend = "hatchling.build"
 
 [project]
-name = "MMAseq"
+name = "mmaseq"
 version = "1.0.0"
 description = "Mixed Microbial Analysis on Sequencing data"
 readme = "README.md"
