@@ -3,11 +3,11 @@ rule spades:
         R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
         R2 = lambda wc: samplesheet.loc[wc.sample, "read2"]
     output:
-        assembly = "%s/{sample}/raw/spades/{sample}.fasta" %outdir
+        assembly = f"{outdir}/{{sample}}/raw/spades/spades_{{sample}}.fasta"
     conda:
         ENVS_DIR / "spades.yaml"
     log:
-        stdout = "%s/Assemblies/{sample}_spades.log" %logdir
+        stdout = f"{logdir}/spades_{{sample}}.log"
     threads: max(1, workflow.cores - 1 - (workflow.cores - 1) % 2)
     priority: 2
     message:
@@ -30,11 +30,11 @@ rule skesa:
         R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
         R2 = lambda wc: samplesheet.loc[wc.sample, "read2"]
     output:
-        assembly = "%s/{sample}/raw/skesa/{sample}.fasta" %outdir
+        assembly = f"{outdir}/{{sample}}/raw/skesa/skesa_{{sample}}.fasta"
     conda:
         ENVS_DIR / "skesa.yaml"
     log:
-        stdout = "%s/Assemblies/{sample}_Skesa.log" %logdir
+        stdout = f"{logdir}/skesa_{{sample}}.log"
     threads: max(1, workflow.cores - 1 - (workflow.cores - 1) % 2)
     priority: 2
     message:
@@ -52,11 +52,11 @@ rule shovill:
         R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
         R2 = lambda wc: samplesheet.loc[wc.sample, "read2"]
     output:
-        assembly = "%s/{sample}/raw/shovill/{sample}.fasta" %outdir
+        assembly = f"{outdir}/{{sample}}/raw/shovill/shovill_{{sample}}.fasta"
     conda:
         ENVS_DIR / "shovill.yaml"
     log:
-        stdout = "%s/Assemblies/{sample}_Shovill.log" %logdir
+        stdout = f"{logdir}/shovill_{{sample}}.log"
     threads: max(1, workflow.cores - 1 - (workflow.cores - 1) % 2)
     priority: 2
     message:
@@ -79,19 +79,19 @@ rule shovill:
 
 rule assembly:
     input:
-        input_assembly = "%s/{sample}/raw/{assembler}/{sample}.fasta" %outdir
+        assembly = f"{outdir}/{{sample}}/raw/{{assembler}}/{{assembler}}_{{sample}}.fasta"
     output:
-        output_assembly = "%s/{sample}/Assemblies/{sample}_{assembler}.fasta" %outdir
+        assembly = f"{outdir}/{{sample}}/Assemblies/{{assembler}}_{{sample}}.fasta"
     log:
-        stdout = "%s/Assemblies/{sample}_{assembler}_assembly.log" %logdir
+        stdout = f"{logdir}/sync_{{assembler}}_{{sample}}.log"
     message:
-        "[assembly]: Moving {wildcards.assembler} assembly for {wildcards.sample} from raw location to assembly folder"
+        "[assembly]: Syncronizing {wildcards.assembler} for {wildcards.sample} from raw location to assembly folder"
  
     shell:
         """
-        mkdir -p $(dirname {output.output_assembly})
+        mkdir -p $(dirname {output.assembly})
 
-        cmd="cp {input.input_assembly} {output.output_assembly}"
+        cmd="rsync -av {input.assembly} {output.assembly}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1 

@@ -10,12 +10,12 @@ disinfinder:
 
 amrfinder:
   options: --organism 'Salmonella'
-  assemblers: shovill
+  assembler: shovill
   
 mlst:
-  assemblers: shovill
+  assembler: shovill
 
 seqsero2: true
 
 sistr:
-  assemblers: shovill
+  assembler: shovill

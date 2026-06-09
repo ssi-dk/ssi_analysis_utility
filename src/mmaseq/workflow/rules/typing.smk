@@ -1,15 +1,13 @@
-# Rule MLST:
-# Runs Multi Locus Sequence Type to determine the ST profile of isolate
 rule mlst:
     input:
-        assembly = rules.assembly.output.output_assembly
+        assembly = rules.assembly.output.assembly
     output:
-        mlst_file = "%s/{sample}/raw/mlst/{assembler}_mlst.tsv" %outdir,
-        mlst_tmp = temp("%s/{sample}/raw/mlst/{assembler}_mlst.mp" %outdir)
+        results = f"{outdir}/{{sample}}/raw/mlst/mlst_{{assembler}}.tsv",
+        mlst_tmp = temp(f"%s/{{sample}}/raw/mlst/mlst_{{assembler}}.tmp")
     conda:
         ENVS_DIR / "mlst.yaml"
     log:
-    	stdout = "%s/{sample}/{assembler}_mlst.log" %logdir
+    	stdout = f"{logdir}/mlst_{{assembler}}_{{sample}}.log"
     message:
     	"[mlst]: Running MLST on {wildcards.assembler} assembly from {wildcards.sample}"
     shell:
@@ -24,28 +22,27 @@ rule mlst:
         awk -f {SCRIPTS_DIR}/mlst_header.awk {output.mlst_tmp} > {output.mlst_file}
     	"""
 
-# Rule Kleborate:
-# Runs Kleborate characterising virulence and resistance in pathogen assemblies
+
 rule kleborate:
     input:
-        assembly = rules.assembly.output.output_assembly,
+        assembly = rules.assembly.output.assembly,
         version_db = rules.setup_kleborate_amrfinder.output.version_db
     output:
-        kleborate = "%s/{sample}/raw/kleborate/{assembler}/Kleborate_long.tsv" %outdir
+        results = f"{outdir}/{{sample}}/raw/kleborate/kleborate_{{assembler}}.tsv"
     params:
         options = lambda wildcards: sample_configs[wildcards.sample]["kleborate"]["options"]
     conda:
         ENVS_DIR / "kleborate.yaml"
     log:
-    	stdout = "%s/{sample}/Kleborate_{assembler}.log" %logdir
+    	stdout = f"{logdir}/kleborate_{{assembler}}_{{sample}}.log"
     message:
     	"[kleborate]: Running Kleborate on {wildcards.assembler} assembly from {wildcards.sample}"
     shell:
         """
-        outdir=$(dirname {output.kleborate})
-        #mkdir -p $outdir
+        OUTDIR=$(dirname {output.results})
+        #mkdir -p $OUTDIR
 
-        cmd="kleborate --assemblies {input.assembly} --outdir $outdir {params.options}"
+        cmd="kleborate --assemblies {input.assembly} --outdir $OUTDIR {params.options}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
@@ -53,7 +50,7 @@ rule kleborate:
         # Creating long table
         (
             echo -e "Sample\tModule\tFile\tRow\tColumn\tValue"
-            for f in $outdir/*.txt; do
+            for f in $OUTDIR/*.txt; do
                 fname=$(basename "$f" .tsv)
 
                 awk -v file="$fname" 'BEGIN{{FS=OFS="\t"}}
@@ -68,8 +65,9 @@ rule kleborate:
                     }}
                 }}' "$f"
             done
-        ) > {output.kleborate}
+        ) > {output.results}
     	"""
+
 
 rule chtyper:
     input:
@@ -78,39 +76,39 @@ rule chtyper:
         id = 90,
         coverage = 60
     output:
-        filtered_tsv = "%s/{sample}/raw/chtyper/{database}_chtyper.tsv" % outdir
+        results = f"{outdir}/{{sample}}/raw/chtyper/chtyper_{{database}}.tsv"
     log:
-        stdout = "%s/{sample}/{database}_chtyper.log" %logdir
+        stdout = f"{logdir}/chtyper_{{database}}_{{sample}}.log"
     message:
     	"[chtyper]: Running Chtyper on {wildcards.database} assembly for {wildcards.sample}"
     shell:
         """
-        mkdir -p $(dirname {output.filtered_tsv})
+        OUTDIR=$(dirname {output.results})
+        mkdir -p $OUTDIR
 
         echo "Running awk filter on {input.results}" > {log.stdout} 2>&1
 
-        awk -F'\t' 'NR==1{{for(i=1;i<=NF;i++){{if($i=="Template_Identity")id=i;if($i=="Template_Coverage")cov=i}}print;next}} ($id+0>{params.id} && $cov+0>{params.coverage})' {input.results} > {output.filtered_tsv} 2>> {log.stdout}
+        awk -F'\t' 'NR==1{{for(i=1;i<=NF;i++){{if($i=="Template_Identity")id=i;if($i=="Template_Coverage")cov=i}}print;next}} ($id+0>{params.id} && $cov+0>{params.coverage})' {input.results} > {output.results} 2>> {log.stdout}
         """
 
 
-# Rule meningotype
-# Runs meningotype on SPAdes assembled contigs to perform serotyping of N. Meningmeningitidis contigs
 rule meningotype:
     input:
-        assembly = rules.assembly.output.output_assembly,
+        assembly = rules.assembly.output.assembly,
     output:
-        meningotype = "%s/{sample}/raw/meningotype/{assembler}_meningotype.tsv" %outdir
+        results = f"{outdir}/{{sample}}/raw/meningotype/meningotype_{{assembler}}.tsv"
     conda:
         ENVS_DIR / "meningotype.yaml"
     log:
-        stdout = "%s/{sample}/{assembler}_meningotype.log" %logdir
+        stdout = f"{logdir}/meningotype_{{assembler}}_{{sample}}.log"
     message:
     	"[meningotype]: Running Meningotype on {wildcards.assembler} assembly for {wildcards.sample}"
     shell:
         """
-        mkdir -p $(dirname {output.meningotype})
+        OUTDIR=$(dirname {output.results})
+        mkdir -p $OUTDIR
 
-        cmd="meningotype --all {input.assembly} > {output.meningotype}"
+        cmd="meningotype --all {input.assembly} > {output.results}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
@@ -121,48 +119,54 @@ rule seqsero2:
     input:
         R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
         R2 = lambda wc: samplesheet.loc[wc.sample, "read2"]
+    params:
+        tmp_results = "SeqSero_result.tsv"
     output:
-        seqsero = "%s/{sample}/raw/seqsero2/SeqSero_result.tsv" %outdir
+        results = f"{outdir}/{{sample}}/raw/seqsero2/seqsero2.tsv"
     threads: max(1, workflow.cores - 1 - (workflow.cores - 1) % 2)
     priority: 1
     conda:
         ENVS_DIR / "seqsero2.yaml"
     log:
-        stdout = "%s/{sample}/seqsero2.log" %logdir
+        stdout = f"{logdir}/seqsero2_{{sample}}.log"
     message:
         "[seqsero2]: Running seqsero2 on {wildcards.sample}"
     shell:
         """
-        outdir=$(dirname {output.seqsero})
-        mkdir -p $outdir
+        OUTDIR=$(dirname {output.results})
+        mkdir -p $OUTDIR
 
-        cmd="SeqSero2_package.py -m k -t 2 -b mem -i {input.R1} {input.R2} -d $outdir -n {wildcards.sample} -p {threads}"
+        cmd="SeqSero2_package.py -m k -t 2 -b mem -i {input.R1} {input.R2} -d $OUTDIR -n {wildcards.sample} -p {threads}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
+
+        echo "Renaming result files" >> {log.stdout} 2>&1
+        mv $OUTDIR/{params.tmp_results} {output.results} >> {log.stdout} 2>&1
         """
 
 rule sistr:
     input:
-        assembly = rules.assembly.output.output_assembly,
-        serovarlist = rules.fetch_Senterica_Serovar.output.source
+        assembly = rules.assembly.output.assembly,
+        serovarlist = rules.fetch_senterica_serovar.output.source
     output:
-        sistr_tab = "%s/{sample}/raw/sistr/{assembler}_sistr.tab" %outdir,
-        gmlst_profile = "%s/{sample}/raw/sistr/{assembler}_cgmlst_profiles.csv" %outdir,
-        allele_results = "%s/{sample}/raw/sistr/{assembler}_allele-results.json" %outdir
+        results = f"{outdir}/{{sample}}/raw/sistr/sistr_{{assembler}}.tsv",
+        cgmlst = temp(f"{outdir}/{{sample}}/raw/sistr/sistr_cgmlst_profiles_{{assembler}}.csv"), # Not listed anywhere else, kept for history sake...
+        alleles = temp(f"{outdir}/{{sample}}/raw/sistr/sistr_alleles_{{assembler}}.json") # Not listed anywhere else...
     threads: max(1, workflow.cores - 1 - (workflow.cores - 1) % 2)
     priority: 1
     conda:
         ENVS_DIR / "sistr.yaml"
     log:
-        stdout = "%s/{sample}/{assembler}_SISTR_serovar.log" %logdir
+        stdout = f"{logdir}/sistr_{{assembler}}_{{sample}}.log"
     message:
         "[sistr]: Predict Salmonella serovar with SISTR"
     shell:
         """
-        mkdir -p $(dirname {output.sistr_tab})
+        OUTDIR=$(dirname {output.results})
+        mkdir -p $OUTDIR
 
-        cmd="sistr -f tab --qc -t {threads} -l {input.serovarlist} --cgmlst-profiles {output.gmlst_profile} --alleles-output {output.allele_results} --output-prediction {output.sistr_tab} {input.assembly}"
+        cmd="sistr -f tab --qc -t {threads} -l {input.serovarlist} --cgmlst-profiles {output.cgmlst} --alleles-output {output.alleles} --output-prediction {output.results} {input.assembly}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
@@ -173,40 +177,46 @@ rule serotypefinder:
     input:
         R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
         R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
-        database = rules.setup_SerotypeFinder.output.database
+        database = rules.setup_serotypefinder.output.database
+    params:
+        tmp_results = "results_tab.tsv"
     output:
-        serotype = "%s/{sample}/raw/serotypefinder/results_tab.tsv" %outdir,
+        results = f"{outdir}/{{sample}}/raw/serotypefinder/serotypefinder.tsv",
     conda:
         ENVS_DIR / "serotypefinder.yaml"
     log:
-        stdout = "%s/{sample}/serotypefinder.log" %logdir
+        stdout = f"{logdir}/serotypefinder_{{sample}}.log"
     message:
         "[serotypefinder]: Running SerotypeFinder on {wildcards.sample}"
     shell:
         """
-        outdir=$(dirname {output.serotype})
-        cmd="serotypefinder -i {input.R1} {input.R2} -o $outdir -p {input.database} -x"
+        OUTDIR=$(dirname {output.results})
+
+        cmd="serotypefinder -i {input.R1} {input.R2} -o $OUTDIR -p {input.database} -x"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
+
+        echo "Renaming result files" >> {log.stdout} 2>&1
+        mv $OUTDIR/{params.tmp_results} {output.results} >> {log.stdout} 2>&1
         """
 
 rule spa_typing:
     input:
-        assembly = rules.assembly.output.output_assembly,
-        database = rules.setup_Spatyper.output.database
+        assembly = rules.assembly.output.assembly,
+        database = rules.setup_spatyper.output.database
     output:
-        spatyper = "%s/{sample}/raw/spatyper/{assembler}_spatype_results.tsv" %outdir
+        results = f"{outdir}/{{sample}}/raw/spatyper/spa_typing_{{assembler}}.tsv"
     conda:
         ENVS_DIR / "py_utls.yaml"
     log:
-        stdout = "%s/{sample}/spatyper_{assembler}.log" %logdir
+        stdout = f"{logdir}/spa_typing_{{assembler}}_{{sample}}.log"
     message:
         "[spa_typing]: Running Spatyper for {wildcards.sample} using ({wildcards.assembler}) contigs"
     shell:
         """
-        outdir=$(dirname {output.spatyper})
-        cmd="python {SCRIPTS_DIR}/SPATyper_V2.py -a {input.assembly} -d {input.database} -o {output.spatyper} -b $outdir/seq_db -l $outdir/spatyper.log "
+        OUTDIR=$(dirname {output.results})
+        cmd="python {SCRIPTS_DIR}/SPATyper_V2.py -a {input.assembly} -d {input.database} -o {output.results} -b $OUTDIR/seq_db -l $OUTDIR/spatyper.log "
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1

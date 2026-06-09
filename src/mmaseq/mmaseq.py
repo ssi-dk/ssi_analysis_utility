@@ -336,9 +336,9 @@ def link_assemblies(
             # Determine assemblers specified in sample configs
             assemblers = set()
             for options in configs.values():
-                if not isinstance(options, dict) or "assemblers" not in options:
+                if not isinstance(options, dict) or "assembler" not in options:
                     continue
-                raw = options["assemblers"]
+                raw = options["assembler"]
                 assembler_list = (
                     raw if isinstance(raw, list) else [raw]
                 )
@@ -347,7 +347,7 @@ def link_assemblies(
             # Define assembly type from sample configurations
             for assembler in assemblers:
                 assembly_dir = outdir / sample / "raw" / assembler
-                destination = assembly_dir / f"{sample}.fasta"
+                destination = assembly_dir / f"{assembler}_{sample}.fasta"
 
                 # Ensure output assembly results directory exists
                 if not assembly_dir.exists():

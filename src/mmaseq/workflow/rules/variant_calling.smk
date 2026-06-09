@@ -1,19 +1,19 @@
 rule samtools_sam_filtration:
     input:
-        sam = "%s/{sample}/raw/samtools/{database}.sam" %outdir
+        sam = f"{outdir}/{{sample}}/raw/samtools/{{database}}.sam"
     params:
         options = lambda wc: sample_configs[wc.sample]["samtools"]["view_options"]
     output:
-        bam = temp("%s/{sample}/raw/samtools/{database}_filtered.bam" %outdir)
+        results = temp(f"{outdir}/{{sample}}/raw/samtools/samtools_bam_filtration_{{database}}.bam")
     conda:
         ENVS_DIR / "samtools.yaml"
     log:
-        stdout = "%s/{sample}/custom_kmeralignment_samtools_filtration_{database}.log" %logdir
+        stdout = f"{logdir}/samtools_sam_filtration_{{database}}_{{sample}}.log"
     message:
         "[samtools_sam_filtration]: Filtering kmeralignment output for {wildcards.database} on {wildcards.sample}"
     shell:
         """
-        cmd="samtools view {input.sam} {params.options} -F 4 -bo {output.bam}"
+        cmd="samtools view {input.sam} {params.options} -F 4 -bo {output.results}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
@@ -22,20 +22,20 @@ rule samtools_sam_filtration:
 
 rule samtools_bam_filtration:
     input:
-        bam = "%s/{sample}/raw/samtools/{database}.bam" %outdir
+        bam = f"{outdir}/{{sample}}/raw/samtools/{{database}}.bam"
     params:
         options = lambda wc: sample_configs[wc.sample]["samtools"]["view_options"]
     output:
-        bam = temp("%s/{sample}/raw/samtools/{database}_filtered.bam" %outdir)
+        results = temp(f"{outdir}/{{sample}}/raw/samtools/samtools_bam_filtration_{{database}}.bam")
     conda:
         ENVS_DIR / "samtools.yaml"
     log:
-        stdout = "%s/{sample}/custom_kmeralignment_samtools_filtration_{database}.log" %logdir
+        stdout = f"{logdir}/samtools_bam_filtration_{{database}}_{{sample}}.log"
     message:
         "[samtools_bam_filtration]: Filtering kmeralignment output for {wildcards.database} on {wildcards.sample}"
     shell:
         """
-        cmd="samtools view {input.bam} {params.options} -F 4 -bo {output.bam}"
+        cmd="samtools view {input.bam} {params.options} -F 4 -bo {output.results}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
@@ -44,26 +44,26 @@ rule samtools_bam_filtration:
 
 rule samtools_sort:
     input:
-        bam = "%s/{sample}/raw/samtools/{database}_filtered.bam" %outdir
+        bam = f"{outdir}/{{sample}}/raw/samtools/samtools_bam_filtration_{{database}}.bam"
     params:
         options = lambda wc: sample_configs[wc.sample]["samtools"]["sort_options"]
     output:
-        bam_sort = temp("%s/{sample}/raw/samtools/{database}_sorted.bam" %outdir),
-        index = temp("%s/{sample}/raw/samtools/{database}_sorted.bam.bai" %outdir)
+        results = temp(f"{outdir}/{{sample}}/raw/samtools/samtools_sort_{{database}}.bam"),
+        index = temp(f"{outdir}/{{sample}}/raw/samtools/samtools_sort_{{database}}.bam.bai")
     conda:
         ENVS_DIR / "samtools.yaml"
     log:
-        stdout = "%s/{sample}/samtools_sort_{database}.log" %logdir
+        stdout = f"{logdir}/samtools_sort_{{database}}_{{sample}}.log"
     message:
         "[samtools_sort]: Sorting filtered bam for {wildcards.database} on {wildcards.sample}"
     shell:
         """
-        cmd="samtools sort -o {output.bam_sort} {input.bam}"
+        cmd="samtools sort -o {output.results} {input.bam}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
 
-        cmd="samtools index {output.bam_sort}"
+        cmd="samtools index {output.results}"
 
         echo "\nIndexing Bam:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
@@ -72,25 +72,25 @@ rule samtools_sort:
 
 rule bcftools_pileup:
     input:
-        bam_sort = rules.samtools_sort.output.bam_sort,
-        reference = "%s/samtools/{database}.fasta" %database_dir
+        bam_sort = rules.samtools_sort.output.results,
+        reference = f"{database_dir}/samtools/{{database}}.fasta"
     output:
-        pileup = temp("%s/{sample}/raw/bcftools/{database}_pileup.bcf" %outdir),
-        index = temp("%s/{sample}/raw/bcftools/{database}_pileup.bcf.csi" %outdir)
+        results = temp(f"{outdir}/{{sample}}/raw/bcftools/bcftools_pileup_{{database}}.bcf"),
+        index = temp(f"{outdir}/{{sample}}/raw/bcftools/bcftools_pileup_{{database}}.bcf.csi")
     conda:
         ENVS_DIR / "bcftools.yaml"
     log:
-        stdout = "%s/{sample}/bcftools_pileup_{database}.log" %logdir
+        stdout = f"{logdir}/bcftools_pileup_{{database}}_{{sample}}.log"
     message:
         "[bcftools_pileup]: Generating mpileup for {wildcards.database} on {wildcards.sample}"
     shell:
         """
-        cmd="bcftools mpileup -Ob -f {input.reference} {input.bam_sort} -o {output.pileup}"
+        cmd="bcftools mpileup -Ob -f {input.reference} {input.bam_sort} -o {output.results}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
 
-        cmd="bcftools index -f {output.pileup} -o {output.index}"
+        cmd="bcftools index -f {output.results} -o {output.index}"
 
         echo "\nIndexing Pileup:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
@@ -99,27 +99,27 @@ rule bcftools_pileup:
 
 rule bcftools_filter_indels:
     input:
-        pileup = rules.bcftools_pileup.output.pileup,
+        pileup = rules.bcftools_pileup.output.results,
         pileup_index = rules.bcftools_pileup.output.index,
     params:
         options = lambda wc: sample_configs[wc.sample]["bcftools"]["view_options"]
     output:
-        indels = temp("%s/{sample}/raw/bcftools/{database}_pileup_indels.bcf" %outdir),
-        index = temp("%s/{sample}/raw/bcftools/{database}_pileup_indels.bcf.csi" %outdir)
+        results = temp(f"{outdir}/{{sample}}/raw/bcftools/bcftools_filter_indels_{{database}}.bcf"),
+        index = temp(f"{outdir}/{{sample}}/raw/bcftools/bcftools_filter_indels_{{database}}.bcf.csi")
     conda:
         ENVS_DIR / "bcftools.yaml"
     log:
-        stdout = "%s/{sample}/bcftools_filter_indels_{database}.log" %logdir
+        stdout = f"{logdir}/bcftools_filter_indels_{{database}}_{{sample}}.log"
     message:
         "[bcftools_filter_indels]: Filtering indels of {wildcards.database} on {wildcards.sample}"
     shell:
         """
-        cmd="bcftools view {params.options} -Ob -o {output.indels} {input.pileup}"
+        cmd="bcftools view {params.options} -Ob -o {output.results} {input.pileup}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
 
-        cmd="bcftools index -f {output.indels} -o {output.index}"
+        cmd="bcftools index -f {output.results} -o {output.index}"
 
         echo "\nIndexing Pileup:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
@@ -128,25 +128,25 @@ rule bcftools_filter_indels:
 
 rule bcftools_variant_call:
     input:
-        pileup = rules.bcftools_pileup.output.pileup,
+        pileup = rules.bcftools_pileup.output.results,
         pileup_index = rules.bcftools_pileup.output.index,
     output: 
-        variants = temp("%s/{sample}/raw/bcftools/{database}_call_variants.bcf" %outdir),
-        index = temp("%s/{sample}/raw/bcftools/{database}_call_variants.bcf.csi" %outdir)
+        results = temp(f"{outdir}/{{sample}}/raw/bcftools/bcftools_variant_call_{{database}}.bcf"),
+        index = temp(f"{outdir}/{{sample}}/raw/bcftools/bcftools_variant_call_{{database}}.bcf.csi")
     conda:
         ENVS_DIR / "bcftools.yaml"
     log:
-        stdout = "%s/{sample}/bcftools_variant_call_{database}.log" %logdir
+        stdout = f"{logdir}/bcftools_variant_call_{{database}}_{{sample}}.log"
     message:
         "[bcftools_variant_call]: Calling variant of {wildcards.database} on {wildcards.sample}"
     shell:
         """
-        cmd="bcftools call -mv -Ob --ploidy 1 {input.pileup} -o {output.variants}"
+        cmd="bcftools call -mv -Ob --ploidy 1 {input.pileup} -o {output.results}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
 
-        cmd="bcftools index -f {output.variants} -o {output.index}"
+        cmd="bcftools index -f {output.results} -o {output.index}"
 
         echo "\nIndexing Call:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1

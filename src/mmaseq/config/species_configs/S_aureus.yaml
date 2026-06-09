@@ -1,2 +1,2 @@
 spatyper:
-  assemblers: [spades]
+  assembler: [spades]
