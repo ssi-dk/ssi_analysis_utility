@@ -146,8 +146,6 @@ rule clean:
 
 
 include : "rules/databases.smk"       
-include : "rules/assembly.smk"
-include : "rules/AS_analysis.smk"
-include : "rules/PR_analysis.smk"
-include : "rules/SR_analysis.smk"
-include : "rules/OT_analysis.smk"
+include : "rules/PairedReads.smk"
+include : "rules/analysis.smk"
+#include : "rules/SingleReads.smk"

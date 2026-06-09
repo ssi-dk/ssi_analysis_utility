@@ -1,3 +1,85 @@
+# Assemblers
+
+rule spades:
+    input:
+        R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
+        R2 = lambda wc: samplesheet.loc[wc.sample, "read2"]
+    output:
+        assembly = "%s/{sample}/raw/spades/{sample}.fasta" %outdir
+    conda:
+        ENVS_DIR / "spades.yaml"
+    log:
+        stdout = "%s/Assemblies/{sample}_spades.log" %logdir
+    threads: max(1, workflow.cores - 1 - (workflow.cores - 1) % 2)
+    priority: 2
+    message:
+        "[SPAdes]: Assemblying {wildcards.sample} using SPAdes with {threads} thread(s). This may take some time!\nInspect {log.stdout} for more details!"
+    shell:
+        """
+        outdir=$(dirname {output.assembly})
+        cmd="spades.py -1 {input.R1} -2 {input.R2} --threads {threads} --isolate -o $outdir"
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+
+        cmd="mv $outdir/contigs.fasta {output.assembly}"
+        echo "### SPAdes Done!###\nExecuting command:\n$cmd\n" >> {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+        """
+
+
+rule skesa:
+    input:
+        R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
+        R2 = lambda wc: samplesheet.loc[wc.sample, "read2"]
+    output:
+        assembly = "%s/{sample}/raw/skesa/{sample}.fasta" %outdir
+    conda:
+        ENVS_DIR / "skesa.yaml"
+    log:
+        stdout = "%s/Assemblies/{sample}_Skesa.log" %logdir
+    threads: max(1, workflow.cores - 1 - (workflow.cores - 1) % 2)
+    priority: 2
+    message:
+        "[Skesa]: Assemblying {wildcards.sample} using Skesa with {threads} core(s). This may take some time!\nInspect {log.stdout} for more details!"
+    shell:
+        """
+        cmd="skesa --reads {input.R1},{input.R2} --contigs_out {output.assembly} --cores {threads}"
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+        """
+
+
+rule shovill:
+    input:
+        R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
+        R2 = lambda wc: samplesheet.loc[wc.sample, "read2"]
+    output:
+        assembly = "%s/{sample}/raw/shovill/{sample}.fasta" %outdir
+    conda:
+        ENVS_DIR / "shovill.yaml"
+    log:
+        stdout = "%s/Assemblies/{sample}_Shovill.log" %logdir
+    threads: max(1, workflow.cores - 1 - (workflow.cores - 1) % 2)
+    priority: 2
+    message:
+        "[Shovill]: Assemblying {wildcards.sample} using Shovill with {threads} CPU(s). This may take some time!\nInspect {log.stdout} for more details!"
+    shell:
+        """
+        mkdir -p $(dirname {output.assembly})
+        outdir=$(dirname {output.assembly})
+
+        cmd="shovill --R1 {input.R1} --R2 {input.R2} --outdir $outdir/ --force --cpus {threads}"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+
+        cmd="mv $outdir/contigs.fa {output.assembly}"
+        echo "### Shovil Done!###\nExecuting command:\n$cmd\n" >> {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+        """
+
+# Custom mapping
+
 rule custom_kmeralignment:
     input:
         R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
@@ -6,9 +88,9 @@ rule custom_kmeralignment:
     params:
         prefix_db = rules.setup_custom_kmeraligner_index.params.prefix    
     output:
-        results = "%s/{sample}/raw/kmeraligner/pr/{database}.res" %outdir,
-        sam = temp("%s/{sample}/raw/samtools/pr/{database}.sam" %outdir),
-        matrix = temp("%s/{sample}/raw/kmeraligner/pr/{database}.mat.gz" %outdir)
+        results = "%s/{sample}/raw/PR/kmeraligner/{database}.res" %outdir,
+        sam = temp("%s/{sample}/raw/samtools/{database}.sam" %outdir),
+        matrix = temp("%s/{sample}/raw/PR/kmeraligner/{database}.mat.gz" %outdir)
     conda:
         ENVS_DIR / "kmeraligner.yaml"
     log:
@@ -37,9 +119,9 @@ rule custom_kmerconsensus:
     params:
         prefix_db = rules.setup_custom_kmeraligner_index.params.prefix,
     output:
-        results = temp("%s/{sample}/raw/kmerconsensus/pr/{database}.res" %outdir),
-        seq = "%s/{sample}/raw/kmerconsensus/pr/{database}.fsa" %outdir,
-        aln = temp("%s/{sample}/raw/kmerconsensus/pr/{database}.aln" %outdir)
+        results = temp("%s/{sample}/raw/PR/kmerconsensus/{database}.res" %outdir),
+        seq = "%s/{sample}/raw/PR/kmerconsensus/{database}.fsa" %outdir,
+        aln = temp("%s/{sample}/raw/PR/kmerconsensus/{database}.aln" %outdir)
     conda:
         ENVS_DIR / "kmeraligner.yaml"
     log:
@@ -57,6 +139,7 @@ rule custom_kmerconsensus:
         eval $cmd >> {log.stdout} 2>&1
         """
 
+
 rule custom_bowtie2alignment:
     input:
         R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
@@ -65,7 +148,7 @@ rule custom_bowtie2alignment:
     params:
        options = lambda wc: sample_configs[wc.sample]["custom_bowtie2alignment"]["options"]
     output:
-        sam = temp("%s/{sample}/raw/bowtie2/pr/{database}.sam" %outdir)
+        sam = temp("%s/{sample}/raw/PR/bowtie2/{database}.sam" %outdir)
     threads: max(1, workflow.cores - 1 - (workflow.cores - 1) % 2)
     priority: 1
     conda:
@@ -86,13 +169,14 @@ rule custom_bowtie2alignment:
         eval $cmd >> {log.stdout} 2>&1
         """
 
+# Mappers
 
 rule seqsero2:
     input:
         R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
         R2 = lambda wc: samplesheet.loc[wc.sample, "read2"]
     output:
-        seqsero = "%s/{sample}/raw/seqsero2/pr/SeqSero_result.tsv" %outdir
+        seqsero = "%s/{sample}/raw/PR/seqsero2/SeqSero_result.tsv" %outdir
     threads: max(1, workflow.cores - 1 - (workflow.cores - 1) % 2)
     priority: 1
     conda:
@@ -113,7 +197,6 @@ rule seqsero2:
         """
 
 
-### CGE TOOLS ###
 rule resfinder:
     input:
         R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
@@ -122,7 +205,7 @@ rule resfinder:
     params:
         options = lambda wc: sample_configs[wc.sample]["resfinder"]["options"]
     output:
-        resistance = "%s/{sample}/raw/resfinder/pr/ResFinder_results_tab.txt" %outdir
+        resistance = "%s/{sample}/raw/PR/resfinder/ResFinder_results_tab.txt" %outdir
     conda:
         ENVS_DIR / "resfinder.yaml"
     log:
@@ -148,7 +231,7 @@ rule pointfinder:
     params:
         options = lambda wc: sample_configs[wc.sample]["pointfinder"]["options"]
     output:
-        point_mutations = "%s/{sample}/raw/pointfinder/pr/PointFinder_results.txt" %outdir
+        point_mutations = "%s/{sample}/raw/PR/pointfinder/PointFinder_results.txt" %outdir
     conda:
         ENVS_DIR / "resfinder.yaml"
     log:
@@ -174,7 +257,7 @@ rule disinfinder:
     params:
         options = lambda wc: sample_configs[wc.sample]["disinfinder"]["options"]
     output:
-        disins = "%s/{sample}/raw/disinfinder/pr/DisinFinder_results_tab.txt" %outdir
+        disins = "%s/{sample}/raw/PR/disinfinder/DisinFinder_results_tab.txt" %outdir
     conda:
         ENVS_DIR / "resfinder.yaml"
     log:
@@ -198,7 +281,7 @@ rule plasmidfinder:
         R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
         database = rules.setup_PlasmidFinder.output.database
     output:
-        replicons = "%s/{sample}/raw/plasmidfinder/pr/results_tab.tsv" %outdir
+        replicons = "%s/{sample}/raw/PR/plasmidfinder/results_tab.tsv" %outdir
     conda:
         ENVS_DIR / "plasmidfinder.yaml"
     log:
@@ -222,7 +305,7 @@ rule virulencefinder:
         R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
         database = rules.setup_VirulenceFinder.output.database
     output:
-        virulence = "%s/{sample}/raw/virulencefinder/pr/results_tab.tsv" %outdir,
+        virulence = "%s/{sample}/raw/PR/virulencefinder/results_tab.tsv" %outdir,
     conda:
         ENVS_DIR / "virulencefinder.yaml"
     log:
@@ -245,7 +328,7 @@ rule serotypefinder:
         R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
         database = rules.setup_SerotypeFinder.output.database
     output:
-        serotype = "%s/{sample}/raw/serotypefinder/pr/results_tab.tsv" %outdir,
+        serotype = "%s/{sample}/raw/PR/serotypefinder/results_tab.tsv" %outdir,
     conda:
         ENVS_DIR / "serotypefinder.yaml"
     log:

@@ -25,7 +25,7 @@ def define_module_results_file(outdir, sample, module, type, results_catalogue, 
     # Define prefix for result file paths
     prefix = Path(f"{outdir}/{sample}/{module}").expanduser()
     if raw:
-        prefix = Path(f"{outdir}/{sample}/raw/{module}/{type}").expanduser()
+        prefix = Path(f"{outdir}/{sample}/raw/{type}{module}/").expanduser()
     
 
     # Define and normalise expected result file names
