@@ -1,22 +1,22 @@
-rule custom_kmeralignment:
+rule kmeraligner:
     input:
         R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
         R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
-        database = rules.setup_custom_kmeraligner_index.output.names
+        database = rules.setup_kmeraligner_index.output.names
     params:
         tmp_results = f"{{database}}.res",
         tmp_matrix = f"{{database}}.mat.gz",
-        prefix_db = rules.setup_custom_kmeraligner_index.params.prefix    
+        prefix_db = rules.setup_kmeraligner_index.params.prefix    
     output:
-        results = f"{outdir}/{{sample}}/raw/kmeraligner/custom_kmeralignment_{{database}}.tsv",
+        results = f"{outdir}/{{sample}}/raw/kmeraligner/kmeraligner_{{database}}.tsv",
         sam = temp(f"{outdir}/{{sample}}/raw/samtools/{{database}}.sam"),
-        matrix = temp(f"{outdir}/{{sample}}/raw/kmeraligner/custom_kmeralignment_{{database}}.mat.gz")
+        matrix = temp(f"{outdir}/{{sample}}/raw/kmeraligner/kmeraligner_{{database}}.mat.gz")
     conda:
         ENVS_DIR / "kmeraligner.yaml"
     log:
-        stdout = f"{logdir}/custom_kmeralignment_{{database}}_{{sample}}.log"
+        stdout = f"{logdir}/kmeraligner_{{database}}_{{sample}}.log"
     message:
-        "[custom_kmeralignment]: Running KMA for {wildcards.database} on {wildcards.sample}"
+        "[kmeraligner]: Running KMA for {wildcards.database} on {wildcards.sample}"
     shell:
         """
         OUTDIR=$(dirname {output.results})
@@ -35,22 +35,22 @@ rule custom_kmeralignment:
         mv $OUTDIR/{params.tmp_matrix} {output.matrix} >> {log.stdout} 2>&1
         """
 
-rule custom_kmerconsensus:
+rule kmeraligner_consensus:
     input:
         R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
         R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
-        database = rules.setup_custom_kmeraligner_index.output.names
+        database = rules.setup_kmeraligner_index.output.names
     params:
         tmp_results = f"{{database}}.fsa",
-        prefix_db = rules.setup_custom_kmeraligner_index.params.prefix,
+        prefix_db = rules.setup_kmeraligner_index.params.prefix,
     output:
-        results = temp(f"{outdir}/{{sample}}/raw/kmerconsensus/custom_kmerconsensus_{{database}}.fasta")
+        results = temp(f"{outdir}/{{sample}}/raw/kmerconsensus/kmeraligner_consensus_{{database}}.fasta")
     conda:
         ENVS_DIR / "kmeraligner.yaml"
     log:
-        stdout = f"{logdir}/custom_kmerconsensus_{{database}}_{{sample}}.log"
+        stdout = f"{logdir}/kmeraligner_consensus_{{database}}_{{sample}}.log"
     message:
-        "[custom_kmerconsensus]: Running KMA for {wildcards.database} on {wildcards.sample}"
+        "[kmeraligner_consensus]: Running KMA for {wildcards.database} on {wildcards.sample}"
     shell:
         """
         OUTDIR=$(dirname {output.results})
@@ -64,13 +64,13 @@ rule custom_kmerconsensus:
         mv $OUTDIR/{params.tmp_results} {output.results} >> {log.stdout} 2>&1
         """
 
-# rule custom_bowtie2alignment:
+# rule custom_bowtie2:
 #     input:
 #         R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
 #         R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
-#         database = rules.setup_custom_bowtie2_index.output.bt2_1 # just locate one of the bt2 files to activate the db_setup
+#         database = rules.setup_bowtie2_index.output.bt2_1 # just locate one of the bt2 files to activate the db_setup
 #     params:
-#        options = lambda wc: sample_configs[wc.sample]["custom_bowtie2alignment"]["options"]
+#        options = lambda wc: sample_configs[wc.sample]["custom_bowtie2"]["options"]
 #     output:
 #         sam = temp(f"{outdir}/{{sample}}/raw/bowtie2/{{database}}.sam")
 #     threads: max(1, workflow.cores - 1 - (workflow.cores - 1) % 2)
@@ -80,7 +80,7 @@ rule custom_kmerconsensus:
 #     log:
 #         stdout = f"{logdir}/{{sample}}/custom_bowtie2_{{database}}.log"
 #     message:
-#         "[custom_bowtie2alignment]: Running Bowtie2 for {wildcards.database} on {wildcards.sample} using {threads} thread(s)"
+#         "[custom_bowtie2]: Running Bowtie2 for {wildcards.database} on {wildcards.sample} using {threads} thread(s)"
 #     shell:
 #         """
 #         mkdir -p $(dirname {output.sam})
@@ -94,12 +94,12 @@ rule custom_kmerconsensus:
 #         """
 
         
-rule assembly_minimap2:
+rule minimap2:
     input:
         assembly = rules.assembly.output.assembly,
         database = rules.fetch_genbank.output.fasta
     params:
-        options = lambda wc: sample_configs[wc.sample]["assembly_minimap2"]["options"]
+        options = lambda wc: sample_configs[wc.sample]["minimap2"]["options"]
     output:
         results = temp(f"{outdir}/{{sample}}/raw/minimap2/minimap2_{{assembler}}_{{database}}.sam")
     conda:
@@ -107,7 +107,7 @@ rule assembly_minimap2:
     log:
         stdout = f"{logdir}/minimap2_{{assembler}}_{{database}}_{{sample}}.log"
     message:
-        "[assembly_minimap2]: Running Minimap2 for {wildcards.database} on {wildcards.assembler} for {wildcards.sample}"
+        "[minimap2]: Running Minimap2 for {wildcards.database} on {wildcards.assembler} for {wildcards.sample}"
     shell:
         r"""
         mkdir -p $(dirname {output.results})
@@ -119,21 +119,21 @@ rule assembly_minimap2:
         """
 
 
-rule kma_filter:
+rule kmeraligner_wrangler:
     input:
-        results = rules.custom_kmeralignment.output.results,
-        database = rules.setup_custom_kmeraligner_index.output.names
+        results = rules.kmeraligner.output.results,
+        database = rules.setup_kmeraligner_index.output.names
     params:
-        options = lambda wildcards: sample_configs[wildcards.sample]["kma_filter"]["options"],
-        metafile = f"{SCREENING_DIR}/kma_filter.tsv"
+        options = lambda wildcards: sample_configs[wildcards.sample]["kmeraligner_wrangler"]["options"],
+        metafile = f"{SCREENING_DIR}/kmeraligner_wrangler.tsv"
     output:
-        filtered_tsv = f"{outdir}/{{sample}}/raw/kma_filter/kma_filter_{{database}}.tsv"
+        filtered_tsv = f"{outdir}/{{sample}}/raw/kmeraligner_wrangler/kmeraligner_wrangler_{{database}}.tsv"
     conda:
         ENVS_DIR / "py_utls.yaml"
     log:
-        stdout = f"{logdir}/kma_filter_{{database}}_{{sample}}.log"
+        stdout = f"{logdir}/kmeraligner_wrangler_{{database}}_{{sample}}.log"
     message:
-        "[KMA kma_filter]: Filtering KMA .res result for {wildcards.sample}"
+        "[KMA kmeraligner_wrangler]: Filtering KMA .res result for {wildcards.sample}"
     shell:
         """
         mkdir -p $(dirname {output.filtered_tsv})

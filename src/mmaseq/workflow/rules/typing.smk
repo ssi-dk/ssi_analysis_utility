@@ -71,7 +71,7 @@ rule kleborate:
 
 rule chtyper:
     input:
-        results = rules.custom_kmeralignment.output.results
+        results = rules.kmeraligner.output.results
     params:
         id = 90,
         coverage = 60

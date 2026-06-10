@@ -387,7 +387,7 @@ rule setup_lrefinder:
         """
 
 
-rule setup_custom_kmeraligner_index:
+rule setup_kmeraligner_index:
     input:
         source = f"{database_dir}/custom/{{database}}.fasta"
     params:
@@ -401,9 +401,9 @@ rule setup_custom_kmeraligner_index:
     conda:
         ENVS_DIR / "kmeraligner.yaml"
     log:
-        stdout = f"{logdir}/Databases/setup_custom_kmeraligner_index_{{database}}.log"
+        stdout = f"{logdir}/Databases/setup_kmeraligner_index_{{database}}.log"
     message:
-        "[setup_custom_kmeraligner_index]: Setting up {wildcards.database} database with kmeraligner"
+        "[setup_kmeraligner_index]: Setting up {wildcards.database} database with kmeraligner"
     shell:
         """
             mkdir -p $(dirname {params.prefix})
@@ -425,47 +425,47 @@ rule setup_custom_kmeraligner_index:
             printf '%s\t%s\n' "$version_str" "$date_str" > {output.version_db}
         """
 
-rule setup_custom_bowtie2_index:
-    input:
-        source = f"{database_dir}/custom/{{database}}.fasta"
-    params:
-        prefix = f"{database_dir}/bowtie2/{{database}}"
-    output:
-        bt2_1 = f"{database_dir}/bowtie2/{{database}}.1.bt2",
-        bt2_2 = f"{database_dir}/bowtie2/{{database}}.2.bt2",
-        bt2_3 = f"{database_dir}/bowtie2/{{database}}.3.bt2",
-        bt2_4 = f"{database_dir}/bowtie2/{{database}}.4.bt2",
-        bt2_1_rev = f"{database_dir}/bowtie2/{{database}}.rev.1.bt2",
-        bt2_2_rev = f"{database_dir}/bowtie2/{{database}}.rev.2.bt2",
-        version_db = f"{database_dir}/bowtie2/{{database}}_bowtie2index_version.txt"
-    conda:
-        ENVS_DIR / "bowtie2.yaml"
-    log:
-        stdout = f"{logdir}/Databases/setup_custom_bowtie2_index_{{database}}.log"
-    message:
-        "[setup_custom_bowtie2_index]: Setting up {wildcards.database} database with bowtie2"
-    shell:
-        """
-            mkdir -p $(dirname {params.prefix})
-            cmd="bowtie2-build {input.source} {params.prefix}"
+# rule setup_bowtie2_index:
+#     input:
+#         source = f"{database_dir}/custom/{{database}}.fasta"
+#     params:
+#         prefix = f"{database_dir}/bowtie2/{{database}}"
+#     output:
+#         bt2_1 = f"{database_dir}/bowtie2/{{database}}.1.bt2",
+#         bt2_2 = f"{database_dir}/bowtie2/{{database}}.2.bt2",
+#         bt2_3 = f"{database_dir}/bowtie2/{{database}}.3.bt2",
+#         bt2_4 = f"{database_dir}/bowtie2/{{database}}.4.bt2",
+#         bt2_1_rev = f"{database_dir}/bowtie2/{{database}}.rev.1.bt2",
+#         bt2_2_rev = f"{database_dir}/bowtie2/{{database}}.rev.2.bt2",
+#         version_db = f"{database_dir}/bowtie2/{{database}}_bowtie2index_version.txt"
+#     conda:
+#         ENVS_DIR / "bowtie2.yaml"
+#     log:
+#         stdout = f"{logdir}/Databases/setup_bowtie2_index_{{database}}.log"
+#     message:
+#         "[setup_bowtie2_index]: Setting up {wildcards.database} database with bowtie2"
+#     shell:
+#         """
+#             mkdir -p $(dirname {params.prefix})
+#             # cmd="bowtie2-build {input.source} {params.prefix}"
+# 
+#             echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+#             eval $cmd >> {log.stdout} 2>&1
+# 
+#             # 2) create version file with date
+#             version_cmd="bowtie2-build --version | head -n1 | grep -oE '[0-9]+([.][0-9]+)+'"
+#             date_cmd="date -I"
+#                 
+#             echo -e "Executing command:\n$version_cmd\n$date_cmd\n" >> {log.stdout}
+# 
+#             version_str="$(eval "$version_cmd" 2>> {log.stdout})"
+#             date_str="$(eval "$date_cmd" 2>> {log.stdout})"
+# 
+#             printf '%s\t%s\n' "$version_str" "$date_str" > {output.version_db}
+#         """
 
-            echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-            eval $cmd >> {log.stdout} 2>&1
 
-            # 2) create version file with date
-            version_cmd="bowtie2-build --version | head -n1 | grep -oE '[0-9]+([.][0-9]+)+'"
-            date_cmd="date -I"
-                
-            echo -e "Executing command:\n$version_cmd\n$date_cmd\n" >> {log.stdout}
-
-            version_str="$(eval "$version_cmd" 2>> {log.stdout})"
-            date_str="$(eval "$date_cmd" 2>> {log.stdout})"
-
-            printf '%s\t%s\n' "$version_str" "$date_str" > {output.version_db}
-        """
-
-
-rule setup_custom_samtool_index:
+rule setup_samtool_index:
     input:
         source = f"{database_dir}/custom/{{database}}.fasta"
     output:
@@ -474,9 +474,9 @@ rule setup_custom_samtool_index:
     conda:
         ENVS_DIR / "samtools.yaml"
     log:
-        stdout = f"{logdir}/Databases/setup_custom_samtool_index_{{database}}.log"
+        stdout = f"{logdir}/Databases/setup_samtool_index_{{database}}.log"
     message:
-        "[setup_custom_samtool_index]: Setting up {wildcards.database} database with samtools"
+        "[setup_samtool_index]: Setting up {wildcards.database} database with samtools"
     shell:
         """
             outdir=$(dirname {output.source})

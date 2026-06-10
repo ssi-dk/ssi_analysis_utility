@@ -23,12 +23,12 @@ rule snp_identifier:
 
 rule deletion_identifier:
     input:
-        consensus_seq = rules.custom_kmerconsensus.output.results,
+        consensus_seq = rules.kmeraligner_consensus.output.results,
         indels = rules.bcftools_filter_indels.output.results,
         indels_index = rules.bcftools_filter_indels.output.index,
         variants = rules.bcftools_variant_call.output.results,
         variants_index = rules.bcftools_variant_call.output.index,
-        asm_aln = rules.assembly_minimap2.output.results
+        asm_aln = rules.minimap2.output.results
     params:
         options  = lambda wc: sample_configs[wc.sample]["deletion_identifier"]["options"],
         metafile = f"{SCREENING_DIR}/deletion_metafile.tsv"

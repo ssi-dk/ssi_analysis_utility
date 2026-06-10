@@ -1,4 +1,4 @@
-kma_filter:
+kmeraligner_wrangler:
     options: --organism 'Clostridioides difficile'
     database: CdiffToxins
 
@@ -11,7 +11,7 @@ deletion_identifier:
     database: CdiffToxins
     assembler: [spades]        # <--- NEW: matches the assembler wildcard
 
-assembly_minimap2:
+minimap2:
     options: -ax asm5 --cs
     database: CdiffToxins
     assembler: [spades]        # used to configure which assembler(s) to align

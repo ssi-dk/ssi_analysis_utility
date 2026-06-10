@@ -1,4 +1,4 @@
-kma_filter:
+kmeraligner_wrangler:
     options: --organism 'Escherichia coli'
     database: ecoligenes
 
@@ -27,7 +27,7 @@ chtyper:
 mlst:
     assembler: shovill  
 
-custom_blaster:
+blastn:
     options: "-perc_identity 90.0"
     assembler: shovill
     database : OXAndm
