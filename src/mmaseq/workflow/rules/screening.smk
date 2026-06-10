@@ -174,8 +174,6 @@ rule lrefinder:
     input:
         res = rules.kmeraligner.output.results,
         matrix = rules.kmeraligner.output.matrix
-    # params:
-    #     options = lambda wildcards: species_configs[sample_to_organism[wildcards.sample]]["analyses_to_run"]["blastn"]["options"],    
     output:
         results = f"{outdir}/{{sample}}/raw/lrefinder/lrefinder_{{database}}.tsv",
     conda:
@@ -197,7 +195,6 @@ rule lrefinder:
 
 rule blastn:
     input:
-        # A complete access to the wildcard is needed, if we try to call the output of different rule we have the blending of wildcards 
         assembly = rules.assembly.output.assembly,
         database = rules.fetch_custom_blast_database.output.source
     params:

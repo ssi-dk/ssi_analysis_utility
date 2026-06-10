@@ -33,7 +33,7 @@ rule deletion_identifier:
         options  = lambda wc: sample_configs[wc.sample]["deletion_identifier"]["options"],
         metafile = f"{SCREENING_DIR}/deletion_metafile.tsv"
     output:
-        identified_variants = f"{outdir}/{{sample}}/raw/deletion_identifier/deletion_identifier_{{assembler}}_{{database}}.tsv" #added regex expression to ensure assemblies cannot contain '_' which our database also does
+        identified_variants = f"{outdir}/{{sample}}/raw/deletion_identifier/deletion_identifier_{{assembler}}_{{database}}.tsv"
     conda:
         ENVS_DIR / "py_utls.yaml"
     log:
