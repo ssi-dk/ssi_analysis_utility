@@ -29,11 +29,11 @@ rule blastn:
     params:
         options = lambda wc: sample_configs[wc.sample]["blastn"]["options"]
     output:
-        results = f"{outdir}/{{sample}}/raw/blastn/blastn_{{assembler}}_{{database}}.tsv"
+        results = f"{outdir}/{{sample}}/raw/blastn/blastn_{{database}}_{{assembler}}.tsv"
     conda:
         ENVS_DIR / "blast.yaml"
     log:
-        stdout = f"{logdir}/blastn_{{assembler}}_{{database}}_{{sample}}.log"
+        stdout = f"{logdir}/blastn_{{database}}_{{assembler}}_{{sample}}.log"
     message:
         "[blastn]: Blasting {wildcards.database} against {wildcards.sample} database from the temporary storage folder"
     shell:
@@ -266,11 +266,11 @@ rule deletion_identifier:
         options  = lambda wc: sample_configs[wc.sample]["deletion_identifier"]["options"],
         metafile = f"{SCREENING_DIR}/deletion_metafile.tsv"
     output:
-        identified_variants = f"{outdir}/{{sample}}/raw/deletion_identifier/deletion_identifier_{{assembler}}_{{database}}.tsv"
+        identified_variants = f"{outdir}/{{sample}}/raw/deletion_identifier/deletion_identifier_{{database}}_{{assembler}}.tsv"
     conda:
         ENVS_DIR / "py_utls.yaml"
     log:
-        stdout = f"{logdir}/deletion_identifier_{{assembler}}_{{database}}_{{sample}}.log"
+        stdout = f"{logdir}/deletion_identifier_{{database}}_{{assembler}}_{{sample}}.log"
     message:
         "[deletion_identifier]: Identifying deletions of {wildcards.database} on {wildcards.sample} ({wildcards.assembler})"
     shell:
@@ -378,7 +378,7 @@ rule mlst:
     	"[mlst]: Running MLST on {wildcards.assembler} assembly from {wildcards.sample}"
     shell:
         """
-        mkdir -p $(dirname {output.mlst_file})
+        mkdir -p $(dirname {output.results})
 
         cmd="mlst {input.assembly} --label $(basename {input.assembly} .fasta) > {output.mlst_tmp}"
 

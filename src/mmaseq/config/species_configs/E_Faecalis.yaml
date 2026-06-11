@@ -16,3 +16,4 @@ lrefinder:
 
 kmeraligner:
     database : [vancomycin, vancomycinOperon]
+    reads: True

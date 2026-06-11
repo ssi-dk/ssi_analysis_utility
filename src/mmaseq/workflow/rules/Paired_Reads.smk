@@ -90,9 +90,9 @@ rule kmeraligner:
         tmp_matrix = f"{{database}}.mat.gz",
         prefix_db = rules.setup_kmeraligner_index.params.prefix    
     output:
-        results = f"{outdir}/{{sample}}/raw/kmeraligner/kmeraligner_{{database}}.tsv",
+        results = f"{outdir}/{{sample}}/raw/PR/kmeraligner/kmeraligner_{{database}}.tsv",
         sam = temp(f"{outdir}/{{sample}}/raw/samtools/{{database}}.sam"),
-        matrix = temp(f"{outdir}/{{sample}}/raw/kmeraligner/kmeraligner_{{database}}.mat.gz")
+        matrix = temp(f"{outdir}/{{sample}}/raw/PR/kmeraligner/kmeraligner_{{database}}.mat.gz")
     conda:
         ENVS_DIR / "kmeraligner.yaml"
     log:
@@ -127,7 +127,7 @@ rule kmeraligner_consensus:
         tmp_results = f"{{database}}.fsa",
         prefix_db = rules.setup_kmeraligner_index.params.prefix,
     output:
-        results = temp(f"{outdir}/{{sample}}/raw/kmerconsensus/kmeraligner_consensus_{{database}}.fasta")
+        results = temp(f"{outdir}/{{sample}}/raw/PR/kmerconsensus/kmeraligner_consensus_{{database}}.fasta")
     conda:
         ENVS_DIR / "kmeraligner.yaml"
     log:
@@ -156,7 +156,7 @@ rule bowtie2:
     params:
        options = lambda wc: sample_configs[wc.sample]["bowtie2"]["options"]
     output:
-        sam = temp(f"{outdir}/{{sample}}/raw/bowtie2/bowtie2_{{database}}.sam")
+        sam = temp(f"{outdir}/{{sample}}/raw/PR/bowtie2/bowtie2_{{database}}.sam")
     threads: max(1, workflow.cores - 1 - (workflow.cores - 1) % 2)
     priority: 1
     conda:
@@ -186,7 +186,7 @@ rule seqsero2:
     params:
         tmp_results = "SeqSero_result.tsv"
     output:
-        results = f"{outdir}/{{sample}}/raw/seqsero2/seqsero2.tsv"
+        results = f"{outdir}/{{sample}}/raw/PR/seqsero2/seqsero2.tsv"
     threads: max(1, workflow.cores - 1 - (workflow.cores - 1) % 2)
     priority: 1
     conda:
@@ -219,7 +219,7 @@ rule plasmidfinder:
     params:
         tmp_results = "results_tab.tsv"
     output:
-        results = f"{outdir}/{{sample}}/raw/plasmidfinder/plasmidfinder.tsv"
+        results = f"{outdir}/{{sample}}/raw/PR/plasmidfinder/plasmidfinder.tsv"
     conda:
         ENVS_DIR / "plasmidfinder.yaml"
     log:
@@ -249,7 +249,7 @@ rule resfinder:
         tmp_results = "ResFinder_results_tab.txt",
         options = lambda wc: sample_configs[wc.sample]["resfinder"]["options"]
     output:
-        results = f"{outdir}/{{sample}}/raw/resfinder/resfinder.tsv"
+        results = f"{outdir}/{{sample}}/raw/PR/resfinder/resfinder.tsv"
     conda:
         ENVS_DIR / "resfinder.yaml"
     log:
@@ -279,7 +279,7 @@ rule pointfinder:
         tmp_results = "PointFinder_results.txt",
         options = lambda wc: sample_configs[wc.sample]["pointfinder"]["options"]
     output:
-        results = f"{outdir}/{{sample}}/raw/pointfinder/pointfinder.tsv"
+        results = f"{outdir}/{{sample}}/raw/PR/pointfinder/pointfinder.tsv"
     conda:
         ENVS_DIR / "resfinder.yaml"
     log:
@@ -309,7 +309,7 @@ rule disinfinder:
         tmp_results = "DisinFinder_results_tab.txt",
         options = lambda wc: sample_configs[wc.sample]["disinfinder"]["options"]
     output:
-        results = f"{outdir}/{{sample}}/raw/disinfinder/disinfinder.tsv"
+        results = f"{outdir}/{{sample}}/raw/PR/disinfinder/disinfinder.tsv"
     conda:
         ENVS_DIR / "resfinder.yaml"
     log:
@@ -337,7 +337,7 @@ rule virulencefinder:
     params:
         tmp_results = "results_tab.tsv"
     output:
-        results = f"{outdir}/{{sample}}/raw/virulencefinder/virulencefinder.tsv",
+        results = f"{outdir}/{{sample}}/raw/PR/virulencefinder/virulencefinder.tsv",
     conda:
         ENVS_DIR / "virulencefinder.yaml"
     log:
@@ -365,7 +365,7 @@ rule serotypefinder:
     params:
         tmp_results = "results_tab.tsv"
     output:
-        results = f"{outdir}/{{sample}}/raw/serotypefinder/serotypefinder.tsv",
+        results = f"{outdir}/{{sample}}/raw/PR/serotypefinder/serotypefinder.tsv",
     conda:
         ENVS_DIR / "serotypefinder.yaml"
     log:

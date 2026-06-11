@@ -4,6 +4,7 @@ kmeraligner_wrangler:
 
 resfinder:
     options: --species 'Escherichia coli'
+    reads: True
 
 pointfinder:
     options: --species 'Escherichia coli'

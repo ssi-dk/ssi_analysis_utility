@@ -34,6 +34,7 @@ bcftools:
 
 resfinder:
     options: --species 'Other'
+    reads: True
 
 pointfinder:
     options: --species 'Other'

@@ -2,13 +2,14 @@
 
 import pandas as pd
 from pathlib import Path
+from itertools import product
 from collections import defaultdict
 
 # Import from utils
 from .helpers import deconvolute_path, read_results_catalogue
 
 
-def define_module_results_file(outdir, sample, module, results_catalogue, sample_configs, raw):
+def define_module_results_file(outdir, sample, module, module_options, raw):
     """
     Defines the expected result file paths for a specific module and sample.
 
@@ -22,35 +23,53 @@ def define_module_results_file(outdir, sample, module, results_catalogue, sample
     Returns:
         list: List of Path objects representing the expected result file paths.
     """
-    # Define prefix for result file paths
-    prefix = Path(f"{outdir}/{sample}/{module}").expanduser()
-    if raw:
-        prefix = Path(f"{outdir}/{sample}/raw/{module}").expanduser()
+    
+    # Extract configurations
+    read_string = ""
+    if module_options.get("reads"):
+        read_type = module_options.get("read_type")
+
+        if read_type is not None:
+            read_string = f"{read_type}/"
     
 
-    # Define and normalise expected result file names
-    result_strings = results_catalogue.get(module)
-    if not isinstance(result_strings, (list, tuple)):
-        result_strings = [result_strings]
+    databases = [None]
+    if "database" in module_options.keys():
+        databases = module_options.get("database")
+        if not isinstance(databases, list):
+            databases = [databases]
 
-    # Define module configurations
-    sample_cfg = sample_configs.get(sample)
-    configs = sample_cfg.get(module)
+    assemblers = [None]
+    if "assembler" in module_options.keys():
+        assemblers = module_options.get("assembler")
 
-    # Define container for results
-    module_result_files = []
+        if not isinstance(assemblers, list):
+            databases = [assemblers]
 
-    # Iterate over multiple expected output results files
-    for template in result_strings:
-        deconvoluted_paths = deconvolute_path(template, configs)
+    paths = []
 
-        for path in deconvoluted_paths:
-            module_result_files.append(prefix / path)
+    for db, asm in product(databases, assemblers):
 
-    return module_result_files
+        suffix = ""
+
+        if db:
+            suffix += f"_{db}"
+
+        if asm:
+            suffix += f"_{asm}"
+
+        path = Path(
+            f"{outdir}/{sample}/{read_string}{module}/{module}{suffix}.tsv"
+        )
+        if raw:
+            path = f"{outdir}/{sample}/raw/{read_string}{module}/{module}{suffix}.tsv"
+
+        paths.append(path)
+
+    return paths
 
 
-def define_all_result_files(outdir, sample_configs, results_catalogue, raw):
+def define_all_result_files(outdir, sample_configs, raw):
     """
     Defines all expected result file paths for all samples and modules.
 
@@ -69,65 +88,18 @@ def define_all_result_files(outdir, sample_configs, results_catalogue, raw):
     for sample, modules in sample_configs.items():
         
         # Iterate over individual modules
-        for mod in modules.keys():
+        for mod, opts in modules.items():
 
-            # Ensure that module exists in results catalogue
-            if mod not in results_catalogue.keys():
+            # Ensure that tools are skipped 
+            if "ignore" in opts.keys():
                 continue
-            
-            # Define Result file strings
-            result_strings = results_catalogue.get(mod)
-
-            # Streamline object as list
-            if not isinstance(result_strings, list):
-                result_strings = [result_strings]
-
-            # Extract the configurations as keywords
-            configs = modules.get(mod)
 
             # Streamline object as dict
-            if not isinstance(configs, dict):
-                configs = dict()  # Not a dict means no keywords
+            if not isinstance(opts, dict):
+                opts = dict()  # Not a dict means no keywords
 
-            result_files = define_module_results_file(outdir, sample, mod, results_catalogue, sample_configs, raw)
+            result_files = define_module_results_file(outdir, sample, mod, opts, raw)
 
             all_result_files[sample].update({mod: result_files})
 
     return all_result_files
-
-
-def determine_rule_output(outdir, sample, module, results_catalogue, sample_configs):
-    """
-    Determines the output paths for a rule based on the results catalogue and configurations.
-
-    Args:
-        outdir (str): Output directory path.
-        sample (str): Sample name.
-        module (str): Module name.
-        results_catalogue (dict): Dictionary containing result file templates for each module.
-        sample_configs (dict): Dictionary containing configurations for each sample.
-
-    Returns:
-        list: List of output path strings for the rule.
-    """
-    result_strings = results_catalogue.get(module)
-    if not isinstance(result_strings, (list, tuple)):
-        result_strings = [result_strings]
-
-    # Define module configurations
-    sample_cfg = sample_configs.get(sample)
-    configs = sample_cfg.get(module)
-
-    # Define container for results
-    module_result_path = []
-
-    # Iterate over multiple expected output results files
-    for template in result_strings:
-        deconvoluted_paths = deconvolute_path(template, configs)
-
-        for path in deconvoluted_paths:
-            module_result_path.append(path)
-
-    return [f"{outdir}/{{sample}}/{{module}}/{path}" for path in module_result_path]
-
-
