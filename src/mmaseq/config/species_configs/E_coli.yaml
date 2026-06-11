@@ -8,15 +8,20 @@ resfinder:
 
 pointfinder:
     options: --species 'Escherichia coli'
+    reads: True
 
 disinfinder:
     options: --species 'Escherichia coli'
+    reads: True
 
-plasmidfinder: true
+plasmidfinder: 
+    reads: True
 
-virulencefinder: true
+virulencefinder: 
+    reads: True
 
-serotypefinder: true
+serotypefinder: 
+    reads: True
 
 amrfinder:
     options: --organism 'Escherichia'

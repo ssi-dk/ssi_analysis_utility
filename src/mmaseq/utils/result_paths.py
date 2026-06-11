@@ -44,7 +44,7 @@ def define_module_results_file(outdir, sample, module, module_options, raw):
         assemblers = module_options.get("assembler")
 
         if not isinstance(assemblers, list):
-            databases = [assemblers]
+            assemblers = [assemblers]
 
     paths = []
 

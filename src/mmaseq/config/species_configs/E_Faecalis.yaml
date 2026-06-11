@@ -1,8 +1,11 @@
-plasmidfinder: true
+plasmidfinder:
+    reads: True
 
-virulencefinder: true
+virulencefinder:
+    reads: True
 
-serotypefinder: true
+serotypefinder:
+    reads: True
 
 amrfinder:
     options: --organism 'Enterococcus_faecalis'
