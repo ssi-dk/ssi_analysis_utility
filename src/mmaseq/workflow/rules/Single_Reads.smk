@@ -25,7 +25,7 @@ rule SR_kmeraligner:
         SAMDIR=$(dirname {output.sam})
         mkdir -p $SAMDIR
 
-        cmd="kma -i {input.R1} -o $OUTDIR/{wildcards.database} -t_db {params.prefix_db} -na -nc -nf -sam 4 -matrix"
+        cmd="kma -i {input.R1} -o $OUTDIR/{wildcards.database} -t_db {params.prefix_db} -na -nc -nf -matrix -1t1"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
