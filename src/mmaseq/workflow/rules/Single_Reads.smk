@@ -10,7 +10,6 @@ rule SR_kmeraligner:
         prefix_db = rules.setup_kmeraligner_index.params.prefix    
     output:
         results = f"{outdir}/{{sample}}/raw/SR/kmeraligner/kmeraligner_{{database}}.tsv",
-        sam = temp(f"{outdir}/{{sample}}/raw/samtools/{{database}}.sam"),
         matrix = temp(f"{outdir}/{{sample}}/raw/SR/kmeraligner/kmeraligner_{{database}}.mat.gz")
     conda:
         ENVS_DIR / "kmeraligner.yaml"
@@ -26,7 +25,7 @@ rule SR_kmeraligner:
         SAMDIR=$(dirname {output.sam})
         mkdir -p $SAMDIR
 
-        cmd="kma -i {input.R1} -o $OUTDIR/{wildcards.database} -t_db {params.prefix_db} -na -nc -nf -sam 4 -matrix > {output.sam}"
+        cmd="kma -i {input.R1} -o $OUTDIR/{wildcards.database} -t_db {params.prefix_db} -na -nc -nf -sam 4 -matrix"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
@@ -34,65 +33,6 @@ rule SR_kmeraligner:
         echo "Renaming result files" >> {log.stdout} 2>&1
         mv $OUTDIR/{params.tmp_results} {output.results} >> {log.stdout} 2>&1
         mv $OUTDIR/{params.tmp_matrix} {output.matrix} >> {log.stdout} 2>&1
-        """
-
-
-rule SR_kmeraligner_consensus:
-    input:
-        R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
-        database = rules.setup_kmeraligner_index.output.names
-    params:
-        tmp_results = f"{{database}}.fsa",
-        prefix_db = rules.setup_kmeraligner_index.params.prefix,
-    output:
-        results = temp(f"{outdir}/{{sample}}/raw/SR/kmerconsensus/kmeraligner_consensus_{{database}}.fasta")
-    conda:
-        ENVS_DIR / "kmeraligner.yaml"
-    log:
-        stdout = f"{logdir}/kmeraligner_consensus_{{database}}_{{sample}}.log"
-    message:
-        "[kmeraligner_consensus]: Running KMA for {wildcards.database} on {wildcards.sample}"
-    shell:
-        """
-        OUTDIR=$(dirname {output.results})
-        mkdir -p $OUTDIR
-
-        cmd="kma -i {input.R1} -o $OUTDIR/{wildcards.database} -t_db {params.prefix_db} -nf -ref_fsa"
-        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-        eval $cmd >> {log.stdout} 2>&1
-
-        echo "Renaming result files" >> {log.stdout} 2>&1
-        mv $OUTDIR/{params.tmp_results} {output.results} >> {log.stdout} 2>&1
-        """
-
-### SNP analysis ###
-
-rule SR_deletion_identifier:
-    input:
-        consensus_seq = rules.SR_kmeraligner_consensus.output.results,
-        indels = rules.bcftools_filter_indels.output.results,
-        indels_index = rules.bcftools_filter_indels.output.index,
-        variants = rules.bcftools_variant_call.output.results,
-        variants_index = rules.bcftools_variant_call.output.index,
-        asm_aln = rules.minimap2.output.results
-    params:
-        options  = lambda wc: sample_configs[wc.sample]["deletion_identifier"]["options"],
-        metafile = f"{SCREENING_DIR}/deletion_metafile.tsv"
-    output:
-        identified_variants = f"{outdir}/{{sample}}/raw/deletion_identifier/deletion_identifier_{{database}}_{{assembler}}.tsv"
-    conda:
-        ENVS_DIR / "py_utls.yaml"
-    log:
-        stdout = f"{logdir}/deletion_identifier_{{database}}_{{assembler}}_{{sample}}.log"
-    message:
-        "[deletion_identifier]: Identifying deletions of {wildcards.database} on {wildcards.sample} ({wildcards.assembler})"
-    shell:
-        """
-        cmd="python {SCRIPTS_DIR}/deletion_identifier.py {params.options} --fsa {input.consensus_seq} --call {input.variants} --mpileup {input.indels} --metafile {params.metafile} --sam {input.asm_aln} --output {output.identified_variants}"
-
-
-        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-        eval $cmd >> {log.stdout} 2>&1
         """
 
 ### Characterizers ###

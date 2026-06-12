@@ -4,5 +4,5 @@ SRR4046826	reads/SRR4046826_1.fastq.gz	reads/SRR4046826_2.fastq.gz	assemblies/SR
 SRR25448586	reads/SRR25448586_1.fastq.gz	reads/SRR25448586_2.fastq.gz	assemblies/SRR25448586.fasta	N_meningitidis.yaml
 SRR26205262	reads/SRR26205262_1.fastq.gz	reads/SRR26205262_2.fastq.gz	assemblies/SRR26205262.fasta	S_enterica.yaml
 ERR2929615	reads/ERR2929615_1.fastq.gz	reads/ERR2929615_2.fastq.gz	assemblies/ERR2929615.fasta	E_Faecalis.yaml
-ERR2929578	reads/ERR29295782_1.fastq.gz	reads/ERR29295782_2.fastq.gz	assemblies/ERR2929578.fasta	E_Faecium.yaml
+ERR2929578	reads/ERR2929578_1.fastq.gz	reads/ERR2929578_2.fastq.gz	assemblies/ERR2929578.fasta	E_Faecium.yaml
 ERR142064	reads/ERR142064_1.fastq.gz	reads/ERR142064_2.fastq.gz	assemblies/ERR142064.fasta	C_difficile.yaml

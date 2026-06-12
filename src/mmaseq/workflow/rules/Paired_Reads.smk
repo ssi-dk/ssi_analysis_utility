@@ -90,7 +90,7 @@ rule PR_kmeraligner:
         tmp_matrix = f"{{database}}.mat.gz",
         prefix_db = rules.setup_kmeraligner_index.params.prefix    
     output:
-        results = f"{outdir}/{{sample}}/raw/kmeraligner/kmeraligner_{{database}}_PR.tsv",
+        results = f"{outdir}/{{sample}}/raw/PR/kmeraligner/kmeraligner_{{database}}.tsv",
         sam = temp(f"{outdir}/{{sample}}/raw/samtools/{{database}}.sam"),
         matrix = temp(f"{outdir}/{{sample}}/raw/PR/kmeraligner/kmeraligner_{{database}}.mat.gz")
     conda:
@@ -118,7 +118,7 @@ rule PR_kmeraligner:
         """
 
 
-rule PR_kmeraligner_consensus:
+rule kmeraligner_consensus:
     input:
         R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
         R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
@@ -176,37 +176,6 @@ rule PR_bowtie2:
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
         """
-
-### SNP analysis ###
-
-rule PR_deletion_identifier:
-    input:
-        consensus_seq = rules.PR_kmeraligner_consensus.output.results,
-        indels = rules.bcftools_filter_indels.output.results,
-        indels_index = rules.bcftools_filter_indels.output.index,
-        variants = rules.bcftools_variant_call.output.results,
-        variants_index = rules.bcftools_variant_call.output.index,
-        asm_aln = rules.minimap2.output.results
-    params:
-        options  = lambda wc: sample_configs[wc.sample]["deletion_identifier"]["options"],
-        metafile = f"{SCREENING_DIR}/deletion_metafile.tsv"
-    output:
-        identified_variants = f"{outdir}/{{sample}}/raw/deletion_identifier/deletion_identifier_{{database}}_{{assembler}}.tsv"
-    conda:
-        ENVS_DIR / "py_utls.yaml"
-    log:
-        stdout = f"{logdir}/deletion_identifier_{{database}}_{{assembler}}_{{sample}}.log"
-    message:
-        "[deletion_identifier]: Identifying deletions of {wildcards.database} on {wildcards.sample} ({wildcards.assembler})"
-    shell:
-        """
-        cmd="python {SCRIPTS_DIR}/deletion_identifier.py {params.options} --fsa {input.consensus_seq} --call {input.variants} --mpileup {input.indels} --metafile {params.metafile} --sam {input.asm_aln} --output {output.identified_variants}"
-
-
-        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-        eval $cmd >> {log.stdout} 2>&1
-        """
-
 
 ### Characterizers ###
 

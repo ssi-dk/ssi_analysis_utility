@@ -139,7 +139,6 @@ rule clean:
 
 
 include : "rules/databases.smk"
-include : "rules/preprocessing.smk"
 include : "rules/Single_Reads.smk"
 include : "rules/Paired_Reads.smk"
 include : "rules/analysis.smk"

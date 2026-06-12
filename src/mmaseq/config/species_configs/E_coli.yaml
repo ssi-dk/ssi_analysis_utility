@@ -1,6 +1,7 @@
 kmeraligner_wrangler:
     options: --organism 'Escherichia coli'
     database: ecoligenes
+    reads: True
 
 resfinder:
     options: --species 'Escherichia coli'
@@ -29,6 +30,7 @@ amrfinder:
 
 chtyper:
     database: fumCH_db 
+    reads: True
 
 mlst:
     assembler: shovill  

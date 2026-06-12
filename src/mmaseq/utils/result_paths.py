@@ -31,6 +31,8 @@ def define_module_results_file(outdir, sample, module, module_options, raw):
 
         if read_type is not None:
             read_string = f"{read_type}/"
+        else:
+            print(f"ERROR: Read type not identified for {sample}. Check read paths for your samplesheet!")
     
 
     databases = [None]

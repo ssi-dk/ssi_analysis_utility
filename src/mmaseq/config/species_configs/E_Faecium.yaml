@@ -9,6 +9,8 @@ serotypefinder:
 
 resfinder:
     reads: False
+    assembler: shovill
+    options: --species 'Other'
 
 amrfinder:
     options: --organism 'Enterococcus_faecium'
@@ -19,6 +21,7 @@ mlst:
 
 lrefinder:
     database : [elmDB]
+    reads: True
 
 kmeraligner:
     database : [vancomycin, vancomycinOperon]
