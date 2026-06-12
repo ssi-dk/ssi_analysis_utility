@@ -327,7 +327,7 @@ rule fetch_vancomycin_operon:
         OUTDIR=$(dirname {output.source})
         mkdir -p $OUTDIR
                 
-        fasta_url="https://raw.githubusercontent.com/ssi-dk/ssi_analysis_utility_db/refs/heads/main/resistance/vancomycin_operon.fasta"
+        fasta_url="https://raw.githubusercontent.com/ssi-dk/ssi_analysis_utility_db/refs/heads/main/resistance/vancomycinOperon.fasta"
 
         cmd="curl -fSL $fasta_url -o {output.source}"
 
