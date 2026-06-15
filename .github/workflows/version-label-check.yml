@@ -24,7 +24,7 @@ jobs:
               issue_number: context.issue.number,
             });
 
-            const allowed = ["major", "feature", "patch", "build});
+            const allowed = ["feature", "patch", "build});
             const found = labels.map(l => l.name).filter(n => allowed.includes(n));
             
             console.log("Detected labels:", found);
