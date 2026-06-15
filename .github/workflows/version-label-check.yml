@@ -26,6 +26,6 @@ jobs:
 
             if (labels.length !== 1) {
               core.setFailed(
-                `PR must contain exactly one version label (major, feature, patch, build). Found: ${labels.join(", ")}`
+                `PR must contain exactly one version label (feature, patch, build). Found: ${labels.join(", ")}`
               );
             }
