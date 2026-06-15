@@ -1,0 +1,48 @@
+name: Bump version
+
+on:
+  pull_request:
+    types:
+      - closed
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    if: github.event.pull_request.merged == true
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Get label
+        id: label
+        run: |
+          echo "LABEL=${{
+            contains(github.event.pull_request.labels.*.name, 'major') && 'major' ||
+            contains(github.event.pull_request.labels.*.name, 'feature') && 'feature' ||
+            contains(github.event.pull_request.labels.*.name, 'patch') && 'patch' ||
+            'build'
+          }}" >> $GITHUB_OUTPUT
+
+      - name: Bump version
+        run: |
+          python .github/scripts/bump_version.py \
+            "${{ steps.label.outputs.LABEL }}"
+
+      - name: Commit
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+
+          git add .
+          git commit -m "Bump version"
+          git push

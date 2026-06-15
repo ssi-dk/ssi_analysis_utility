@@ -1,0 +1,31 @@
+name: Version label check
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - labeled
+      - unlabeled
+
+jobs:
+  check-version-label:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check labels
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = context.payload.pull_request.labels
+              .map(l => l.name)
+              .filter(l =>
+                ["major","feature","patch","build"].includes(l)
+              );
+
+            if (labels.length !== 1) {
+              core.setFailed(
+                `PR must contain exactly one version label (feature, patch, build). Found: ${labels.join(", ")}`
+              );
+            }
