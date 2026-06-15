@@ -4,7 +4,7 @@ from pathlib import Path
 
 label = sys.argv[1]
 
-version_file = Path("mmaseq/_version.py")
+version_file = Path("src/mmaseq/_version.py")
 
 text = version_file.read_text()
 
