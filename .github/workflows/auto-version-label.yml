@@ -1,0 +1,56 @@
+name: Auto version label
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+
+    permissions:
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: Assign version label from title
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = context.payload.pull_request.title.toLowerCase();
+
+            let label = null;
+
+            if (title.startsWith("fix") || title.startsWith("bug")) {
+              label = "patch";
+            }
+
+            else if (
+              title.startsWith("feat") ||
+              title.startsWith("feature") ||
+              title.startsWith("add")
+            ) {
+              label = "feature";
+            }
+
+            else if (
+              title.startsWith("build") ||
+              title.startsWith("pkg") ||
+              title.startsWith("docs")
+            ) {
+              label = "build";
+            }
+
+            if (!label) {
+              console.log("No matching label for title:", title);
+              return;
+            }
+
+            console.log("Applying label:", label);
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: [label],
+            });
