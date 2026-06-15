@@ -321,7 +321,7 @@ rule amrfinder:
     params:
         options = lambda wc: sample_configs[wc.sample]["amrfinder"]["options"]
     output:
-        result = f"{outdir}/{{sample}}/raw/amrfinder/amrfinder_{{assembler}}.tsv"
+        results = f"{outdir}/{{sample}}/raw/amrfinder/amrfinder_{{assembler}}.tsv"
     conda:
         ENVS_DIR / "amrfinder.yaml"
     log:
@@ -333,7 +333,7 @@ rule amrfinder:
         OUTDIR=$(dirname {output.results})
         mkdir -p $OUTDIR
         
-        cmd="amrfinder --nucleotide {input.assembly} --database {input.database} {params.options} --output {output.result}"
+        cmd="amrfinder --nucleotide {input.assembly} --database {input.database} {params.options} --output {output.results}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
@@ -378,7 +378,7 @@ rule mlst:
     	"[mlst]: Running MLST on {wildcards.assembler} assembly from {wildcards.sample}"
     shell:
         """
-        mkdir -p $(dirname {output.mlst_file})
+        mkdir -p $(dirname {output.results})
 
         cmd="mlst {input.assembly} --label $(basename {input.assembly} .fasta) > {output.mlst_tmp}"
 
@@ -485,6 +485,8 @@ rule sistr:
     input:
         assembly = rules.assembly.output.assembly,
         serovarlist = rules.fetch_senterica_serovar.output.source
+    params:
+        tmp_results = f"sistr_{{assembler}}.tsv.tab"
     output:
         results = f"{outdir}/{{sample}}/raw/sistr/sistr_{{assembler}}.tsv",
         cgmlst = temp(f"{outdir}/{{sample}}/raw/sistr/sistr_cgmlst_profiles_{{assembler}}.csv"), # Not listed anywhere else, kept for history sake...
@@ -506,6 +508,9 @@ rule sistr:
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
+
+        echo "Renaming result files" >> {log.stdout} 2>&1
+        mv $OUTDIR/{params.tmp_results} {output.results} >> {log.stdout} 2>&1
         """
 
 
