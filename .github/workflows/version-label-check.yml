@@ -21,7 +21,7 @@ jobs:
             const labels = context.payload.pull_request.labels
               .map(l => l.name)
               .filter(l =>
-                ["major","feature","patch","build"].includes(l)
+                ["feature","patch","build"].includes(l)
               );
 
             if (labels.length !== 1) {
