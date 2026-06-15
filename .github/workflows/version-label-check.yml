@@ -18,14 +18,19 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const labels = context.payload.pull_request.labels
-              .map(l => l.name)
-              .filter(l =>
-                ["feature","patch","build"].includes(l)
-              );
+            const { data: labels } = await github.rest.issues.listLabelsOnIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
 
-            if (labels.length !== 1) {
+            const allowed = ["major", "feature", "patch", "build});
+            const found = labels.map(l => l.name).filter(n => allowed.includes(n));
+            
+            console.log("Detected labels:", found);
+            
+            if (found.length !== 1) {
               core.setFailed(
-                `PR must contain exactly one version label (feature, patch, build). Found: ${labels.join(", ")}`
+                `PR must contain exactly one version label (major, feature, patch, build). Found: ${found.join(", ")}`
               );
             }
