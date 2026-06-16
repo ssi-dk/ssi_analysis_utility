@@ -1,6 +1,8 @@
-name: Version label check
+name: Pull Requests label check
 
 on:
+  workflow_run:
+    workflows: ["Pull Requests Automatic labelling"]
   pull_request:
     types:
       - opened
