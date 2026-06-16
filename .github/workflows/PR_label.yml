@@ -2,7 +2,7 @@ name: Pull Requests Automatic labelling
 
 on:
   pull_request:
-    types: [opened, edited, reopened, synchronize]
+    types: [opened, edited, reopened, synchronize, labeled, unlabeled]
 
 jobs:
   label:

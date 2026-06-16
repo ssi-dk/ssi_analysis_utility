@@ -4,13 +4,6 @@ on:
   workflow_run:
     workflows: ["Pull Requests Automatic labelling"]
     types: [completed]
-  pull_request:
-    types:
-      - opened
-      - synchronize
-      - reopened
-      - labeled
-      - unlabeled
 
 jobs:
   check-version-label:
