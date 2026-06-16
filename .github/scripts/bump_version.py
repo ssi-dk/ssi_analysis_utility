@@ -12,7 +12,7 @@ m = re.search(r'__version__ = "(\d+)\.(\d+)\.(\d+)\+(\d+)"', text)
 
 major, minor, patch, build = map(int, m.groups())
 
-elif label == "feature":
+if label == "feature":
     minor += 1
     patch = 0
     build = 0

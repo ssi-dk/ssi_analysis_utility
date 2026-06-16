@@ -3,6 +3,7 @@ name: Pull Requests label check
 on:
   workflow_run:
     workflows: ["Pull Requests Automatic labelling"]
+    types: [completed]
   pull_request:
     types:
       - opened
