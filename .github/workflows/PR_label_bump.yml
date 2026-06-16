@@ -1,6 +1,8 @@
 name: Bump version
 
 on:
+  workflow_run:
+    workflows: ["Pull Requests label check"]
   pull_request:
     types:
       - closed
@@ -17,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: main
+          ref: dev
 
       - uses: actions/setup-python@v5
         with:
