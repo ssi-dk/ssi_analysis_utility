@@ -3,9 +3,9 @@ name: Bump version
 on:
   workflow_run:
     workflows: ["Pull Requests label check"]
+    types: ["closed"]
   pull_request:
-    types:
-      - closed
+    types: ["closed"]
 
 permissions:
   contents: write
