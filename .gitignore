@@ -13,3 +13,4 @@ config/*yaml
 *Results/
 MMAseq_Test/*
 *.swp
+*.sublime-*

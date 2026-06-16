@@ -1,11 +1,11 @@
-name: Bump version
+name: Automatic version bump
 
 on:
   workflow_run:
-    workflows: ["Pull Requests label check"]
-    types: ["closed"]
+    workflows: ["Pull Request actions"]
+    types: [completed]
   pull_request:
-    types: ["closed"]
+    types: [closed]
 
 permissions:
   contents: write
