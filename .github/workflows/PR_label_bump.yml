@@ -1,6 +1,8 @@
 name: Bump version
 
 on:
+  workflow_run:
+    workflows: ["Pull Requests label check"]
   pull_request:
     types:
       - closed
