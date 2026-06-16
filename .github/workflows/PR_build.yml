@@ -1,4 +1,4 @@
-name: Installation tests
+name: Installation check
 
 on:
   pull_request:
