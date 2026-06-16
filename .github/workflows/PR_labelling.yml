@@ -1,4 +1,4 @@
-name: Automatic labelling of Pull Requests
+name: Pull Requests Automatic labelling 
 
 on:
   pull_request:
