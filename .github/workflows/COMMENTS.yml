@@ -1,4 +1,4 @@
-name: Ready enable CI
+name: Handle comments
 
 on:
   issue_comment:
