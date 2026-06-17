@@ -2,25 +2,100 @@ name: Build and install
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, labeled]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+  issue_comment:
+    types: [created]
 
 concurrency:
-  group: pr-${{ github.event.pull_request.number }}
+  group: pr-${{ github.event.pull_request.number || github.event.issue.number }}
   cancel-in-progress: true
 
 jobs:
   build:
-
-    if: contains(github.event.pull_request.labels.*.name, 'ready')
+    runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
         os: [ubuntu-latest]
         #os: [ubuntu-22.04, ubuntu-latest, macos-latest] # Usable when we also have execution scripts available
-
-    runs-on: ${{ matrix.os }}
-
+    
     steps:
+      - name: Check if build should run (ready gate)
+        id: gate
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue_number =
+              context.payload.pull_request?.number ||
+              context.payload.issue?.number;
+
+            if (!issue_number) {
+              core.setOutput("run", "false");
+              return;
+            }
+
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: issue_number
+            });
+
+            const labels = pr.data.labels.map(l => l.name);
+
+            const hasReady = labels.includes("ready");
+
+            console.log("labels:", labels);
+            console.log("ready:", hasReady);
+
+            core.setOutput("run", hasReady ? "true" : "false");
+
+      - name: Stop if not ready
+        if: steps.gate.outputs.run != 'true'
+        run: |
+          echo "Build skipped (ready label missing)"
+          exit 0
+
+      - uses: actions/checkout@v4
+
+      - name: Setup Micromamba
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-name: test-env
+          init-shell: bash
+
+      - name: Install dependencies
+        shell: bash -l {0}
+        run: |
+          micromamba install conda --yes
+          pip install .
+
+      - name: Import test
+        shell: bash -l {0}
+        run: |
+          python -c "import mmaseq"
+
+      - name: Check ready label
+        id: gate
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+
+            const hasReady = pr.data.labels.some(l => l.name === "ready");
+
+            console.log("ready label:", hasReady);
+
+            core.setOutput("ready", hasReady);
+
+      - name: Stop if not ready
+        if: steps.gate.outputs.ready != 'true'
+        run: exit 0
+
       - uses: actions/checkout@v4
 
       - name: Setup Micromamba
