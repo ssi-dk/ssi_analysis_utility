@@ -15,7 +15,8 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-22.04, ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
+        #os: [ubuntu-22.04, ubuntu-latest, macos-latest] # Usable when we also have execution scripts available
 
     runs-on: ${{ matrix.os }}
 
