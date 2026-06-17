@@ -1,9 +1,6 @@
 name: Automatic version bump
 
 on:
-  workflow_run:
-    workflows: ["Pull Request Validation"]
-    types: [completed]
   pull_request:
     types: [closed]
 

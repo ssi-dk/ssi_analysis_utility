@@ -2,16 +2,15 @@ name: Pull Request Validation
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, edited, synchronize, reopened, labeled, unlabeled]
 
 concurrency:
-  group: build-${{ github.event.pull_request.number || github.head_ref }}
+  group: pr-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
   label:
     runs-on: ubuntu-latest
-
     permissions:
       issues: write
       pull-requests: write
@@ -25,29 +24,23 @@ jobs:
 
             let label = null;
 
-            if (
-              title.startsWith("fix") ||
-              title.startsWith("bug")
-            ) {label = "patch";}
-
-            else if (
+            if (title.startsWith("fix") || title.startsWith("bug")) {
+              label = "patch";
+            } else if (
               title.startsWith("feat") ||
               title.startsWith("feature") ||
               title.startsWith("add")
-            ) {label = "feature";}
-
-            else if (
+            ) {
+              label = "feature";
+            } else if (
               title.startsWith("build") ||
               title.startsWith("pkg") ||
               title.startsWith("docs")
-            ) {label = "build";}
-
-            if (!label) {
-              console.log("No matching label for title:", title);
-              return;
+            ) {
+              label = "build";
             }
 
-            console.log("Applying label:", label);
+            if (!label) return;
 
             await github.rest.issues.addLabels({
               owner: context.repo.owner,
@@ -61,56 +54,39 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check labels
+      - name: Validate labels
         uses: actions/github-script@v7
         with:
           script: |
-            const run = await github.rest.actions.getWorkflowRun({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              run_id: context.runId
-            });
-            
-            // Get PR number from workflow run
-            const pr_number = run.data.pull_requests[0]?.number;
-            
-            if (!pr_number) {
-              core.setFailed('Could not find associated pull request');
-              return;
-            }
-            
             const pr = await github.rest.pulls.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: pr_number
+              pull_number: context.issue.number
             });
-            
+
+            const allowed = ["feature", "patch", "build"];
+
             const labels = pr.data.labels
               .map(l => l.name)
-              .filter(l =>
-                ["feature","patch","build"].includes(l)
-              );
+              .filter(l => allowed.includes(l));
 
             if (labels.length !== 1) {
-              core.setFailed(
-                `PR must contain exactly one version label (feature, patch, build). Found: ${labels.join(", ")}`
-              );
+              core.setFailed(`Must have exactly one version label. Found: ${labels.join(", ")}`);
             }
 
   build:
     needs: check-label
+
+    if: contains(github.event.pull_request.labels.*.name, 'ready')
+
     strategy:
       matrix:
-        os:
-          - ubuntu-22.04
-          - ubuntu-latest
-          - macos-latest
+        os: [ubuntu-22.04, ubuntu-latest, macos-latest]
 
     runs-on: ${{ matrix.os }}
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Setup Micromamba
         uses: mamba-org/setup-micromamba@v2
@@ -118,15 +94,13 @@ jobs:
           environment-name: test-env
           init-shell: bash
 
-      - name: Test conda installation
+      - name: Install
         shell: bash -l {0}
         run: |
           micromamba install conda --yes
-
-          # install package from repo
           pip install .
 
-      - name: Verify package imports
+      - name: Import test
         shell: bash -l {0}
         run: |
           python -c "import mmaseq"
