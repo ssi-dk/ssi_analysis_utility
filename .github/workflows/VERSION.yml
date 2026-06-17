@@ -44,45 +44,33 @@ jobs:
           git add .
           git commit -m "Bump version"
           git push
+      
+      - name: Add released label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request.number;
 
-  unready:
-    needs: bump
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Cleanup ready label
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const pr = context.payload.pull_request.number;
-
-          try {
-            await github.rest.issues.removeLabel({
+            await github.rest.issues.addLabels({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: pr,
-              name: "ready"
+              labels: ["released"]
             });
-          } catch (e) {
-            console.log("ready label not present");
-          }
 
-  release:
-    needs: bump
+      - name: Cleanup ready label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request.number;
 
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Add released label
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const pr = context.payload.pull_request.number;
-
-          await github.rest.issues.addLabels({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            issue_number: pr,
-            labels: ["released"]
-          });
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr,
+                name: "ready"
+              });
+            } catch (e) {
+              console.log("ready label not present");
+            }
