@@ -1,4 +1,4 @@
-name: Pull Request Validation
+name: Build and install
 
 on:
   pull_request:

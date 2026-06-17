@@ -1,4 +1,4 @@
-name: Handle comments
+name: Automatic comments
 
 on:
   issue_comment:
