@@ -2,11 +2,11 @@ name: Pull Request Validation
 
 on:
   pull_request:
-    types: [opened, edited, synchronize, reopened, labeled, unlabeled]
+    types: [opened, edited, reopened, labeled, unlabeled]
 
 concurrency:
   group: pr-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   label:
@@ -20,34 +20,64 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            const versionLabels = ["feature", "patch", "build"];
+
             const title = context.payload.pull_request.title.toLowerCase();
 
-            let label = null;
+            // fetch current labels
+            const { data: labels } = await github.rest.issues.listLabelsOnIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number
+            });
+
+            const currentLabels = labels.map(l => l.name);
+
+            // remove existing version labels
+            for (const l of currentLabels) {
+              if (versionLabels.includes(l)) {
+                await github.rest.issues.removeLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  name: l
+                });
+              }
+            }
+
+            // decide new label
+            let newLabel = null;
 
             if (title.startsWith("fix") || title.startsWith("bug")) {
-              label = "patch";
+              newLabel = "patch";
             } else if (
               title.startsWith("feat") ||
               title.startsWith("feature") ||
               title.startsWith("add")
             ) {
-              label = "feature";
+              newLabel = "feature";
             } else if (
               title.startsWith("build") ||
               title.startsWith("pkg") ||
               title.startsWith("docs")
             ) {
-              label = "build";
+              newLabel = "build";
             }
 
-            if (!label) return;
+            if (!newLabel) {
+              console.log("No version label matched");
+              return;
+            }
 
+            // add new label
             await github.rest.issues.addLabels({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              labels: [label],
+              labels: [newLabel]
             });
+
+            console.log("Applied label:", newLabel);
 
   check-label:
     needs: label
@@ -73,34 +103,3 @@ jobs:
             if (labels.length !== 1) {
               core.setFailed(`Must have exactly one version label. Found: ${labels.join(", ")}`);
             }
-
-  build:
-    needs: check-label
-
-    if: contains(github.event.pull_request.labels.*.name, 'ready')
-
-    strategy:
-      matrix:
-        os: [ubuntu-22.04, ubuntu-latest, macos-latest]
-
-    runs-on: ${{ matrix.os }}
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Micromamba
-        uses: mamba-org/setup-micromamba@v2
-        with:
-          environment-name: test-env
-          init-shell: bash
-
-      - name: Install
-        shell: bash -l {0}
-        run: |
-          micromamba install conda --yes
-          pip install .
-
-      - name: Import test
-        shell: bash -l {0}
-        run: |
-          python -c "import mmaseq"

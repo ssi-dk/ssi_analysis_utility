@@ -1,0 +1,40 @@
+name: Pull Request Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+
+    if: contains(github.event.pull_request.labels.*.name, 'ready')
+
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, ubuntu-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Micromamba
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-name: test-env
+          init-shell: bash
+
+      - name: Install
+        shell: bash -l {0}
+        run: |
+          micromamba install conda --yes
+          pip install .
+
+      - name: Import test
+        shell: bash -l {0}
+        run: |
+          python -c "import mmaseq"
