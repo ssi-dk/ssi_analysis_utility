@@ -64,7 +64,7 @@ jobs:
               labels: ["released"]
             });
 
-unready:
+  unready:
     needs: bump
     runs-on: ubuntu-latest
 
