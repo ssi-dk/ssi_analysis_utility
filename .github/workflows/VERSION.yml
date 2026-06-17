@@ -1,0 +1,88 @@
+name: Automatic version bump
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  bump:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dev
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Get label
+        id: label
+        run: |
+          echo "LABEL=${{
+            contains(github.event.pull_request.labels.*.name, 'feature') && 'feature' ||
+            contains(github.event.pull_request.labels.*.name, 'patch') && 'patch' ||
+            'build'
+          }}" >> $GITHUB_OUTPUT
+
+      - name: Bump version
+        run: |
+          python .github/scripts/bump_version.py \
+            "${{ steps.label.outputs.LABEL }}"
+
+      - name: Commit
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+
+          git add .
+          git commit -m "Bump version"
+          git push
+
+  release:
+    needs: bump
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Add released label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request.number;
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr,
+              labels: ["released"]
+            });
+
+unready:
+    needs: bump
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Cleanup ready label (non-blocking)
+        uses: actions/github-script@v7
+        continue-on-error: true
+        with:
+          script: |
+            const pr = context.payload.pull_request.number;
+
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr,
+                name: "ready"
+              });
+            } catch (e) {
+              console.log("ready label not present");
+            }
