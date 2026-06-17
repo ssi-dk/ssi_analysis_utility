@@ -1,11 +1,8 @@
-name: Bump version
+name: Automatic version bump
 
 on:
-  workflow_run:
-    workflows: ["Pull Requests label check"]
-    types: ["closed"]
   pull_request:
-    types: ["closed"]
+    types: [closed]
 
 permissions:
   contents: write
@@ -47,3 +44,33 @@ jobs:
           git add .
           git commit -m "Bump version"
           git push
+      
+      - name: Add released label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request.number;
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr,
+              labels: ["released"]
+            });
+
+      - name: Cleanup ready label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request.number;
+
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr,
+                name: "ready"
+              });
+            } catch (e) {
+              console.log("ready label not present");
+            }
