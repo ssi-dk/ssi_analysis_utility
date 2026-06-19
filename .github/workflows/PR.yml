@@ -49,12 +49,14 @@ jobs:
             // decide new label
             let newLabel = null;
 
-            if (title.startsWith("fix") || title.startsWith("bug")) {
+            if (
+              title.startsWith("fix") ||
+              title.startsWith("patch")
+            ) {
               newLabel = "patch";
             } else if (
               title.startsWith("feat") ||
-              title.startsWith("feature") ||
-              title.startsWith("add")
+              title.startsWith("feature")
             ) {
               newLabel = "feature";
             } else if (
