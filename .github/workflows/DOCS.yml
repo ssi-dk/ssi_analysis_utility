@@ -37,10 +37,10 @@ jobs:
             mkdocs-material-
 
           run: |
-          pip install mkdocs-material
-          pip install mkdocstrings
-          pip install pymdown-extensions
-          pip install mkdocs-mermaid2-plugin 
+            pip install mkdocs-material
+            pip install mkdocstrings
+            pip install pymdown-extensions
+            pip install mkdocs-mermaid2-plugin 
 
-          echo "Deploying docs"
-          mkdocs gh-deploy --force
+            echo "Deploying docs"
+            mkdocs gh-deploy --force
