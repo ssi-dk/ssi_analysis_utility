@@ -129,7 +129,7 @@ jobs:
           micromamba install conda --yes
           pip install .
 
-        - name: Import test
-          shell: bash -l {0}
-          run: |
-            python -c "import mmaseq"
+      - name: Import test
+        shell: bash -l {0}
+        run: |
+          python -c "import mmaseq"
