@@ -2,7 +2,7 @@ name: Build and install
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, labeled, unlabeled]
+    types: [opened, synchronize, reopened]
 
 permissions:
   pull-requests: write
@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:    
+  build:
     strategy:
       matrix:
         os: [ubuntu-latest]
@@ -23,28 +23,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     
     steps:
-      - name: Check ready state
-        id: gate
-        uses: actions/github-script@v7
-        with:
-          result-encoding: string
-          script: |
-            const pr = await github.rest.pulls.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.issue.number
-            });
-
-            return pr.data.labels.some(l => l.name === "ready")
-              ? "true"
-              : "false";
-
-      - name: Stop if not ready
-        if: steps.gate.outputs.result != 'true'
-        run: |
-          echo "Not ready → skipping build"
-          exit 0
-
       # Check out the repository main folder
       - uses: actions/checkout@v4
 
