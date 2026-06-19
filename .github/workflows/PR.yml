@@ -11,6 +11,7 @@ concurrency:
 jobs:
   label:
     runs-on: ubuntu-latest
+    
     permissions:
       issues: write
       pull-requests: write

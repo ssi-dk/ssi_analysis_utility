@@ -13,15 +13,15 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
-
     strategy:
       matrix:
         os: [ubuntu-latest]
         #os: [ubuntu-22.04, ubuntu-latest, macos-latest] # Usable when we also have execution scripts available
     
+    runs-on: ${{ matrix.os }}
+
     steps:
-      - name: Check if build should run (ready gate)
+      - name: Build ready gate
         id: gate
         uses: actions/github-script@v7
         with:
@@ -48,12 +48,12 @@ jobs:
             console.log("labels:", labels);
             console.log("ready:", hasReady);
 
-            core.setOutput("run", hasReady ? "true" : "false");
+            core.setOutput("ready", hasReady ? "true" : "false");
 
       - name: Stop if not ready
-        if: steps.gate.outputs.run != 'true'
+        if: steps.gate.outputs.ready != 'true'
         run: |
-          echo "Build skipped (ready label missing)"
+          echo "Build skipped - ready label missing"
           exit 0
 
       - uses: actions/checkout@v4
