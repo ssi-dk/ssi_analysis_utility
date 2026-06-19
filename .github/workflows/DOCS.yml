@@ -16,16 +16,17 @@ jobs:
       - name: Configure Git Credentials
         uses: actions/checkout@v4
 
-        run: |
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+        with:
+          python-version: 3.x
+          run: |
+            git config user.name github-actions[bot]
+            git config user.email 41898282+github-actions[bot]@users.noreply.github.com
 
       - name: Manage cache
         uses: actions/setup-python@v5
         with:
           python-version: 3.x
-
-      - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV 
+          run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV 
 
       - name: Make documentation
         uses: actions/cache@v4
@@ -34,10 +35,12 @@ jobs:
           path: ~/.cache 
           restore-keys: |
             mkdocs-material-
-      - run: |
+
+          run: |
           pip install mkdocs-material
           pip install mkdocstrings
           pip install pymdown-extensions
           pip install mkdocs-mermaid2-plugin 
 
-      - run: mkdocs gh-deploy --force
+          echo "Deploying docs"
+          mkdocs gh-deploy --force

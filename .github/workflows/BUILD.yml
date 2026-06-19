@@ -4,8 +4,8 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, labeled, unlabeled]
 
-  issue_comment:
-    types: [created]
+permissions:
+  pull-requests: write
 
 concurrency:
   group: pr-${{ github.event.pull_request.number || github.event.issue.number }}
@@ -52,11 +52,11 @@ jobs:
 
       - name: Stop if not ready
         if: steps.gate.outputs.ready != 'true'
+        uses: actions/checkout@v4
         run: |
           echo "Build skipped - ready label missing"
           exit 0
 
-      - uses: actions/checkout@v4
 
       - name: Setup Micromamba
         uses: mamba-org/setup-micromamba@v2
@@ -75,42 +75,32 @@ jobs:
         run: |
           python -c "import mmaseq"
 
-      - name: Check ready label
-        id: gate
+  unready:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Disable ready
         uses: actions/github-script@v7
         with:
           script: |
-            const pr = await github.rest.pulls.get({
+            const user = context.payload.comment.user.login;
+
+            const perm = await github.rest.repos.getCollaboratorPermissionLevel({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: context.issue.number
+              username: user
             });
 
-            const hasReady = pr.data.labels.some(l => l.name === "ready");
+            if (!["admin", "write"].includes(perm.data.permission)) return;
 
-            console.log("ready label:", hasReady);
+            const prNumber = context.issue.number;
 
-            core.setOutput("ready", hasReady);
-
-      - name: Stop if not ready
-        if: steps.gate.outputs.ready != 'true'
-        run: exit 0
-
-      - uses: actions/checkout@v4
-
-      - name: Setup Micromamba
-        uses: mamba-org/setup-micromamba@v2
-        with:
-          environment-name: test-env
-          init-shell: bash
-
-      - name: Install
-        shell: bash -l {0}
-        run: |
-          micromamba install conda --yes
-          pip install .
-
-      - name: Import test
-        shell: bash -l {0}
-        run: |
-          python -c "import mmaseq"
+            // remove ready label
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                name: "ready"
+              });
+            } catch {}
