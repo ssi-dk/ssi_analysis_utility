@@ -2,85 +2,45 @@ name: Label Validation
 
 on:
   pull_request:
-    types: [opened, edited, reopened, synchronize, labeled, unlabeled]
+    types: [opened, edited, reopened, labeled, unlabeled, synchronize]
 
 concurrency:
   group: pr-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
-  label:
+  check-PR-label:
+
     runs-on: ubuntu-latest
-    
-    permissions:
-      issues: write
-      pull-requests: write
 
     steps:
-      - name: Assign label
+      - name: Validate labels
         uses: actions/github-script@v7
         with:
           script: |
-            const versionLabels = ["feature", "patch", "build"];
-
-            const title = context.payload.pull_request.title.toLowerCase();
-
-            // fetch current labels
-            const { data: labels } = await github.rest.issues.listLabelsOnIssue({
+            const pr = await github.rest.pulls.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number
+              pull_number: context.issue.number
             });
 
-            const currentLabels = labels.map(l => l.name);
+            const allowed = ["feature", "patch", "build"];
 
-            // remove existing version labels
-            for (const l of currentLabels) {
-              if (versionLabels.includes(l)) {
-                await github.rest.issues.removeLabel({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: context.issue.number,
-                  name: l
-                });
-              }
+            const labels = pr.data.labels
+              .map(l => l.name)
+              .filter(l => allowed.includes(l));
+
+            // deterministic rule
+            if (labels.length !== 1) {
+              core.setFailed(
+                `PR must have exactly ONE version label (feature/patch/build). Found: ${labels.join(", ")}`
+              );
+              throw new Error("Invalid label state");
             }
-
-            // decide new label
-            let newLabel = null;
-
-            if (title.startsWith("fix") || title.startsWith("bug")) {
-              newLabel = "patch";
-            } else if (
-              title.startsWith("feat") ||
-              title.startsWith("feature") ||
-              title.startsWith("add")
-            ) {
-              newLabel = "feature";
-            } else if (
-              title.startsWith("build") ||
-              title.startsWith("pkg") ||
-              title.startsWith("docs")
-            ) {
-              newLabel = "build";
-            }
-
-            if (!newLabel) {
-              console.log("No version label matched");
-              return;
-            }
-
-            // add new label
-            await github.rest.issues.addLabels({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              labels: [newLabel]
-            });
-
-            console.log("Applied label:", newLabel);
 
   build:
+    needs: check-PR-label
+
     strategy:
       matrix:
         os: [ubuntu-latest]
@@ -92,19 +52,50 @@ jobs:
       # Check out the repository main folder
       - uses: actions/checkout@v4
 
+      - name: Check ready + version state
+        id: gate
+        uses: actions/github-script@v7
+        with:
+          result-encoding: string
+          script: |
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+
+            const labels = pr.data.labels.map(l => l.name);
+
+            const hasReady = labels.includes("ready");
+            const hasVersion = ["feature","patch","build"]
+              .filter(l => labels.includes(l))
+              .length === 1;
+
+            return (hasReady && hasVersion) ? "true" : "false";
+
+      - name: Stop if not ready
+        if: steps.gate.outputs.result != 'true'
+        run: |
+          echo "Not ready or invalid state"
+          exit 0
+
+
       - name: Setup Micromamba
+        if: steps.gate.outputs.result != 'true'
         uses: mamba-org/setup-micromamba@v2
         with:
           environment-name: test-env
           init-shell: bash
 
       - name: Install dependencies
+        if: steps.gate.outputs.result != 'true'
         shell: bash -l {0}
         run: |
           micromamba install conda --yes
           pip install .
 
       - name: Import test
+        if: steps.gate.outputs.result != 'true'
         shell: bash -l {0}
         run: |
           python -c "import mmaseq; print(mmaseq.__version__)"

@@ -25,20 +25,25 @@ jobs:
             };
 
             const label = mapping[body];
-
             if (!label) return;
 
             const user = context.payload.comment.user.login;
 
-            const perm =
-              await github.rest.repos.getCollaboratorPermissionLevel({
+            const perm = await github.rest.repos.getCollaboratorPermissionLevel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              username: user
+            });
+
+            if (!["admin", "write"].includes(perm.data.permission)) {
+              await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                username: user
+                issue_number: context.issue.number,
+                body: "❌ You don't have permission to change version labels."
               });
-
-            if (!["admin", "write"].includes(perm.data.permission))
               return;
+            }
 
             const issue_number = context.issue.number;
 
@@ -51,21 +56,19 @@ jobs:
 
             const versionLabels = ["feature", "patch", "build"];
 
-            // remove existing version labels
+            // remove old version labels
             for (const existing of issue.data.labels.map(l => l.name)) {
               if (!versionLabels.includes(existing)) continue;
 
-              try {
-                await github.rest.issues.removeLabel({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number,
-                  name: existing
-                });
-              } catch {}
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: repo,
+                issue_number,
+                name: existing
+              });
             }
 
-            // add requested label
+            // apply new label
             await github.rest.issues.addLabels({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -73,27 +76,10 @@ jobs:
               labels: [label]
             });
 
-  check-label:
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Validate labels
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const pr = await github.rest.pulls.get({
+            // feedback
+            await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: context.issue.number
+              issue_number,
+              body: `✅ Version label set to **${label}**`
             });
-
-            const allowed = ["feature", "patch", "build"];
-
-            const labels = pr.data.labels
-              .map(l => l.name)
-              .filter(l => allowed.includes(l));
-
-            if (labels.length !== 1) {
-              core.setFailed(`Must have exactly one version label. Found: ${labels.join(", ")}`);
-            }
