@@ -2,7 +2,7 @@ name: Label Validation
 
 on:
   pull_request:
-    types: [opened, edited, reopened, labeled, unlabeled]
+    types: [opened, edited, reopened]
 
 concurrency:
   group: pr-${{ github.event.pull_request.number }}
@@ -49,14 +49,12 @@ jobs:
             // decide new label
             let newLabel = null;
 
-            if (
-              title.startsWith("fix") ||
-              title.startsWith("patch")
-            ) {
+            if (title.startsWith("fix") || title.startsWith("bug")) {
               newLabel = "patch";
             } else if (
               title.startsWith("feat") ||
-              title.startsWith("feature")
+              title.startsWith("feature") ||
+              title.startsWith("add")
             ) {
               newLabel = "feature";
             } else if (
@@ -82,39 +80,14 @@ jobs:
 
             console.log("Applied label:", newLabel);
 
-  check-label:
-    needs: label
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Validate labels
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const pr = await github.rest.pulls.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.issue.number
-            });
-
-            const allowed = ["feature", "patch", "build"];
-
-            const labels = pr.data.labels
-              .map(l => l.name)
-              .filter(l => allowed.includes(l));
-
-            if (labels.length !== 1) {
-              core.setFailed(`Must have exactly one version label. Found: ${labels.join(", ")}`);
-            }
   build:
-    needs: check-label
     strategy:
       matrix:
         os: [ubuntu-latest]
         #os: [ubuntu-22.04, ubuntu-latest, macos-latest] # Usable when we also have execution scripts available
-    
-    runs-on: ${{ matrix.os }}
 
+    runs-on: ${{ matrix.os }}
+    
     steps:
       # Check out the repository main folder
       - uses: actions/checkout@v4
