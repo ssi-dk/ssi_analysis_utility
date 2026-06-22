@@ -18,13 +18,17 @@ jobs:
           script: |
             const body = context.payload.comment.body.trim();
 
+            const body = context.payload.comment.body.trim().toLowerCase();
+
+            const command = body.replace(/^\\/, "");
+
             const mapping = {
-              "\\feature": "feature",
-              "\\patch": "patch",
-              "\\build": "build"
+              feature: "feature",
+              patch: "patch",
+              build: "build"
             };
 
-            const label = mapping[body];
+            const label = mapping[command];
             if (!label) return;
 
             const user = context.payload.comment.user.login;
@@ -60,12 +64,16 @@ jobs:
             for (const existing of issue.data.labels.map(l => l.name)) {
               if (!versionLabels.includes(existing)) continue;
 
-              await github.rest.issues.removeLabel({
-                owner: context.repo.owner,
-                repo: repo,
-                issue_number,
-                name: existing
-              });
+              try {
+                await github.rest.issues.removeLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number,
+                  name: existing
+                });
+              } catch (e) {
+                console.log(`Could not remove label: ${existing}`, e.message);
+              }
             }
 
             // apply new label

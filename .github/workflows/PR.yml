@@ -52,7 +52,7 @@ jobs:
       # Check out the repository main folder
       - uses: actions/checkout@v4
 
-      - name: Check ready + version state
+      - name: Check version state
         id: gate
         uses: actions/github-script@v7
         with:
@@ -66,36 +66,26 @@ jobs:
 
             const labels = pr.data.labels.map(l => l.name);
 
-            const hasReady = labels.includes("ready");
             const hasVersion = ["feature","patch","build"]
               .filter(l => labels.includes(l))
               .length === 1;
 
-            return (hasReady && hasVersion) ? "true" : "false";
-
-      - name: Stop if not ready
-        if: steps.gate.outputs.result != 'true'
-        run: |
-          echo "Not ready or invalid state"
-          exit 0
+            return (hasVersion) ? "true" : "false";
 
 
       - name: Setup Micromamba
-        if: steps.gate.outputs.result != 'true'
         uses: mamba-org/setup-micromamba@v2
         with:
           environment-name: test-env
           init-shell: bash
 
       - name: Install dependencies
-        if: steps.gate.outputs.result != 'true'
         shell: bash -l {0}
         run: |
           micromamba install conda --yes
           pip install .
 
       - name: Import test
-        if: steps.gate.outputs.result != 'true'
         shell: bash -l {0}
         run: |
           python -c "import mmaseq; print(mmaseq.__version__)"
