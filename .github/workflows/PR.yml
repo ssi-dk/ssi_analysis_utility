@@ -2,7 +2,7 @@ name: Pull Request Validation
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, edited]
 
 concurrency:
   group: build-${{ github.event.pull_request.number || github.head_ref }}
@@ -33,13 +33,15 @@ jobs:
             else if (
               title.startsWith("feat") ||
               title.startsWith("feature") ||
-              title.startsWith("add")
+              title.startsWith("add") 
             ) {label = "feature";}
 
             else if (
               title.startsWith("build") ||
               title.startsWith("pkg") ||
-              title.startsWith("docs")
+              title.startsWith("docs") ||
+              title.startsWith("github") ||
+              title.startsWith("gh")
             ) {label = "build";}
 
             if (!label) {
@@ -47,13 +49,43 @@ jobs:
               return;
             }
 
-            console.log("Applying label:", label);
+            const issue_number = context.issue.number;
 
+            // fetch current labels
+            const issue = await github.rest.issues.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number
+            });
+
+            const versionLabels = ["feature", "patch", "build"];
+
+            // remove old version labels
+            for (const existing of issue.data.labels.map(l => l.name)) {
+              if (!versionLabels.includes(existing)) continue;
+
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number,
+                name: existing
+              });
+            }
+
+            // apply new label
             await github.rest.issues.addLabels({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.issue.number,
-              labels: [label],
+              issue_number,
+              labels: [label]
+            });
+
+            // feedback
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number,
+              body: `✅ Version label set to **${label}**`
             });
 
   check-label:
@@ -101,10 +133,9 @@ jobs:
     needs: check-label
     strategy:
       matrix:
+
         os:
-          - ubuntu-22.04
-          - ubuntu-latest
-          - macos-latest
+          - ubuntu-latest # ubuntu-22.04 # macos-latest
 
     runs-on: ${{ matrix.os }}
 
