@@ -2,11 +2,11 @@ name: Label Validation
 
 on:
   pull_request:
-    types: [opened, edited, reopened]
+    types: [opened, edited, reopened, synchronize, labeled, unlabeled]
 
 concurrency:
   group: pr-${{ github.event.pull_request.number }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   label:
@@ -107,4 +107,4 @@ jobs:
       - name: Import test
         shell: bash -l {0}
         run: |
-          python -c "import mmaseq"
+          python -c "import mmaseq; print(mmaseq.__version__)"
