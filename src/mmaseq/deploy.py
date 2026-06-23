@@ -322,7 +322,7 @@ def deploy(args):
     samplesheet_file = f"{DATA_DIR}/samplesheet.tsv"
 
     # Create arguments for command
-    additional_cmds = ""
+    additional_cmds = "--resolve "
     if update:
         dataset = "small"
         samplesheet_file = f"{DATA_DIR}/samplesheet_small.tsv"
