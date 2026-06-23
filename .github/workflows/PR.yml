@@ -160,4 +160,9 @@ jobs:
       - name: Verify package imports
         shell: bash -l {0}
         run: |
-          python -c "import mmaseq"
+          python -c "import mmaseq; print(mmaseq.__version__)"
+
+      - name: Test pipeline
+        shell: bash -l {0}
+        run: |
+          mmadeploy --deploy_dir ~/test --threads 2 --test --verbosity 2

@@ -44,10 +44,24 @@ def parse_deploy():
         dest="update",
         action="store_true",
         help=(
-            "Will force rerunning all rules, thus issuing database updates. "
+            "Will force running all rules to ensure issuing database updates. "
             "(Default: %(default)s) The small dataset consists of a single "
             "isolate, executed on ALL modules, thus all results should be "
             f"considered wrong. Read data will be downloaded to {READ_DIR}"
+        )
+    )
+
+    parser.add_argument(
+        "--test",
+        dest="test",
+        action="store_true",
+        help=(
+            "Will run rules to complete a quick pipeline test. "
+            "(Default: %(default)s) The test dataset consist of exactly "
+            "400001 paired end reads created synthetically from AI. "
+            "Certain modules will fail on these reads and are "
+            " excluded from the test. "
+            "Excluded; resfinder, pointfinder, kleborate, shovill"
         )
     )
 
@@ -293,6 +307,7 @@ def deploy(args):
 
     deploy_dir = Path(args.deploy_dir)
     update = args.update
+    test = args.test
     retries = args.retries
     threads = args.threads
     verbosity = args.verbosity
@@ -300,18 +315,25 @@ def deploy(args):
     logger.info("Inspecting species configuration directory")
     deploy_spe_configs(deploy_dir)
 
-    logger.info(f"Inspecting the deployment dataset")
-    deploy_dataset(update, retries)
+    if not test:
+        logger.info(f"Inspecting the deployment dataset")
+        deploy_dataset(update, retries)
 
     samplesheet_file = f"{DATA_DIR}/samplesheet.tsv"
 
     # Create arguments for command
-    dataset = "full"
     additional_cmds = ""
     if update:
         dataset = "small"
         samplesheet_file = f"{DATA_DIR}/samplesheet_small.tsv"
         additional_cmds += "--ignore_assemblies --force --clean "
+    elif test:
+        dataset = "test"
+        samplesheet_file = f"{DATA_DIR}/samplesheet_test.tsv"
+        additional_cmds += "--clean "
+    else:
+        dataset = "full"
+
 
 
     outdir = deploy_dir / "MMAseq_Test"
@@ -332,9 +354,14 @@ def deploy(args):
     status = subprocess.Popen(command, shell=True).wait()
 
     if status != 0:
+        verb = ""
+        if verbosity < 1:
+            verb = "Rerun command with '--verbosity 1' for more details.\n"
         logger.error(
-            "Something went wrong during deployment. "
-            "Rerun command with '--verbosity 1' for more details."
+            "Something went wrong during deployment. ",
+            verb,
+            "Either way you are welcome to post an issue on our Github."
+            
         )
         sys.exit(1)
 
