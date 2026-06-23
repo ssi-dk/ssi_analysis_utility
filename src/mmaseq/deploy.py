@@ -358,8 +358,8 @@ def deploy(args):
         if verbosity < 1:
             verb = "Rerun command with '--verbosity 1' for more details.\n"
         logger.error(
-            "Something went wrong during deployment. ",
-            verb,
+            "Something went wrong during deployment. "
+            f"{verb}"
             "Either way you are welcome to post an issue on our Github."
             
         )
