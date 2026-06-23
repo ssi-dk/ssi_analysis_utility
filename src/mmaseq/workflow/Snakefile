@@ -88,9 +88,9 @@ rule copy:
         """
         for FILE in {input.raw}; do
             RAWDIR=$(dirname $FILE)
-            NEWDIR="${{RAWDIR//\\/raw\\//\\/}}"
+            NEWDIR=$(echo "$RAWDIR" | sed 's#/raw/#/#')
             
-            echo "Copying $FILE to $NEWDIR/" > {log.stdout} 2>&1
+            echo "Copying $FILE to $NEWDIR/" >> {log.stdout} 2>&1
             mkdir -p $NEWDIR
             cp -f $FILE $NEWDIR/
         done
