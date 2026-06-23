@@ -2,14 +2,20 @@ kma_filter:
     options: --organism 'Escherichia coli'
     database: ecoligenes
 
-snp_identifier:
-    options: --organism 'Clostridioides difficile' --snp_region_buffer 5
-    database: Cdiff_Toxins
+# snp_identifier:
+#     options: --organism 'Clostridioides difficile' --snp_region_buffer 5
+#     database: Cdiff_Toxins
 
-deletion_identifier:
-    options: --organism 'Clostridioides difficile' --deletion_region_buffer 5 --overlap_fraction 0.5
-    database: Cdiff_Toxins
-    assemblers: spades
+# resfinder:
+#     options: --species 'Other'
+
+# pointfinder:
+#     options: --species 'Other'
+
+# deletion_identifier:
+#     options: --organism 'Clostridioides difficile' --deletion_region_buffer 5 --overlap_fraction 0.5
+#     database: Cdiff_Toxins
+#     assemblers: spades
 
 assembly_minimap2:
     options: -ax asm5 --cs
@@ -55,13 +61,13 @@ custom_blaster:
     assemblers: spades
     database : OXAndm
 
-meningotype:
-    assemblers: spades
+# meningotype:
+#     assemblers: spades
 
 spatyper:
   assemblers: spades
 
-seqsero2: true
+# seqsero2: true
 
 sistr:
   assemblers: spades
