@@ -72,10 +72,10 @@ def parse_create():
     )
 
     parser.add_argument(
-    "--version",
-    action="version",
-    version=f"%(prog)s {__version__}",
-)
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
+    )
 
     return parser.parse_args()
 
