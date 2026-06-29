@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from .__version__ import __version__
 
 import argparse
 from pathlib import Path
@@ -7,7 +8,7 @@ import re
 import pandas as pd
 from datetime import datetime
 import yaml
-from mmaseq.utils import logging_setup, sample_config
+from .utils import logging_setup, sample_config
 from .utils.PATH import *
 import subprocess
 
@@ -141,6 +142,12 @@ def parse_mmaseq():
             "(Default: %(default)s) Will be ignored if logfile parent folder "
             "doesn't exist."
         )
+    )
+
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
     )
 
     return parser.parse_args()
