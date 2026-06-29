@@ -101,6 +101,8 @@ rule versions:
         deploy_dir = deploy_dir
     output:
         versions_file = outdir / "Conda_tools_version.tsv"
+    message:
+        "[versions]: Conda versions are being determined and written to {output.versions_file}"
     script:
         SCRIPTS_DIR / "versions.py"
 
