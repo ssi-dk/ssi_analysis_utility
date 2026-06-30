@@ -6,11 +6,11 @@ kma_filter:
 #     options: --organism 'Clostridioides difficile' --snp_region_buffer 5
 #     database: Cdiff_Toxins
 
-# resfinder:
-#     options: --species 'Other'
+resfinder:
+     options: --species 'ecoli'
 
-# pointfinder:
-#     options: --species 'Other'
+pointfinder:
+     options: --species 'ecoli'
 
 # deletion_identifier:
 #     options: --organism 'Clostridioides difficile' --deletion_region_buffer 5 --overlap_fraction 0.5
@@ -39,7 +39,7 @@ bcftools:
     view_options: -v indels -i 'INFO/DP>10'
 
 disinfinder:
-    options: --species 'Other'
+    options: --species 'ecoli'
 
 plasmidfinder: 
     options: ""
