@@ -67,9 +67,14 @@ rule pointfinder:
     shell:
         """
         outdir=$(dirname {output.point_mutations})
-        cmd="run_resfinder.py -ifq {input.R1} {input.R2} -o $outdir -db_res {input.res_database} --point -db_point {input.point_database} {params.options}"
+        cmd="run_resfinder.py -ifq {input.R1} {input.R2} -o $outdir -db_res {input.res_database} --unknown_mut --acquired --point -db_point {input.point_database} {params.options}"
+
+	if [ ! -f {output.point_mutations} ] ; then
+		echo "No PointFinder results!" > {log.stdout} 2>&1
+		echo "No\tResults\n" > {output.point_mutations}
+	fi
     
-        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        echo "Executing command:\n$cmd\n" >> {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
         """
 
