@@ -89,7 +89,6 @@ jobs:
             });
 
   check-label:
-    needs: label
     runs-on: ubuntu-latest
 
     steps:
