@@ -160,4 +160,4 @@ jobs:
       - name: Verify package imports
         shell: bash -l {0}
         run: |
-          python -c "import mmaseq"
+          mmaseq --version

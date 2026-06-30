@@ -1,3 +1,4 @@
+from .__version__ import __version__
 from .utils import logging_setup
 from .utils.PATH import *
 import argparse
@@ -102,6 +103,11 @@ def parse_deploy():
         )
     )
 
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"MMAseq {__version__}",
+    )
 
     return parser.parse_args()
 
