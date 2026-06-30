@@ -1,7 +1,8 @@
 .snakemake/
 Logs
 __pycache__**
-*fastq.gz
+src/mmaseq/data/reads/*fastq.gz
+!src/mmaseq/data/reads/Ec_Test_R?.fastq.gz
 resources/
 *DS_store
 .gitignore
