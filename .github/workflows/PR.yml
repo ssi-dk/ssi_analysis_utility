@@ -163,7 +163,7 @@ jobs:
       - name: Verify package imports
         shell: bash -l {0}
         run: |
-          python -c "import mmaseq; print(mmaseq.__version__)"
+          mmaseq --version
 
       - name: Test pipeline
         shell: bash -l {0}

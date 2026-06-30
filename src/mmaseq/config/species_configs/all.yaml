@@ -33,13 +33,13 @@ bcftools:
     view_options: -v indels -i 'INFO/DP>10'
 
 resfinder:
-    options: --species 'Other'
+    options: --species 'ecoli'
 
 pointfinder:
-    options: --species 'Other'
+    options: --species 'ecoli'
 
 disinfinder:
-    options: --species 'Other'
+    options: --species 'ecoli'
 
 plasmidfinder: 
     options: ""
