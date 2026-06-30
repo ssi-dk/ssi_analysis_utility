@@ -106,7 +106,7 @@ def parse_deploy():
     parser.add_argument(
         "--version",
         action="version",
-        version=f"%(prog)s {__version__}",
+        version=f"MMAseq {__version__}",
     )
 
     return parser.parse_args()
