@@ -84,4 +84,4 @@ jobs:
       - name: Test pipeline
         shell: bash -l {0}
         run: |
-          mmadeploy --deploy_dir ~/test --threads 2 --test --verbosity 2
+          mmadeploy --deploy_dir ~/test --threads 3 --test --verbosity 2
