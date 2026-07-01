@@ -43,7 +43,16 @@ jobs:
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
-
+          
           git add .
           git commit -m "Bump version"
-          git push
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Bump version"
+          title: "Automated version bump"
+          branch: automated-version-bump
+          base: dev
+          delete-branch: true
