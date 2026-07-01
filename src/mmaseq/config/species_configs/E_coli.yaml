@@ -1,4 +1,4 @@
-kma_filter:
+kmeraligner_wrangler:
     options: --organism 'Escherichia coli'
     database: ecoligenes
 
@@ -19,19 +19,19 @@ serotypefinder: true
 
 amrfinder:
     options: --organism 'Escherichia'
-    assemblers: shovill 
+    assembler: shovill 
 
 chtyper:
     database: fumCH_db 
 
 mlst:
-    assemblers: shovill  
+    assembler: shovill  
 
-custom_blaster:
+blastn:
     options: "-perc_identity 90.0"
-    assemblers: shovill
+    assembler: shovill
     database : OXAndm
 
 kleborate:
     options: --preset escherichia
-    assemblers: shovill
+    assembler: shovill

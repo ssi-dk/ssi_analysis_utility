@@ -6,10 +6,10 @@ serotypefinder: true
 
 amrfinder: # Leave blank or insert --organism alongside one of the supported organisms, listed here: https://github.com/evolarjun/amr/wiki/Curated-organisms
     options: --organism 'Neisseria_meningitidis'
-    assemblers: shovill
+    assembler: shovill
 
 mlst:
-    assemblers: shovill
+    assembler: shovill
 
 meningotype:
-    assemblers: [shovill, skesa, spades]
+    assembler: [shovill, skesa, spades]
