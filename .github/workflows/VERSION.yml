@@ -47,3 +47,4 @@ jobs:
           git add .
           git commit -m "Bump version"
           git push
+  
