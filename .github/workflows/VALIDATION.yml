@@ -65,9 +65,13 @@ jobs:
                 ["feature","patch","build"].includes(l)
               );
 
-            if (labels.length !== 1) {
+            if (labels.length === 0) {
               core.setFailed(
-                `PR must contain exactly one version label (feature, patch, build). Found: ${labels.join(", ")}`
+                `PR does not contain any version labels, it must contain exactly one of the following labels - feature, patch, build`
+              );
+            } else if (labels.length > 1) {
+              core.setFailed(
+                `PR contains multiple version labels, it must contain exactly one of the following labels - feature, patch, build. Found: ${labels.join(", ")}`
               );
             }
 
