@@ -9,6 +9,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Delayed execution
+        run: sleep 30
+    
       - name: Check labels
         uses: actions/github-script@v7
         with:
