@@ -10,7 +10,7 @@ jobs:
 
     steps:
       - name: Delayed execution
-        run: sleep 30
+        run: sleep 10
     
       - name: Check labels
         uses: actions/github-script@v7
