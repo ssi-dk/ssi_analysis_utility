@@ -145,11 +145,6 @@ rule clean:
         """
 
 
-include : "rules/db_fetch.smk"      
-include : "rules/db_setup.smk"       
-include : "rules/assemblers.smk"
-include : "rules/mappers.smk"
-include : "rules/variant_calling.smk"
-include : "rules/screening.smk"
-include : "rules/typing.smk"
-include : "rules/custom_analysis.smk"
+include : "rules/databases.smk"
+include : "rules/Paired_Reads.smk"
+include : "rules/analysis.smk"

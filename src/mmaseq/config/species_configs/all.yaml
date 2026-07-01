@@ -1,28 +1,28 @@
-kma_filter:
+kmeraligner_wrangler:
     options: --organism 'Escherichia coli'
     database: ecoligenes
 
 snp_identifier:
     options: --organism 'Clostridioides difficile' --snp_region_buffer 5
-    database: Cdiff_Toxins
+    database: CdiffToxins
 
 deletion_identifier:
     options: --organism 'Clostridioides difficile' --deletion_region_buffer 5 --overlap_fraction 0.5
-    database: Cdiff_Toxins
-    assemblers: shovill
+    database: CdiffToxins
+    assembler: shovill
 
-assembly_minimap2:
+minimap2:
     options: -ax asm5 --cs
     database: Cdiff_Toxins
-    assemblers: shovill
+    assembler: shovill
 
 cdiff_repeat_identifier:
     repeats: TR6 TR10
     combos: TRST
-    assemblers: shovill
+    assembler: shovill
 
 amrfinder:
-    assemblers: [shovill, skesa, spades]
+    assembler: [shovill, skesa, spades]
     options: ""
 
 samtools:
@@ -54,30 +54,30 @@ chtyper:
     database: fumCH_db 
 
 mlst:
-    assemblers: shovill  
+    assembler: shovill  
 
-custom_blaster:
+blastn:
     options: "-perc_identity 90.0"
-    assemblers: shovill
+    assembler: shovill
     database : OXAndm
 
-LREfinder:
+lrefinder:
     database : elmDB
 
 kleborate:
     options: --preset escherichia
-    assemblers: shovill
+    assembler: shovill
 
 meningotype:
-    assemblers: shovill
+    assembler: shovill
 
 spatyper:
-  assemblers: shovill
+  assembler: shovill
 
 seqsero2: true
 
 sistr:
-  assemblers: shovill
+  assembler: shovill
 
 kmeraligner:
-    database : [vancomycin, vancomycin_operon]
+    database : [vancomycin, vancomycinOperon]

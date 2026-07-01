@@ -15,11 +15,11 @@ serotypefinder: true
 
 amrfinder:
     options: --organism 'Klebsiella_pneumoniae'
-    assemblers: shovill 
+    assembler: shovill 
 
 kleborate:
     options: --preset kpsc
-    assemblers: shovill
+    assembler: shovill
 
 mlst:
-    assemblers: shovill  
+    assembler: shovill  
