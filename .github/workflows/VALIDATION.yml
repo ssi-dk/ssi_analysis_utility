@@ -9,7 +9,30 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Wait if no version label exists
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+
+            const labels = pr.data.labels
+              .map(l => l.name)
+              .filter(l => ["feature", "patch", "build"].includes(l));
+
+            if (labels.length !== 1) {
+              console.log("Multiple or no labels detected.");
+              return "wait";
+            }
+
+            return "continue";
+
+            
       - name: Delayed execution
+        if: steps.check.outputs.result == 'wait'
         run: sleep 10
     
       - name: Check labels
