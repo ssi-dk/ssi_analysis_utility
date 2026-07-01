@@ -52,7 +52,7 @@ serotypefinder:
     options: ""    
 
 chtyper:
-    database: fumCH_db 
+    database: fumCH 
 
 mlst:
     assembler: shovill  
@@ -75,7 +75,8 @@ meningotype:
 spatyper:
   assembler: shovill
 
-seqsero2: true
+seqsero2: 
+  assembler: shovill
 
 sistr:
   assembler: shovill

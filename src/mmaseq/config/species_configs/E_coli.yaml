@@ -29,7 +29,7 @@ amrfinder:
     assembler: shovill 
 
 chtyper:
-    database: fumCH_db 
+    database: fumCH 
     reads: True
 
 mlst:

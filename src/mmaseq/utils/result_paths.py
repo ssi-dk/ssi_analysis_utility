@@ -78,8 +78,7 @@ def define_all_result_files(outdir, sample_configs, raw):
     Args:
         outdir (str): Output directory path.
         sample_configs (dict): Dictionary containing configurations for each sample.
-        results_catalogue (dict): Dictionary containing result file templates for each module.
-
+        raw (bool): Flag whether to store in raw folder or not
     Returns:
         defaultdict: Nested dictionary with sample -> module -> list of Path objects.
     """
