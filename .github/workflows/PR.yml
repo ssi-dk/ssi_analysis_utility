@@ -43,7 +43,7 @@ jobs:
               core.setFailed(
                 `PR does not contain any version labels, it must contain exactly one of the following labels - feature, patch, build`
               );
-            elif (labels.length >== 1) {
+            } else if (labels.length > 1) {
               core.setFailed(
                 `PR contains multiple version labels, it must contain exactly one of the following labels - feature, patch, build. Found: ${labels.join(", ")}`
               );
