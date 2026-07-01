@@ -15,20 +15,20 @@ pointfinder:
 # deletion_identifier:
 #     options: --organism 'Clostridioides difficile' --deletion_region_buffer 5 --overlap_fraction 0.5
 #     database: Cdiff_Toxins
-#     assemblers: spades
+#     assembler: spades
 
 assembly_minimap2:
     options: -ax asm5 --cs
     database: Cdiff_Toxins
-    assemblers: spades
+    assembler: spades
 
 cdiff_repeat_identifier:
     repeats: TR6 TR10
     combos: TRST
-    assemblers: spades
+    assembler: spades
 
 amrfinder:
-    assemblers: [skesa, spades]
+    assembler: [skesa, spades]
     options: ""
 
 samtools:
@@ -54,23 +54,23 @@ chtyper:
     database: fumCH_db 
 
 mlst:
-    assemblers: spades  
+    assembler: spades  
 
 custom_blaster:
     options: "-perc_identity 90.0"
-    assemblers: spades
+    assembler: spades
     database : OXAndm
 
 # meningotype:
-#     assemblers: spades
+#     assembler: spades
 
 spatyper:
-  assemblers: spades
+  assembler: spades
 
 # seqsero2: true
 
 sistr:
-  assemblers: spades
+  assembler: spades
 
 kmeraligner:
     database : [vancomycin, vancomycin_operon]
