@@ -321,7 +321,7 @@ rule fetch_vancomycin_operon:
     output:
         source = f"{database_dir}/custom/vancomycinOperon.fasta"
     log:
-        stdout = f"{logdir}/Databases/fetch_vancomycin_operon.log"
+        stdout = f"{logdir}/Databases/fetch_vancomycinOperon.log"
     message:
         "[fetch_vancomycin_operon]: Downloading custom vancomycin operon database"
     shell:

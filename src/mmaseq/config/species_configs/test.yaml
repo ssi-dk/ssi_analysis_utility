@@ -73,4 +73,4 @@ sistr:
   assembler: spades
 
 kmeraligner:
-    database : [vancomycin, vancomycin_operon]
+    database : [vancomycin, vancomycinOperon]
