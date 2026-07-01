@@ -1,0 +1,3 @@
+name: ncbi-amrfinderplus
+dependencies:
+  - bioconda::ncbi-amrfinderplus

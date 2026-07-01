@@ -1,0 +1,3 @@
+name: minimap2
+dependencies:
+  - bioconda::minimap2

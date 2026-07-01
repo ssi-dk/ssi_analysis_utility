@@ -1,0 +1,3 @@
+name: spades
+dependencies:
+  - bioconda::spades

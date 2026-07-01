@@ -1,0 +1,25 @@
+plasmidfinder: true
+
+resfinder:
+    options: --species 'Klebsiella'
+
+pointfinder:
+    options: --species 'Klebsiella'
+
+disinfinder:
+    options: --species 'Klebsiella'
+
+virulencefinder: true
+
+serotypefinder: true
+
+amrfinder:
+    options: --organism 'Klebsiella_pneumoniae'
+    assemblers: shovill 
+
+kleborate:
+    options: --preset kpsc
+    assemblers: shovill
+
+mlst:
+    assemblers: shovill  

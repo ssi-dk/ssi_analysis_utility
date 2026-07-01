@@ -1,8 +1,0 @@
-channels:
- - conda-forge
-dependencies:
- - curl
- - python=3.9
- - biopython
- - pandas
- - curl

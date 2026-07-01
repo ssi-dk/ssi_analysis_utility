@@ -1,0 +1,20 @@
+name: scripts
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.10
+  - bioconda::blast
+  - pip
+  - pandas
+  - pyyaml
+  - biopython
+  - pysam
+  - curl
+  - pip
+  - pip:
+      - typer  # optional if you later switch to it
+      - biopython
+      - pandas
+      - GitPython

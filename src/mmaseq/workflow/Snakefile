@@ -1,0 +1,155 @@
+from mmaseq.utils.PATH import *
+from mmaseq.utils import logging_setup, helpers, sample_config, result_paths, results_aggregator
+from pathlib import Path
+import pandas as pd
+
+# Initiate logging
+###################################################################
+logger = logging_setup.initiate_log("MMAseq Pipeline")
+logging_setup.adjust_log(logger, int(config["verbosity"]))
+
+logger.info("Setting up pipeline variables")
+logger.debug("Importing user input from config file")
+
+
+# Read user input
+###################################################################
+samplesheet_path = Path(config["samplesheet"])
+outdir = Path(config["outdir"])
+ignore_assemblies = config["ignore_assemblies"]
+deploy_dir = Path(config["deploy_dir"])
+spe_configs_dir = Path(config["spe_configs_dir"])
+
+logger.trace(("User input (by config):\n"
+    f" - samplesheet_path: {samplesheet_path}"
+    f" - deploy_dir: {deploy_dir}"
+    f" - outdir: {outdir}"))
+
+# Deduce variables
+###################################################################
+logdir = outdir / "Logs"
+database_dir = deploy_dir / "Databases"
+logger.trace(("Deduced variables:\n"
+    f" - logdir: {logdir}"
+    f" - database_dir: {database_dir}"))
+
+
+# Read config files
+#################################################################
+logger.debug("Creating sample specific input and output objects")
+logger.trace("Reading samplesheet")
+samplesheet = pd.read_csv(samplesheet_path, 
+                          sep='\t').set_index("sample_name")
+
+logger.trace("Reading result files catalogue")
+results_catalogue = helpers.read_results_catalogue(CATALOGUE_PATH)
+
+logger.trace("Defining sample specific configurations")
+sample_configs = sample_config.determine_sample_configs(samplesheet, 
+                                                           spe_configs_dir, 
+                                                           ignore_assemblies)
+
+all_raw_result_files = result_paths.define_all_result_files(outdir, 
+                                                            sample_configs, 
+                                                            results_catalogue,
+                                                            raw=True)
+all_result_files = result_paths.define_all_result_files(outdir, 
+                                                            sample_configs, 
+                                                            results_catalogue,
+                                                            raw=False)
+
+all_raw_result_filepaths = [
+    path
+    for sample in all_raw_result_files.values()
+    for files in sample.values()
+    for path in files
+]
+
+
+all_result_filepaths = [
+    path
+    for sample in all_result_files.values()
+    for files in sample.values()
+    for path in files
+]
+
+#################################
+logger.info("Initiating pipeline")
+rule copy:
+    input:
+        raw = all_raw_result_filepaths
+    output:
+        files = all_result_filepaths
+    log:
+        stdout = "%s/copy.log" %logdir
+    message:
+        "[copy_results] Copying results files"
+    shell:
+        """
+        for FILE in {input.raw}; do
+            RAWDIR=$(dirname $FILE)
+            NEWDIR=$(echo "$RAWDIR" | sed 's#/raw/#/#')
+            
+            echo "Copying $FILE to $NEWDIR/" >> {log.stdout} 2>&1
+            mkdir -p $NEWDIR
+            cp -f $FILE $NEWDIR/
+        done
+        """
+
+rule versions:
+    input:
+        deploy_dir = deploy_dir
+    output:
+        versions_file = outdir / "Conda_tools_version.tsv"
+    message:
+        "[versions]: Conda versions are being determined and written to {output.versions_file}"
+    script:
+        SCRIPTS_DIR / "versions.py"
+
+
+
+rule table:
+    input:
+        files = rules.copy.output.files,
+        versions = rules.versions.output.versions_file
+    params:
+        results_dict = all_result_files
+    output:
+        long = "%s/results_long.tsv" %outdir
+    log:
+        stdout = "%s/table.log" %logdir
+    message:
+        "[keep]: Generating long table"
+    run:
+        all_results_long = results_aggregator.generate_long_results(params.results_dict)
+        all_results_long.to_csv(output.long, sep = "\t", index = False)
+
+
+rule clean:
+    input:
+        long = rules.table.output.long,
+        raw = rules.copy.input.raw
+    log:
+        stdout = "%s/clean.log" %logdir
+    message:
+        "[clean_results]: Removing intermediate folders"
+    shell:
+        """
+        for DIR in $(dirname {input.raw}); do
+           RAW=$(dirname $DIR)
+           if [ -d "$RAW" ]; then 
+               echo "Removing $RAW" > {log.stdout} 2>&1
+               rm -r $RAW
+           fi
+        done
+        """
+
+
+include : "rules/db_fetch.smk"      
+include : "rules/db_setup.smk"       
+include : "rules/assemblers.smk"
+include : "rules/mappers.smk"
+include : "rules/variant_calling.smk"
+include : "rules/screening.smk"
+include : "rules/typing.smk"
+include : "rules/custom_analysis.smk"

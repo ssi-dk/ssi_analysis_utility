@@ -1,0 +1,5 @@
+name: meningotype
+dependencies:
+  - bioconda::meningotype=0.8.5
+  - conda-forge::biopython=1.83
+  - conda-forge::setuptools<82.0.0

@@ -1,0 +1,4 @@
+deploy_dir: /home/simonescrima/Desktop/ssi_analysis_utility/mmaseq/Deploy
+outdir: /home/simonescrima/Desktop/ssi_analysis_utility/mmaseq/Test/Results
+root: /home/simonescrima/Desktop/ssi_analysis_utility/mmaseq
+samplesheet: /home/simonescrima/Desktop/ssi_analysis_utility/mmaseq/data/samplesheet.tsv

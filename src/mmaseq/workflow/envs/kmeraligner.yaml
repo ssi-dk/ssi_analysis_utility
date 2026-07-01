@@ -1,0 +1,4 @@
+name: kma
+dependencies:
+  - bioconda::kma
+  - conda-forge::curl

@@ -1,0 +1,5 @@
+name: sistr_cmd
+dependencies:
+  - bioconda::sistr_cmd
+  - conda-forge::numpy>=1.11.1,<2.0
+  - conda-forge::setuptools<82.0.0

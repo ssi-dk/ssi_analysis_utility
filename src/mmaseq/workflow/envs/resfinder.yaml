@@ -1,0 +1,4 @@
+name: resfinder
+dependencies:
+  - bioconda::resfinder
+  - bioconda::kma
