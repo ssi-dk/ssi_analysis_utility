@@ -30,7 +30,8 @@ jobs:
 
             if (
               title.startsWith("fix") ||
-              title.startsWith("bug")
+              title.startsWith("bug") ||
+              title.startsWith("patch")
             ) {label = "patch";}
 
             else if (
