@@ -62,16 +62,16 @@ jobs:
             const labels = pr.data.labels
               .map(l => l.name)
               .filter(l =>
-                ["feature","patch","build"].includes(l)
+                ["feature","patch","build","major"].includes(l)
               );
 
             if (labels.length === 0) {
               core.setFailed(
-                `PR does not contain any version labels, it must contain exactly one of the following labels - feature, patch, build`
+                `PR does not contain any version labels, it must contain exactly one of the following labels - major, feature, patch, build`
               );
             } else if (labels.length > 1) {
               core.setFailed(
-                `PR contains multiple version labels, it must contain exactly one of the following labels - feature, patch, build. Found: ${labels.join(", ")}`
+                `PR contains multiple version labels, it must contain exactly one of the following labels - major, feature, patch, build. Found: ${labels.join(", ")}`
               );
             }
 
