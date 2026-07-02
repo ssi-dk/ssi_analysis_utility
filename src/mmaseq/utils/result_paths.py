@@ -26,6 +26,7 @@ def define_module_results_file(outdir, sample, module, module_options, raw):
     
     # Extract configurations
     read_string = ""
+    read_type = None
     if module_options.get("reads"):
         read_type = module_options.get("read_type")
 
@@ -57,7 +58,7 @@ def define_module_results_file(outdir, sample, module, module_options, raw):
         if db:
             suffix += f"_{db}"
 
-        if asm:
+        if asm and read_type is None:
             suffix += f"_{asm}"
 
         path = Path(

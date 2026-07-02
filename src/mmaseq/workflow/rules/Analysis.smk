@@ -229,12 +229,12 @@ rule sistr:
         """
 
 
-rule spa_typing:
+rule spatyper:
     input:
         assembly = rules.assembly.output.assembly,
         database = rules.setup_spatyper.output.database
     output:
-        results = f"{outdir}/{{sample}}/raw/spatyper/spa_typing_{{assembler}}.tsv"
+        results = f"{outdir}/{{sample}}/raw/spatyper/spatyper_{{assembler}}.tsv"
     conda:
         ENVS_DIR / "py_utls.yaml"
     log:
