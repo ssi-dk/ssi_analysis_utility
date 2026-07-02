@@ -29,6 +29,7 @@ jobs:
         id: label
         run: |
           echo "LABEL=${{
+            contains(github.event.pull_request.labels.*.name, 'major') && 'major' ||
             contains(github.event.pull_request.labels.*.name, 'feature') && 'feature' ||
             contains(github.event.pull_request.labels.*.name, 'patch') && 'patch' ||
             'build'
