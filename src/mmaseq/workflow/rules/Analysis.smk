@@ -440,7 +440,7 @@ rule serotypefinder:
         """
         OUTDIR=$(dirname {output.results})
 
-        cmd="serotypefinder -i {input.R1} -o $OUTDIR -p {input.database} -x"
+        cmd="serotypefinder -i {input.assembly} -o $OUTDIR -p {input.database} -x"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1

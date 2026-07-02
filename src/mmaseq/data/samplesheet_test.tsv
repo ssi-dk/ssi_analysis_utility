@@ -1,0 +1,2 @@
+sample_name	read1	read2	assembly	config
+Ec_Test	reads/Ec_Test_R1.fastq.gz	reads/Ec_Test_R2.fastq.gz	NA	test.yaml

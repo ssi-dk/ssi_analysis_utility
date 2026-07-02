@@ -18,7 +18,6 @@ minimap2:
     assembler: shovill
     ignore: True
 
-
 cdiff_repeat_identifier:
     repeats: TR6 TR10
     combos: TRST
@@ -39,16 +38,16 @@ bcftools:
     ignore: True
 
 resfinder:
-    options: --species 'Other'
+    options: --species 'ecoli'
     assembler: shovill
     reads: True
 
 pointfinder:
-    options: --species 'Other'
+    options: --species 'ecoli'
     assembler: shovill
 
 disinfinder:
-    options: --species 'Other'
+    options: --species 'ecoli'
     assembler: shovill
 
 plasmidfinder: 

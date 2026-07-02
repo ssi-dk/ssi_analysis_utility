@@ -83,9 +83,9 @@ rule copy:
         """
         for FILE in {input.raw}; do
             RAWDIR=$(dirname $FILE)
-            NEWDIR="${{RAWDIR//\\/raw\\//\\/}}"
+            NEWDIR=$(echo "$RAWDIR" | sed 's#/raw/#/#')
             
-            echo "Copying $FILE to $NEWDIR/" > {log.stdout} 2>&1
+            echo "Copying $FILE to $NEWDIR/" >> {log.stdout} 2>&1
             mkdir -p $NEWDIR
             cp -f $FILE $NEWDIR/
         done
@@ -96,6 +96,8 @@ rule versions:
         deploy_dir = deploy_dir
     output:
         versions_file = outdir / "Conda_tools_version.tsv"
+    message:
+        "[versions]: Conda versions are being determined and written to {output.versions_file}"
     script:
         SCRIPTS_DIR / "versions.py"
 

@@ -5,7 +5,7 @@
 
 ```
 mlst:
-    assemblers: shovill  
+    assembler: shovill  
     
 resfinder:
     options: --species 'Other'
@@ -20,11 +20,11 @@ serotypefinder:
     options: ""
           
 amrfinder:
-    assemblers: shovill
+    assembler: shovill
     options: ""
     
 meningotype:
-    assemblers: shovill
+    assembler: shovill
 
 kmeraligner:
     database: elmDB
@@ -42,17 +42,17 @@ snp_identifier:
 deletion_identifier:
     options: --organism 'Clostridioides difficile' --deletion_region_buffer 5 --overlap_fraction 0.5
     database: Cdiff_Toxins
-    assemblers: [spades]        # <--- NEW: matches the assembler wildcard
+    assembler: [spades]        # <--- NEW: matches the assembler wildcard
 
 assembly_minimap2:
     options: -ax asm5 --cs
     database: Cdiff_Toxins
-    assemblers: [spades]        # used to configure which assembler(s) to align
+    assembler: [spades]        # used to configure which assembler(s) to align
 
 cdiff_repeat_identifier:
     repeats: TR6 TR10
     combos: TRST
-    assemblers: [spades, skesa]
+    assembler: [spades, skesa]
 
 samtools:
     view_options: -q 20
@@ -71,27 +71,27 @@ chtyper:
 
 custom_blaster:
     options: "-perc_identity 90.0"
-    assemblers: shovill
+    assembler: shovill
     database : OXAndm
 
 # Typical of K.Pneumoniae
 kleborate:
     options: --preset kpsc
-    assemblers: shovill  
+    assembler: shovill  
 
 #  Typical of N.Meningitis
 meningotype:
-    assemblers: shovill
+    assembler: shovill
 
 # Typical of S.Aureus
 spatyper:
-  assemblers: [spades]    
+  assembler: [spades]    
 
 # S.Enterica
 seqsero2: true
 
 sistr:
-  assemblers: shovill  
+  assembler: shovill  
 
 ``` 
 
