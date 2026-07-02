@@ -78,17 +78,17 @@ lrefinder:
     database : elmDB
     reads: True
 
-kleborate:
-    options: --preset escherichia
-    assembler: spades
+# kleborate: # MacOS gsl=2.5
+#     options: --preset escherichia
+#     assembler: spades
 
-# meningotype:
+# meningotype: # MacOS
 #     assembler: spades
 
 spatyper:
   assembler: spades
 
-# seqsero2:
+# seqsero2: # MacOS
 #    assembler: spades
 
 
