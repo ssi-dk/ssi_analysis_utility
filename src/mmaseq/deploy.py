@@ -334,7 +334,7 @@ def deploy(args):
     threads = args.threads
     verbosity = args.verbosity
 
-    if custom
+    if custom:
         logger.info("Inspecting species configuration directory")
         deploy_spe_configs(deploy_dir)
 
