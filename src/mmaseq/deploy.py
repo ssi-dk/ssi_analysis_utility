@@ -36,8 +36,7 @@ def parse_deploy():
             "used during pipeline execution. To reinstall environments "
             "and/or databases, remove the `conda/` and/or the `Databases/` "
             "folders in the deployment directory. (Default: %(default)s)"
-        )
-            
+        )        
     )
 
     parser.add_argument(
@@ -49,6 +48,17 @@ def parse_deploy():
             "(Default: %(default)s) The small dataset consists of a single "
             "isolate, executed on ALL modules, thus all results should be "
             f"considered wrong. Read data will be downloaded to {READ_DIR}"
+        )
+    )
+
+    parser.add_argument(
+        "--custom",
+        dest="custom",
+        action="store_true",
+        help=(
+            "Enable custom species configuration. (Default: %(default)s) "
+            "When enabled, species configuration folders (identified as species_configs/ inside the deploy_dir/) will be used. "
+            "If the folder doesn't allready exists, it will be copied from the install folder to the deployment directory."
         )
     )
 
@@ -131,7 +141,7 @@ def deploy_spe_configs(deploy_dir):
         f"deploy_dir = {deploy_dir}"
         ")"))
 
-    spe_configs_dir = deploy_dir / "spe_configs"
+    spe_configs_dir = deploy_dir / "species_configs"
     
     logger.trace("Checking whether config dir allready exists")
     if not spe_configs_dir.exists():
@@ -318,13 +328,15 @@ def deploy(args):
 
     deploy_dir = Path(args.deploy_dir)
     update = args.update
+    custom = args.custom
     test = args.test
     retries = args.retries
     threads = args.threads
     verbosity = args.verbosity
 
-    logger.info("Inspecting species configuration directory")
-    deploy_spe_configs(deploy_dir)
+    if custom
+        logger.info("Inspecting species configuration directory")
+        deploy_spe_configs(deploy_dir)
 
     if not test:
         logger.info(f"Inspecting the deployment dataset")
