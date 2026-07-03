@@ -13,6 +13,8 @@ pointfinder:
 
 lrefinder:
     database : [elmDB]
+    reads: True
 
 kmeraligner:
     database : [vancomycin, vancomycinOperon]
+    reads: True

@@ -2,11 +2,11 @@
 
 import sys
 import argparse
+from pathlib import Path
 import gzip
 import pandas as pd
 import os
 import warnings
-
 
 """
 LRE-Finder
@@ -165,7 +165,7 @@ def count_occurences(gene_dict):
 
         # Merge raw + percentage data
         gene_final = pd.concat([subset, subset_perc], axis=1)
-        gene_final["POS"] = gene_final.index + 1
+        gene_final["outfile"] = gene_final.index + 1
         gene_final.index = [gene] * len(gene_final)
         results.append(gene_final)
 
@@ -182,52 +182,58 @@ def count_occurences(gene_dict):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-ires',
-                        '--res_file',
-                        dest='res',
+    parser.add_argument('-i',
+                        '--infile',
+                        dest='infile',
                         type=str,
                         required=True,
                         metavar='',
-                        help='.res file output from KMA'
+                        help='Input .res file output from KMA'
                         )
 
-    parser.add_argument('-imat',
+    parser.add_argument('-m',
                         '--matrix',
                         dest='mat',
                         type=str,
                         required=True,
                         metavar='',
-                        help='.mat.gz file output from KMA'
+                        help='Input .mat.gz file output from KMA'
                         )
     
     parser.add_argument('-o',
-                        '--pos_file',
-                        dest='pos',
+                        '--outfile',
+                        dest='outfile',
                         type=str,
                         required=True,
                         metavar='',
-                        help='Position description file (tab-delimited)'
+                        help='Output file (tab-delimited)'
                         )
 
     args = parser.parse_args()
 
     # Define Flags
-    res_file = os.path.abspath(args.res)
+    infile = os.path.abspath(args.infile)
     mat = os.path.abspath(args.mat)
-    pos = args.pos
+    outfile = Path(args.outfile)
 
-
+    # Define output
+    outfile = outfile if outfile.suffix == '.tsv' else outfile.with_suffix('.tsv')
 
     # Read .res file for valid genes
-    wanted_genes = read_res_file(res_file)
+    wanted_genes = read_res_file(infile)
+
+    if len(wanted_genes) == 0:
+        with open(outfile, "w") as out:
+            out.write("No\tresults")
+        return None
     
-    if not wanted_genes:
-        sys.exit(f"Error: Could not read valid templates from {res_file}")
- 
+    elif not wanted_genes:
+        sys.exit(f"Error: Could not read valid templates from {infile}")
+
     d = parse_mat_file(mat, 
                        wanted_genes)
     df_final = count_occurences(d)
-    df_final = df_final[["POS",
+    df_final = df_final[["outfile",
                          "RefBase", 
                          "A",
                          "C",
@@ -241,11 +247,11 @@ def main():
                          "T[%]",
                          "N[%]",
                          "-[%]"]]
-    base, ext = os.path.splitext(pos)
-    pos = pos if pos.endswith('.tsv') else pos + '.tsv'
+    base, ext = os.path.splitext(outfile)
     
-    df_final.to_csv(pos,
-                    sep="\t") # write final tsv 
+    df_final.to_csv(outfile,
+                    sep="\t",
+                    index = False) # write final tsv 
 
 
 if __name__ == "__main__":

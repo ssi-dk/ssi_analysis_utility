@@ -1,17 +1,23 @@
-plasmidfinder: true
+plasmidfinder:
+    reads: True
 
 resfinder:
     options: --species 'Klebsiella'
+    reads: True
 
 pointfinder:
     options: --species 'Klebsiella'
+    reads: True
 
 disinfinder:
     options: --species 'Klebsiella'
+    reads: True
 
-virulencefinder: true
+virulencefinder:
+    reads: True
 
-serotypefinder: true
+serotypefinder:
+    reads: True
 
 amrfinder:
     options: --organism 'Klebsiella_pneumoniae'
