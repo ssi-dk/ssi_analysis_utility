@@ -71,7 +71,7 @@ mlst:
 
 blastn:
     options: "-perc_identity 90.0"
-    assembler: shovill
+    assembler: spades
     database : OXAndm
 
 lrefinder:

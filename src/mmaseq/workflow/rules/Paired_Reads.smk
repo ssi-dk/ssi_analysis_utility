@@ -402,7 +402,7 @@ rule PR_lrefinder:
         OUTDIR=$(dirname {output.results})
         mkdir -p $OUTDIR
 
-        cmd="python {SCRIPTS_DIR}/LRE-Typer.py -ires {input.res} -imat {input.matrix} -o {output.results}"
+        cmd="python {SCRIPTS_DIR}/LRE-Typer.py -i {input.res} -m {input.matrix} -o {output.results}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1

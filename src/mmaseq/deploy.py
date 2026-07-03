@@ -360,7 +360,10 @@ def deploy(args):
 
 
     outdir = deploy_dir / "MMAseq_Test"
-    additional_cmds += f"--clean --verbosity {verbosity}"
+    additional_cmds += f"--clean --verbosity {verbosity} "
+
+    if custom:
+        additional_cmds += "--custom "
 
     # Create command
     command = (
