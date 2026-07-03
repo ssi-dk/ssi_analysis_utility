@@ -1,4 +1,11 @@
-plasmidfinder: true
+plasmidfinder:
+  options: "-l 80 -t 80"
+  assembler: shovill
+
+blastn:
+  options: "-perc_identity 99.0"
+  assembler: shovill
+  database : OXAndm
 
 resfinder:
     options: --species 'Klebsiella'

@@ -1,0 +1,23 @@
+pointfinder:
+    options: --species 'Salmonella'
+    assembler: shovill
+
+plasmidfinder:
+  options: "-l 80 -t 80"
+  assembler: shovill
+
+blastn:
+  options: "-perc_identity 99.0"
+  assembler: shovill
+  database : OXAndm
+
+amrfinder:
+  options: --organism 'Salmonella'
+  assembler: shovill
+
+seqsero2: 
+  reads
+
+sistr:
+  assembler: shovill
+
