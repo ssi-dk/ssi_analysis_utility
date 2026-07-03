@@ -93,6 +93,17 @@ def parse_mmaseq():
     )
 
     parser.add_argument(
+        "--custom",
+        dest="custom",
+        action="store_true",
+        help=(
+            "Enable custom species configuration. (Default: %(default)s) "
+            "When enabled, species configuration folders (identified as species_configs/ inside the deploy_dir/) will be used. "
+            "If the folder doesn't allready exists, MMAseq will throw an error and exit."
+        )
+    )
+
+    parser.add_argument(
         "--force",
         dest="force",
         action="store_true",
@@ -447,6 +458,7 @@ def mmaseq(args):
     threads = args.threads
     resolve = args.resolve
     clean = args.clean
+    custom = args.custom
     force = args.force
     ignore_assemblies = args.ignore_assemblies
 
@@ -473,16 +485,17 @@ def mmaseq(args):
         samplesheet_file = resolve_samplesheet_paths(samplesheet_file, outdir)
         logger.info("Resolved the file paths stated in the samplesheet")
 
-    spe_configs_dir = deploy_dir / "spe_configs"
+    spe_configs_dir = SPE_CONFIGS
+    if custom:
+        spe_configs_dir = deploy_dir / "species_configs"
 
-    if not spe_configs_dir.exists():
-        logger.warning((
-            f"Species configuration folder not detected in {deploy_dir}. "
-            f"Will use system installation configurations.\n"
-            f"To generate your own species configurations folder, run: \n"
-            f"mmadeploy --deploy_dir {deploy_dir} --threads {threads}"
-        ))
-        spe_configs_dir = SPE_CONFIGS
+        if not spe_configs_dir.exists():
+            logger.error((
+                f"Species configuration folder not detected in {deploy_dir}. "
+                f"To generate your own species configurations folder, run: \n"
+                f"mmadeploy --deploy_dir {deploy_dir} --threads {threads}"
+            ))
+            sys.exit(1)
     else:
         logger.info("Species configurations folder successfully detected.")
 
