@@ -1,8 +1,16 @@
-plasmidfinder: true
+plasmidfinder:
+    reads: True
 
-virulencefinder: true
+virulencefinder:
+    reads: True
 
-serotypefinder: true
+serotypefinder:
+    reads: True
+
+resfinder:
+    reads: False
+    assembler: shovill
+    options: --species 'Other'
 
 amrfinder:
     options: --organism 'Enterococcus_faecium'
@@ -13,6 +21,8 @@ mlst:
 
 lrefinder:
     database : [elmDB]
+    reads: True
 
 kmeraligner:
     database : [vancomycin, vancomycinOperon]
+    reads: True

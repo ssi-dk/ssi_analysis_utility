@@ -46,7 +46,7 @@ kma_filter:
     database: ecoligenes
 
 chtyper:
-    database: fumCH_db 
+    database: fumCH 
 
 custom_blaster:
     options: "-perc_identity 90.0"

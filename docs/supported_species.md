@@ -67,7 +67,7 @@ LREfinder:
 
 # Typical of E.Coli
 chtyper:
-    database: fumCH_db 
+    database: fumCH 
 
 custom_blaster:
     options: "-perc_identity 90.0"

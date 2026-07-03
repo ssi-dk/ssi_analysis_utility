@@ -1,12 +1,14 @@
 resfinder:
   options: --species 'Salmonella enterica'
+  reads: True
 
 pointfinder:
   options: --species 'Salmonella enterica'
+  reads: True
 
 disinfinder:
   options: --species 'Salmonella enterica'
-
+  reads: True
 
 amrfinder:
   options: --organism 'Salmonella'
@@ -15,7 +17,8 @@ amrfinder:
 mlst:
   assembler: shovill
 
-seqsero2: true
+seqsero2: 
+  reads: True
 
 sistr:
   assembler: shovill

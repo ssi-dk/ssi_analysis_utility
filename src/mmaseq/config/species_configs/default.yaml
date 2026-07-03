@@ -3,6 +3,7 @@ mlst:
     
 resfinder:
     options: --species 'Other'
+    reads: True
 
 plasmidfinder:
     options: ""

@@ -41,9 +41,6 @@ logger.trace("Reading samplesheet")
 samplesheet = pd.read_csv(samplesheet_path, 
                           sep='\t').set_index("sample_name")
 
-logger.trace("Reading result files catalogue")
-results_catalogue = helpers.read_results_catalogue(CATALOGUE_PATH)
-
 logger.trace("Defining sample specific configurations")
 sample_configs = sample_config.determine_sample_configs(samplesheet, 
                                                            spe_configs_dir, 
@@ -51,11 +48,9 @@ sample_configs = sample_config.determine_sample_configs(samplesheet,
 
 all_raw_result_files = result_paths.define_all_result_files(outdir, 
                                                             sample_configs, 
-                                                            results_catalogue,
                                                             raw=True)
 all_result_files = result_paths.define_all_result_files(outdir, 
-                                                            sample_configs, 
-                                                            results_catalogue,
+                                                            sample_configs,
                                                             raw=False)
 
 all_raw_result_filepaths = [
@@ -145,6 +140,7 @@ rule clean:
         """
 
 
-include : "rules/databases.smk"
+include : "rules/Databases.smk"
+include : "rules/Single_Reads.smk"
 include : "rules/Paired_Reads.smk"
-include : "rules/analysis.smk"
+include : "rules/Analysis.smk"

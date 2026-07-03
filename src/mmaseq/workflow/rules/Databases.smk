@@ -221,8 +221,8 @@ rule fetch_senterica_serovar:
 
 rule fetch_chtyper_db:
     output:
-        source = f"{database_dir}/custom/fumCH_db.fasta",
-        version_db = f"{database_dir}/custom/fumCH_db_version.txt"
+        source = f"{database_dir}/custom/fumCH.fasta",
+        version_db = f"{database_dir}/custom/fumCH_version.txt"
     conda:
         ENVS_DIR / "py_utls.yaml"
     log:
@@ -321,7 +321,7 @@ rule fetch_vancomycin_operon:
     output:
         source = f"{database_dir}/custom/vancomycinOperon.fasta"
     log:
-        stdout = f"{logdir}/Databases/fetch_vancomycinOperon.log"
+        stdout = f"{logdir}/Databases/fetch_vancomycin_operon.log"
     message:
         "[fetch_vancomycin_operon]: Downloading custom vancomycin operon database"
     shell:

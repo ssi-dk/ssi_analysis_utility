@@ -80,7 +80,7 @@ rule shovill:
 
 ### Mapping ###
 
-rule kmeraligner:
+rule PR_kmeraligner:
     input:
         R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
         R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
@@ -90,9 +90,9 @@ rule kmeraligner:
         tmp_matrix = f"{{database}}.mat.gz",
         prefix_db = rules.setup_kmeraligner_index.params.prefix    
     output:
-        results = f"{outdir}/{{sample}}/raw/kmeraligner/kmeraligner_{{database}}.tsv",
+        results = f"{outdir}/{{sample}}/raw/PR/kmeraligner/kmeraligner_{{database}}.tsv",
         sam = temp(f"{outdir}/{{sample}}/raw/samtools/{{database}}.sam"),
-        matrix = temp(f"{outdir}/{{sample}}/raw/kmeraligner/kmeraligner_{{database}}.mat.gz")
+        matrix = temp(f"{outdir}/{{sample}}/raw/PR/kmeraligner/kmeraligner_{{database}}.mat.gz")
     conda:
         ENVS_DIR / "kmeraligner.yaml"
     log:
@@ -127,7 +127,7 @@ rule kmeraligner_consensus:
         tmp_results = f"{{database}}.fsa",
         prefix_db = rules.setup_kmeraligner_index.params.prefix,
     output:
-        results = temp(f"{outdir}/{{sample}}/raw/kmerconsensus/kmeraligner_consensus_{{database}}.fasta")
+        results = temp(f"{outdir}/{{sample}}/raw/PR/kmerconsensus/kmeraligner_consensus_{{database}}.fasta")
     conda:
         ENVS_DIR / "kmeraligner.yaml"
     log:
@@ -148,7 +148,7 @@ rule kmeraligner_consensus:
         """
 
 
-rule bowtie2:
+rule PR_bowtie2:
     input:
        R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
        R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
@@ -156,7 +156,7 @@ rule bowtie2:
     params:
        options = lambda wc: sample_configs[wc.sample]["bowtie2"]["options"]
     output:
-        sam = temp(f"{outdir}/{{sample}}/raw/bowtie2/bowtie2_{{database}}.sam")
+        sam = temp(f"{outdir}/{{sample}}/raw/PR/bowtie2/bowtie2_{{database}}.sam")
     threads: max(1, workflow.cores - 1 - (workflow.cores - 1) % 2)
     priority: 1
     conda:
@@ -179,14 +179,14 @@ rule bowtie2:
 
 ### Characterizers ###
 
-rule seqsero2:
+rule PR_seqsero2:
     input:
         R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
         R2 = lambda wc: samplesheet.loc[wc.sample, "read2"]
     params:
         tmp_results = "SeqSero_result.tsv"
     output:
-        results = f"{outdir}/{{sample}}/raw/seqsero2/seqsero2.tsv"
+        results = f"{outdir}/{{sample}}/raw/PR/seqsero2/seqsero2.tsv"
     threads: max(1, workflow.cores - 1 - (workflow.cores - 1) % 2)
     priority: 1
     conda:
@@ -210,7 +210,7 @@ rule seqsero2:
         """
 
 
-rule plasmidfinder:
+rule PR_plasmidfinder:
     input:
         # Input paired-end Illumina reads.
         R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
@@ -219,7 +219,7 @@ rule plasmidfinder:
     params:
         tmp_results = "results_tab.tsv"
     output:
-        results = f"{outdir}/{{sample}}/raw/plasmidfinder/plasmidfinder.tsv"
+        results = f"{outdir}/{{sample}}/raw/PR/plasmidfinder/plasmidfinder.tsv"
     conda:
         ENVS_DIR / "plasmidfinder.yaml"
     log:
@@ -240,7 +240,7 @@ rule plasmidfinder:
         """
 
 
-rule resfinder:
+rule PR_resfinder:
     input:
         R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
         R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
@@ -249,7 +249,7 @@ rule resfinder:
         tmp_results = "ResFinder_results_tab.txt",
         options = lambda wc: sample_configs[wc.sample]["resfinder"]["options"]
     output:
-        results = f"{outdir}/{{sample}}/raw/resfinder/resfinder.tsv"
+        results = f"{outdir}/{{sample}}/raw/PR/resfinder/resfinder.tsv"
     conda:
         ENVS_DIR / "resfinder.yaml"
     log:
@@ -269,7 +269,7 @@ rule resfinder:
         """
 
 
-rule pointfinder:
+rule PR_pointfinder:
     input:
         R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
         R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
@@ -279,7 +279,7 @@ rule pointfinder:
         tmp_results = "PointFinder_results.txt",
         options = lambda wc: sample_configs[wc.sample]["pointfinder"]["options"]
     output:
-        results = f"{outdir}/{{sample}}/raw/pointfinder/pointfinder.tsv"
+        results = f"{outdir}/{{sample}}/raw/PR/pointfinder/pointfinder.tsv"
     conda:
         ENVS_DIR / "resfinder.yaml"
     log:
@@ -299,7 +299,7 @@ rule pointfinder:
         """
 
 
-rule disinfinder:
+rule PR_disinfinder:
     input:
         R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
         R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
@@ -309,7 +309,7 @@ rule disinfinder:
         tmp_results = "DisinFinder_results_tab.txt",
         options = lambda wc: sample_configs[wc.sample]["disinfinder"]["options"]
     output:
-        results = f"{outdir}/{{sample}}/raw/disinfinder/disinfinder.tsv"
+        results = f"{outdir}/{{sample}}/raw/PR/disinfinder/disinfinder.tsv"
     conda:
         ENVS_DIR / "resfinder.yaml"
     log:
@@ -329,7 +329,7 @@ rule disinfinder:
         """
 
 
-rule virulencefinder:
+rule PR_virulencefinder:
     input:
         R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
         R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
@@ -337,7 +337,7 @@ rule virulencefinder:
     params:
         tmp_results = "results_tab.tsv"
     output:
-        results = f"{outdir}/{{sample}}/raw/virulencefinder/virulencefinder.tsv",
+        results = f"{outdir}/{{sample}}/raw/PR/virulencefinder/virulencefinder.tsv",
     conda:
         ENVS_DIR / "virulencefinder.yaml"
     log:
@@ -357,7 +357,7 @@ rule virulencefinder:
         """
 
 
-rule serotypefinder:
+rule PR_serotypefinder:
     input:
         R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
         R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
@@ -365,7 +365,7 @@ rule serotypefinder:
     params:
         tmp_results = "results_tab.tsv"
     output:
-        results = f"{outdir}/{{sample}}/raw/serotypefinder/serotypefinder.tsv",
+        results = f"{outdir}/{{sample}}/raw/PR/serotypefinder/serotypefinder.tsv",
     conda:
         ENVS_DIR / "serotypefinder.yaml"
     log:
@@ -383,4 +383,76 @@ rule serotypefinder:
 
         echo "Renaming result files" >> {log.stdout} 2>&1
         mv $OUTDIR/{params.tmp_results} {output.results} >> {log.stdout} 2>&1
+        """
+
+rule PR_lrefinder:
+    input:
+        res = rules.PR_kmeraligner.output.results,
+        matrix = rules.PR_kmeraligner.output.matrix
+    output:
+        results = f"{outdir}/{{sample}}/raw/PR/lrefinder/lrefinder_{{database}}.tsv",
+    conda:
+        ENVS_DIR / "py_utls.yaml"
+    log:
+        stdout = f"{logdir}/lrefinder_{{database}}_{{sample}}.log"
+    message:
+        "[LREfinder]: Identify genes and mutations for linezolid resistance in {wildcards.sample}"
+    shell:
+        """
+        OUTDIR=$(dirname {output.results})
+        mkdir -p $OUTDIR
+
+        cmd="python {SCRIPTS_DIR}/LRE-Typer.py -i {input.res} -m {input.matrix} -o {output.results}"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+        """
+
+rule PR_chtyper:
+    input:
+        results = rules.PR_kmeraligner.output.results
+    params:
+        id = 90,
+        coverage = 60
+    output:
+        results = f"{outdir}/{{sample}}/raw/PR/chtyper/chtyper_{{database}}.tsv"
+    log:
+        stdout = f"{logdir}/chtyper_{{database}}_{{sample}}.log"
+    message:
+        "[chtyper]: Running Chtyper on {wildcards.database} assembly for {wildcards.sample}"
+    shell:
+        """
+        OUTDIR=$(dirname {output.results})
+        mkdir -p $OUTDIR
+
+        echo "Running awk filter on {input.results}" > {log.stdout} 2>&1
+
+        awk -F'\t' 'NR==1{{for(i=1;i<=NF;i++){{if($i=="Template_Identity")id=i;if($i=="Template_Coverage")cov=i}}print;next}} ($id+0>{params.id} && $cov+0>{params.coverage})' {input.results} > {output.results} 2>> {log.stdout}
+        """
+
+### Wranglers ###
+
+rule PR_kmeraligner_wrangler:
+    input:
+        results = rules.PR_kmeraligner.output.results,
+        database = rules.setup_kmeraligner_index.output.names
+    params:
+        options = lambda wildcards: sample_configs[wildcards.sample]["kmeraligner_wrangler"]["options"],
+        metafile = f"{SCREENING_DIR}/kmeraligner_wrangler.tsv"
+    output:
+        filtered_tsv = f"{outdir}/{{sample}}/raw/PR/kmeraligner_wrangler/kmeraligner_wrangler_{{database}}.tsv"
+    conda:
+        ENVS_DIR / "py_utls.yaml"
+    log:
+        stdout = f"{logdir}/kmeraligner_wrangler_{{database}}_{{sample}}.log"
+    message:
+        "[KMA kmeraligner_wrangler]: Filtering KMA .res result for {wildcards.sample}"
+    shell:
+        """
+        mkdir -p $(dirname {output.filtered_tsv})
+
+        cmd="python {SCRIPTS_DIR}/KMA_Filter.py --KMA_res {input.results} --metafile {params.metafile} --sample_id {wildcards.sample} --output {output.filtered_tsv} {params.options} > {log.stdout} 2>&1"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout}
+        eval $cmd >> {log.stdout} 2>&1
         """

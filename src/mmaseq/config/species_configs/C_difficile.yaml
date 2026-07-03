@@ -1,6 +1,7 @@
 kmeraligner_wrangler:
     options: --organism 'Clostridioides difficile'
     database: CdiffToxins
+    reads: True
 
 snp_identifier:
     options: --organism 'Clostridioides difficile' --snp_region_buffer 5
@@ -9,12 +10,13 @@ snp_identifier:
 deletion_identifier:
     options: --organism 'Clostridioides difficile' --deletion_region_buffer 5 --overlap_fraction 0.5
     database: CdiffToxins
-    assembler: [spades]        # <--- NEW: matches the assembler wildcard
+    assembler: [spades]
 
 minimap2:
     options: -ax asm5 --cs
     database: CdiffToxins
-    assembler: [spades]        # used to configure which assembler(s) to align
+    assembler: [spades]
+    ignore: True
 
 cdiff_repeat_identifier:
     repeats: TR6 TR10
@@ -31,6 +33,10 @@ mlst:
 samtools:
     view_options: -q 20
     sort_options: -n
+    ignore: True
+    reads: True
 
 bcftools:
     view_options: -v indels -i 'INFO/DP>10'
+    ignore: True
+    reads: True
