@@ -1,15 +1,15 @@
-plasmidfinder: true
+plasmidfinder:
+  options: "-l 80 -t 80"
+  assembler: shovill
 
-virulencefinder: true
+blastn:
+  options: "-perc_identity 99.0"
+  assembler: shovill
+  database : OXAndm
 
-serotypefinder: true
-
-amrfinder:
-    options: --organism 'Enterococcus_faecalis'
-    assembler: [shovill]  
-
-mlst:
-    assembler: [shovill]  
+pointfinder:
+    options: --species 'Enterococcus faecalis'
+    assembler: shovill
 
 lrefinder:
     database : [elmDB]
