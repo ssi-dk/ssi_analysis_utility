@@ -1,37 +1,29 @@
+resfinder:
+    options: --species 'Escherichia coli'
+    assembler: shovill
+
+pointfinder:
+    options: --species 'Escherichia coli'
+    assembler: shovill
+
+plasmidfinder:
+  options: "-l 80 -t 80"
+  assembler: shovill
+
+blastn:
+  options: "-perc_identity 99.0"
+  assembler: shovill
+  database : OXAndm
+
+virulencefinder: 
+    assembler: shovill
+
+serotypefinder:
+    reads: True
+
 kmeraligner_wrangler:
     options: --organism 'Escherichia coli'
     database: ecoligenes
 
-resfinder:
-    options: --species 'Escherichia coli'
-
-pointfinder:
-    options: --species 'Escherichia coli'
-
-disinfinder:
-    options: --species 'Escherichia coli'
-
-plasmidfinder: true
-
-virulencefinder: true
-
-serotypefinder: true
-
-amrfinder:
-    options: --organism 'Escherichia'
-    assembler: shovill 
-
 chtyper:
-    database: fumCH_db 
-
-mlst:
-    assembler: shovill  
-
-blastn:
-    options: "-perc_identity 90.0"
-    assembler: shovill
-    database : OXAndm
-
-kleborate:
-    options: --preset escherichia
-    assembler: shovill
+    database: fumCH_db
