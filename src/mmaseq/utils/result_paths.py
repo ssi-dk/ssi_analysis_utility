@@ -53,6 +53,8 @@ def define_module_results_file(outdir, sample, module, module_options, raw):
 
     for db, asm in product(databases, assemblers):
 
+        print(module, db, asm)
+
         suffix = ""
 
         if db:

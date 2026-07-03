@@ -308,12 +308,12 @@ def deploy_dataset(update, max_retries):
             continue
         except OSError as e:
             logger.error((
-                f"Connection was established but timed out. Try again!"
+                f"Connection was established but there was issues. Skipping {host}!!!\n{e}"
             ))
-            sys.exit(1)
+            continue
         except Exception as e:
             logger.error(
-                f"What? Something bad is going on... Skipping!!!\n{e}"
+                f"What? Something bad is going on... Skipping {host} !!!\n{e}"
             )
             continue
 
