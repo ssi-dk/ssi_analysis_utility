@@ -1,0 +1,37 @@
+plasmidfinder:
+  options: "-l 80 -t 80"
+  assembler: shovill
+
+blastn:
+  options: "-perc_identity 99.0"
+  assembler: shovill
+  database : OXAndm
+
+resfinder:
+    options: --species 'Klebsiella'
+    reads: True
+
+pointfinder:
+    options: --species 'Klebsiella'
+    reads: True
+
+disinfinder:
+    options: --species 'Klebsiella'
+    reads: True
+
+virulencefinder:
+    reads: True
+
+serotypefinder:
+    reads: True
+
+amrfinder:
+    options: --organism 'Klebsiella_oxytoca'
+    assembler: shovill 
+
+kleborate:
+    options: --preset kpsc
+    assembler: shovill
+
+mlst:
+    assembler: shovill  
