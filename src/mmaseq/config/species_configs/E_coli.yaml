@@ -24,6 +24,7 @@ serotypefinder:
 kmeraligner_wrangler:
     options: --organism 'Escherichia coli'
     database: ecoligenes
+    reads: True
 
 chtyper:
     database: fumCH 
