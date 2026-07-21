@@ -30,7 +30,7 @@ amrfinder:
     assembler: shovill 
 
 kleborate:
-    options: --preset kpsc
+    options: --preset kosc
     assembler: shovill
 
 mlst:
