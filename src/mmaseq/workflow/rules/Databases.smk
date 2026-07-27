@@ -301,7 +301,7 @@ rule fetch_vancomycin:
     log:
         stdout = f"{logdir}/Databases/fetch_vancomycin.log"
     conda:
-        ENVS_DIR / "blast.yaml"    
+        ENVS_DIR / "py_utls.yaml"
     message:
         "[fetch_vancomycin]: Downloading custom vancomycin database"
     shell:
@@ -325,7 +325,7 @@ rule fetch_vancomycin_operon:
     log:
         stdout = f"{logdir}/Databases/fetch_vancomycin_operon.log"
     conda:
-        ENVS_DIR / "blast.yaml" 
+        ENVS_DIR / "py_utls.yaml"
     message:
         "[fetch_vancomycin_operon]: Downloading custom vancomycin operon database"
     shell:
