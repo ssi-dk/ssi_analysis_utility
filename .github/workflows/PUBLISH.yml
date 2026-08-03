@@ -8,6 +8,10 @@ on:
       version:
         description: 'Version string (e.g., 1.2.3)'
         required: true
+      dry_run:
+        description: 'Dry Run (Skip PyPI publish and Bioconda PR)'
+        type: boolean
+        default: true
 
 jobs:
   pypi-publish:
@@ -92,6 +96,13 @@ jobs:
           # Update version and sha256 in meta.yaml
           sed -i -E "s/{% set version = \".*\" %}/{% set version = \"${VERSION}\" %}/g" meta.yaml
           sed -i -E "s/sha256: .*/sha256: ${SHA256}/g" meta.yaml
+
+      - name: Preview updated meta.yaml
+        if: ${{ inputs.dry_run == true }}
+        run: |
+          echo "::group::Click to expand generated meta.yaml"
+          cat mock_recipe/meta.yaml
+          echo "::endgroup::"
 
       # 3. Create PR against bioconda/bioconda-recipes
       - name: Create Pull Request to Bioconda
