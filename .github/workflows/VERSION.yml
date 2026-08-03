@@ -8,10 +8,11 @@ jobs:
   bump-and-merge:
     # Only run if both a version label and a merge trigger label are present
     if: |
-      contains(github.event.pull_request.labels.*.name, 'trigger-merge') && (
+      contains(github.event.pull_request.labels.*.name, 'merge') && (
         contains(github.event.pull_request.labels.*.name, 'major') ||
         contains(github.event.pull_request.labels.*.name, 'feature') ||
-        contains(github.event.pull_request.labels.*.name, 'patch')
+        contains(github.event.pull_request.labels.*.name, 'patch') ||
+        contains(github.event.pull_request.labels.*.name, 'build')
       )
     runs-on: ubuntu-latest
     permissions:
