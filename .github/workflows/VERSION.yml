@@ -1,51 +1,58 @@
-name: Automatic version bump
+name: Bump and Merge
 
 on:
-  workflow_run:
-    workflows: ["Pull Request Validation"]
-    types: [completed]
   pull_request:
-    types: [closed]
-
-permissions:
-  contents: write
+    types: [labeled]
 
 jobs:
-  bump:
-    if: github.event.pull_request.merged == true
-
+  bump-and-merge:
+    # Only run if both a version label and a merge trigger label are present
+    if: |
+      contains(github.event.pull_request.labels.*.name, 'trigger-merge') && (
+        contains(github.event.pull_request.labels.*.name, 'major') ||
+        contains(github.event.pull_request.labels.*.name, 'feature') ||
+        contains(github.event.pull_request.labels.*.name, 'patch')
+      )
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout PR Branch
+        uses: actions/checkout@v4
         with:
-          ref: dev
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Get label
+      - name: Extract Label
         id: label
         run: |
           echo "LABEL=${{
             contains(github.event.pull_request.labels.*.name, 'major') && 'major' ||
             contains(github.event.pull_request.labels.*.name, 'feature') && 'feature' ||
-            contains(github.event.pull_request.labels.*.name, 'patch') && 'patch' ||
-            'build'
+            'patch'
           }}" >> $GITHUB_OUTPUT
 
-      - name: Bump version
+      - name: Bump Version
         run: |
-          python .github/scripts/bump_version.py \
-            "${{ steps.label.outputs.LABEL }}"
+          python .github/scripts/bump_version.py "${{ steps.label.outputs.LABEL }}"
 
-      - name: Commit
+      - name: Commit and Push to PR
         run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           git add .
-          git commit -m "Bump version"
+          git commit -m "chore(release): bump version before merge [skip ci]"
           git push
-  
+
+      - name: Automatically Merge PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.pulls.merge({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              merge_method: 'squash' # or 'merge' / 'rebase'
+            })
