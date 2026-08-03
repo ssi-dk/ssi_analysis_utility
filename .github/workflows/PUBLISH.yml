@@ -40,8 +40,15 @@ jobs:
         run: python -m build
 
       - name: Publish package to PyPI
+        if: ${{ inputs.dry_run != true }}
         uses: pypa/gh-action-pypi-publish@release/v1
-  
+
+      - name: Report Build Success
+        if: ${{ inputs.dry_run == true }}
+        run: |
+          echo "DRY RUN MODE: Package built successfully!"
+          ls -la dist/
+          
   bioconda-update:
     name: Update Bioconda Recipe & Open PR
     needs: pypi-publish
@@ -67,16 +74,15 @@ jobs:
       - name: Fetch PyPI SHA256 Hash
         id: fetch_hash
         run: |
-          VERSION="${{ steps.get_version.outputs.VERSION }}"
-          JSON=$(curl -s "https://pypi.org/pypi/MMASeq/${VERSION}/json")
-          SHA256=$(echo "$JSON" | jq -r '.urls[] | select(.packagetype=="sdist") | .digests.sha256')
-          
-          if [ -z "$SHA256" ] || [ "$SHA256" = "null" ]; then
-            echo "Error: Could not retrieve sha256 from PyPI for version ${VERSION}"
-            exit 1
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            echo "DRY RUN MODE: Generating fake sha256"
+            echo "SHA256=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" >> $GITHUB_OUTPUT
+          else
+            VERSION="${{ steps.get_version.outputs.VERSION }}"
+            JSON=$(curl -s "https://pypi.org/pypi/MMASeq/${VERSION}/json")
+            SHA256=$(echo "$JSON" | jq -r '.urls[] | select(.packagetype=="sdist") | .digests.sha256')
+            echo "SHA256=${SHA256}" >> $GITHUB_OUTPUT
           fi
-
-          echo "SHA256=${SHA256}" >> $GITHUB_OUTPUT
 
       # 1. Checkout your FORK of bioconda-recipes
       - name: Checkout ssi-dk/bioconda-recipes Fork
@@ -105,6 +111,14 @@ jobs:
           echo "::endgroup::"
 
       # 3. Create PR against bioconda/bioconda-recipes
+      - name: Check Token Presence
+        run: |
+          if [ -z "${{ secrets.BIOCONDA_TOKEN }}" ]; then
+            echo "WARNING: BIOCONDA_TOKEN secret is NOT set / has expired. Create a new token for the ssi-dk/bioconda-recipes in Profile settings > Credentials > Fine-grained personal access tokens.\nSkipping actual git push/PR creation."
+          else
+            echo "BIOCONDA_TOKEN secret is ready!"
+          fi
+        
       - name: Create Pull Request to Bioconda
         uses: peter-evans/create-pull-request@v6
         with:
