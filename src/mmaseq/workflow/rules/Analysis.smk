@@ -449,6 +449,31 @@ rule serotypefinder:
         mv $OUTDIR/{params.tmp_results} {output.results} >> {log.stdout} 2>&1
         """
 
+
+rule serovar_detector:
+    input:
+        assembly = rules.assembly.output.assembly
+    params:
+        tmp_results = "serovars.tsv"
+    output:
+        results = f"{outdir}/{{sample}}/raw/serovar_detector/serovar_detector.tsv"
+    conda:
+        ENVS_DIR / "serovar_detector.yaml"
+    shell:
+        """
+        INDIR = $(dirname {input.assembly})
+        OUTDIR = $(dirname {output.results})
+
+        cmd="serovar_detector -a $INDIR -o $OUTDIR -t 1"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+
+        echo "Renaming result files" >> {log.stdout} 2>&1
+        mv $OUTDIR/{params.tmp_results} {output.results} >> {log.stdout} 2>&1
+        """
+
+
 ### SNP Analysis ###
 
 # Samtools and bcftools
