@@ -385,6 +385,32 @@ rule PR_serotypefinder:
         mv $OUTDIR/{params.tmp_results} {output.results} >> {log.stdout} 2>&1
         """
 
+
+rule PR_serovar_detector:
+    input:
+        R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
+        R2 = lambda wc: samplesheet.loc[wc.sample, "read2"]
+    params:
+        tmp_results = "serovars.tsv"
+    output:
+        results = f"{outdir}/{{sample}}/raw/PR/serovar_detector/serovar_detector.tsv"
+    conda:
+        ENVS_DIR / "serovar_detector.yaml"
+    shell:
+        """
+        INDIR = $(dirname {input.R1})
+        OUTDIR = $(dirname {output.results})
+
+        cmd="serovar_detector -r $INDIR -o $OUTDIR -t 1"
+
+        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
+        eval $cmd >> {log.stdout} 2>&1
+
+        echo "Renaming result files" >> {log.stdout} 2>&1
+        mv $OUTDIR/{params.tmp_results} {output.results} >> {log.stdout} 2>&1
+        """
+
+
 rule PR_lrefinder:
     input:
         res = rules.PR_kmeraligner.output.results,
