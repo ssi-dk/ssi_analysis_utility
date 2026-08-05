@@ -6,3 +6,4 @@ SRR26205262	reads/SRR26205262_1.fastq.gz	reads/SRR26205262_2.fastq.gz	assemblies
 ERR2929615	reads/ERR2929615_1.fastq.gz	reads/ERR2929615_2.fastq.gz	assemblies/ERR2929615.fasta	E_Faecalis.yaml
 ERR2929578	reads/ERR2929578_1.fastq.gz	reads/ERR2929578_2.fastq.gz	assemblies/ERR2929578.fasta	E_Faecium.yaml
 ERR142064	reads/ERR142064_1.fastq.gz	reads/ERR142064_2.fastq.gz	assemblies/ERR142064.fasta	C_difficile.yaml
+ERR14229029	reads/ERR14229029_1.fastq.gz	reads/ERR14229029_2.fastq.gz	assemblies/ERR14229029.fasta	A_pleuropneumoniae.yaml
