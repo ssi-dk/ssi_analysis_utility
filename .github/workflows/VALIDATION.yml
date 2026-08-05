@@ -33,7 +33,7 @@ jobs:
             
       - name: Delayed execution
         if: steps.check.outputs.result == 'wait'
-        run: sleep 30
+        run: sleep 120
     
       - name: Check labels
         uses: actions/github-script@v7
