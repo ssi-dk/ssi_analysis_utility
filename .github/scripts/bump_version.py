@@ -20,7 +20,11 @@ if label == "major":
 
 elif label == "feature":
     minor += 1
-    patch = 1
+    patch = 0
+    # Determine every tens of minor version increments (10, 20, 30 etc.)
+    if (10 % minor) == 0:
+        # Set patch version to 1 directly
+        patch = 1
     build = 0
 
 elif label == "patch":
