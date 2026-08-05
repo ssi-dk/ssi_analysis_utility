@@ -77,7 +77,6 @@ jobs:
 
   build:
     needs: check-label
-    if: ${{ !contains(github.event.pull_request.labels.*.name, 'build') }}
     strategy:
       matrix:
 
@@ -93,12 +92,14 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Micromamba
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'build') }}
         uses: mamba-org/setup-micromamba@v2
         with:
           environment-name: test-env
           init-shell: bash
 
       - name: Test conda installation
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'build') }}
         shell: bash -l {0}
         run: |
           micromamba install conda --yes
@@ -108,11 +109,13 @@ jobs:
           pip install .
 
       - name: Verify package imports
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'build') }}
         shell: bash -l {0}
         run: |
           mmaseq --version
 
       - name: Test pipeline
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'build') }}
         shell: bash -l {0}
         run: |
           mmadeploy --deploy_dir ~/test --threads 3 --test --verbosity 2
