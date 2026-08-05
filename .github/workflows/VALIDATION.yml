@@ -98,7 +98,7 @@ jobs:
             const labels = context.payload.pull_request.labels.map(l => l.name);
 
             if (labels.includes('build')) {
-              console.log("PR is labelled 'build', thus no changes in software is imminent. Skipping remainder!");
+              console.log("PR is labelled 'build', thus no changes in software is imminent. Check is done sucessfully!");
             }
 
 
