@@ -20,7 +20,7 @@ if label == "major":
 
 elif label == "feature":
     minor += 1
-    patch = 0
+    patch = 1
     build = 0
 
 elif label == "patch":
