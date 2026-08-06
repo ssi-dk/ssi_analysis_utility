@@ -41,7 +41,11 @@ rule blastn:
         OUTDIR=$(dirname {output.results})
         mkdir -p $OUTDIR
 
-        cmd="blastn -subject {input.database} -query {input.assembly} -outfmt '6' -out {output.results} {params.options}"
+        # Write a header first so the file is self-describing (BLAST outfmt 6 has none),
+        # otherwise the results aggregator consumes the first hit as column names.
+        printf 'qseqid\tsseqid\tpident\tlength\tmismatch\tgapopen\tqstart\tqend\tsstart\tsend\tevalue\tbitscore\n' > {output.results}
+
+        cmd="blastn -subject {input.database} -query {input.assembly} -outfmt '6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore' {params.options} >> {output.results}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
