@@ -78,9 +78,9 @@ lrefinder:
     database : elmDB
     reads: True
 
-kleborate: # MacOS gsl=2.5
-    options: --preset escherichia
-    assembler: skesa
+# kleborate: # MacOS gsl=2.5
+#     options: --preset escherichia
+#     assembler: skesa
 
 # meningotype: # MacOS
 #     assembler: spades
