@@ -42,6 +42,10 @@ def generate_long_results(all_result_files):
     """
     Generates a concatenated long-format DataFrame from all result files.
 
+    Files that were never produced are skipped rather than raising, so that a
+    module which crashed cannot prevent the remaining results from being
+    aggregated. Missing modules are reported at the end.
+
     Args:
         all_result_files (defaultdict): Nested dictionary with sample -> module -> list of Path objects.
 
@@ -49,11 +53,19 @@ def generate_long_results(all_result_files):
         pd.DataFrame: Concatenated long-format DataFrame from all result files.
     """
     all_sample_results = list()
+    missing = list()
 
     for sample, modules in all_result_files.items():
 
         for mod, files in modules.items():
             for file in files:
+                file = Path(file)
+
+                # Absent means the producing rule failed or never ran
+                if not file.exists():
+                    missing.append(f"{sample}/{mod}: {file.name}")
+                    continue
+
                 try:
                     sample_results = pd.read_csv(file, sep = "\t", index_col = False)
                 except pd.errors.EmptyDataError:
@@ -69,5 +81,20 @@ def generate_long_results(all_result_files):
                     sample_long = unpivot_results(sample, mod, file, sample_results)
 
                 all_sample_results.append(sample_long)
+
+    if missing:
+        print(
+            f"{len(missing)} expected result file(s) were not produced and are "
+            "absent from the long table:"
+        )
+        for entry in missing:
+            print(f" - {entry}")
+
+    # Nothing to concatenate would raise, so return the empty shape instead
+    if not all_sample_results:
+        print("No result files were available to aggregate!")
+        return pd.DataFrame(
+            columns = ["Sample", "Module", "File", "Row", "Column", "Value"]
+        )
 
     return pd.concat(all_sample_results, ignore_index = True)

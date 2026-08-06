@@ -2,6 +2,7 @@ from mmaseq.utils.PATH import *
 from mmaseq.utils import logging_setup, helpers, sample_config, result_paths, results_aggregator
 from pathlib import Path
 import pandas as pd
+import re
 
 # Initiate logging
 ###################################################################
@@ -46,21 +47,12 @@ sample_configs = sample_config.determine_sample_configs(samplesheet,
                                                            spe_configs_dir, 
                                                            ignore_assemblies)
 
-all_raw_result_files = result_paths.define_all_result_files(outdir, 
-                                                            sample_configs, 
-                                                            raw=True)
-all_result_files = result_paths.define_all_result_files(outdir, 
+all_result_files = result_paths.define_all_result_files(outdir,
                                                             sample_configs,
                                                             raw=False)
 
-all_raw_result_filepaths = [
-    path
-    for sample in all_raw_result_files.values()
-    for files in sample.values()
-    for path in files
-]
-
-
+# The raw path of a result is now derived by rule copy from its final path,
+# so the raw list is no longer needed here.
 all_result_filepaths = [
     path
     for sample in all_result_files.values()
@@ -68,27 +60,60 @@ all_result_filepaths = [
     for path in files
 ]
 
+long_table = outdir / "results_long.tsv"
+
+
+# Wildcard values accepted by rule copy, taken from the expected results rather
+# than from a loose pattern. Without these constraints the copy pattern would
+# also match its own `raw/` input (infinite recursion) and the output of rule
+# assembly (ambiguity).
+copy_samples = sorted(all_result_files)
+copy_relpaths = sorted({
+    str(Path(path).relative_to(outdir / sample))
+    for sample, modules in all_result_files.items()
+    for files in modules.values()
+    for path in files
+})
+
+
+def alternation(values):
+    """Regex matching exactly `values`. '$^' is used to never match."""
+    return "|".join(re.escape(str(value)) for value in values) if values else "$^"
+
+
+def write_long_table(result_files, destination):
+    """
+    Aggregate every result file that exists into the long table.
+
+    Called both by rule table (all modules succeeded) and by the onerror
+    handler (some did not), so a partially failed run still yields a
+    results_long.tsv covering the modules that did complete.
+    """
+    results_long = results_aggregator.generate_long_results(result_files)
+    results_long.to_csv(destination, sep = "\t", index = False)
+
+    return destination
+
+
 #################################
 logger.info("Initiating pipeline")
+
+# One job per result file. Copying used to be a single job over the full list,
+# which meant one failed module left every other result uncopied.
 rule copy:
     input:
-        raw = all_raw_result_filepaths
+        raw = f"{outdir}/{{sample}}/raw/{{relpath}}"
     output:
-        files = all_result_filepaths
-    log:
-        stdout = "%s/copy.log" %logdir
+        result = f"{outdir}/{{sample}}/{{relpath}}"
+    wildcard_constraints:
+        sample = alternation(copy_samples),
+        relpath = alternation(copy_relpaths)
     message:
-        "[copy_results] Copying results files"
+        "[copy]: Copying {wildcards.relpath} for {wildcards.sample}"
     shell:
         """
-        for FILE in {input.raw}; do
-            RAWDIR=$(dirname $FILE)
-            NEWDIR=$(echo "$RAWDIR" | sed 's#/raw/#/#')
-            
-            echo "Copying $FILE to $NEWDIR/" >> {log.stdout} 2>&1
-            mkdir -p $NEWDIR
-            cp -f $FILE $NEWDIR/
-        done
+        mkdir -p $(dirname {output.result})
+        cp -f {input.raw} {output.result}
         """
 
 rule versions:
@@ -105,39 +130,53 @@ rule versions:
 
 rule table:
     input:
-        files = rules.copy.output.files,
+        files = all_result_filepaths,
         versions = rules.versions.output.versions_file
     params:
         results_dict = all_result_files
     output:
-        long = "%s/results_long.tsv" %outdir
+        long = long_table
     log:
         stdout = "%s/table.log" %logdir
     message:
-        "[keep]: Generating long table"
+        "[table]: Generating long table"
     run:
-        all_results_long = results_aggregator.generate_long_results(params.results_dict)
-        all_results_long.to_csv(output.long, sep = "\t", index = False)
+        write_long_table(params.results_dict, output.long)
 
 
 rule clean:
     input:
-        long = rules.table.output.long,
-        raw = rules.copy.input.raw
+        long = rules.table.output.long
+    params:
+        outdir = outdir
     log:
         stdout = "%s/clean.log" %logdir
     message:
         "[clean_results]: Removing intermediate folders"
     shell:
         """
-        for DIR in $(dirname {input.raw}); do
-           RAW=$(dirname $DIR)
-           if [ -d "$RAW" ]; then 
-               echo "Removing $RAW" > {log.stdout} 2>&1
-               rm -r $RAW
-           fi
-        done
+        echo "Removing raw result folders under {params.outdir}" > {log.stdout} 2>&1
+
+        find {params.outdir} -mindepth 2 -maxdepth 2 -type d -name raw \
+            -exec rm -r {{}} + >> {log.stdout} 2>&1
         """
+
+
+# rule table only runs once every expected result exists, so a crashed module
+# would otherwise mean no long table at all. Aggregate what did complete
+# instead. The run still exits non-zero - this recovers results, it does not
+# hide the failure.
+onerror:
+    logger.warning(
+        "Pipeline finished with errors. Aggregating the results that did "
+        "complete; modules that failed are absent from the long table."
+    )
+
+    try:
+        write_long_table(all_result_files, long_table)
+        logger.warning(f"Partial results were written to {long_table}")
+    except Exception as error:
+        logger.error(f"Could not write partial results to {long_table}:\n{error}")
 
 
 include : "rules/Databases.smk"
