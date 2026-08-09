@@ -479,27 +479,6 @@ rule samtools_sam_filtration:
         """
 
 
-rule samtools_bam_filtration:
-    input:
-        bam = f"{outdir}/{{sample}}/raw/samtools/{{database}}.bam"
-    params:
-        options = lambda wc: sample_configs[wc.sample]["samtools"]["view_options"]
-    output:
-        results = temp(f"{outdir}/{{sample}}/raw/samtools/samtools_bam_filtration_{{database}}.bam")
-    conda:
-        ENVS_DIR / "samtools.yaml"
-    log:
-        stdout = f"{logdir}/samtools_bam_filtration_{{database}}_{{sample}}.log"
-    message:
-        "[samtools_bam_filtration]: Filtering kmeralignment output for {wildcards.database} on {wildcards.sample}"
-    shell:
-        """
-        cmd="samtools view {input.bam} {params.options} -F 4 -bo {output.results}"
-
-        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-        eval $cmd >> {log.stdout} 2>&1
-        """
-
 
 rule samtools_sort:
     input:
