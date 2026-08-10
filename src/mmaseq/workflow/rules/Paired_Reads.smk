@@ -396,6 +396,8 @@ rule PR_serovar_detector:
         results = f"{outdir}/{{sample}}/raw/PR/serovar_detector/serovar_detector.tsv"
     conda:
         ENVS_DIR / "serovar_detector.yaml"
+    log:
+        stdout = f"{logdir}/PR/serovar_detector_{{sample}}.log"
     shell:
         """
         INDIR = $(dirname {input.R1})
