@@ -459,6 +459,8 @@ rule serovar_detector:
         results = f"{outdir}/{{sample}}/raw/serovar_detector/serovar_detector.tsv"
     conda:
         ENVS_DIR / "serovar_detector.yaml"
+    log:
+        stdout = f"{logdir}/serovar_detector_{{sample}}.log"
     shell:
         """
         INDIR = $(dirname {input.assembly})
