@@ -99,7 +99,7 @@ jobs:
           
           # Allow if commenter is the PR author, the repo owner, or a collaborator
           if [ "$ASSOCIATION" = "OWNER" ] || [ "$ASSOCIATION" = "COLLABORATOR" ] || [ "$ASSOCIATION" = "MEMBER" ]; then
-            echo ""✅ Labelling major authorized" 
+            echo "✅ Labelling major authorized" 
             echo "authorized=true" >> $GITHUB_OUTPUT
           else
             echo "❌ Only Owners and Collaborators are authorized to update major version."
