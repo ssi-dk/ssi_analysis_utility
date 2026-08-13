@@ -17,8 +17,12 @@ if label == "major":
     minor = 0
     patch = 0
 
-elif label == "feature":
+elif label == "minor":
     minor += 1
+    # Determine every tens of minor version increments (10, 20, 30 etc.)
+    if (minor % 10) == 0:
+        # Set patch version to 1 directly
+        patch = 1
     patch = 0
 
 elif label == "patch":
