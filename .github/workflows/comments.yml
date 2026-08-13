@@ -71,49 +71,59 @@ jobs:
           echo "Adding new label: $NEW_LABEL"
           gh pr edit "$PR_NUMBER" --add-label "$NEW_LABEL"
 
-              });
-              return;
-            }
+  major_labelling:
+    if: ${{ github.event.issue.pull_request }}
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
 
-            const issue_number = context.issue.number;
+    steps:
+      - name: Parse Command
+        id: parse
+        run: |
+          COMMENT_BODY="${{ github.event.comment.body }}"
+          if [[ "$COMMENT_BODY" == *"/major"* ]]; then
+            echo "Attaching new label 'major'"
+            echo "new_label=major" >> $GITHUB_OUTPUT
+          else
+            echo "Comment is not related to major version"
+            exit 0
+          fi
+      - name: Authorize User
+        id: authorize
+        run: | 
+          ASSOCIATION="${{ github.event.comment.author_association }}"
+          
+          echo "Association: $ASSOCIATION"
+          
+          # Allow if commenter is the PR author, the repo owner, or a collaborator
+          if [ "$ASSOCIATION" = "OWNER" ] || [ "$ASSOCIATION" = "COLLABORATOR" ] || [ "$ASSOCIATION" = "MEMBER" ]; then
+            echo ""✅ Labelling major authorized" 
+            echo "authorized=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Only Owners and Collaborators are authorized to update major version."
+            echo "authorized=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Update Labels
+        if: steps.authorize.outputs.authorized == 'true' && steps.parse.outputs.new_label != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          NEW_LABEL: ${{ steps.parse.outputs.new_label }}
+        run: |
+          CURRENT_LABELS=$(gh pr view "$PR_NUMBER" --json labels --jq '.labels[].name')
+          # Define conflicting versioning labels
+          VERSION_LABELS=("major")
+          # Loop through current labels and remove any conflicting version labels
+          for label in $CURRENT_LABELS; do
+            if [[ " ${VERSION_LABELS[@]} " =~ " ${label} " ]]; then
+              echo "Removing old label: $label"
+              gh pr edit "$PR_NUMBER" --remove-label "$label"
+            fi
+          done
+          # Apply the requested new label
+          echo "Adding new label: $NEW_LABEL"
+          gh pr edit "$PR_NUMBER" --add-label "$NEW_LABEL"
 
-            // fetch current labels
-            const issue = await github.rest.issues.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number
-            });
-
-            const versionLabels = ["feature", "patch", "build"];
-
-            // remove old version labels
-            for (const existing of issue.data.labels.map(l => l.name)) {
-              if (!versionLabels.includes(existing)) continue;
-
-              try {
-                await github.rest.issues.removeLabel({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number,
-                  name: existing
-                });
-              } catch (e) {
-                console.log(`Could not remove label: ${existing}`, e.message);
-              }
-            }
-
-            // apply new label
-            await github.rest.issues.addLabels({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number,
-              labels: [label]
-            });
-
-            // feedback
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number,
-              body: `✅ Version label set to **${label}**`
-            });
