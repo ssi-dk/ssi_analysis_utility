@@ -467,10 +467,9 @@ rule serovar_detector:
         stdout = f"{logdir}/serovar_detector_{{sample}}.log"
     shell:
         """
-        INDIR = $(dirname {input.assembly})
         OUTDIR = $(dirname {output.results})
 
-        cmd="serovar_detector -a $INDIR -o $OUTDIR -t 1"
+        cmd="serovar_detector -A {input.assembly} -o $OUTDIR -t 1"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
