@@ -62,7 +62,7 @@ jobs:
           fi
 
   build:
-    if: !contains(github.event.pull_request.labels.*.name, 'build')
+    if: "!contains(github.event.pull_request.labels.*.name, 'build')"
     needs: check-label
 
     strategy:
