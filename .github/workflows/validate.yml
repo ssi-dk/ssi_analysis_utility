@@ -58,6 +58,7 @@ jobs:
 
   build:
     needs: check-label
+    if: !contains(github.event.pull_request.labels.*.name, 'build')
     strategy:
       matrix:
         os:
