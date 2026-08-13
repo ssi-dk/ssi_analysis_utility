@@ -41,7 +41,11 @@ rule blastn:
         OUTDIR=$(dirname {output.results})
         mkdir -p $OUTDIR
 
-        cmd="blastn -subject {input.database} -query {input.assembly} -outfmt '6' -out {output.results} {params.options}"
+        # Write a header first so the file is self-describing (BLAST outfmt 6 has none),
+        # otherwise the results aggregator consumes the first hit as column names.
+        printf 'qseqid\tsseqid\tpident\tlength\tmismatch\tgapopen\tqstart\tqend\tsstart\tsend\tevalue\tbitscore\n' > {output.results}
+
+        cmd="blastn -subject {input.database} -query {input.assembly} -outfmt '6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore' {params.options} >> {output.results}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1
@@ -474,27 +478,6 @@ rule samtools_sam_filtration:
         eval $cmd >> {log.stdout} 2>&1
         """
 
-
-rule samtools_bam_filtration:
-    input:
-        bam = f"{outdir}/{{sample}}/raw/samtools/{{database}}.bam"
-    params:
-        options = lambda wc: sample_configs[wc.sample]["samtools"]["view_options"]
-    output:
-        results = temp(f"{outdir}/{{sample}}/raw/samtools/samtools_bam_filtration_{{database}}.bam")
-    conda:
-        ENVS_DIR / "samtools.yaml"
-    log:
-        stdout = f"{logdir}/samtools_bam_filtration_{{database}}_{{sample}}.log"
-    message:
-        "[samtools_bam_filtration]: Filtering kmeralignment output for {wildcards.database} on {wildcards.sample}"
-    shell:
-        """
-        cmd="samtools view {input.bam} {params.options} -F 4 -bo {output.results}"
-
-        echo "Executing command:\n$cmd\n" > {log.stdout} 2>&1
-        eval $cmd >> {log.stdout} 2>&1
-        """
 
 
 rule samtools_sort:

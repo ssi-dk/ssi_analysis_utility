@@ -87,9 +87,11 @@ def determine_sample_configs(samplesheet, config_dir, ignore_assemblies):
 
         # Handle missing configuration file
         if not os.path.isfile(cfg_path):
-            print(
-                f"Warning: Config file specified in samplesheet {cfg} "
-                f"does not exist in {config_dir}!"
+            available = sorted(p.name for p in Path(config_dir).glob("*.yaml"))
+            logger.warning(
+                f"Sample '{sample}' references config '{cfg}' which was not "
+                f"found in {config_dir}. Available configs: "
+                f"{', '.join(available) if available else '(none)'}."
             )
             cfg_path = None
 
@@ -97,11 +99,11 @@ def determine_sample_configs(samplesheet, config_dir, ignore_assemblies):
 
             # Ensure that default file exists and use it
             if os.path.exists(default_path):
-                print("Using default.yaml instead")
+                logger.warning(f"Falling back to default.yaml for sample '{sample}'.")
                 cfg_path = default_path
             else:
-                print(
-                    "Warning: Default configuration file is missing, "
+                logger.error(
+                    "Default configuration file is missing, "
                     "please recreate it to enable default analysis: "
                     f"{default_path}"
                 )

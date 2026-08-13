@@ -266,7 +266,7 @@ rule SR_chtyper:
         id = 90,
         coverage = 60
     output:
-        results = f"{outdir}/{{sample}}/raw/chtyper/chtyper_{{database}}_SR.tsv"
+        results = f"{outdir}/{{sample}}/raw/SR/chtyper/chtyper_{{database}}.tsv"
     log:
         stdout = f"{logdir}/chtyper_{{database}}_{{sample}}.log"
     message:

@@ -26,11 +26,11 @@ serotypefinder:
     reads: True
 
 amrfinder:
-    options: --organism 'Klebsiella_pneumoniae'
+    options: --organism 'Klebsiella_oxytoca'
     assembler: shovill 
 
 kleborate:
-    options: --preset kpsc
+    options: --preset kosc
     assembler: shovill
 
 mlst:

@@ -1,3 +1,5 @@
 name: shovill
 dependencies:
+  - bioconda::spades
   - bioconda::shovill
+
