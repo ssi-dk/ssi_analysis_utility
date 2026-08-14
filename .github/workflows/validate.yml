@@ -100,8 +100,7 @@ jobs:
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'build') }}
         shell: bash -l {0}
         run: |
-          micromamba install conda --yes
-          conda config --set channel_priority strict
+          micromamba install bioconda::mmaseq --yes
 
           # install package from repo
           pip install .
