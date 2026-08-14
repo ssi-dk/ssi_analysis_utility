@@ -2,7 +2,7 @@ name: Validate Pull Requests
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, labeled, unlabeled, edited]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
 
 concurrency:
   group: build-${{ github.event.pull_request.number || github.head_ref }}
@@ -11,7 +11,9 @@ concurrency:
 
 jobs:
   check-label:
-      
+  
+    if: ${{ github.event_name == 'pull_request' || github.event.issue.pull_request }}
+    
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -37,12 +39,7 @@ jobs:
           
           MATCH_COUNT=0
           FOUND_LABELS=()
-
-          if ! echo "$CURRENT_LABELS" | grep -q "ready"; then
-            echo "Pull request is not yet ready, write /check in a comment to check whether the package can build successfully!"
-            exit 1
-          fi
-
+          
           for label in $CURRENT_LABELS; do
             if [[ "$label" == "major" || "$label" == "minor" || "$label" == "patch"  || "$label" == "build" ]]; then
               MATCH_COUNT=$((MATCH_COUNT + 1))
@@ -63,3 +60,60 @@ jobs:
             echo "Error: Pull Request has multiple version labels (${FOUND_LABELS[*]}). Only one is allowed."
             exit 1
           fi
+
+  build:
+    if: "!contains(github.event.pull_request.labels.*.name, 'build')"
+    needs: check-label
+
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest 
+          - ubuntu-22.04 
+          - macos-latest
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Checking PR status
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = context.payload.pull_request.labels.map(l => l.name);
+
+            if (labels.includes('build')) {
+              console.log("PR is labelled 'build', thus no changes in software is imminent. Check is done sucessfully!");
+            }
+
+
+      - name: Setup Micromamba
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'build') }}
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-name: test-env
+          init-shell: bash
+
+      - name: Test conda installation
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'build') }}
+        shell: bash -l {0}
+        run: |
+          micromamba install conda --yes
+          conda config --set channel_priority strict
+
+          # install package from repo
+          pip install .
+
+      - name: Verify package imports
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'build') }}
+        shell: bash -l {0}
+        run: |
+          mmaseq --version
+
+      - name: Test pipeline
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'build') }}
+        shell: bash -l {0}
+        run: |
+          mmadeploy --deploy_dir ~/test --threads 3 --test --verbosity 2
