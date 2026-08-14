@@ -7,20 +7,24 @@ resfinder:
 
 plasmidfinder:
     options: ""
+    reads: True
 
 virulencefinder:
     options: ""
+    reads: True
 
 serotypefinder:
     options: ""
-          
+    reads: True
+
 amrfinder:
     assembler: shovill
     options: ""
-    
+
 meningotype:
     assembler: shovill
 
 kmeraligner:
     database: elmDB
     options : -ID 80 -1t1 -cge
+    reads: True

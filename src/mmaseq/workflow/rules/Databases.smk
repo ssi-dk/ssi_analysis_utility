@@ -62,8 +62,8 @@ rule fetch_type_repeat_sequence:
         fasta_url="https://raw.githubusercontent.com/ssi-dk/ssi_analysis_utility_db/main/$rel_path"
         ver_url="https://raw.githubusercontent.com/ssi-dk/ssi_analysis_utility_db/main/$rel_ver"
 
-        cmd_fasta="curl -fSL $fasta_url -o {output.seq}"
-        cmd_ver="curl -fSL $ver_url -o {output.version_db}"
+        cmd_fasta="curl -fSL --retry 5 --retry-delay 3 --retry-all-errors $fasta_url -o {output.seq}"
+        cmd_ver="curl -fSL --retry 5 --retry-delay 3 --retry-all-errors $ver_url -o {output.version_db}"
 
         echo "Executing command:\n$cmd_fasta\n$cmd_ver\n" > {log.stdout}
         eval "$cmd_fasta" >> {log.stdout} 2>&1
@@ -84,7 +84,7 @@ rule fetch_type_repeat_metadata:
         """
         mkdir -p $(dirname {output.meta})
 
-        cmd="curl -fSL https://raw.githubusercontent.com/ssi-dk/ssi_analysis_utility_db/refs/heads/main/clostridioides_difficile/type_repeats/{wildcards.TR}.txt -o {output.meta}"
+        cmd="curl -fSL --retry 5 --retry-delay 3 --retry-all-errors https://raw.githubusercontent.com/ssi-dk/ssi_analysis_utility_db/refs/heads/main/clostridioides_difficile/type_repeats/{wildcards.TR}.txt -o {output.meta}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout}
         eval $cmd >> {log.stdout} 2>&1
@@ -112,8 +112,8 @@ rule fetch_ecoligenes:
         fasta_url="https://raw.githubusercontent.com/ssi-dk/ssi_analysis_utility_db/main/$rel_path"
         ver_url="https://raw.githubusercontent.com/ssi-dk/ssi_analysis_utility_db/main/$rel_ver"
 
-        cmd_fasta="curl -fSL $fasta_url -o {output.source}"
-        cmd_ver="curl -fSL $ver_url | awk '1' > {output.version_db}"
+        cmd_fasta="curl -fSL --retry 5 --retry-delay 3 --retry-all-errors $fasta_url -o {output.source}"
+        cmd_ver="curl -fSL --retry 5 --retry-delay 3 --retry-all-errors $ver_url | awk '1' > {output.version_db}"
 
         echo "Executing command:\n$cmd_fasta\n$cmd_ver\n" > {log.stdout}
         eval "$cmd_fasta" >> {log.stdout} 2>&1
@@ -140,8 +140,8 @@ rule fetch_senterica_scheme:
         fasta_url="https://enterobase.warwick.ac.uk/schemes/Salmonella.Achtman7GeneMLST/MLST_Achtman_ref.fasta"
         profile_url="https://enterobase.warwick.ac.uk/schemes/Salmonella.Achtman7GeneMLST/profiles.list.gz"
 
-        fasta_cmd="curl -fSL $fasta_url -o {output.source}"
-        profile_cmd="curl -fSL $profile_url -o {output.profile}"
+        fasta_cmd="curl -fSL --retry 5 --retry-delay 3 --retry-all-errors $fasta_url -o {output.source}"
+        profile_cmd="curl -fSL --retry 5 --retry-delay 3 --retry-all-errors $profile_url -o {output.profile}"
 
         echo "Executing command:\n$fasta_cmd\n" > {log.stdout} 2>&1
         eval $fasta_cmd >> {log.stdout} 2>&1
@@ -189,7 +189,7 @@ rule fetch_senterica_serovar:
         list_url="https://raw.githubusercontent.com/phac-nml/sistr_cmd/master/sistr/data/serovar-list.txt"
 
         # 1) Download the serovar list
-        cmd_fasta="curl -fSL $list_url -o {output.source}"
+        cmd_fasta="curl -fSL --retry 5 --retry-delay 3 --retry-all-errors $list_url -o {output.source}"
 
         echo "Executing command:\n$cmd_fasta\n" > {log.stdout}
         eval "$cmd_fasta" >> {log.stdout} 2>&1
@@ -239,8 +239,8 @@ rule fetch_chtyper_db:
         fumC_url="https://bitbucket.org/genomicepidemiology/chtyper_db/raw/654ca48d250e0a69c6c06b4be5a96d807b23f806/fumC.fsa"
 
         # 1) Download the serovar list
-        cmd_fimH="curl -fSL $fimH_url -o $outdir/fimH.fsa"
-        cmd_fumC="curl -fSL $fumC_url -o $outdir/fumC.fsa"
+        cmd_fimH="curl -fSL --retry 5 --retry-delay 3 --retry-all-errors $fimH_url -o $outdir/fimH.fsa"
+        cmd_fumC="curl -fSL --retry 5 --retry-delay 3 --retry-all-errors $fumC_url -o $outdir/fumC.fsa"
 
         echo "Executing command:\n$cmd_fimH\n" > {log.stdout}
         eval "$cmd_fimH" >> {log.stdout} 2>&1
@@ -286,8 +286,8 @@ rule fetch_custom_blast_database:
         fasta_url="https://raw.githubusercontent.com/ssi-dk/ssi_analysis_utility_db/main/$rel_path"
         ver_url="https://raw.githubusercontent.com/ssi-dk/ssi_analysis_utility_db/main/$rel_ver"
 
-        cmd_fasta="curl -fSL $fasta_url -o {output.source}"
-        cmd_ver="curl -fSL $ver_url  | awk '1' > {output.version_db}"
+        cmd_fasta="curl -fSL --retry 5 --retry-delay 3 --retry-all-errors $fasta_url -o {output.source}"
+        cmd_ver="curl -fSL --retry 5 --retry-delay 3 --retry-all-errors $ver_url  | awk '1' > {output.version_db}"
 
         echo "Executing command:\n$cmd_fasta\n$cmd_ver\n" > {log.stdout}
         eval "$cmd_fasta" >> {log.stdout} 2>&1
@@ -300,6 +300,8 @@ rule fetch_vancomycin:
         source = f"{database_dir}/custom/vancomycin.fasta"
     log:
         stdout = f"{logdir}/Databases/fetch_vancomycin.log"
+    conda:
+        ENVS_DIR / "py_utls.yaml"
     message:
         "[fetch_vancomycin]: Downloading custom vancomycin database"
     shell:
@@ -310,7 +312,7 @@ rule fetch_vancomycin:
                 
         fasta_url="https://raw.githubusercontent.com/ssi-dk/ssi_analysis_utility_db/refs/heads/main/resistance/vancomycin.fasta"
 
-        cmd="curl -fSL $fasta_url -o {output.source}"
+        cmd="curl -fSL --retry 5 --retry-delay 3 --retry-all-errors $fasta_url -o {output.source}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout}
         eval "$cmd" >> {log.stdout} 2>&1
@@ -322,6 +324,8 @@ rule fetch_vancomycin_operon:
         source = f"{database_dir}/custom/vancomycinOperon.fasta"
     log:
         stdout = f"{logdir}/Databases/fetch_vancomycin_operon.log"
+    conda:
+        ENVS_DIR / "py_utls.yaml"
     message:
         "[fetch_vancomycin_operon]: Downloading custom vancomycin operon database"
     shell:
@@ -332,7 +336,7 @@ rule fetch_vancomycin_operon:
                 
         fasta_url="https://raw.githubusercontent.com/ssi-dk/ssi_analysis_utility_db/refs/heads/main/resistance/vancomycinOperon.fasta"
 
-        cmd="curl -fSL $fasta_url -o {output.source}"
+        cmd="curl -fSL --retry 5 --retry-delay 3 --retry-all-errors $fasta_url -o {output.source}"
 
         echo "Executing command:\n$cmd\n" > {log.stdout}
         eval "$cmd" >> {log.stdout} 2>&1
@@ -819,7 +823,7 @@ rule setup_lrefinder:
         sequence_url="https://bitbucket.org/genomicepidemiology/lre-finder/raw/fac445d190853cc90c1aed392a55102fe9df4376/elmDB.tar.gz"
 
         # 1) download raw sequence
-        cmd="curl -fSL $sequence_url --output - | tar -xzvf - -C {params.prefix} && mv {params.dbdir}elm.fsa {output.source} && rm -rf {params.dbdir}"
+        cmd="curl -fSL --retry 5 --retry-delay 3 --retry-all-errors $sequence_url --output - | tar -xzvf - -C {params.prefix} && mv {params.dbdir}elm.fsa {output.source} && rm -rf {params.dbdir}"
 
         echo -e "Executing command:\n$cmd\n" > {log.stdout} 2>&1
         eval $cmd >> {log.stdout} 2>&1

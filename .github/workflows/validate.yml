@@ -1,0 +1,62 @@
+name: Validate Pull Requests
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+concurrency:
+  group: build-${{ github.event.pull_request.number || github.head_ref }}
+  cancel-in-progress: true
+
+
+jobs:
+  check-label:
+  
+    if: ${{ github.event_name == 'pull_request' || github.event.issue.pull_request }}
+    
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+    steps:
+      - name: Cool down for API sync
+        run: sleep 20
+
+      - name: Validate Single Version Label
+        run: |
+          # Dynamically determine PR number depending on what event triggered the run
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            PR_NUM="${{ github.event.pull_request.number }}"
+          else
+            PR_NUM="${{ github.event.issue.number }}"
+          fi
+          
+          REPO="${{ github.repository }}"
+          echo "Checking labels for PR #$PR_NUM in $REPO..."
+          
+          # Fetch current labels
+          CURRENT_LABELS=$(gh pr view "$PR_NUM" -R "$REPO" --json labels --jq '.labels[].name')
+          
+          MATCH_COUNT=0
+          FOUND_LABELS=()
+          
+          for label in $CURRENT_LABELS; do
+            if [[ "$label" == "major" || "$label" == "minor" || "$label" == "patch"  || "$label" == "build" ]]; then
+              MATCH_COUNT=$((MATCH_COUNT + 1))
+              FOUND_LABELS+=("$label")
+            fi
+          done
+          
+          echo "Found version labels: ${FOUND_LABELS[*]}"
+          echo "Total count: $MATCH_COUNT"
+          
+          if [ "$MATCH_COUNT" -eq 1 ]; then
+            echo "Success: Exactly one versioning label is applied (${FOUND_LABELS})."
+            exit 0
+          elif [ "$MATCH_COUNT" -eq 0 ]; then
+            echo "Error: Pull Request is missing a version label (major, minor, patch, or build)."
+            exit 1
+          else
+            echo "Error: Pull Request has multiple version labels (${FOUND_LABELS[*]}). Only one is allowed."
+            exit 1
+          fi
