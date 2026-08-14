@@ -131,6 +131,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Check PR Labels
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const pr = context.payload.pull_request;
+          
+          if (!pr) {
+            core.info("This workflow was not triggered by a pull request event. Skipping label check.");
+            return;
+          }
+    
+          const labels = pr.labels.map(l => l.name);
+          
+          if (labels.includes('build')) {
+            core.info("PR is labelled 'build', thus no changes in software is imminent. Check is done successfully!");
+          } else {
+            core.info("PR does not have the 'build' label.");
+          }
+          
     - name: Parse comments
       id: parse
       run: |
