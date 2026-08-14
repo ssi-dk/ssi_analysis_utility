@@ -1,5 +1,4 @@
-name: Label PR by Comment
-
+name: Commands
 on:
   issue_comment:
     types: [created]
