@@ -10,8 +10,13 @@ Add a label to this PR by commenting one of the following:
 
 **Note:** The label check waits 20 seconds before reading labels. Comment your label immediately after creating the PR to ensure the check passes.
 
-## Checklist (Does NOT apply for changes to Github actions and documentations)
+## Checklist
 Before creating a Pull request for your changes, you can save time by completing the following steps in advance, on you local repository.
+
+### Special case
+- [ ] I'm ONLY doing changes to Github actions and/or Documentation
+- [ ] I've added the `build` label to my PR and I will Skip all tasks below!
+
 ### Setup (Required for all PRs)
 - [ ] I have installed the local branch (e.g. using `pip install .` in an appropriate virtual environment)
 
@@ -26,9 +31,11 @@ Before creating a Pull request for your changes, you can save time by completing
 - [ ] I have included a sample and added its ftp link to `mmaseq/src/mmaseq/data/reads/reads.urls`
 - [ ] I have updated the samplesheet at `mmaseq/src/mmaseq/data/samplesheet.tsv` (if needed)
 - [ ] I have run a minimal test using `mmadeploy --test` and confirmed that my module completed succesfully
+- [ ] I have added the `minor` label to my PR
 
 ### For other pipeline Changes
 - [ ] I have that all my changes work using `mmadeploy --update`
+- [ ] I have added the `patch` OR `minor` label (depending on the type of changes) to my PR
 
 ## Related Issues
 <!-- Link any related issues: Closes #123 -->
