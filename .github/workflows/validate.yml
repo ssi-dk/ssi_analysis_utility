@@ -62,7 +62,6 @@ jobs:
           fi
 
   build:
-    if: "!contains(github.event.pull_request.labels.*.name, 'build')"
     needs: check-label
 
     strategy:
@@ -90,24 +89,20 @@ jobs:
 
 
       - name: Setup Micromamba
-        if: ${{ !contains(github.event.pull_request.labels.*.name, 'build') }}
         uses: mamba-org/setup-micromamba@v2
         with:
           environment-name: test-env
           init-shell: bash
 
       - name: Test conda installation
-        if: ${{ !contains(github.event.pull_request.labels.*.name, 'build') }}
         shell: bash -l {0}
         run: |
-          micromamba install conda --yes
-          conda config --set channel_priority strict
+          micromamba install bioconda::mmaseq --yes
 
           # install package from repo
           pip install .
 
       - name: Verify package imports
-        if: ${{ !contains(github.event.pull_request.labels.*.name, 'build') }}
         shell: bash -l {0}
         run: |
           mmaseq --version
