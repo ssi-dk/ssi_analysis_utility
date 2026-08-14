@@ -11,9 +11,7 @@ concurrency:
 
 jobs:
   check-label:
-  
-    if: ${{ contains(github.event.pull_request.labels.*.name, 'ready') }}
-    
+      
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -39,6 +37,9 @@ jobs:
           
           MATCH_COUNT=0
           FOUND_LABELS=()
+
+          if "!contains($CURRENT_LABELS, 'ready')"; then
+            echo "Pull request are not yet ready, write /check in a comment, to check whether the pkackage can build successfully!"
           
           for label in $CURRENT_LABELS; do
             if [[ "$label" == "major" || "$label" == "minor" || "$label" == "patch"  || "$label" == "build" ]]; then
