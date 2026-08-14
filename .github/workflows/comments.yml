@@ -127,3 +127,75 @@ jobs:
           echo "Adding new label: $NEW_LABEL"
           gh pr edit "$PR_NUMBER" --add-label "$NEW_LABEL"
 
+  check-ready:
+    if: ${{ github.event.issue.pull_request }}
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Parse comments
+      id: parse
+      run: |
+        COMMENT_BODY="${{ github.event.comment.body }}"
+          if [[ "$COMMENT_BODY" == *"/check"* ]]; then
+            echo "Ready to go!"
+          else
+            echo "Not ready to go..."
+            exit 1
+          fi
+
+  build:
+    if: "!contains(github.event.pull_request.labels.*.name, 'build')"
+    needs: check-ready
+
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest 
+          - ubuntu-22.04 
+          - macos-latest
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Checking PR status
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = context.payload.pull_request.labels.map(l => l.name);
+
+            if (labels.includes('build')) {
+              console.log("PR is labelled 'build', thus no changes in software is imminent. Check is done sucessfully!");
+            }
+
+
+      - name: Setup Micromamba
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'build') }}
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-name: test-env
+          init-shell: bash
+
+      - name: Test conda installation
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'build') }}
+        shell: bash -l {0}
+        run: |
+          micromamba install bioconda::mmaseq --yes
+
+          # install package from repo
+          pip install .
+
+      - name: Verify package imports
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'build') }}
+        shell: bash -l {0}
+        run: |
+          mmaseq --version
+
+      - name: Test pipeline
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'build') }}
+        shell: bash -l {0}
+        run: |
+          mmadeploy --deploy_dir ~/test --threads 3 --test --verbosity 2
+    
