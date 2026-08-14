@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from .__version__ import __version__
 
 import argparse
 from pathlib import Path
@@ -7,7 +8,7 @@ import re
 import pandas as pd
 from datetime import datetime
 import yaml
-from mmaseq.utils import logging_setup, sample_config
+from .utils import logging_setup, sample_config
 from .utils.PATH import *
 import subprocess
 
@@ -92,6 +93,17 @@ def parse_mmaseq():
     )
 
     parser.add_argument(
+        "--custom",
+        dest="custom",
+        action="store_true",
+        help=(
+            "Enable custom species configuration. (Default: %(default)s) "
+            "When enabled, species configuration folders (identified as species_configs/ inside the deploy_dir/) will be used. "
+            "If the folder doesn't allready exists, MMAseq will throw an error and exit."
+        )
+    )
+
+    parser.add_argument(
         "--force",
         dest="force",
         action="store_true",
@@ -141,6 +153,12 @@ def parse_mmaseq():
             "(Default: %(default)s) Will be ignored if logfile parent folder "
             "doesn't exist."
         )
+    )
+
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"MMAseq {__version__}",
     )
 
     return parser.parse_args()
@@ -336,9 +354,9 @@ def link_assemblies(
             # Determine assemblers specified in sample configs
             assemblers = set()
             for options in configs.values():
-                if not isinstance(options, dict) or "assemblers" not in options:
+                if not isinstance(options, dict) or "assembler" not in options:
                     continue
-                raw = options["assemblers"]
+                raw = options["assembler"]
                 assembler_list = (
                     raw if isinstance(raw, list) else [raw]
                 )
@@ -347,7 +365,7 @@ def link_assemblies(
             # Define assembly type from sample configurations
             for assembler in assemblers:
                 assembly_dir = outdir / sample / "raw" / assembler
-                destination = assembly_dir / f"{sample}.fasta"
+                destination = assembly_dir / f"{assembler}_{sample}.fasta"
 
                 # Ensure output assembly results directory exists
                 if not assembly_dir.exists():
@@ -440,6 +458,7 @@ def mmaseq(args):
     threads = args.threads
     resolve = args.resolve
     clean = args.clean
+    custom = args.custom
     force = args.force
     ignore_assemblies = args.ignore_assemblies
 
@@ -466,16 +485,17 @@ def mmaseq(args):
         samplesheet_file = resolve_samplesheet_paths(samplesheet_file, outdir)
         logger.info("Resolved the file paths stated in the samplesheet")
 
-    spe_configs_dir = deploy_dir / "spe_configs"
+    spe_configs_dir = SPE_CONFIGS
+    if custom:
+        spe_configs_dir = deploy_dir / "species_configs"
 
-    if not spe_configs_dir.exists():
-        logger.warning((
-            f"Species configuration folder not detected in {deploy_dir}. "
-            f"Will use system installation configurations.\n"
-            f"To generate your own species configurations folder, run: \n"
-            f"mmadeploy --deploy_dir {deploy_dir} --threads {threads}"
-        ))
-        spe_configs_dir = SPE_CONFIGS
+        if not spe_configs_dir.exists():
+            logger.error((
+                f"Species configuration folder not detected in {deploy_dir}. "
+                f"To generate your own species configurations folder, run: \n"
+                f"mmadeploy --deploy_dir {deploy_dir} --threads {threads}"
+            ))
+            sys.exit(1)
     else:
         logger.info("Species configurations folder successfully detected.")
 

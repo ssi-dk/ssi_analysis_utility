@@ -1,0 +1,100 @@
+kmeraligner_wrangler:
+    options: --organism 'Escherichia coli'
+    database: ecoligenes
+    reads: True
+
+
+# snp_identifier:
+#     options: --organism 'Clostridioides difficile' --snp_region_buffer 5
+#     database: CdiffToxins
+
+# deletion_identifier:
+#     options: --organism 'Clostridioides difficile' --deletion_region_buffer 5 --overlap_fraction 0.5
+#     database: CdiffToxins
+#     assembler: spades
+
+assembly_minimap2:
+    options: -ax asm5 --cs
+    database: Cdiff_Toxins
+    assembler: spades
+    ignore: True
+
+cdiff_repeat_identifier:
+    repeats: TR6 TR10
+    combos: TRST
+    assembler: spades
+
+amrfinder:
+    assembler: [skesa, spades]
+    options: ""
+
+samtools:
+    view_options: -q 20
+    sort_options: -n
+    ignore: True
+
+bcftools:
+    view_options: -v indels -i 'INFO/DP>10'
+    ignore: True
+
+resfinder:
+    options: --species 'ecoli'
+    assembler: spades
+    reads: True
+
+pointfinder:
+    options: --species 'ecoli'
+    assembler: spades
+
+disinfinder:
+    options: --species 'ecoli'
+    assembler: spades
+
+plasmidfinder: 
+    options: ""
+    assembler: spades
+
+virulencefinder:
+    options: ""
+    assembler: spades
+
+serotypefinder:
+    assembler: spades
+    options: ""    
+
+chtyper:
+    database: fumCH
+    reads: True
+
+mlst:
+    assembler: spades
+
+blastn:
+    options: "-perc_identity 90.0"
+    assembler: spades
+    database : OXAndm
+
+lrefinder:
+    database : elmDB
+    reads: True
+
+# kleborate: # MacOS gsl=2.5
+#     options: --preset escherichia
+#     assembler: spades
+
+# meningotype: # MacOS
+#     assembler: spades
+
+spatyper:
+  assembler: spades
+
+# seqsero2: # MacOS
+#    assembler: spades
+
+
+sistr:
+  assembler: spades
+
+kmeraligner:
+    database : [vancomycin, vancomycinOperon]
+    reads: True

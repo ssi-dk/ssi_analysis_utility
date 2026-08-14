@@ -9,6 +9,22 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+def inspect_read_types(sample, samplesheet):
+    read1_from_sheet = samplesheet.at[sample, "read1"]
+    read2_from_sheet = samplesheet.at[sample, "read2"]
+
+    type = None
+
+    if not pd.isna(read1_from_sheet) and Path(read1_from_sheet).exists():
+        type = "SR"
+        if not pd.isna(read2_from_sheet) and Path(read2_from_sheet).exists():
+            type = "PR"
+    elif not pd.isna(read2_from_sheet) and Path(read2_from_sheet).exists():
+        logger.error("Read 1 does not exist but read 2 does, is your samplesheet corrupt?")
+        sys.exit(0)
+
+    return type
+
 
 def inspect_samplesheet_assembly_path(sample, samplesheet):
     """
@@ -71,9 +87,11 @@ def determine_sample_configs(samplesheet, config_dir, ignore_assemblies):
 
         # Handle missing configuration file
         if not os.path.isfile(cfg_path):
-            print(
-                f"Warning: Config file specified in samplesheet {cfg} "
-                f"does not exist in {config_dir}!"
+            available = sorted(p.name for p in Path(config_dir).glob("*.yaml"))
+            logger.warning(
+                f"Sample '{sample}' references config '{cfg}' which was not "
+                f"found in {config_dir}. Available configs: "
+                f"{', '.join(available) if available else '(none)'}."
             )
             cfg_path = None
 
@@ -81,11 +99,11 @@ def determine_sample_configs(samplesheet, config_dir, ignore_assemblies):
 
             # Ensure that default file exists and use it
             if os.path.exists(default_path):
-                print("Using default.yaml instead")
+                logger.warning(f"Falling back to default.yaml for sample '{sample}'.")
                 cfg_path = default_path
             else:
-                print(
-                    "Warning: Default configuration file is missing, "
+                logger.error(
+                    "Default configuration file is missing, "
                     "please recreate it to enable default analysis: "
                     f"{default_path}"
                 )
@@ -95,7 +113,16 @@ def determine_sample_configs(samplesheet, config_dir, ignore_assemblies):
         if cfg_path is not None:
             # print(f"Configuration file {cfg_path} found for {sample}")  # As log_debug
             with open(cfg_path, "r") as config_file:
-                sample_configs[sample] = yaml.safe_load(config_file)
+                sample_cfg = yaml.safe_load(config_file)
+                sample_configs[sample] = sample_cfg
+
+            for mod, opts in sample_cfg.items():
+
+                if not isinstance(opts, dict):
+                    sample_configs[sample][mod] = {"enabled": opts}
+
+                # Record read type
+                sample_configs[sample][mod]["read_type"] = inspect_read_types(sample, samplesheet)
 
         # Warn user of no configuration is included
         else:
@@ -112,7 +139,7 @@ def determine_sample_configs(samplesheet, config_dir, ignore_assemblies):
         for mod, opts in sample_cfg.items():
             if not isinstance(opts, dict):
                 continue
-            elif "assemblers" in opts.keys():
-                sample_configs[sample][mod]["assemblers"] = ["UnkAssembly"]
+            elif "assembler" in opts.keys():
+                sample_configs[sample][mod]["assembler"] = ["unkwnAssmbly"]
 
     return sample_configs

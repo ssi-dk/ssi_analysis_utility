@@ -1,3 +1,4 @@
+from .__version__ import __version__
 from .utils import logging_setup
 from .utils.PATH import *
 import argparse
@@ -35,8 +36,7 @@ def parse_deploy():
             "used during pipeline execution. To reinstall environments "
             "and/or databases, remove the `conda/` and/or the `Databases/` "
             "folders in the deployment directory. (Default: %(default)s)"
-        )
-            
+        )        
     )
 
     parser.add_argument(
@@ -44,10 +44,35 @@ def parse_deploy():
         dest="update",
         action="store_true",
         help=(
-            "Will force rerunning all rules, thus issuing database updates. "
+            "Will force running all rules to ensure issuing database updates. "
             "(Default: %(default)s) The small dataset consists of a single "
             "isolate, executed on ALL modules, thus all results should be "
             f"considered wrong. Read data will be downloaded to {READ_DIR}"
+        )
+    )
+
+    parser.add_argument(
+        "--custom",
+        dest="custom",
+        action="store_true",
+        help=(
+            "Enable custom species configuration. (Default: %(default)s) "
+            "When enabled, species configuration folders (identified as species_configs/ inside the deploy_dir/) will be used. "
+            "If the folder doesn't allready exists, it will be copied from the install folder to the deployment directory."
+        )
+    )
+
+    parser.add_argument(
+        "--test",
+        dest="test",
+        action="store_true",
+        help=(
+            "Will run rules to complete a quick pipeline test. "
+            "(Default: %(default)s) The test dataset consist of exactly "
+            "400001 paired end reads created synthetically from AI. "
+            "Certain modules will fail on these reads and are "
+            " excluded from the test. "
+            "Excluded; resfinder, pointfinder, kleborate, shovill"
         )
     )
 
@@ -102,6 +127,11 @@ def parse_deploy():
         )
     )
 
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"MMAseq {__version__}",
+    )
 
     return parser.parse_args()
 
@@ -111,7 +141,7 @@ def deploy_spe_configs(deploy_dir):
         f"deploy_dir = {deploy_dir}"
         ")"))
 
-    spe_configs_dir = deploy_dir / "spe_configs"
+    spe_configs_dir = deploy_dir / "species_configs"
     
     logger.trace("Checking whether config dir allready exists")
     if not spe_configs_dir.exists():
@@ -276,9 +306,14 @@ def deploy_dataset(update, max_retries):
                 "Skipping host!"
             ))
             continue
+        except OSError as e:
+            logger.error((
+                f"Connection was established but there was issues. Skipping {host}!!!\n{e}"
+            ))
+            continue
         except Exception as e:
             logger.error(
-                f"What? Something bad is going on... Skipping!!!\n{e}"
+                f"What? Something bad is going on... Skipping {host} !!!\n{e}"
             )
             continue
 
@@ -293,29 +328,42 @@ def deploy(args):
 
     deploy_dir = Path(args.deploy_dir)
     update = args.update
+    custom = args.custom
+    test = args.test
     retries = args.retries
     threads = args.threads
     verbosity = args.verbosity
 
-    logger.info("Inspecting species configuration directory")
-    deploy_spe_configs(deploy_dir)
+    if custom:
+        logger.info("Inspecting species configuration directory")
+        deploy_spe_configs(deploy_dir)
 
-    logger.info(f"Inspecting the deployment dataset")
-    deploy_dataset(update, retries)
+    if not test:
+        logger.info(f"Inspecting the deployment dataset")
+        deploy_dataset(update, retries)
 
     samplesheet_file = f"{DATA_DIR}/samplesheet.tsv"
 
     # Create arguments for command
-    dataset = "full"
-    additional_cmds = ""
+    additional_cmds = "--resolve "
     if update:
         dataset = "small"
         samplesheet_file = f"{DATA_DIR}/samplesheet_small.tsv"
         additional_cmds += "--ignore_assemblies --force --clean "
+    elif test:
+        dataset = "test"
+        samplesheet_file = f"{DATA_DIR}/samplesheet_test.tsv"
+        additional_cmds += "--clean "
+    else:
+        dataset = "full"
+
 
 
     outdir = deploy_dir / "MMAseq_Test"
-    additional_cmds += f"--clean --verbosity {verbosity}"
+    additional_cmds += f"--clean --verbosity {verbosity} "
+
+    if custom:
+        additional_cmds += "--custom "
 
     # Create command
     command = (
@@ -332,9 +380,14 @@ def deploy(args):
     status = subprocess.Popen(command, shell=True).wait()
 
     if status != 0:
+        verb = ""
+        if verbosity < 1:
+            verb = "Rerun command with '--verbosity 1' for more details.\n"
         logger.error(
             "Something went wrong during deployment. "
-            "Rerun command with '--verbosity 1' for more details."
+            f"{verb}"
+            "Either way you are welcome to post an issue on our Github."
+            
         )
         sys.exit(1)
 

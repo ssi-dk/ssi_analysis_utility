@@ -214,7 +214,7 @@ The format is typical of a .yaml file, and is the following:
 
 ```yaml
 mlst:
-    assemblers: shovill  
+    assembler: shovill  
     
 resfinder:
     options: --species 'Other'
@@ -229,11 +229,11 @@ serotypefinder:
     options: ""
           
 amrfinder:
-    assemblers: shovill
+    assembler: shovill
     options: ""
     
 meningotype:
-    assemblers: shovill
+    assembler: shovill
 
 kmeraligner:
     database: elmDB

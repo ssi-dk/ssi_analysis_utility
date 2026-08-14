@@ -3,8 +3,8 @@ requires = ["hatchling>=1.25"]
 build-backend = "hatchling.build"
 
 [project]
-name = "MMAseq"
-version = "1.0.0"
+name = "mmaseq"
+dynamic = ["version"]
 description = "Mixed Microbial Analysis on Sequencing data"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -36,11 +36,16 @@ only-include = ["src/mmaseq", "README.md", "LICENSE", "pyproject.toml"]
 [tool.hatch.build]
 exclude = [
   "src/mmaseq/data/reads/*.gz",
+  "!src/mmaseq/data/reads/Ec_Test_R1.fastq.gz",
+  "!src/mmaseq/data/reads/Ec_Test_R2.fastq.gz",
   "src/mmaseq/config/*yaml",
   "!src/mmaseq/config/results_catalogue.yaml",
   "**/__pycache__/**",
   "**/.snakemake/**"
 ]
+
+[tool.hatch.version]
+path = "src/mmaseq/__version__.py"
 
 [project.scripts]
 mmadeploy = "mmaseq.deploy:launcher"

@@ -1,0 +1,127 @@
+name: Commands
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  small_version_labelling:
+    if: ${{ github.event.issue.pull_request }}
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: Parse Command
+        id: parse
+        run: |
+          COMMENT_BODY="${{ github.event.comment.body }}"
+          if [[ "$COMMENT_BODY" == *"/minor"* ]]; then
+            echo "Attaching new label 'minor'"
+            echo "new_label=minor" >> $GITHUB_OUTPUT
+          elif [[ "$COMMENT_BODY" == *"/patch"* ]]; then
+            echo "Attaching new label 'patch'"
+            echo "new_label=patch" >> $GITHUB_OUTPUT
+          elif [[ "$COMMENT_BODY" == *"/build"* ]]; then
+            echo "Attaching new label 'build'"
+            echo "new_label=build" >> $GITHUB_OUTPUT
+          else
+            echo "Comment is not related to version labelling"
+            exit 0
+          fi
+      - name: Authorize User
+        id: authorize
+        run: | 
+          COMMENTER="${{ github.event.comment.user.login }}"
+          PR_AUTHOR="${{ github.event.issue.user.login }}"
+          ASSOCIATION="${{ github.event.comment.author_association }}"
+          
+          echo "Commenter: $COMMENTER"
+          echo "PR Author: $PR_AUTHOR"
+          echo "Association: $ASSOCIATION"
+          
+          # Allow if commenter is the PR author, the repo owner, or a collaborator
+          if [ "$COMMENTER" = "$PR_AUTHOR" ] || [ "$ASSOCIATION" = "OWNER" ] || [ "$ASSOCIATION" = "COLLABORATOR" ] || [ "$ASSOCIATION" = "MEMBER" ]; then
+            echo "✅ Labelling authorized" 
+            echo "authorized=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ You don't have permission to change version labels."
+            echo "authorized=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Update Labels
+        if: steps.authorize.outputs.authorized == 'true' && steps.parse.outputs.new_label != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          NEW_LABEL: ${{ steps.parse.outputs.new_label }}
+        run: |
+          CURRENT_LABELS=$(gh pr view "$PR_NUMBER" --json labels --jq '.labels[].name')
+          # Define conflicting versioning labels
+          VERSION_LABELS=("major" "minor" "patch" "build")
+          # Loop through current labels and remove any conflicting version labels
+          for label in $CURRENT_LABELS; do
+            if [[ " ${VERSION_LABELS[@]} " =~ " ${label} " ]]; then
+              echo "Removing old label: $label"
+              gh pr edit "$PR_NUMBER" --remove-label "$label"
+            fi
+          done
+          # Apply the requested new label
+          echo "Adding new label: $NEW_LABEL"
+          gh pr edit "$PR_NUMBER" --add-label "$NEW_LABEL"
+
+  major_labelling:
+    if: ${{ github.event.issue.pull_request }}
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: Parse Command
+        id: parse
+        run: |
+          COMMENT_BODY="${{ github.event.comment.body }}"
+          if [[ "$COMMENT_BODY" == *"/major"* ]]; then
+            echo "Attaching new label 'major'"
+            echo "new_label=major" >> $GITHUB_OUTPUT
+          else
+            echo "Comment is not related to major version"
+            exit 0
+          fi
+      - name: Authorize User
+        id: authorize
+        run: | 
+          ASSOCIATION="${{ github.event.comment.author_association }}"
+          
+          echo "Association: $ASSOCIATION"
+          
+          # Allow if commenter is the PR author, the repo owner, or a collaborator
+          if [ "$ASSOCIATION" = "OWNER" ] || [ "$ASSOCIATION" = "COLLABORATOR" ] || [ "$ASSOCIATION" = "MEMBER" ]; then
+            echo "✅ Labelling major authorized" 
+            echo "authorized=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Only Owners and Collaborators are authorized to update major version."
+            echo "authorized=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Update Labels
+        if: steps.authorize.outputs.authorized == 'true' && steps.parse.outputs.new_label != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          NEW_LABEL: ${{ steps.parse.outputs.new_label }}
+        run: |
+          CURRENT_LABELS=$(gh pr view "$PR_NUMBER" --json labels --jq '.labels[].name')
+          # Define conflicting versioning labels
+          VERSION_LABELS=("major")
+          # Loop through current labels and remove any conflicting version labels
+          for label in $CURRENT_LABELS; do
+            if [[ " ${VERSION_LABELS[@]} " =~ " ${label} " ]]; then
+              echo "Removing old label: $label"
+              gh pr edit "$PR_NUMBER" --remove-label "$label"
+            fi
+          done
+          # Apply the requested new label
+          echo "Adding new label: $NEW_LABEL"
+          gh pr edit "$PR_NUMBER" --add-label "$NEW_LABEL"

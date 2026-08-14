@@ -1,25 +1,30 @@
 mlst:
-    assemblers: shovill  
+    assembler: shovill  
     
 resfinder:
     options: --species 'Other'
+    reads: True
 
 plasmidfinder:
     options: ""
+    reads: True
 
 virulencefinder:
     options: ""
+    reads: True
 
 serotypefinder:
     options: ""
-          
+    reads: True
+
 amrfinder:
-    assemblers: shovill
+    assembler: shovill
     options: ""
-    
+
 meningotype:
-    assemblers: shovill
+    assembler: shovill
 
 kmeraligner:
     database: elmDB
     options : -ID 80 -1t1 -cge
+    reads: True

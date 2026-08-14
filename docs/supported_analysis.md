@@ -8,7 +8,7 @@ The pipeline supports a variety of generic analyses that can be applied to a wid
 
 ```yaml
 mlst:
-    assemblers: shovill  
+    assembler: shovill  
     
 resfinder:
     options: --species 'Other'
@@ -23,11 +23,11 @@ serotypefinder:
     options: ""
           
 amrfinder:
-    assemblers: shovill
+    assembler: shovill
     options: ""
     
 meningotype:
-    assemblers: [shovill, spades, skesa]
+    assembler: [shovill, spades, skesa]
 ```
 
 The options field can be used to specify any additional parameters or options that may be relevant for the analysis, such as the species being analyzed or specific thresholds for gene detection and can be specified following the rules of the respective tool. The assemblers field allows users to specify which assembly tools to use for the analysis, which can be particularly important for certain analyses that may require specific assembly methods to achieve optimal results (in the current states only shovill, spades and skesa are supported). By providing these configuration options, the pipeline allows users to tailor their analysis to their specific needs and research questions, while still maintaining a consistent and standardized workflow across different samples and species.
@@ -46,11 +46,11 @@ kma_filter:
     database: ecoligenes
 
 chtyper:
-    database: fumCH_db 
+    database: fumCH 
 
 custom_blaster:
     options: "-perc_identity 90.0"
-    assemblers: shovill
+    assembler: shovill
     database : OXAndm
 ```
 
@@ -69,17 +69,17 @@ snp_identifier:
 deletion_identifier:
     options: --organism 'Clostridioides difficile' --deletion_region_buffer 5 --overlap_fraction 0.5
     database: Cdiff_Toxins
-    assemblers: [spades]        # <--- NEW: matches the assembler wildcard
+    assembler: [spades]        # <--- NEW: matches the assembler wildcard
 
 assembly_minimap2:
     options: -ax asm5 --cs
     database: Cdiff_Toxins
-    assemblers: [spades]        # used to configure which assembler(s) to align
+    assembler: [spades]        # used to configure which assembler(s) to align
 
 cdiff_repeat_identifier:
     repeats: TR6 TR10
     combos: TRST
-    assemblers: [spades, skesa]
+    assembler: [spades, skesa]
 
 samtools:
     view_options: -q 20
@@ -101,21 +101,21 @@ LREfinder:
 ```yaml
 kleborate:
     options: --preset kpsc
-    assemblers: shovill  
+    assembler: shovill  
 ```
 
 ## N_meningitidis  
 
 ```yaml
 meningotype:
-    assemblers: shovill
+    assembler: shovill
 ```
 
 ## S.Aureus  
 
 ```yaml
 spatyper:
-  assemblers: [spades]   
+  assembler: [spades]   
 ```
 ## S.Enterica
 
@@ -123,7 +123,7 @@ spatyper:
 seqsero2: true
 
 sistr:
-  assemblers: shovill  
+  assembler: shovill  
 ```
 
 

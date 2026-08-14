@@ -1,18 +1,20 @@
-plasmidfinder: true
+plasmidfinder:
+  options: "-l 80 -t 80"
+  assembler: shovill
 
-virulencefinder: true
+blastn:
+  options: "-perc_identity 99.0"
+  assembler: shovill
+  database : OXAndm
 
-serotypefinder: true
+pointfinder:
+    options: --species 'Enterococcus faecalis'
+    assembler: shovill
 
-amrfinder:
-    options: --organism 'Enterococcus_faecalis'
-    assemblers: [shovill]  
-
-mlst:
-    assemblers: [shovill]  
-
-LREfinder:
+lrefinder:
     database : [elmDB]
+    reads: True
 
 kmeraligner:
-    database : [vancomycin, vancomycin_operon]
+    database : [vancomycin, vancomycinOperon]
+    reads: True
