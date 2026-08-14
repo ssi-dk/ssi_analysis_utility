@@ -131,6 +131,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Check PR Labels
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const pr = context.payload.pull_request;
+          
+          if (!pr) {
+            core.info("This workflow was not triggered by a pull request event. Skipping label check.");
+            return;
+          }
+    
+          const labels = pr.labels.map(l => l.name);
+          
+          if (labels.includes('build')) {
+            core.info("PR is labelled 'build', thus no changes in software is imminent. Check is done successfully!");
+          } else {
+            core.info("PR does not have the 'build' label.");
+          }
+          
     - name: Parse comments
       id: parse
       run: |
@@ -143,7 +162,7 @@ jobs:
           fi
 
   build:
-    if: "!contains(github.event.pull_request.labels.*.name, 'build')"
+    if: "!contains(github.event.issue.labels.*.name, 'build')"
     needs: check-ready
 
     strategy:
@@ -163,7 +182,7 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const labels = context.payload.pull_request.labels.map(l => l.name);
+            const labels = context.payload.issue.labels.map(l => l.name);
 
             if (labels.includes('build')) {
               console.log("PR is labelled 'build', thus no changes in software is imminent. Check is done sucessfully!");
@@ -171,14 +190,14 @@ jobs:
 
 
       - name: Setup Micromamba
-        if: ${{ !contains(github.event.pull_request.labels.*.name, 'build') }}
+        if: ${{ !contains(github.event.issue.labels.*.name, 'build') }}
         uses: mamba-org/setup-micromamba@v2
         with:
           environment-name: test-env
           init-shell: bash
 
       - name: Test conda installation
-        if: ${{ !contains(github.event.pull_request.labels.*.name, 'build') }}
+        if: ${{ !contains(github.event.issue.labels.*.name, 'build') }}
         shell: bash -l {0}
         run: |
           micromamba install bioconda::mmaseq --yes
@@ -187,13 +206,13 @@ jobs:
           pip install .
 
       - name: Verify package imports
-        if: ${{ !contains(github.event.pull_request.labels.*.name, 'build') }}
+        if: ${{ !contains(github.event.issue.labels.*.name, 'build') }}
         shell: bash -l {0}
         run: |
           mmaseq --version
 
       - name: Test pipeline
-        if: ${{ !contains(github.event.pull_request.labels.*.name, 'build') }}
+        if: ${{ !contains(github.event.issue.labels.*.name, 'build') }}
         shell: bash -l {0}
         run: |
           mmadeploy --deploy_dir ~/test --threads 3 --test --verbosity 2
