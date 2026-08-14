@@ -1,4 +1,4 @@
-name: Commands
+name: Update PR Labels
 on:
   issue_comment:
     types: [created]
