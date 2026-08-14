@@ -10,7 +10,7 @@ Add a label to this PR by commenting one of the following:
 
 **Note:** The label check waits 20 seconds before reading labels. Comment your label immediately after creating the PR to ensure the check passes.
 
-## Checklist
+## Checklist (Does NOT apply for changes to Github actions and documentations)
 Before creating a Pull request for your changes, you can save time by completing the following steps in advance, on you local repository.
 ### Setup (Required for all PRs)
 - [ ] I have installed the local branch (e.g. using `pip install .` in an appropriate virtual environment)
