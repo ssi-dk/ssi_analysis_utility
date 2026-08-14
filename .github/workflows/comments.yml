@@ -162,7 +162,6 @@ jobs:
           fi
 
   build:
-    if: "!contains(github.event.issue.labels.*.name, 'build')"
     needs: check-ready
 
     strategy:
@@ -190,14 +189,12 @@ jobs:
 
 
       - name: Setup Micromamba
-        if: ${{ !contains(github.event.issue.labels.*.name, 'build') }}
         uses: mamba-org/setup-micromamba@v2
         with:
           environment-name: test-env
           init-shell: bash
 
       - name: Test conda installation
-        if: ${{ !contains(github.event.issue.labels.*.name, 'build') }}
         shell: bash -l {0}
         run: |
           micromamba install bioconda::mmaseq --yes
@@ -206,14 +203,39 @@ jobs:
           pip install .
 
       - name: Verify package imports
-        if: ${{ !contains(github.event.issue.labels.*.name, 'build') }}
         shell: bash -l {0}
         run: |
           mmaseq --version
 
-      - name: Test pipeline
+      - name: Test pipeline (on code changes)
         if: ${{ !contains(github.event.issue.labels.*.name, 'build') }}
         shell: bash -l {0}
         run: |
-          mmadeploy --deploy_dir ~/test --threads 3 --test --verbosity 2
+          mmaseq --version
+          mmadeploy --threads 3 --test --verbosity 2
+
+      - name: Cleanup
+        shell: bash -l {0}
+        run: |
+          pip uninstall mmaseq --yes
+          
+  lable-ready:
+    if: ${{ github.event.issue.pull_request }}
+    needs: build
     
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: Mark ready
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          NEW_LABEL: ${{ steps.parse.outputs.new_label }}
+        run: |
+          # Define conflicting versioning labels
+          gh pr edit "$PR_NUMBER" --add-label "ready"
+
