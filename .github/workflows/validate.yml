@@ -38,9 +38,11 @@ jobs:
           MATCH_COUNT=0
           FOUND_LABELS=()
 
-          if "!contains($CURRENT_LABELS, 'ready')"; then
-            echo "Pull request are not yet ready, write /check in a comment, to check whether the pkackage can build successfully!"
-          
+          if ! echo "$CURRENT_LABELS" | grep -q "ready"; then
+            echo "Pull request is not yet ready, write /check in a comment to check whether the package can build successfully!"
+            exit 1
+          fi
+
           for label in $CURRENT_LABELS; do
             if [[ "$label" == "major" || "$label" == "minor" || "$label" == "patch"  || "$label" == "build" ]]; then
               MATCH_COUNT=$((MATCH_COUNT + 1))
