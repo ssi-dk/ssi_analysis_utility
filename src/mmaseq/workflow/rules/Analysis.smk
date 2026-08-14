@@ -467,7 +467,7 @@ rule serovar_detector:
         stdout = f"{logdir}/serovar_detector_{{sample}}.log"
     shell:
         """
-        OUTDIR = $(dirname {output.results})
+        OUTDIR=$(dirname {output.results})
 
         cmd="serovar_detector -A {input.assembly} -o $OUTDIR -t 1"
 
