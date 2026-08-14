@@ -400,7 +400,7 @@ rule PR_serovar_detector:
         stdout = f"{logdir}/PR/serovar_detector_{{sample}}.log"
     shell:
         """
-        OUTDIR = $(dirname {output.results})
+        OUTDIR=$(dirname {output.results})
 
         cmd="serovar_detector -1 {input.R1} -2 {input.R2} -o $OUTDIR -t 1"
 
