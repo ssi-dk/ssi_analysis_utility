@@ -111,6 +111,14 @@ jobs:
         if: ${{ !contains(github.event.pull_request.labels.*.name, 'build') }}
         shell: bash -l {0}
         run: |
+          # Check labels via API call (fresh read, not from event payload)
+          LABELS=$(gh pr view ${{ github.event.pull_request.number }} --json labels --jq '.labels[].name')
+          if echo "$LABELS" | grep -q "build"; then
+            echo "Build label found, skipping test pipeline"
+            exit 0
+          fi
+    
+          # Run tests
           mmadeploy --deploy_dir ~/test --threads 3 --test --verbosity 2
 
       - name: Cleanup installation
