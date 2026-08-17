@@ -41,6 +41,8 @@ elif label == "patch":
 
 new_version = f'{major}.{minor}.{patch}'
 
+version_text = f'__version__ = {new_version}'
+
 print(
     "After",
     "new_version: {new_version}",
@@ -50,7 +52,7 @@ print(
     sep = "\n"
 )
 
-version_file.write_text(new_version)
+version_file.write_text(version_text)
 
 # Write new version to Github actions
 if "GITHUB_OUTPUT" in os.environ:
