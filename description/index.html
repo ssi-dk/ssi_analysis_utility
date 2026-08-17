@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><link rel="canonical" href="https://ssiutility.dk/description/" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Description - MMASeq Documentation</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Description";
+        var mkdocs_page_input_path = "description.md";
+        var mkdocs_page_url = "/description/";
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="..">
+          <img src="../assets/MMASeq_logo.png" class="logo" alt="Logo"/>
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <ul class="current">
+                <li class="toctree-l1 current"><a class="reference internal current" href="#">Description</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#input-data">Input data</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#repository-structure">Repository Structure</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#src">src/</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#docs">docs/</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#license">LICENSE</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#readmemd">README.md</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#mkdocsyml">mkdocs.yml</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#pyprojecttoml">pyproject.toml</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#version_guidemd">version_guide.md</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../supported_analysis/">Supported Analysis</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../tools_databases/">Tools and Databases</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../tutorials/">Tutorials</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../references/">References</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">MMASeq Documentation</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+      <li class="breadcrumb-item active">Description</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="workflow-description">Workflow description</h1>
+<h2 id="input-data">Input data</h2>
+<p><strong>MMASeq (Mixed Microbial Analysis on Sequencing data)</strong> accepts as input either raw sequencing reads (FASTQ format) or assembled genomes (FASTA format). At the present state, the pipeline is designed to handle short-read. However, long-read support is planned for future releases. 
+The input data is specified through a samplesheet, which allows for batch processing of multiple samples in a single run. Each sample can be associated with its own set of reads and/or assemblies, enabling flexible analysis across different species or strains. The pipeline also supports the use of species-specific configuration files, which can be linked to each sample in the samplesheet to tailor the analysis according to the organism being studied. This modular approach ensures that the pipeline can be easily adapted to a wide range of bacterial species and genomic contexts, making it a versatile tool for microbial genomics research and surveillance. </p>
+<h2 id="repository-structure">Repository Structure</h2>
+<p>Within the <code>MMAseq</code> folder repository, the project is organized into several key directories and files that facilitate the workflow and its management:</p>
+<h3 id="src"><code>src/</code></h3>
+<dl>
+<dd>It is the top level directory that contains all snakemake-related files: rule definitions, species-specific configs, conda environments, and helper scripts.</dd>
+</dl>
+<h3 id="docs"><code>docs/</code></h3>
+<dl>
+<dd>Includes the the markdow documentation files and assets, used to build the project documentation.</dd>
+</dl>
+<h3 id="license"><code>LICENSE</code></h3>
+<dl>
+<dd>The <code>LICENSE</code> file contains the terms under which the software is distributed, specifying the permissions and limitations for users of the software.</dd>
+</dl>
+<h3 id="readmemd"><code>README.md</code></h3>
+<dl>
+<dd>The<code>README.md</code> provides an overview of the project and other relevant information for users.</dd>
+</dl>
+<h3 id="mkdocsyml"><code>mkdocs.yml</code></h3>
+<dl>
+<dd>The <code>mkdocs.yml</code> file is the configuration file for MkDocs, a static site generator used to build the project documentation. It defines the structure and settings for the documentation site.</dd>
+</dl>
+<h3 id="pyprojecttoml"><code>pyproject.toml</code></h3>
+<dl>
+<dd>The <code>pyproject.toml</code> file is a configuration file for Python projects, specifying the project metadata, dependencies, and build system requirements. It is used to manage the Python environment and dependencies for the project, ensuring that all necessary packages are installed and compatible with the workflow.</dd>
+</dl>
+<h3 id="version_guidemd"><code>version_guide.md</code></h3>
+<dl>
+<dd>The <code>version_guide.md</code> file provides information about the versioning strategy and release notes for the project.</dd>
+</dl>
+<details>
+<summary><strong>Click to expand: Full project tree structure </strong></summary>
+
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>.
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>├── LICENSE
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>├── README.md
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>├── mkdocs.yml
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>├── pyproject.toml
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>├── version_guide.md
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>├── src
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    ├── mmaseq/
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>        ├── config/
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>            |   ├── target_screening/              # Metadata Folder
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>            |   ├── species_configs/               # Folder containing all species configuration file
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>            |   ├── results_catalogue.yaml         # File containing all the information regarding the results generated by the pipeline                 
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>            |   ├── Test.yaml                    # Main pipeline default configuration file                 
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>            ├── data/
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>            │   ├── assemblies/                    # Example assemblies  
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>            |   ├── reads/                         # Reads folder
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>            |   |    └── reads.urls                # Example input reads urls file
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>            │   ├── samplesheet_small.tsv          # Reduced example input sheet
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>            │   └── samplesheet.tsv                # Complete example input sheet
+</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>            │                          
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>            ├── workflow/
+</span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>            │   ├── Snakefile                      # Main Snakemake workflow definition
+</span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>            │   ├── envs/                          # Folder containing all environments configuration files 
+</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>            │   ├── rules/                         # Folder containing all snakemake rules 
+</span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>            │   └── scripts/                       # Folder containing all helper scripts
+</span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>            ├── utils/                             # Folder containing all helper functions and classes
+</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>            |   ├── PATH.py                        # File containing all paths used in the pipeline
+</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>            |   ├── helpers.py                     # File containing helper functions and classes    
+</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>            |   ├── logging_setup.py               # File containing the logging setup for the pipeline  
+</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>            |   ├── results_paths.py               # File containing the functions to generate the paths for the results generated by the pipeline
+</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>            |   ├── results_aggregator.py          # File containing the functions to aggregate the results generated by the pipeline
+</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>            |   └── sample_config.py               # File containing the functions to parse the sample configuration files 
+</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>            ├── deploy.py                          # Script to deploy the pipeline into a specified location and run the pipeline on a test dataset
+</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>            └── mmaseq.py                          # Main launcher of the pipeline
+</span></code></pre></div>
+
+</details>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href=".." class="btn btn-neutral float-left" title="Home"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../installation/" class="btn btn-neutral float-right" title="Installation">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+      <p>The MIT License (MIT)  Copyright © 2023 Statens Serum Institut</p>
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href=".." style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../installation/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
