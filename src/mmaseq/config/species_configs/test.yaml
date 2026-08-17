@@ -98,3 +98,6 @@ sistr:
 kmeraligner:
     database : [vancomycin, vancomycinOperon]
     reads: True
+
+serovar_detector:
+    reads: True

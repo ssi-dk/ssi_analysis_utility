@@ -1,0 +1,3 @@
+name: serovar_detector
+dependencies:
+  - bioconda::serovar_detector
