@@ -13,6 +13,15 @@ m = re.search(r'__version__ = "(\d+)\.(\d+)\.(\d+)"', text)
 
 major, minor, patch = map(int, m.groups())
 
+print(
+    "Before",
+    f"label: {label}",
+    f"major: {major}",
+    f"minor: {minor}",
+    f"patch: {patch}",
+    sep = "\n"
+)
+
 if label == "major":
     major += 1
     minor = 0
@@ -32,13 +41,16 @@ elif label == "patch":
 
 new_version = f'{major}.{minor}.{patch}'
 
-text = re.sub(
-    r'__version__ = ".*"',
-    f'__version__ = "{new_version}"',
-    text,
+print(
+    "After",
+    "new_version: {new_version}",
+    f"major: {major}",
+    f"minor: {minor}",
+    f"patch: {patch}",
+    sep = "\n"
 )
 
-version_file.write_text(text)
+version_file.write_text(new_version)
 
 # Write new version to Github actions
 if "GITHUB_OUTPUT" in os.environ:
