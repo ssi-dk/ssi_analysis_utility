@@ -1,3 +1,4 @@
 name: serotypefinder
 dependencies:
   - bioconda::serotypefinder
+  - conda-forge::python=3.9
