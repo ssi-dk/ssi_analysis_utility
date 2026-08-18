@@ -1,4 +1,3 @@
 name: plasmidfinder
 dependencies:
   - bioconda::plasmidfinder
-  - bioconda::kma
