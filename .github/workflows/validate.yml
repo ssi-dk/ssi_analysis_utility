@@ -3,6 +3,8 @@ name: Validate Pull Requests
 on:
   pull_request:
     types: [opened, synchronize, reopened, labeled, unlabeled]
+    branches:
+      - dev
 
 concurrency:
   group: build-${{ github.event.pull_request.number || github.head_ref }}
