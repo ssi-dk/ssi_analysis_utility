@@ -3,6 +3,8 @@ name: Bump version
 on: 
   pull_request:
     types: [closed]
+    branches:
+      - dev
 
 permissions:
   contents: write
