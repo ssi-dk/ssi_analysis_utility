@@ -242,12 +242,12 @@ rule PR_plasmidfinder:
 
 rule PR_resfinder:
     input:
-        R1 = lambda wc: samplesheet.loc[wc.sample, "read1"],
-        R2 = lambda wc: samplesheet.loc[wc.sample, "read2"],
+        R1 = lambda wc: samples[wc.sample].inputs.read1,
+        R2 = lambda wc: samples[wc.sample].inputs.read2,
         res_database = rules.setup_resfinder.output.database
     params:
         tmp_results = "ResFinder_results_tab.txt",
-        options = lambda wc: sample_configs[wc.sample]["resfinder"]["options"]
+        options = lambda wc: samples[wc.sample].module("resfinder").options
     output:
         results = f"{outdir}/{{sample}}/raw/PR/resfinder/resfinder.tsv"
     conda:

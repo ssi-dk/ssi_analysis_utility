@@ -1,5 +1,5 @@
 from mmaseq.utils.PATH import *
-from mmaseq.utils import logging_setup, helpers, sample_config, result_paths, results_aggregator
+from mmaseq.utils import logging_setup, helpers, sample_config, result_paths, results_aggregator, classes
 from pathlib import Path
 import pandas as pd
 
@@ -38,8 +38,12 @@ logger.trace(("Deduced variables:\n"
 #################################################################
 logger.debug("Creating sample specific input and output objects")
 logger.trace("Reading samplesheet")
-samplesheet = pd.read_csv(samplesheet_path, 
-                          sep='\t').set_index("sample_name")
+samplesheet = pd.read_csv(
+    samplesheet_path,
+    sep='\t'
+).set_index("sample_name")
+
+samples = classes.import_dataset(samplesheet, spe_configs_dir, outdir)
 
 logger.trace("Defining sample specific configurations")
 sample_configs = sample_config.determine_sample_configs(samplesheet, 
